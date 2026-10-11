@@ -1436,6 +1436,22 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/LinkResponse'
+  GET /api/v1/telemetry/probes/anomalies:
+    responses:
+      "200":
+        description: The probe engine's active anomalies, filtered to one probe target by the endpoint query parameter when given; activeCount is the unfiltered total. Answers 503 when the anomaly store is not wired.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProbeAnomaliesResponse'
+  GET /api/v1/telemetry/probes/run:
+    responses:
+      "200":
+        description: Runs every configured health check now and returns the results grouped by kind; hasTests is false when none is configured.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthCheckRunResponse'
   GET /api/v1/telemetry/probes/settings:
     responses:
       "200":

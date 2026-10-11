@@ -1324,6 +1324,35 @@ components:
                 - callingAe
                 - enabled
             type: object
+        DICOMTestResult:
+            additionalProperties: false
+            properties:
+                aeTitle:
+                    type: string
+                echoTimeMs:
+                    type: number
+                error:
+                    type: string
+                host:
+                    type: string
+                name:
+                    type: string
+                port:
+                    type: integer
+                serverAeTitle:
+                    type: string
+                success:
+                    type: boolean
+                totalTimeMs:
+                    type: number
+            required:
+                - name
+                - success
+                - host
+                - port
+                - aeTitle
+                - totalTimeMs
+            type: object
         DNSConfig:
             additionalProperties: false
             properties:
@@ -1938,6 +1967,14 @@ components:
                 - deviceId
                 - portId
             type: object
+        EducationResults:
+            additionalProperties: false
+            properties:
+                ltiResults:
+                    items:
+                        $ref: '#/components/schemas/LTITestResult'
+                    type: array
+            type: object
         EngineCapabilities:
             additionalProperties: false
             properties:
@@ -2092,6 +2129,22 @@ components:
                 - count
                 - engines
             type: object
+        EnterpriseResults:
+            additionalProperties: false
+            properties:
+                fileShareResults:
+                    items:
+                        $ref: '#/components/schemas/FileShareTestResult'
+                    type: array
+                ldapResults:
+                    items:
+                        $ref: '#/components/schemas/LDAPTestResult'
+                    type: array
+                sqlResults:
+                    items:
+                        $ref: '#/components/schemas/SQLTestResult'
+                    type: array
+            type: object
         Entry:
             additionalProperties: false
             properties:
@@ -2237,6 +2290,31 @@ components:
                 - authType
                 - enabled
             type: object
+        FHIRTestResult:
+            additionalProperties: false
+            properties:
+                baseUrl:
+                    type: string
+                error:
+                    type: string
+                fhirVersion:
+                    type: string
+                name:
+                    type: string
+                resourceCount:
+                    type: integer
+                serverName:
+                    type: string
+                success:
+                    type: boolean
+                totalTimeMs:
+                    type: number
+            required:
+                - name
+                - success
+                - baseUrl
+                - totalTimeMs
+            type: object
         FeatureGateResponse:
             additionalProperties: false
             properties:
@@ -2318,6 +2396,35 @@ components:
                 - host
                 - share
                 - enabled
+            type: object
+        FileShareTestResult:
+            additionalProperties: false
+            properties:
+                connectTimeMs:
+                    type: number
+                error:
+                    type: string
+                host:
+                    type: string
+                name:
+                    type: string
+                protocol:
+                    type: string
+                readSpeedMbps:
+                    type: number
+                share:
+                    type: string
+                success:
+                    type: boolean
+                writeSpeedMbps:
+                    type: number
+            required:
+                - name
+                - success
+                - protocol
+                - host
+                - share
+                - connectTimeMs
             type: object
         FingerprintingConfig:
             additionalProperties: false
@@ -2662,6 +2769,34 @@ components:
                 - receivingFacility
                 - enabled
             type: object
+        HL7TestResult:
+            additionalProperties: false
+            properties:
+                ackCode:
+                    type: string
+                error:
+                    type: string
+                host:
+                    type: string
+                name:
+                    type: string
+                port:
+                    type: integer
+                responseTimeMs:
+                    type: number
+                serverVersion:
+                    type: string
+                success:
+                    type: boolean
+                totalTimeMs:
+                    type: number
+            required:
+                - name
+                - success
+                - host
+                - port
+                - totalTimeMs
+            type: object
         HTTPEndpoint:
             additionalProperties: false
             properties:
@@ -2767,6 +2902,44 @@ components:
                 - tcp
                 - tls
                 - ttfb
+            type: object
+        HealthCheckRunResponse:
+            additionalProperties: false
+            properties:
+                educationResults:
+                    $ref: '#/components/schemas/EducationResults'
+                enterpriseResults:
+                    $ref: '#/components/schemas/EnterpriseResults'
+                hasTests:
+                    type: boolean
+                httpResults:
+                    items:
+                        $ref: '#/components/schemas/TestResult'
+                    type: array
+                industrialResults:
+                    $ref: '#/components/schemas/IndustrialResults'
+                medicalResults:
+                    $ref: '#/components/schemas/MedicalResults'
+                pingResults:
+                    items:
+                        $ref: '#/components/schemas/TestResult'
+                    type: array
+                tcpResults:
+                    items:
+                        $ref: '#/components/schemas/TestResult'
+                    type: array
+                udpResults:
+                    items:
+                        $ref: '#/components/schemas/TestResult'
+                    type: array
+                videoResults:
+                    $ref: '#/components/schemas/VideoResults'
+            required:
+                - pingResults
+                - tcpResults
+                - udpResults
+                - httpResults
+                - hasTests
             type: object
         HealthChecksConfig:
             additionalProperties: false
@@ -3143,6 +3316,18 @@ components:
             required:
                 - name
                 - location
+            type: object
+        IndustrialResults:
+            additionalProperties: false
+            properties:
+                modbusResults:
+                    items:
+                        $ref: '#/components/schemas/ModbusTestResult'
+                    type: array
+                opcuaResults:
+                    items:
+                        $ref: '#/components/schemas/OPCUATestResult'
+                    type: array
             type: object
         IntThreshold:
             additionalProperties: false
@@ -3716,6 +3901,37 @@ components:
                 - baseDn
                 - enabled
             type: object
+        LDAPTestResult:
+            additionalProperties: false
+            properties:
+                bindTimeMs:
+                    type: number
+                connectTimeMs:
+                    type: number
+                error:
+                    type: string
+                host:
+                    type: string
+                name:
+                    type: string
+                port:
+                    type: integer
+                serverInfo:
+                    type: string
+                success:
+                    type: boolean
+                totalTimeMs:
+                    type: number
+                useTls:
+                    type: boolean
+            required:
+                - name
+                - success
+                - useTls
+                - host
+                - port
+                - totalTimeMs
+            type: object
         LLDPDeviceInfo:
             additionalProperties: false
             properties:
@@ -3780,6 +3996,27 @@ components:
                 - name
                 - launchUrl
                 - enabled
+            type: object
+        LTITestResult:
+            additionalProperties: false
+            properties:
+                error:
+                    type: string
+                launchUrl:
+                    type: string
+                ltiVersion:
+                    type: string
+                name:
+                    type: string
+                success:
+                    type: boolean
+                totalTimeMs:
+                    type: number
+            required:
+                - name
+                - success
+                - launchUrl
+                - totalTimeMs
             type: object
         LicenseStatusResponse:
             additionalProperties: false
@@ -4085,6 +4322,22 @@ components:
                 - webauthnEnabled
                 - webauthnCredentialCount
             type: object
+        MedicalResults:
+            additionalProperties: false
+            properties:
+                dicomResults:
+                    items:
+                        $ref: '#/components/schemas/DICOMTestResult'
+                    type: array
+                fhirResults:
+                    items:
+                        $ref: '#/components/schemas/FHIRTestResult'
+                    type: array
+                hl7Results:
+                    items:
+                        $ref: '#/components/schemas/HL7TestResult'
+                    type: array
+            type: object
         MintTokenRequest:
             additionalProperties: false
             properties:
@@ -4167,6 +4420,33 @@ components:
                 - unitId
                 - testRegister
                 - enabled
+            type: object
+        ModbusTestResult:
+            additionalProperties: false
+            properties:
+                error:
+                    type: string
+                host:
+                    type: string
+                name:
+                    type: string
+                port:
+                    type: integer
+                registerValue:
+                    type: integer
+                success:
+                    type: boolean
+                totalTimeMs:
+                    type: number
+                unitId:
+                    type: integer
+            required:
+                - name
+                - success
+                - host
+                - port
+                - unitId
+                - totalTimeMs
             type: object
         MultiPathRequest:
             additionalProperties: false
@@ -4541,6 +4821,31 @@ components:
                 - name
                 - endpointUrl
                 - enabled
+            type: object
+        OPCUATestResult:
+            additionalProperties: false
+            properties:
+                endpointUrl:
+                    type: string
+                error:
+                    type: string
+                name:
+                    type: string
+                productName:
+                    type: string
+                securityMode:
+                    type: string
+                serverState:
+                    type: string
+                success:
+                    type: boolean
+                totalTimeMs:
+                    type: number
+            required:
+                - name
+                - success
+                - endpointUrl
+                - totalTimeMs
             type: object
         ObserveRequest:
             additionalProperties: false
@@ -5090,6 +5395,23 @@ components:
                 - preset
                 - tcpPorts
             type: object
+        ProbeAnomaliesResponse:
+            additionalProperties: false
+            properties:
+                activeCount:
+                    type: integer
+                anomalies:
+                    items:
+                        $ref: '#/components/schemas/Anomaly'
+                    type: array
+                timestamp:
+                    format: date-time
+                    type: string
+            required:
+                - timestamp
+                - anomalies
+                - activeCount
+            type: object
         ProbeHistoryResponse:
             additionalProperties: false
             properties:
@@ -5457,6 +5779,29 @@ components:
                 - name
                 - url
                 - enabled
+            type: object
+        RTSPTestResult:
+            additionalProperties: false
+            properties:
+                codec:
+                    type: string
+                connectTimeMs:
+                    type: number
+                error:
+                    type: string
+                name:
+                    type: string
+                resolution:
+                    type: string
+                success:
+                    type: boolean
+                url:
+                    type: string
+            required:
+                - name
+                - success
+                - url
+                - connectTimeMs
             type: object
         RecoveryCompleteRequest:
             additionalProperties: false
@@ -6246,6 +6591,37 @@ components:
                 - port
                 - database
                 - enabled
+            type: object
+        SQLTestResult:
+            additionalProperties: false
+            properties:
+                connectTimeMs:
+                    type: number
+                driver:
+                    type: string
+                error:
+                    type: string
+                host:
+                    type: string
+                name:
+                    type: string
+                port:
+                    type: integer
+                queryTimeMs:
+                    type: number
+                serverVersion:
+                    type: string
+                success:
+                    type: boolean
+                totalTimeMs:
+                    type: number
+            required:
+                - name
+                - success
+                - driver
+                - host
+                - port
+                - totalTimeMs
             type: object
         SSIDGroup:
             additionalProperties: false
@@ -7308,6 +7684,82 @@ components:
             required:
                 - code
             type: object
+        TestResult:
+            additionalProperties: false
+            properties:
+                certDaysLeft:
+                    type: integer
+                certExpiry:
+                    type: string
+                certIssuer:
+                    type: string
+                certStatus:
+                    enum:
+                        - success
+                        - warning
+                        - error
+                    type: string
+                certWithheld:
+                    type: boolean
+                dnsLatency:
+                    type: number
+                dnsStatus:
+                    enum:
+                        - success
+                        - warning
+                        - error
+                    type: string
+                error:
+                    type: string
+                jitter:
+                    type: number
+                latency:
+                    type: number
+                name:
+                    type: string
+                packetLoss:
+                    type: number
+                status:
+                    type: integer
+                success:
+                    type: boolean
+                tcpConnect:
+                    type: number
+                tcpStatus:
+                    enum:
+                        - success
+                        - warning
+                        - error
+                    type: string
+                testStatus:
+                    enum:
+                        - success
+                        - warning
+                        - error
+                    type: string
+                tlsLatency:
+                    type: number
+                tlsStatus:
+                    enum:
+                        - success
+                        - warning
+                        - error
+                    type: string
+                tlsVersion:
+                    type: string
+                ttfbLatency:
+                    type: number
+                ttfbStatus:
+                    enum:
+                        - success
+                        - warning
+                        - error
+                    type: string
+            required:
+                - name
+                - success
+                - latency
+            type: object
         TestsDefaults:
             additionalProperties: false
             properties:
@@ -7962,6 +8414,14 @@ components:
                 - taggedVlans
                 - voiceVlan
                 - configured
+            type: object
+        VideoResults:
+            additionalProperties: false
+            properties:
+                rtspResults:
+                    items:
+                        $ref: '#/components/schemas/RTSPTestResult'
+                    type: array
             type: object
         VisibilityStatus:
             additionalProperties: false
@@ -15145,6 +15605,12 @@ paths:
         get:
             operationId: getApiV1TelemetryProbesAnomalies
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProbeAnomaliesResponse'
+                    description: The probe engine's active anomalies, filtered to one probe target by the endpoint query parameter when given; activeCount is the unfiltered total. Answers 503 when the anomaly store is not wired.
                 "401":
                     content:
                         application/json:
@@ -15167,6 +15633,12 @@ paths:
         get:
             operationId: getApiV1TelemetryProbesRun
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/HealthCheckRunResponse'
+                    description: Runs every configured health check now and returns the results grouped by kind; hasTests is false when none is configured.
                 "401":
                     content:
                         application/json:

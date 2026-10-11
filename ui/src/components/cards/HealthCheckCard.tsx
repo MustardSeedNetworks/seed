@@ -42,13 +42,16 @@ import {
   status as statusColor,
   timing,
 } from '../../styles/theme';
+import type {
+  HealthCheckRunResponse,
+  TestResult,
+} from '../../types/generated/health-check-run-response';
 import { Card, type Status } from '../ui/Card';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { HeartPulse } from '../ui/Icons';
 import { StatusBadge } from '../ui/StatusBadge';
 import { Tooltip } from '../ui/Tooltip';
 import { HealthCheckCardProtocolSections } from './HealthCheckCardProtocolSections';
-import type { HealthCheckData, StatusValue, TestResult } from './healthCheckCardTypes';
 import { failuresFirst, testResultRank } from './healthCheckResultOrder';
 
 /** One cache entry for the last run, shared by every mount of the card. */
@@ -63,7 +66,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.El
   const { cardSettings } = useSettings();
   const run = useQuery({
     queryKey: healthCheckRunKey,
-    queryFn: () => api.get<HealthCheckData>('/api/v1/telemetry/probes/run'),
+    queryFn: () => api.get<HealthCheckRunResponse>('/api/v1/telemetry/probes/run'),
     enabled: false,
     staleTime: Number.POSITIVE_INFINITY,
     gcTime: Number.POSITIVE_INFINITY,
@@ -257,7 +260,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.El
     const download = Math.max(0, total - dns - tcp - tls - ttfb);
 
     // Get status-based text color for legend (bar colors stay fixed for phase identification)
-    const getStatusTextColor = (status?: StatusValue): string => {
+    const getStatusTextColor = (status?: TestResult['testStatus']): string => {
       if (status === 'error') {
         return statusColor.text.error;
       }
@@ -403,19 +406,8 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.El
     return 'success';
   };
 
-  // Helper to get cert status color
-  const getCertStatusColor = (status?: StatusValue): string => {
-    if (status === 'error') {
-      return statusColor.text.error;
-    }
-    if (status === 'warning') {
-      return statusColor.text.warning;
-    }
-    if (status === 'success') {
-      return statusColor.text.success;
-    }
-    return 'text-text-muted';
-  };
+  const getCertStatusColor = (status?: TestResult['testStatus']): string =>
+    status ? statusColor.text[status] : 'text-text-muted';
 
   const renderHttpResult = (result: TestResult): React.JSX.Element => {
     // Use testStatus for threshold-based coloring

@@ -356,6 +356,10 @@ func Targets() []Target {
 		{&api.RenewDHCPLeaseRequest{}, "renew-dhcp-lease-request.schema.json"},
 		{&api.RenewDHCPLeaseResponse{}, "renew-dhcp-lease-response.schema.json"},
 
+		// The health-check run and the probe engine's active anomalies.
+		{&api.HealthCheckRunResponse{}, "health-check-run-response.schema.json"},
+		{&api.ProbeAnomaliesResponse{}, "probe-anomalies-response.schema.json"},
+
 		// The alert test-send action on a saved receiver (#2997).
 		{&api.AlertTestSendRequest{}, "alert-test-send-request.schema.json"},
 		{&api.AlertTestSendResponse{}, "alert-test-send-response.schema.json"},
