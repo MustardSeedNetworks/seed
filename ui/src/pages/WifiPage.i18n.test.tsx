@@ -47,6 +47,7 @@ const context = {
   isWifi: true,
   cards: { wifi },
   channelGraphData: {
+    interface: 'wlan0',
     available: true,
     data: {
       networks24Ghz: [],
@@ -55,9 +56,9 @@ const context = {
           ssid: 'msn-lab',
           bssid: '02:00:5e:00:00:01',
           channel: 36,
-          centerFreq: 5180,
-          channelWidth: 80,
-          signal: -55,
+          centerFreqMhz: 5180,
+          channelWidthMhz: 80,
+          signalDbm: -55,
           band: '5GHz',
           isConnected: true,
         },

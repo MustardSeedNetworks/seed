@@ -370,6 +370,7 @@ func Targets() []Target {
 		// and the connect/disconnect result, which /wifi/wifi/disconnect
 		// serves as the wifi package's own flat type.
 		{&api.WiFiScanResponse{}, "wifi-scan-response.schema.json"},
+		{&api.WiFiChannelGraphResponse{}, "wifi-channel-graph-response.schema.json"},
 		{&api.WiFiSavedNetworksResponse{}, "wifi-saved-networks-response.schema.json"},
 		{&api.WiFiSettingsRequest{}, "wifi-settings-request.schema.json"},
 		{&wifi.ConnectionResult{}, "wifi-connection-result.schema.json"},

@@ -522,6 +522,38 @@ func TestWiFiScanResponseShape(t *testing.T) {
 	}
 }
 
+// The channel graph answered each network with snake_case keys the UI never
+// mapped (it renamed only the band lists), so every curve was drawn from an
+// undefined signal and channel width.
+func TestWiFiChannelGraphResponseShape(t *testing.T) {
+	t.Parallel()
+	s := &Server{
+		wifiManagement: troubleshooting.NewManagement(scanRadio{}, nil, fixedWiFiInterface("wlan0")),
+		wifiMgr:        wifi.NewManager("seed-test-absent"),
+	}
+	w := serve(t, s.handleWiFiChannelGraph, "/api/v1/wifi/wifi/channel-graph")
+
+	var body struct {
+		Data map[string]any `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+	require.Contains(t, body.Data, "scanTime")
+	delete(body.Data, "scanTime")
+	data, err := json.Marshal(body.Data)
+	require.NoError(t, err)
+	require.JSONEq(t, `{"networks24Ghz":[],"networks6Ghz":[],"networks5Ghz":[{"ssid":"lab",`+
+		`"bssid":"aa:bb:cc:dd:ee:ff","channel":36,"centerFreqMhz":5180,"channelWidthMhz":80,`+
+		`"signalDbm":-51,"band":"5GHz","isConnected":false}]}`, string(data))
+}
+
+func TestWiFiChannelGraphUnavailableHasNoData(t *testing.T) {
+	t.Parallel()
+	s := &Server{wifiManagement: troubleshooting.NewManagement(noScanRadio{}, nil, fixedWiFiInterface("wlan0"))}
+	w := serve(t, s.handleWiFiChannelGraph, "/api/v1/wifi/wifi/channel-graph")
+	require.JSONEq(t, `{"interface":"wlan0","available":false,"error":"WiFi scanner not initialized"}`,
+		w.Body.String())
+}
+
 func TestWiFiDisconnectResponseShape(t *testing.T) {
 	t.Parallel()
 	s := &Server{wifiManagement: troubleshooting.NewManagement(scanRadio{}, nil, fixedWiFiInterface("wlan0"))}

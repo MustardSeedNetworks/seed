@@ -83,6 +83,17 @@ type WiFiScanResponse struct {
 	Error       string                 `json:"error,omitempty"`
 }
 
+// WiFiChannelGraphResponse is the last neighbor scan grouped by band for the
+// channel overlap graph. Data is absent when the scan could not run or failed,
+// and Error then says why.
+type WiFiChannelGraphResponse struct {
+	Interface   string                 `json:"interface"`
+	Available   bool                   `json:"available"`
+	Error       string                 `json:"error,omitempty"`
+	Remediation string                 `json:"remediation,omitempty"`
+	Data        *wifi.ChannelGraphData `json:"data,omitempty"`
+}
+
 // WiFiSavedNetworksResponse lists the networks the host has credentials for.
 // Error is set when the platform could not list them.
 type WiFiSavedNetworksResponse struct {
@@ -432,31 +443,20 @@ func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request)
 // It scans available networks and organizes them by frequency band with channel overlap information.
 func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) {
 	res := s.wifiManagement.Scan(s.getInterfaceFromRequest(r))
-	if !res.Available || res.Error != "" {
-		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-			"interface":   res.Interface,
-			"available":   res.Available,
-			"error":       res.Error,
-			"remediation": res.Remediation,
-			"data":        nil,
-		})
-		return
+	response := WiFiChannelGraphResponse{
+		Interface:   res.Interface,
+		Available:   res.Available,
+		Error:       res.Error,
+		Remediation: res.Remediation,
 	}
-
-	// Get connected network BSSID
-	connectedBSSID := ""
-	if info := s.wifiManager().GetInfo(); info != nil {
-		connectedBSSID = info.BSSID
+	if res.Available && res.Error == "" {
+		connectedBSSID := ""
+		if info := s.wifiManager().GetInfo(); info != nil {
+			connectedBSSID = info.BSSID
+		}
+		response.Data = wifi.GetChannelGraphData(res.Networks, connectedBSSID)
 	}
-
-	// Generate channel graph data
-	data := wifi.GetChannelGraphData(res.Networks, connectedBSSID)
-
-	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"interface": res.Interface,
-		"available": true,
-		"data":      data,
-	})
+	sendJSONResponse(w, nil, http.StatusOK, response)
 }
 
 // ============================================================================
