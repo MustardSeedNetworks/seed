@@ -174,7 +174,7 @@ operations:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TOTPToggleResponse'
+              $ref: '#/components/schemas/MFAToggleResponse'
   POST /api/v1/auth/totp/disable:
     requestBody:
       required: true
@@ -188,7 +188,45 @@ operations:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TOTPToggleResponse'
+              $ref: '#/components/schemas/MFAToggleResponse'
+  POST /api/v1/auth/webauthn/register/begin:
+    responses:
+      "200":
+        description: Creation options for navigator.credentials.create(); enrolled passkeys are excluded.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebAuthnCreationOptionsResponse'
+  POST /api/v1/auth/webauthn/register/finish:
+    responses:
+      "200":
+        description: The attestation verified and the passkey is enrolled.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MFAToggleResponse'
+  POST /api/v1/auth/webauthn/login/begin:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WebAuthnLoginBeginRequest'
+    responses:
+      "200":
+        description: Request options for navigator.credentials.get(), naming the account's passkeys.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebAuthnRequestOptionsResponse'
+  POST /api/v1/auth/webauthn/login/finish:
+    responses:
+      "200":
+        description: The assertion verified; the session token.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginResponse'
   POST /api/v1/config/backup:
     responses:
       "201":

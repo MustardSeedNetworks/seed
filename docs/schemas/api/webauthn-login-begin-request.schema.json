@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/webauthn-login-begin-request.schema.json",
+  "$ref": "#/$defs/WebAuthnLoginBeginRequest",
+  "$defs": {
+    "WebAuthnLoginBeginRequest": {
+      "properties": {
+        "username": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "username"
+      ]
+    }
+  },
+  "title": "WebAuthnLoginBeginRequest",
+  "description": "WebAuthnLoginBeginRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

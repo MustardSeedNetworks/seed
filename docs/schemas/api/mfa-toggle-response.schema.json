@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/mfa-toggle-response.schema.json",
+  "$ref": "#/$defs/MFAToggleResponse",
+  "$defs": {
+    "MFAToggleResponse": {
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "enabled",
+            "disabled",
+            "registered"
+          ]
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "status",
+        "enabled"
+      ]
+    }
+  },
+  "title": "MFAToggleResponse",
+  "description": "MFAToggleResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

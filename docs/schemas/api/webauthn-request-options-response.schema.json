@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/webauthn-request-options-response.schema.json",
+  "$ref": "#/$defs/WebAuthnRequestOptionsResponse",
+  "$defs": {
+    "WebAuthnCredentialDescriptor": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "public-key"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "transports": {
+          "items": {
+            "type": "string",
+            "enum": [
+              "usb",
+              "nfc",
+              "ble",
+              "smart-card",
+              "hybrid",
+              "internal"
+            ]
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "type",
+        "id"
+      ]
+    },
+    "WebAuthnRequestOptions": {
+      "properties": {
+        "challenge": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "integer"
+        },
+        "rpId": {
+          "type": "string"
+        },
+        "allowCredentials": {
+          "items": {
+            "$ref": "#/$defs/WebAuthnCredentialDescriptor"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "challenge",
+        "timeout",
+        "rpId",
+        "allowCredentials"
+      ]
+    },
+    "WebAuthnRequestOptionsResponse": {
+      "properties": {
+        "publicKey": {
+          "$ref": "#/$defs/WebAuthnRequestOptions"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "publicKey"
+      ]
+    }
+  },
+  "title": "WebAuthnRequestOptionsResponse",
+  "description": "WebAuthnRequestOptionsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

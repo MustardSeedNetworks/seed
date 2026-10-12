@@ -490,6 +490,12 @@ func (s *Server) WebAuthnEnabledForTest() bool {
 	return s.webAuthn != nil
 }
 
+// SetWebAuthnManagerForTest installs the passkey manager the HTTPS listener
+// would otherwise build at bind time.
+func (s *Server) SetWebAuthnManagerForTest(m *auth.WebAuthnManager) {
+	s.webAuthn = m
+}
+
 // ExportFingerprintFromPEM exposes fingerprintFromPEM for testing.
 func ExportFingerprintFromPEM(pemData []byte) (string, error) {
 	return fingerprintFromPEM(pemData)

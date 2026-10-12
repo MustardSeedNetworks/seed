@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/webauthn-creation-options-response.schema.json",
+  "$ref": "#/$defs/WebAuthnCreationOptionsResponse",
+  "$defs": {
+    "WebAuthnCreationOptions": {
+      "properties": {
+        "rp": {
+          "$ref": "#/$defs/WebAuthnRelyingParty"
+        },
+        "user": {
+          "$ref": "#/$defs/WebAuthnUserEntity"
+        },
+        "challenge": {
+          "type": "string"
+        },
+        "pubKeyCredParams": {
+          "items": {
+            "$ref": "#/$defs/WebAuthnCredentialParameter"
+          },
+          "type": "array"
+        },
+        "timeout": {
+          "type": "integer"
+        },
+        "excludeCredentials": {
+          "items": {
+            "$ref": "#/$defs/WebAuthnCredentialDescriptor"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "rp",
+        "user",
+        "challenge",
+        "pubKeyCredParams",
+        "timeout",
+        "excludeCredentials"
+      ]
+    },
+    "WebAuthnCreationOptionsResponse": {
+      "properties": {
+        "publicKey": {
+          "$ref": "#/$defs/WebAuthnCreationOptions"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "publicKey"
+      ]
+    },
+    "WebAuthnCredentialDescriptor": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "public-key"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "transports": {
+          "items": {
+            "type": "string",
+            "enum": [
+              "usb",
+              "nfc",
+              "ble",
+              "smart-card",
+              "hybrid",
+              "internal"
+            ]
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "type",
+        "id"
+      ]
+    },
+    "WebAuthnCredentialParameter": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "public-key"
+          ]
+        },
+        "alg": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "type",
+        "alg"
+      ]
+    },
+    "WebAuthnRelyingParty": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "id"
+      ]
+    },
+    "WebAuthnUserEntity": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "displayName",
+        "id"
+      ]
+    }
+  },
+  "title": "WebAuthnCreationOptionsResponse",
+  "description": "WebAuthnCreationOptionsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
