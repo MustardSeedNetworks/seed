@@ -13,6 +13,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net/netip"
 	"os"
@@ -71,10 +72,8 @@ func main() {
 			),
 		),
 		// An instance whose name contains a literal dot, hand-assembled
-		// because the library refuses to build one. dnsmessage rejects the
-		// WHOLE packet for it ("Name: invalid dns name"), so the service is
-		// invisible; the fixture exists to pin that as known behaviour rather
-		// than let it surprise someone later.
+		// because dnsmessage refuses to build one — and refused to read one,
+		// which made the service invisible until #2626.
 		"dotted-instance.bin": dottedInstancePacket(),
 		// The macOS shape: the instance PTR alone, details in a later packet.
 		"split-ptr.bin": build(answers(
@@ -196,19 +195,54 @@ func aaaa(owner, addr string) dnsmessage.Resource {
 	}
 }
 
-// dottedInstancePacket assembles "Office No. 5._ipp._tcp.local" byte by byte.
-// dnsmessage.NewName refuses the name, so the packet cannot be built with the
-// builder used for every other fixture.
+// dottedInstancePacket assembles a full announcement of "Office No. 5", an
+// _ipp._tcp instance, byte by byte. dnsmessage.NewName refuses the name, so
+// the packet cannot be built with the builder used for every other fixture.
+// Names after the first are compressed, as a real responder sends them.
 func dottedInstancePacket() []byte {
-	raw := []byte{0x00, 0x00, 0x84, 0x00, 0, 0, 0, 1, 0, 0, 0, 0}
-	raw = appendLabel(raw, "Office No. 5")
-	for _, l := range []string{"_ipp", "_tcp", "local"} {
-		raw = appendLabel(raw, l)
-	}
+	// ID 0, response + authoritative, one answer, three additionals.
+	raw := []byte{0x00, 0x00, 0x84, 0x00, 0, 0, 0, 1, 0, 0, 0, 3}
+	serviceType := len(raw)
+	raw = appendLabel(raw, "_ipp")
+	raw = appendLabel(raw, "_tcp")
+	local := len(raw)
+	raw = appendLabel(raw, "local")
 	raw = append(raw, 0x00)
-	// PTR, IN, TTL 4500, rdata = a compression pointer back to the name.
-	raw = append(raw, 0x00, 0x0c, 0x00, 0x01, 0x00, 0x00, 0x11, 0x94, 0x00, 0x02, 0xc0, 0x0c)
-	return raw
+
+	// PTR _ipp._tcp.local -> Office No. 5._ipp._tcp.local.
+	raw = appendRRHeader(raw, 12, 1, 4500, 13+2)
+	instance := len(raw)
+	raw = appendLabel(raw, "Office No. 5")
+	raw = appendPointer(raw, serviceType)
+
+	// SRV, cache-flush class: port 631 on office-printer.local.
+	raw = appendPointer(raw, instance)
+	raw = appendRRHeader(raw, 33, 0x8001, 120, 6+15+2)
+	raw = append(raw, 0, 0, 0, 0, 0x02, 0x77)
+	host := len(raw)
+	raw = appendLabel(raw, "office-printer")
+	raw = appendPointer(raw, local)
+
+	// TXT rp=ipp/print.
+	raw = appendPointer(raw, instance)
+	raw = appendRRHeader(raw, 16, 0x8001, 4500, 13)
+	raw = appendLabel(raw, "rp=ipp/print")
+
+	// A office-printer.local -> 192.168.20.61.
+	raw = appendPointer(raw, host)
+	raw = appendRRHeader(raw, 1, 0x8001, 120, 4)
+	return append(raw, 192, 168, 20, 61)
+}
+
+func appendRRHeader(raw []byte, rtype, class uint16, ttl uint32, rdLen uint16) []byte {
+	raw = binary.BigEndian.AppendUint16(raw, rtype)
+	raw = binary.BigEndian.AppendUint16(raw, class)
+	raw = binary.BigEndian.AppendUint32(raw, ttl)
+	return binary.BigEndian.AppendUint16(raw, rdLen)
+}
+
+func appendPointer(raw []byte, off int) []byte {
+	return binary.BigEndian.AppendUint16(raw, 0xC000|uint16(off))
 }
 
 func appendLabel(raw []byte, label string) []byte {

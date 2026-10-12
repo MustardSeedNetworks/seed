@@ -19,8 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/net/dns/dnsmessage"
-
+	"github.com/MustardSeedNetworks/seed/internal/discovery/mdnswire"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -92,7 +91,7 @@ func (r *MDNSResolver) ResolveIP(ctx context.Context, ip string) (string, error)
 	}
 
 	// Build mDNS query
-	query, err := buildMDNSQuery(ptrName, dnsmessage.TypePTR)
+	query, err := buildMDNSQuery(ptrName, mdnswire.TypePTR)
 	if err != nil {
 		return "", fmt.Errorf("build query: %w", err)
 	}
@@ -132,7 +131,7 @@ func (r *MDNSResolver) ResolveName(ctx context.Context, name string) (string, er
 	r.mu.RUnlock()
 
 	// Build mDNS query for A record
-	query, err := buildMDNSQuery(name, dnsmessage.TypeA)
+	query, err := buildMDNSQuery(name, mdnswire.TypeA)
 	if err != nil {
 		return "", fmt.Errorf("build query: %w", err)
 	}
@@ -307,97 +306,51 @@ func (r *MDNSResolver) ClearCache() {
 }
 
 // buildMDNSQuery creates an mDNS query packet.
-func buildMDNSQuery(name string, qtype dnsmessage.Type) ([]byte, error) {
-	var msg dnsmessage.Message
-	msg.ID = 0                   // mDNS uses 0 for queries
-	msg.RecursionDesired = false // Query, not response
-
-	// Parse the name
-	n, err := dnsmessage.NewName(name)
+func buildMDNSQuery(name string, qtype mdnswire.Type) ([]byte, error) {
+	n, err := mdnswire.ParseName(name)
 	if err != nil {
 		return nil, fmt.Errorf("invalid name: %w", err)
 	}
-
-	msg.Questions = []dnsmessage.Question{
-		{
-			Name:  n,
-			Type:  qtype,
-			Class: dnsmessage.ClassINET,
-		},
-	}
-
-	data, err := msg.Pack()
+	data, err := mdnswire.Query(n, qtype)
 	if err != nil {
 		return nil, fmt.Errorf("pack mDNS query: %w", err)
 	}
 	return data, nil
 }
 
-// parseMDNSResponse parses an mDNS response for PTR records.
+// parseMDNSResponse returns the first PTR target in an mDNS response, looking
+// in the answers before the additionals.
 func parseMDNSResponse(data []byte) (string, error) {
-	var msg dnsmessage.Message
-	if err := msg.Unpack(data); err != nil {
-		return "", fmt.Errorf("parse response: %w", err)
+	rec, err := firstRecord(data, mdnswire.TypePTR)
+	if err != nil {
+		return "", err
 	}
-
-	// Look for PTR answers
-	for i := range msg.Answers {
-		if msg.Answers[i].Header.Type == dnsmessage.TypePTR {
-			ptr, ok := msg.Answers[i].Body.(*dnsmessage.PTRResource)
-			if ok {
-				name := ptr.PTR.String()
-				// Remove trailing dot and clean up
-				name = strings.TrimSuffix(name, ".")
-				return name, nil
-			}
-		}
-	}
-
-	// Also check additional records
-	for i := range msg.Additionals {
-		if msg.Additionals[i].Header.Type == dnsmessage.TypePTR {
-			ptr, ok := msg.Additionals[i].Body.(*dnsmessage.PTRResource)
-			if ok {
-				name := ptr.PTR.String()
-				name = strings.TrimSuffix(name, ".")
-				return name, nil
-			}
-		}
-	}
-
-	return "", errors.New("no PTR record in response")
+	return rec.Target.String(), nil
 }
 
-// parseMDNSResponseForIP parses an mDNS response for A records.
+// parseMDNSResponseForIP returns the first A address in an mDNS response,
+// looking in the answers before the additionals.
 func parseMDNSResponseForIP(data []byte) (string, error) {
-	var msg dnsmessage.Message
-	if err := msg.Unpack(data); err != nil {
-		return "", fmt.Errorf("parse response: %w", err)
+	rec, err := firstRecord(data, mdnswire.TypeA)
+	if err != nil {
+		return "", err
 	}
+	return rec.Addr.String(), nil
+}
 
-	// Look for A answers
-	for i := range msg.Answers {
-		if msg.Answers[i].Header.Type == dnsmessage.TypeA {
-			a, ok := msg.Answers[i].Body.(*dnsmessage.AResource)
-			if ok {
-				ip := net.IP(a.A[:])
-				return ip.String(), nil
+func firstRecord(data []byte, rtype mdnswire.Type) (*mdnswire.Record, error) {
+	msg, err := mdnswire.Parse(data)
+	if err != nil {
+		return nil, fmt.Errorf("parse response: %w", err)
+	}
+	for _, section := range []mdnswire.Section{mdnswire.Answer, mdnswire.Additional} {
+		for i := range msg.Records {
+			if rec := &msg.Records[i]; rec.Section == section && rec.Type == rtype {
+				return rec, nil
 			}
 		}
 	}
-
-	// Also check additional records
-	for i := range msg.Additionals {
-		if msg.Additionals[i].Header.Type == dnsmessage.TypeA {
-			a, ok := msg.Additionals[i].Body.(*dnsmessage.AResource)
-			if ok {
-				ip := net.IP(a.A[:])
-				return ip.String(), nil
-			}
-		}
-	}
-
-	return "", errors.New("no A record in response")
+	return nil, fmt.Errorf("no record of type %d in response", rtype)
 }
 
 // MDNSListener passively captures mDNS announcements on the network.
@@ -502,67 +455,55 @@ func (l *MDNSListener) listen(stopCh <-chan struct{}) {
 	}
 }
 
-// processPacket handles an incoming mDNS packet.
+// processPacket handles an incoming mDNS packet. Only responses
+// (announcements) carry name mappings, and only their answers are read.
 func (l *MDNSListener) processPacket(data []byte, remoteAddr *net.UDPAddr) {
-	var msg dnsmessage.Message
-	if err := msg.Unpack(data); err != nil {
-		return
-	}
-
-	// We're interested in responses (announcements)
-	if !msg.Response {
+	msg, err := mdnswire.Parse(data)
+	if err != nil || !msg.Response {
 		return
 	}
 
 	ip := remoteAddr.IP.String()
-
-	// Process all answers for name mappings
-	for i := range msg.Answers {
-		l.processAnswer(&msg.Answers[i], ip)
-	}
-}
-
-// processAnswer handles a single DNS answer record.
-func (l *MDNSListener) processAnswer(answer *dnsmessage.Resource, remoteIP string) {
-	if answer.Header.Type == dnsmessage.TypeA {
-		l.processARecord(answer)
-		return
-	}
-	if answer.Header.Type == dnsmessage.TypePTR {
-		l.processPTRRecord(answer, remoteIP)
+	for i := range msg.Records {
+		rec := &msg.Records[i]
+		if rec.Section != mdnswire.Answer {
+			continue
+		}
+		switch rec.Type {
+		case mdnswire.TypeA:
+			l.processARecord(rec)
+		case mdnswire.TypePTR:
+			l.processPTRRecord(rec, ip)
+		case mdnswire.TypeAAAA, mdnswire.TypeSRV, mdnswire.TypeTXT:
+			// No IPv4 name mapping in these.
+		}
 	}
 }
 
 // processARecord extracts hostname->IP mappings from A records.
-func (l *MDNSListener) processARecord(answer *dnsmessage.Resource) {
-	name := strings.TrimSuffix(answer.Header.Name.String(), ".")
-	if !strings.HasSuffix(name, ".local") {
+func (l *MDNSListener) processARecord(rec *mdnswire.Record) {
+	if !isLocal(rec.Name) {
 		return
 	}
-
-	a, ok := answer.Body.(*dnsmessage.AResource)
-	if !ok {
-		return
-	}
-
-	answerIP := net.IP(a.A[:]).String()
+	name := rec.Name.String()
+	answerIP := rec.Addr.String()
 	l.storeName(answerIP, name, false)
 	logging.GetLogger().Debug("mDNS: captured name", "ip", answerIP, "name", name)
 }
 
 // processPTRRecord extracts name mappings from PTR records.
-func (l *MDNSListener) processPTRRecord(answer *dnsmessage.Resource, remoteIP string) {
-	ptr, ok := answer.Body.(*dnsmessage.PTRResource)
-	if !ok {
+func (l *MDNSListener) processPTRRecord(rec *mdnswire.Record, remoteIP string) {
+	if !isLocal(rec.Target) {
 		return
 	}
+	l.storeName(remoteIP, rec.Target.String(), true)
+}
 
-	name := strings.TrimSuffix(ptr.PTR.String(), ".")
-	if !strings.HasSuffix(name, ".local") {
-		return
-	}
-
-	l.storeName(remoteIP, name, true)
+// isLocal reports whether a name is in the mDNS .local domain. It tests the
+// last label rather than a string suffix, which a label holding a literal
+// "x.local" would also match.
+func isLocal(name mdnswire.Name) bool {
+	return len(name) > 1 && name[len(name)-1] == "local"
 }
 
 // storeName saves a name mapping. If onlyIfAbsent is true, it only stores if no mapping exists.

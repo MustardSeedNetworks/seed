@@ -5,13 +5,13 @@ import (
 	"slices"
 	"strings"
 
-	"golang.org/x/net/dns/dnsmessage"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/mdnswire"
 )
 
 // dnssdMetaQuery is the service-type enumeration name of RFC 6763 §9. A PTR
 // query for it returns the service types a responder has, which is what makes
 // a browse possible without a hard-coded list.
-const dnssdMetaQuery = "_services._dns-sd._udp.local."
+const dnssdMetaQuery = "_services._dns-sd._udp.local"
 
 // collector accumulates records across packets and assembles services. A
 // responder is free to answer a type PTR query with the instance PTR alone
@@ -58,45 +58,38 @@ func newCollector(lim limits) *collector {
 // the segment is untrusted and a malformed frame is not an error condition
 // for the browse.
 func (c *collector) observe(data []byte, src netip.Addr) {
-	var msg dnsmessage.Message
-	if err := msg.Unpack(data); err != nil {
-		return
-	}
-	if !msg.Response {
+	msg, err := mdnswire.Parse(data)
+	if err != nil || !msg.Response {
 		return
 	}
 	c.responses++
 
-	for _, section := range [][]dnsmessage.Resource{msg.Answers, msg.Authorities, msg.Additionals} {
-		for i := range section {
-			c.observeRecord(&section[i], src)
-		}
+	for i := range msg.Records {
+		c.observeRecord(&msg.Records[i], src)
 	}
 }
 
-func (c *collector) observeRecord(r *dnsmessage.Resource, src netip.Addr) {
-	name := trimRoot(r.Header.Name.String())
-	switch body := r.Body.(type) {
-	case *dnsmessage.PTRResource:
-		c.observePTR(name, trimRoot(body.PTR.String()), src)
-	case *dnsmessage.SRVResource:
+func (c *collector) observeRecord(r *mdnswire.Record, src netip.Addr) {
+	name := r.Name.String()
+	switch r.Type {
+	case mdnswire.TypePTR:
+		c.observePTR(name, r.Target.String(), src)
+	case mdnswire.TypeSRV:
 		if inst, ok := c.instance(name, src); ok {
-			inst.srvHost = trimRoot(body.Target.String())
-			inst.srvPort = body.Port
+			inst.srvHost = r.Target.String()
+			inst.srvPort = r.Port
 		}
-	case *dnsmessage.TXTResource:
+	case mdnswire.TypeTXT:
 		if inst, ok := c.instance(name, src); ok {
-			c.mergeTXT(inst, body.TXT)
+			c.mergeTXT(inst, r.TXT)
 		}
-	case *dnsmessage.AResource:
-		c.observeAddr(name, netip.AddrFrom4(body.A))
-	case *dnsmessage.AAAAResource:
-		c.observeAddr(name, netip.AddrFrom16(body.AAAA).Unmap())
+	case mdnswire.TypeA, mdnswire.TypeAAAA:
+		c.observeAddr(name, r.Addr)
 	}
 }
 
 func (c *collector) observePTR(owner, target string, src netip.Addr) {
-	if owner == trimRoot(dnssdMetaQuery) {
+	if owner == dnssdMetaQuery {
 		// The meta-query's answers are service types, not instances.
 		if len(c.types) >= c.lim.maxServiceTypes {
 			c.truncated = true
@@ -208,27 +201,12 @@ func splitInstance(name string) (string, string, bool) {
 	return labels[0], labels[1] + "." + labels[2], true
 }
 
-// splitLabels splits a name on its label separators.
-//
-// It splits on every dot, with no escape handling, because the parser never
-// hands one over: golang.org/x/net/dns/dnsmessage rejects the whole packet
-// with "Name: invalid dns name" when any label contains a literal dot, and
-// emits names verbatim otherwise — a backslash in a label comes back as a
-// backslash, not as an escape. Measured against the library on 2026-09-15;
-// an unescaping pass here would be code no input can reach.
-//
-// The cost of that library behaviour is real and is not seed's to fix here:
-// a Bonjour instance named "Office No. 5" makes its announcement undecodable,
-// so the service is invisible to this browse and to the name resolution in
-// internal/discovery/resolve, which parses with the same library. Filed as
-// #2626 rather than answered by standing up a second mDNS stack here.
+// splitLabels splits a name in mdnswire presentation form back into its
+// labels, so an instance named "Office No. 5" stays one label (#2626).
 func splitLabels(name string) []string {
-	if name == "" {
+	labels, err := mdnswire.ParseName(name)
+	if err != nil {
 		return nil
 	}
-	return strings.Split(name, ".")
-}
-
-func trimRoot(name string) string {
-	return strings.TrimSuffix(name, ".")
+	return labels
 }

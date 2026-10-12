@@ -4,9 +4,10 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
-	"golang.org/x/net/dns/dnsmessage"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/mdnswire"
 )
 
 // segment is the prefix set of a listening interface with IPv4 only — the
@@ -222,26 +223,37 @@ func TestNonASCIIInstanceNameSurvivesDecoding(t *testing.T) {
 	}
 }
 
-func TestInstanceNameContainingADotIsInvisible(t *testing.T) {
-	// A known limit, pinned rather than papered over: dnsmessage rejects the
-	// whole packet when a label contains a literal dot, so "Office No. 5"
-	// never reaches the collector. The browse must survive it — one
-	// undecodable neighbour cannot end the scan — and the next packet must
-	// still be read.
-	c := newCollector(defaultLimits())
-	src := netip.MustParseAddr("192.168.20.61")
-	c.observe(fixture(t, "dotted-instance.bin"), src)
+func TestInstanceNameContainingADotIsBrowsed(t *testing.T) {
+	// "Office No. 5" is one label on the wire. dnsmessage refused the whole
+	// packet for it, so the service was invisible (#2626); it must be read as
+	// one instance of _ipp._tcp, shown under the name its owner typed, and
+	// asked for its SRV and TXT under that same single label.
+	c, _, services, _ := browseOf(t, "192.168.20.61", segment(), "dotted-instance.bin")
 
-	if c.responses != 0 {
-		t.Errorf("responses = %d, want 0: the packet does not unpack", c.responses)
+	if len(services) != 1 {
+		t.Fatalf("services = %d, want 1", len(services))
 	}
-	if len(c.instances) != 0 {
-		t.Errorf("instances = %d, want 0", len(c.instances))
+	svc := services[0]
+	if svc.Instance != "Office No. 5" || svc.Type != "_ipp._tcp" {
+		t.Errorf("instance = %q type = %q, want \"Office No. 5\" \"_ipp._tcp\"", svc.Instance, svc.Type)
+	}
+	if svc.Host != "office-printer.local" || svc.Port != 631 {
+		t.Errorf("host = %q port = %d, want office-printer.local:631", svc.Host, svc.Port)
+	}
+	if !slices.Equal(svc.Addresses, []string{"192.168.20.61"}) || svc.TXT["rp"] != "ipp/print" {
+		t.Errorf("addresses = %v txt = %v, want [192.168.20.61] and rp=ipp/print", svc.Addresses, svc.TXT)
 	}
 
-	c.observe(fixture(t, "local-instance.bin"), netip.MustParseAddr("192.168.20.40"))
-	if len(c.instances) != 1 {
-		t.Errorf("instances after the next packet = %d, want 1: the browse must continue", len(c.instances))
+	questions := instanceQuestions(c)
+	if len(questions) != 2 {
+		t.Fatalf("instance questions = %d, want 2 (SRV and TXT)", len(questions))
+	}
+	name, err := mdnswire.ParseName(questions[0].name)
+	if err != nil {
+		t.Fatalf("question name %q: %v", questions[0].name, err)
+	}
+	if want := (mdnswire.Name{"Office No. 5", "_ipp", "_tcp", "local"}); !slices.Equal(name, want) {
+		t.Errorf("question labels = %q, want %q", name, want)
 	}
 }
 
@@ -291,8 +303,8 @@ func TestBoundsStopAnUntrustedSegmentFromGrowingTheBrowse(t *testing.T) {
 	})
 	src := netip.MustParseAddr("192.168.20.9")
 
-	c.observePTR(trimRoot(dnssdMetaQuery), "_airplay._tcp.local", src)
-	c.observePTR(trimRoot(dnssdMetaQuery), "_raop._tcp.local", src)
+	c.observePTR(dnssdMetaQuery, "_airplay._tcp.local", src)
+	c.observePTR(dnssdMetaQuery, "_raop._tcp.local", src)
 	if len(c.types) != 1 {
 		t.Errorf("types = %d, want 1 (bounded)", len(c.types))
 	}
@@ -397,14 +409,14 @@ func TestAddressStageAsksForEveryUnresolvedSRVTarget(t *testing.T) {
 	if len(questions) != 2 {
 		t.Fatalf("questions = %d, want 2 (A and AAAA)", len(questions))
 	}
-	types := map[dnsmessage.Type]bool{}
+	types := map[mdnswire.Type]bool{}
 	for _, q := range questions {
-		types[q.Type] = true
-		if q.Name.String() != "studio-display.local." {
-			t.Errorf("question name = %q, want studio-display.local.", q.Name.String())
+		types[q.qtype] = true
+		if q.name != "studio-display.local" {
+			t.Errorf("question name = %q, want studio-display.local", q.name)
 		}
 	}
-	if !types[dnsmessage.TypeA] || !types[dnsmessage.TypeAAAA] {
+	if !types[mdnswire.TypeA] || !types[mdnswire.TypeAAAA] {
 		t.Errorf("question types = %v, want both A and AAAA", types)
 	}
 }
