@@ -130,6 +130,7 @@ func Targets() []Target {
 		{&api.SubnetDecisionRequest{}, "subnet-decision-request.schema.json"},
 		{&api.VLANInterfaceRequest{}, "vlan-interface-request.schema.json"},
 		{&api.VLANInterfaceResponse{}, "vlan-interface-response.schema.json"},
+		{&api.SpeedtestStartResponse{}, "speedtest-start-response.schema.json"},
 		{&api.SpeedtestStatusResponse{}, "speedtest-status-response.schema.json"},
 		{&api.RogueDHCPConfigResponse{}, "rogue-dhcp-config-response.schema.json"},
 		{&api.DNSServerResponse{}, "dns-server-response.schema.json"},
@@ -340,6 +341,10 @@ func Targets() []Target {
 		{&api.DeviceDiscoveryStatusResponse{}, "device-discovery-status-response.schema.json"},
 		{&api.DevicesResponse{}, "devices-response.schema.json"},
 		{&api.DeviceScanResponse{}, "device-scan-response.schema.json"},
+		// One host's advanced probe (POST /security/discovery/fingerprint):
+		// pure data the handler already serializes, reflected directly.
+		{&api.FingerprintRequest{}, "fingerprint-request.schema.json"},
+		{&discovery.AdvancedProbeResult{}, "advanced-probe-result.schema.json"},
 		{&api.DiscoveryOptionsResponse{}, "discovery-options-response.schema.json"},
 		{&api.DiscoveryServiceStatusResponse{}, "discovery-service-status-response.schema.json"},
 		{&discovery.EngineCapabilities{}, "engine-capabilities.schema.json"},

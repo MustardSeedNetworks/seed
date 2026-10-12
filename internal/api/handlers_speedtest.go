@@ -38,6 +38,13 @@ type SpeedtestResponse struct {
 	TestDuration float64 `json:"testDuration"` // seconds
 }
 
+// SpeedtestStartResponse is POST /telemetry/speedtest: the test runs in the
+// background, so the answer only says it started.
+type SpeedtestStartResponse struct {
+	Status  string `json:"status"  jsonschema:"enum=started"`
+	Message string `json:"message"`
+}
+
 // SpeedtestStatusResponse represents the current speedtest status.
 type SpeedtestStatusResponse struct {
 	Running  bool               `json:"running"`
@@ -51,7 +58,7 @@ type SpeedtestStatusResponse struct {
 // ============================================================================
 
 // handleSpeedtest starts a speedtest in the background and returns immediately.
-// Use /api/speedtest/status to poll for results.
+// Poll /telemetry/speedtest/status for results.
 func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -96,10 +103,9 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 		s.recordSpeedtest(ctx, res)
 	}(r.Context(), logger)
 
-	// Return immediately with "started" status
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"status":  "started",
-		"message": "Speedtest started. Poll /api/speedtest/status for results.",
+	sendJSONResponse(w, logger, http.StatusOK, SpeedtestStartResponse{
+		Status:  "started",
+		Message: "Speedtest started. Poll " + APIVersionPrefix + "/telemetry/speedtest/status for results.",
 	})
 }
 

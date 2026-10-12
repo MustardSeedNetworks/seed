@@ -420,14 +420,19 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, result)
 }
 
-// POST /api/discovery/fingerprint with JSON body: {"ip": "192.168.1.1"}.
+// FingerprintRequest is POST /security/discovery/fingerprint: the host to
+// probe for its OS, service versions and TLS certificates.
+type FingerprintRequest struct {
+	IP string `json:"ip"`
+}
+
+// handleAdvancedFingerprint answers the discovery.AdvancedProbeResult of one
+// host.
 func (s *Server) handleAdvancedFingerprint(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	var req struct {
-		IP string `json:"ip"`
-	}
+	var req FingerprintRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
