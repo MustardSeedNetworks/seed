@@ -7,9 +7,9 @@ import (
 	"net/netip"
 	"time"
 
-	"golang.org/x/net/dns/dnsmessage"
 	"golang.org/x/net/ipv4"
 
+	"github.com/MustardSeedNetworks/seed/internal/discovery/mdnswire"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -28,9 +28,6 @@ const (
 
 	readBufferSize   = 65536
 	packetBufferSize = 9000
-	// queryBufferSize is ample for one question: a DNS name is at most 255
-	// bytes and a question adds four more.
-	queryBufferSize = 512
 )
 
 // errNoInterface is returned when the named interface does not exist, so the
@@ -119,11 +116,11 @@ func (b *Browser) Browse(ctx context.Context) (*BrowseResult, error) {
 	group := &net.UDPAddr{IP: net.ParseIP(multicastGroupV4), Port: port}
 	started := time.Now()
 	collected := newCollector(b.lim)
-	stages := []func() []dnsmessage.Question{
-		func() []dnsmessage.Question { return []dnsmessage.Question{ptrQuestion(dnssdMetaQuery)} },
-		func() []dnsmessage.Question { return typeQuestions(collected) },
-		func() []dnsmessage.Question { return instanceQuestions(collected) },
-		func() []dnsmessage.Question { return addressQuestions(collected) },
+	stages := []func() []question{
+		func() []question { return []question{{dnssdMetaQuery, mdnswire.TypePTR}} },
+		func() []question { return typeQuestions(collected) },
+		func() []question { return instanceQuestions(collected) },
+		func() []question { return addressQuestions(collected) },
 	}
 
 	stageWindow := b.window / time.Duration(len(stages))
@@ -173,15 +170,26 @@ func (b *Browser) resolveInterface() (*net.Interface, []netip.Prefix, error) {
 	return iface, localPrefixesOf(interfacePrefixes(iface)), nil
 }
 
-func (b *Browser) ask(conn *net.UDPConn, group *net.UDPAddr, questions []dnsmessage.Question) {
+// question is one name and record type to ask for. The name is in mdnswire
+// presentation form, the form the collector keys its records by.
+type question struct {
+	name  string
+	qtype mdnswire.Type
+}
+
+func (b *Browser) ask(conn *net.UDPConn, group *net.UDPAddr, questions []question) {
 	for _, q := range questions {
-		msg, err := packQuery(q)
+		name, err := mdnswire.ParseName(q.name)
+		if err != nil {
+			continue
+		}
+		msg, err := mdnswire.Query(name, q.qtype)
 		if err != nil {
 			continue
 		}
 		if _, writeErr := conn.WriteToUDP(msg, group); writeErr != nil {
 			logging.GetLogger().
-				Debug("bonjour: query send failed", "name", q.Name.String(), "error", writeErr)
+				Debug("bonjour: query send failed", "name", q.name, "error", writeErr)
 			return
 		}
 	}
@@ -209,28 +217,21 @@ func (b *Browser) gather(ctx context.Context, conn *net.UDPConn, into *collector
 	}
 }
 
-func typeQuestions(c *collector) []dnsmessage.Question {
-	questions := make([]dnsmessage.Question, 0, len(c.types))
+func typeQuestions(c *collector) []question {
+	questions := make([]question, 0, len(c.types))
 	for t := range c.types {
-		questions = append(questions, ptrQuestion(t+"."))
+		questions = append(questions, question{t, mdnswire.TypePTR})
 	}
 	return questions
 }
 
 // instanceQuestions asks for the SRV and TXT of every instance seen so far.
-func instanceQuestions(c *collector) []dnsmessage.Question {
+func instanceQuestions(c *collector) []question {
 	// Two questions per instance: SRV and TXT.
 	const questionsPerInstance = 2
-	questions := make([]dnsmessage.Question, 0, len(c.instances)*questionsPerInstance)
+	questions := make([]question, 0, len(c.instances)*questionsPerInstance)
 	for name := range c.instances {
-		n, err := dnsmessage.NewName(name + ".")
-		if err != nil {
-			continue
-		}
-		questions = append(questions,
-			dnsmessage.Question{Name: n, Type: dnsmessage.TypeSRV, Class: dnsmessage.ClassINET},
-			dnsmessage.Question{Name: n, Type: dnsmessage.TypeTXT, Class: dnsmessage.ClassINET},
-		)
+		questions = append(questions, question{name, mdnswire.TypeSRV}, question{name, mdnswire.TypeTXT})
 	}
 	return questions
 }
@@ -239,7 +240,7 @@ func instanceQuestions(c *collector) []dnsmessage.Question {
 // answered with an address yet. Without this the browse knows a service's
 // host name and nothing about where that host lives, which is the one fact
 // the cross-subnet verdict is made of.
-func addressQuestions(c *collector) []dnsmessage.Question {
+func addressQuestions(c *collector) []question {
 	// A and AAAA per host.
 	const questionsPerHost = 2
 	hosts := make(map[string]struct{}, len(c.instances))
@@ -253,40 +254,11 @@ func addressQuestions(c *collector) []dnsmessage.Question {
 		hosts[inst.srvHost] = struct{}{}
 	}
 
-	questions := make([]dnsmessage.Question, 0, len(hosts)*questionsPerHost)
+	questions := make([]question, 0, len(hosts)*questionsPerHost)
 	for host := range hosts {
-		n, err := dnsmessage.NewName(host + ".")
-		if err != nil {
-			continue
-		}
-		questions = append(questions,
-			dnsmessage.Question{Name: n, Type: dnsmessage.TypeA, Class: dnsmessage.ClassINET},
-			dnsmessage.Question{Name: n, Type: dnsmessage.TypeAAAA, Class: dnsmessage.ClassINET},
-		)
+		questions = append(questions, question{host, mdnswire.TypeA}, question{host, mdnswire.TypeAAAA})
 	}
 	return questions
-}
-
-func ptrQuestion(name string) dnsmessage.Question {
-	n, err := dnsmessage.NewName(name)
-	if err != nil {
-		return dnsmessage.Question{}
-	}
-	return dnsmessage.Question{Name: n, Type: dnsmessage.TypePTR, Class: dnsmessage.ClassINET}
-}
-
-func packQuery(q dnsmessage.Question) ([]byte, error) {
-	if q.Name.Length == 0 {
-		return nil, errors.New("empty question")
-	}
-	builder := dnsmessage.NewBuilder(make([]byte, 0, queryBufferSize), dnsmessage.Header{})
-	if err := builder.StartQuestions(); err != nil {
-		return nil, err
-	}
-	if err := builder.Question(q); err != nil {
-		return nil, err
-	}
-	return builder.Finish()
 }
 
 func hostPrefixes() []netip.Prefix {
