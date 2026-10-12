@@ -7,6 +7,7 @@ package apischema
 import (
 	"reflect"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
 	"github.com/invopop/jsonschema"
 
 	"github.com/MustardSeedNetworks/seed/internal/api"
@@ -356,6 +357,9 @@ func Targets() []Target {
 		{&api.DiscoveryServiceStatusResponse{}, "discovery-service-status-response.schema.json"},
 		{&discovery.EngineCapabilities{}, "engine-capabilities.schema.json"},
 		{&api.BuildVersionResponse{}, "build-version-response.schema.json"},
+		// One /__capabilities manifest entry: the registrar's own pure-data
+		// policy record, which the manifest serializes as it is.
+		{&route.Policy{}, "route-policy.schema.json"},
 
 		// SNMP polling targets and the device-credential vault (#1799). The
 		// vault answers polling.Credentials as it is: pure data whose

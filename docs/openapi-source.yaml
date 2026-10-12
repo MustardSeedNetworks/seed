@@ -91,6 +91,15 @@ operations:
               $ref: '#/components/schemas/BuildVersionResponse'
   GET /__capabilities:
     summary: Route-policy manifest of every registered route
+    responses:
+      "200":
+        description: Every registered route's policy, in registration order.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Policy'
   POST /api/v1/auth/login:
     summary: Sign in and receive a session
     requestBody:
@@ -1497,6 +1506,72 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/SetupStatusResponse'
+  GET /api/v1/sso/login:
+    summary: Start a single sign-on handshake with a provider
+    description: >
+      A browser navigation, not an API call. Sets the oauth_state and
+      oauth_provider cookies, scoped to /api/v1/sso, and redirects to the
+      provider's sign-in page.
+    parameters:
+      - name: provider
+        in: query
+        required: true
+        description: A configured, enabled provider (google, microsoft or github).
+        schema:
+          type: string
+    responses:
+      "307":
+        description: Redirect to the provider's authorization URL, carrying the state the callback checks.
+        headers:
+          Location:
+            description: The provider's authorization URL.
+            schema:
+              type: string
+              format: uri
+      "400":
+        description: The provider parameter is missing, or names no enabled provider.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+  GET /api/v1/sso/callback:
+    summary: Finish a single sign-on handshake
+    description: >
+      The provider redirects the browser here. The state must match the
+      oauth_state cookie /sso/login set. On success the session cookies are
+      set and the browser is sent to the UI; every failure is a redirect too,
+      naming the reason in sso_error.
+    parameters:
+      - name: code
+        in: query
+        description: The authorization code to exchange.
+        schema:
+          type: string
+      - name: state
+        in: query
+        description: The state /sso/login issued.
+        schema:
+          type: string
+      - name: error
+        in: query
+        description: Set by the provider when the user or provider refused.
+        schema:
+          type: string
+      - name: error_description
+        in: query
+        description: The provider's reason for error.
+        schema:
+          type: string
+    responses:
+      "307":
+        description: >
+          Redirect to / when signed in, with the seed_access and seed_refresh
+          cookies set, or to /?sso_error=<reason> when the handshake failed.
+        headers:
+          Location:
+            description: / or /?sso_error=<reason>.
+            schema:
+              type: string
   GET /api/v1/sso/providers:
     responses:
       "200":

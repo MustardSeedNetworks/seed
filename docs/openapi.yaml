@@ -5965,6 +5965,35 @@ components:
             required:
                 - detected
             type: object
+        Policy:
+            additionalProperties: false
+            properties:
+                auth:
+                    type: boolean
+                csrf:
+                    type: boolean
+                feature:
+                    type: string
+                hidden:
+                    type: boolean
+                maxBodyBytes:
+                    type: integer
+                methods:
+                    items:
+                        type: string
+                    type: array
+                path:
+                    type: string
+                rateLimited:
+                    type: boolean
+                scope:
+                    type: string
+            required:
+                - path
+                - auth
+                - csrf
+                - rateLimited
+            type: object
         PollingTargetListResponse:
             additionalProperties: false
             properties:
@@ -10550,6 +10579,14 @@ paths:
         get:
             operationId: getCapabilities
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/Policy'
+                                type: array
+                    description: Every registered route's policy, in registration order.
                 "405":
                     content:
                         application/json:
@@ -16144,8 +16181,39 @@ paths:
             security: []
     /api/v1/sso/callback:
         get:
+            description: |
+                The provider redirects the browser here. The state must match the oauth_state cookie /sso/login set. On success the session cookies are set and the browser is sent to the UI; every failure is a redirect too, naming the reason in sso_error.
             operationId: getApiV1SsoCallback
+            parameters:
+                - description: The authorization code to exchange.
+                  in: query
+                  name: code
+                  schema:
+                    type: string
+                - description: The state /sso/login issued.
+                  in: query
+                  name: state
+                  schema:
+                    type: string
+                - description: Set by the provider when the user or provider refused.
+                  in: query
+                  name: error
+                  schema:
+                    type: string
+                - description: The provider's reason for error.
+                  in: query
+                  name: error_description
+                  schema:
+                    type: string
             responses:
+                "307":
+                    description: |
+                        Redirect to / when signed in, with the seed_access and seed_refresh cookies set, or to /?sso_error=<reason> when the handshake failed.
+                    headers:
+                        Location:
+                            description: / or /?sso_error=<reason>.
+                            schema:
+                                type: string
                 "405":
                     content:
                         application/json:
@@ -16159,10 +16227,34 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
             security: []
+            summary: Finish a single sign-on handshake
     /api/v1/sso/login:
         get:
+            description: |
+                A browser navigation, not an API call. Sets the oauth_state and oauth_provider cookies, scoped to /api/v1/sso, and redirects to the provider's sign-in page.
             operationId: getApiV1SsoLogin
+            parameters:
+                - description: A configured, enabled provider (google, microsoft or github).
+                  in: query
+                  name: provider
+                  required: true
+                  schema:
+                    type: string
             responses:
+                "307":
+                    description: Redirect to the provider's authorization URL, carrying the state the callback checks.
+                    headers:
+                        Location:
+                            description: The provider's authorization URL.
+                            schema:
+                                format: uri
+                                type: string
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: The provider parameter is missing, or names no enabled provider.
                 "405":
                     content:
                         application/json:
@@ -16176,6 +16268,7 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
             security: []
+            summary: Start a single sign-on handshake with a provider
     /api/v1/sso/providers:
         get:
             operationId: getApiV1SsoProviders
