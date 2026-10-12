@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.254.4](https://github.com/MustardSeedNetworks/seed/compare/v0.254.3...v0.254.4) (2026-10-12)
+
+
+### Code Refactoring
+
+* **api:** type the speed test start and fingerprint bodies (S6-4 slice 34) ([#3326](https://github.com/MustardSeedNetworks/seed/issues/3326)) ([1d35e16](https://github.com/MustardSeedNetworks/seed/commit/1d35e16d3e29dfbf48836475a5caae4e8a0213c5))
+* **api:** type the Wi-Fi channel graph answer (S6-4 slice 35) ([#3328](https://github.com/MustardSeedNetworks/seed/issues/3328)) ([f6d8788](https://github.com/MustardSeedNetworks/seed/commit/f6d8788a07b80b765f5063005c902a9a8d49aaa4))
+
 ## [0.254.3](https://github.com/MustardSeedNetworks/seed/compare/v0.254.2...v0.254.3) (2026-10-12)
 
 
