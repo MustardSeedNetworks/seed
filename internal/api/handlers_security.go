@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -329,7 +330,10 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 	// The IPv6 half of the card answers for the same interface as the IPv4
 	// half; a system-wide read named another link's router (#2759).
 	ipv6Gateway, err := gateway.DetectGatewayIPv6ForInterface(s.gatewayTester().GetInterface())
-	if err == nil && ipv6Gateway != "" {
+	if err != nil && !errors.Is(err, gateway.ErrNoGateway) {
+		logger.WarnContext(r.Context(), "IPv6 gateway detection failed", "error", err)
+	}
+	if err == nil {
 		// Create a temporary tester for IPv6
 		ipv6Tester := gateway.NewTester(gateway.DefaultThresholds())
 		defer ipv6Tester.Close()

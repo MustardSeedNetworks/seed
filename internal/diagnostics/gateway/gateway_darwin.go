@@ -121,34 +121,6 @@ func GetAllRoutes() ([]RouteInfo, error) {
 	return routes, nil
 }
 
-// GetDefaultGatewayInterface returns the interface used for the default route.
-func GetDefaultGatewayInterface() (string, error) {
-	rib, err := route.FetchRIB(syscall.AF_INET, syscall.NET_RT_DUMP, 0)
-	if err != nil {
-		return "", fmt.Errorf("fetch RIB: %w", err)
-	}
-
-	msgs, err := route.ParseRIB(syscall.NET_RT_DUMP, rib)
-	if err != nil {
-		return "", fmt.Errorf("parse RIB: %w", err)
-	}
-
-	for _, msg := range msgs {
-		rm, ok := msg.(*route.RouteMessage)
-		if !ok {
-			continue
-		}
-
-		if isDefaultRouteMsg(rm, syscall.AF_INET) && rm.Index > 0 {
-			if iface, ifaceErr := net.InterfaceByIndex(rm.Index); ifaceErr == nil {
-				return iface.Name, nil
-			}
-		}
-	}
-
-	return "", nil
-}
-
 // detectGatewayPlatform is the platform-specific gateway detection.
 // On macOS, this uses golang.org/x/net/route for reliable parsing.
 func detectGatewayPlatform() (string, error) {
@@ -182,7 +154,7 @@ func detectGatewayPlatform() (string, error) {
 		}
 	}
 
-	return "", nil
+	return "", ErrNoGateway
 }
 
 // extractIPv6Gateway extracts the IPv6 gateway from a route message.
@@ -240,7 +212,7 @@ func detectGatewayIPv6Platform() (string, error) {
 		}
 	}
 
-	return "", nil
+	return "", ErrNoGateway
 }
 
 // isDefaultRouteMsg checks if a route message represents the default route.

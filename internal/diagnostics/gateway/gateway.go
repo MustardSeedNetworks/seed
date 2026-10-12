@@ -40,6 +40,13 @@ const (
 	SourceLease Source = "lease"
 )
 
+// ErrNoGateway reports that detection found no gateway: the host has no
+// default route of the family asked for or, for a selected interface, neither
+// a default route over it nor a DHCP lease naming a router. It is an answer,
+// not a failed read, and every detector returns it in place of an empty
+// address.
+var ErrNoGateway = errors.New("no gateway")
+
 // Route families as RouteInfo.Family spells them.
 const (
 	familyIPv4 = "inet"
@@ -248,8 +255,8 @@ func (t *Tester) GetStats() *PingStats {
 	return &statsCopy
 }
 
-// DetectGateway attempts to detect the default gateway.
-// Uses netlink on Linux, exec commands on macOS.
+// DetectGateway returns the next hop of the host's IPv4 default route, or
+// ErrNoGateway when there is none.
 func DetectGateway() (string, error) {
 	return detectGatewayPlatform()
 }
@@ -281,7 +288,7 @@ func systemRouting() routingReader {
 // through. Without one, the router option of iface's DHCP lease is the next
 // best answer — a lease can name a router the kernel installed no default
 // route for — and it is labelled as such. Neither means iface has no gateway
-// of its own, which is reported as an empty address rather than borrowing the
+// of its own, which is reported as ErrNoGateway rather than borrowing the
 // system default, the answer that showed a Wi-Fi gateway at 100 % loss for a
 // probe pinned to a virtual link (#2690, #2759). An empty iface means no
 // selection and keeps the system answer.
@@ -303,6 +310,9 @@ func (r routingReader) gatewayForInterface(iface string) (string, Source, error)
 	if err != nil {
 		return "", "", fmt.Errorf("DHCP lease on %s: %w", iface, err)
 	}
+	if gw == "" {
+		return "", "", ErrNoGateway
+	}
 	return gw, SourceLease, nil
 }
 
@@ -318,7 +328,10 @@ func (r routingReader) ipv6GatewayForInterface(iface string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("routing table: %w", err)
 	}
-	return defaultGatewayOn(routes, iface, familyIPv6), nil
+	if gw := defaultGatewayOn(routes, iface, familyIPv6); gw != "" {
+		return gw, nil
+	}
+	return "", ErrNoGateway
 }
 
 // defaultGatewayOn returns the next hop of a default route of family over
@@ -372,13 +385,13 @@ func routerOfLease(lease *dhcp.LeaseInfo, err error, now time.Time) (string, err
 }
 
 // DetectGatewayIPv6ForInterface returns the IPv6 gateway reachable over iface,
-// or the system default when iface is empty.
+// or the system default when iface is empty; ErrNoGateway when there is none.
 func DetectGatewayIPv6ForInterface(iface string) (string, error) {
 	return systemRouting().ipv6GatewayForInterface(iface)
 }
 
-// DetectGatewayIPv6 attempts to detect the default IPv6 gateway.
-// Uses netlink on Linux, exec commands on macOS.
+// DetectGatewayIPv6 returns the next hop of the host's IPv6 default route, or
+// ErrNoGateway when there is none.
 func DetectGatewayIPv6() (string, error) {
 	return detectGatewayIPv6Platform()
 }
@@ -463,7 +476,7 @@ func (t *Tester) Test() *PingStats {
 	if gateway == "" {
 		// Try to detect gateway
 		detected, detectedSource, err := routing.gatewayForInterface(iface)
-		if err == nil && detected != "" {
+		if err == nil {
 			t.setGateway(detected, detectedSource)
 			gateway = detected
 			stats.Gateway = gateway

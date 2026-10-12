@@ -25,7 +25,7 @@ func detectGatewayNetlink() (string, error) {
 		}
 	}
 
-	return "", nil
+	return "", ErrNoGateway
 }
 
 // detectGatewayIPv6Netlink uses netlink to detect the default IPv6 gateway.
@@ -52,7 +52,7 @@ func detectGatewayIPv6Netlink() (string, error) {
 		}
 	}
 
-	return "", nil
+	return "", ErrNoGateway
 }
 
 // GetAllRoutes returns all routes using netlink (for debugging/display).
@@ -94,29 +94,6 @@ func appendRouteInfo(result []RouteInfo, routes []netlink.Route, family string) 
 		result = append(result, info)
 	}
 	return result
-}
-
-// GetDefaultGatewayInterface returns the interface used for the default route.
-func GetDefaultGatewayInterface() (string, error) {
-	routes, err := netlink.RouteList(nil, netlink.FAMILY_V4)
-	if err != nil {
-		return "", err
-	}
-
-	for i := range routes {
-		route := &routes[i]
-		// Default route has nil Dst OR 0.0.0.0/0.
-		isDefault := route.Dst == nil ||
-			(route.Dst != nil && route.Dst.IP.Equal(net.IPv4zero) && route.Dst.Mask.String() == "00000000")
-		if isDefault && route.LinkIndex > 0 {
-			link, linkErr := netlink.LinkByIndex(route.LinkIndex)
-			if linkErr == nil {
-				return link.Attrs().Name, nil
-			}
-		}
-	}
-
-	return "", nil
 }
 
 // detectGatewayPlatform is the platform-specific gateway detection.
