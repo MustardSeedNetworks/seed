@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -130,6 +131,44 @@ func TestStartServer_StartsAListeningProcess(t *testing.T) {
 	}
 }
 
+// iperf3 serves one test at a time and takes any connection as a client, so a
+// readiness check that dials the port ties the server up and the operator's
+// first client can be refused while it resets (seed#3342). Only the test's own
+// connection may reach the server.
+func TestStartServer_NeverDialsTheServer(t *testing.T) {
+	useFakeIperf3(t)
+	connFile := filepath.Join(t.TempDir(), "conns")
+	t.Setenv("FAKE_IPERF3_CONNFILE", connFile)
+	manager := iperf.NewManager()
+	port := freePort(t)
+
+	if err := manager.StartServer(port); err != nil {
+		t.Fatalf("StartServer(%d): %v", port, err)
+	}
+	t.Cleanup(func() { _ = manager.StopServer() })
+
+	conn, err := net.Dial("tcp", "127.0.0.1:"+strconv.Itoa(port))
+	if err != nil {
+		t.Fatalf("dialing the started server: %v", err)
+	}
+	client := conn.LocalAddr().String()
+	_ = conn.Close()
+
+	var accepted []string
+	waitUntil(t, "the server to record the test's connection", func() bool {
+		content, readErr := os.ReadFile(connFile)
+		if readErr != nil {
+			return false
+		}
+		accepted = strings.Fields(string(content))
+
+		return slices.Contains(accepted, client)
+	})
+	if len(accepted) != 1 {
+		t.Errorf("server accepted %v, want only the test's connection %s", accepted, client)
+	}
+}
+
 func TestStopServer_KillsTheProcessAndFreesThePort(t *testing.T) {
 	useFakeIperf3(t)
 	manager := iperf.NewManager()
@@ -205,6 +244,9 @@ func TestStartServer_ReportsABinaryThatExitsImmediately(t *testing.T) {
 		_ = manager.StopServer()
 		t.Fatal("StartServer returned nil for a binary that exits immediately")
 	}
+	if !strings.Contains(err.Error(), "exited before listening") {
+		t.Errorf("error = %v, want it to say the server exited", err)
+	}
 	if manager.GetServerStatus().Running {
 		t.Error("status.Running = true after a failed start")
 	}
@@ -227,7 +269,7 @@ func TestStartServer_KillsAProcessThatNeverListens(t *testing.T) {
 		t.Fatal("StartServer returned nil though nothing ever listened")
 	}
 	if !strings.Contains(err.Error(), "failed to start listening") {
-		t.Errorf("error = %v, want it to name the port-readiness failure", err)
+		t.Errorf("error = %v, want it to name the readiness failure", err)
 	}
 	if manager.GetServerStatus().Running {
 		t.Error("status.Running = true after the readiness wait failed")
