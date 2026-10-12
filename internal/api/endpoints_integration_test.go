@@ -194,25 +194,22 @@ func (s *testEndpointServer) testSystemHealthEndpoint(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", resp.StatusCode)
 	}
 
-	var health map[string]any
-	if decodeErr := json.NewDecoder(resp.Body).Decode(&health); decodeErr != nil {
-		t.Errorf("Failed to decode health response: %v", decodeErr)
+	// Strict decode: the answer is exactly SystemHealthResponse, so a key
+	// added outside the registered DTO (or a snake_case one) fails here.
+	var health api.SystemHealthResponse
+	dec := json.NewDecoder(resp.Body)
+	dec.DisallowUnknownFields()
+	if decodeErr := dec.Decode(&health); decodeErr != nil {
+		t.Fatalf("Failed to decode health response: %v", decodeErr)
 	}
-
-	requiredFields := []string{"system", "application", "services"}
-	for _, field := range requiredFields {
-		if _, ok := health[field]; !ok {
-			t.Errorf("Missing %s field in health response", field)
-		}
+	if health.System.NumCPU < 1 || health.System.OS == "" || health.System.Arch == "" {
+		t.Errorf("system half not populated: %+v", health.System)
 	}
-
-	if systemHealth, sysOK := health["system"].(map[string]any); sysOK {
-		systemFields := []string{"cpuPercent", "memoryPercent"}
-		for _, field := range systemFields {
-			if _, fieldOK := systemHealth[field]; !fieldOK {
-				t.Errorf("Missing %s field in system health", field)
-			}
-		}
+	if health.Application.Version == "" || health.Application.Uptime < 0 {
+		t.Errorf("application half not populated: %+v", health.Application)
+	}
+	if !health.Services.SSEHub || !health.Services.LinkMonitor {
+		t.Errorf("services = %+v, want the SSE hub and link monitor reported", health.Services)
 	}
 }
 

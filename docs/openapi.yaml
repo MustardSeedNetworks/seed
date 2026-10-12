@@ -3218,6 +3218,70 @@ components:
                 - tls
                 - ttfb
             type: object
+        Health:
+            additionalProperties: false
+            properties:
+                arch:
+                    type: string
+                cpuPercent:
+                    type: number
+                diskPercent:
+                    type: number
+                diskTotal:
+                    type: integer
+                diskUsed:
+                    type: integer
+                goroutines:
+                    type: integer
+                hostname:
+                    type: string
+                loadAvg1:
+                    type: number
+                loadAvg5:
+                    type: number
+                loadAvg15:
+                    type: number
+                memoryPercent:
+                    type: number
+                memoryTotal:
+                    type: integer
+                memoryUsed:
+                    type: integer
+                numCpu:
+                    type: integer
+                os:
+                    type: string
+                processMemory:
+                    type: integer
+                topCpuProcesses:
+                    items:
+                        $ref: '#/components/schemas/ProcessInfo'
+                    type: array
+                topMemoryProcesses:
+                    items:
+                        $ref: '#/components/schemas/ProcessInfo'
+                    type: array
+                uptime:
+                    type: integer
+            required:
+                - cpuPercent
+                - memoryPercent
+                - memoryUsed
+                - memoryTotal
+                - diskPercent
+                - diskUsed
+                - diskTotal
+                - uptime
+                - loadAvg1
+                - loadAvg5
+                - loadAvg15
+                - goroutines
+                - processMemory
+                - hostname
+                - os
+                - arch
+                - numCpu
+            type: object
         HealthCheckRunResponse:
             additionalProperties: false
             properties:
@@ -5927,6 +5991,23 @@ components:
                 - maxChannelUtil
                 - maxCoChannelAps
             type: object
+        ProcessInfo:
+            additionalProperties: false
+            properties:
+                cpuPercent:
+                    type: number
+                memoryMb:
+                    type: number
+                name:
+                    type: string
+                pid:
+                    type: integer
+            required:
+                - name
+                - pid
+                - cpuPercent
+                - memoryMb
+            type: object
         ProfileDuplicateRequest:
             additionalProperties: false
             properties:
@@ -7987,6 +8068,45 @@ components:
                 - tcpConnections
                 - httpRequests
                 - truncated
+            type: object
+        SystemHealthApplicationResponse:
+            additionalProperties: false
+            properties:
+                uptime:
+                    type: number
+                version:
+                    type: string
+            required:
+                - version
+                - uptime
+            type: object
+        SystemHealthResponse:
+            additionalProperties: false
+            properties:
+                application:
+                    $ref: '#/components/schemas/SystemHealthApplicationResponse'
+                services:
+                    $ref: '#/components/schemas/SystemHealthServicesResponse'
+                system:
+                    $ref: '#/components/schemas/Health'
+            required:
+                - system
+                - application
+                - services
+            type: object
+        SystemHealthServicesResponse:
+            additionalProperties: false
+            properties:
+                discoveryService:
+                    type: boolean
+                linkMonitor:
+                    type: boolean
+                sseHub:
+                    type: boolean
+            required:
+                - discoveryService
+                - linkMonitor
+                - sseHub
             type: object
         SystemInfo:
             additionalProperties: false
@@ -16513,6 +16633,12 @@ paths:
         get:
             operationId: getApiV1TelemetrySystemHealth
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SystemHealthResponse'
+                    description: The host's CPU, memory and disk usage with the top consumers above 75%, the daemon's version and uptime, and which background services are running.
                 "401":
                     content:
                         application/json:

@@ -381,6 +381,9 @@ func Targets() []Target {
 		{&api.HealthCheckRunResponse{}, "health-check-run-response.schema.json"},
 		{&api.ProbeAnomaliesResponse{}, "probe-anomalies-response.schema.json"},
 
+		// The host and daemon health answer.
+		{&api.SystemHealthResponse{}, "system-health-response.schema.json"},
+
 		// The alert test-send action on a saved receiver (#2997).
 		{&api.AlertTestSendRequest{}, "alert-test-send-request.schema.json"},
 		{&api.AlertTestSendResponse{}, "alert-test-send-response.schema.json"},

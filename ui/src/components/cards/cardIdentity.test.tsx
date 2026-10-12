@@ -14,6 +14,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import i18n from '../../i18n';
 import { createMockResponse, mockFetch } from '../../test/setup';
+import type { SystemHealthResponse } from '../../types/generated/system-health-response';
 import { PathDiscoveryCard } from './PathDiscoveryCard';
 import { SLADashboardCard } from './SlaDashboardCard';
 import { SystemHealthCard } from './SystemHealthCard';
@@ -30,9 +31,30 @@ describe('compiled cards keep their effects stable across re-renders', () => {
 
   it('SystemHealthCard fetches once, not again when its data arrives', async () => {
     mockFetch.mockReset();
-    mockFetch.mockImplementation(() =>
-      createMockResponse({ system: { hostname: 'probe-1', cpuPercent: 10 } }),
-    );
+    const health: SystemHealthResponse = {
+      system: {
+        cpuPercent: 10,
+        memoryPercent: 20,
+        memoryUsed: 2e9,
+        memoryTotal: 1e10,
+        diskPercent: 30,
+        diskUsed: 3e10,
+        diskTotal: 1e11,
+        uptime: 3600,
+        loadAvg1: 0.5,
+        loadAvg5: 0.4,
+        loadAvg15: 0.3,
+        goroutines: 40,
+        processMemory: 5e7,
+        hostname: 'probe-1',
+        os: 'linux',
+        arch: 'amd64',
+        numCpu: 4,
+      },
+      application: { version: '0.0.0', uptime: 60 },
+      services: { discoveryService: true, linkMonitor: true, sseHub: true },
+    };
+    mockFetch.mockImplementation(() => createMockResponse(health));
     const { rerender } = render(<SystemHealthCard />);
     expect(await screen.findByText('probe-1')).toBeInTheDocument();
     rerender(<SystemHealthCard />);

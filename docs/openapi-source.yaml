@@ -1679,6 +1679,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/PublicIPResponse'
+  GET /api/v1/telemetry/system/health:
+    responses:
+      "200":
+        description: The host's CPU, memory and disk usage with the top consumers above 75%, the daemon's version and uptime, and which background services are running.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SystemHealthResponse'
   GET /api/v1/telemetry/snmp/settings:
     responses:
       "200":
