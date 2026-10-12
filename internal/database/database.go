@@ -113,9 +113,6 @@ type Config struct {
 	// RetentionDays sets how many days of data to retain (0 = forever)
 	RetentionDays int
 
-	// EnableWAL enables Write-Ahead Logging for better concurrency
-	EnableWAL bool
-
 	// BusyTimeout sets the timeout for waiting on locked database (ms)
 	BusyTimeout int
 }
@@ -128,7 +125,6 @@ func DefaultConfig(path string) Config {
 		MaxIdleConns:    defaultMaxIdleConns,
 		ConnMaxLifetime: time.Hour,
 		RetentionDays:   defaultRetentionDays,
-		EnableWAL:       true,
 		BusyTimeout:     defaultBusyTimeoutMs,
 	}
 }
@@ -328,28 +324,25 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 		}
 	}
 
+	// The path is percent-encoded into the URI: raw, a '#' starts a fragment and
+	// a '?' the query, so distinct paths opened one file (#2906). Clean folds a
+	// leading "//", which would otherwise parse as a URI authority.
+	uriPath := (&url.URL{Path: filepath.ToSlash(filepath.Clean(cfg.Path))}).EscapedPath()
+
 	// Every pragma rides the DSN, not an ExecContext after Open. Pragmas are
 	// connection-scoped, so a pragma executed once lands on whichever connection
 	// the pool happened to hand out and every later connection — including the
 	// replacement for one recycled at ConnMaxLifetime — silently reverts to the
 	// SQLite default. On the write handle that matters most: it is one
 	// connection, and losing synchronous=NORMAL there means an fsync per commit.
-	journalMode := "WAL"
-	if !cfg.EnableWAL {
-		journalMode = "DELETE"
-	}
-	// The path is percent-encoded into the URI: raw, a '#' starts a fragment and
-	// a '?' the query, so distinct paths opened one file (#2906). Clean folds a
-	// leading "//", which would otherwise parse as a URI authority.
-	uriPath := (&url.URL{Path: filepath.ToSlash(filepath.Clean(cfg.Path))}).EscapedPath()
 	dsn := fmt.Sprintf(
 		"file:%s?_txlock=immediate"+
 			"&_pragma=foreign_keys(1)"+
-			"&_pragma=journal_mode(%s)"+
+			"&_pragma=journal_mode(WAL)"+
 			"&_pragma=synchronous(NORMAL)"+
 			"&_pragma=cache_size(-64000)"+ // 64MB cache
 			"&_pragma=temp_store(MEMORY)",
-		uriPath, journalMode,
+		uriPath,
 	)
 	if cfg.BusyTimeout > 0 {
 		dsn += fmt.Sprintf("&_busy_timeout=%d", cfg.BusyTimeout)

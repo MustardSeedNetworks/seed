@@ -34,11 +34,6 @@ type DatabaseConfig struct {
 	// RetentionDays sets how many days of historical data to keep.
 	// 0 means keep forever.
 	RetentionDays int `json:"retention_days"`
-	// EnableWAL enables Write-Ahead Logging for better concurrency.
-	// Default: true.
-	EnableWAL bool `json:"enable_wal"`
-	// MaxConnections sets the maximum number of database connections. Default: 10
-	MaxConnections int `json:"max_connections"`
 }
 
 // DNSConfig contains DNS testing settings.

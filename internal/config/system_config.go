@@ -44,14 +44,6 @@ type SystemDatabaseConfig struct {
 	// RetentionDays sets how many days of historical data to keep (0 = forever).
 	// Env: SEED_DB_RETENTION_DAYS
 	RetentionDays int `json:"retention_days"`
-
-	// EnableWAL enables Write-Ahead Logging for better concurrency.
-	// Env: SEED_DB_ENABLE_WAL
-	EnableWAL bool `json:"enable_wal"`
-
-	// MaxConnections sets the maximum number of database connections.
-	// Env: SEED_DB_MAX_CONNECTIONS
-	MaxConnections int `json:"max_connections"`
 }
 
 // SystemServerConfig contains HTTPS server settings.
@@ -176,10 +168,8 @@ func DefaultSystemConfig() *SystemConfig {
 	return &SystemConfig{
 		Version: ConfigVersion,
 		Database: SystemDatabaseConfig{
-			Path:           "data/seed.db",
-			RetentionDays:  defaultDBRetentionDays,
-			EnableWAL:      true,
-			MaxConnections: defaultDBMaxConnections,
+			Path:          "data/seed.db",
+			RetentionDays: defaultDBRetentionDays,
 		},
 		Server: SystemServerConfig{
 			Port: defaultHTTPSPort,
@@ -251,14 +241,6 @@ func applyDatabaseEnv(cfg *SystemConfig) {
 	if v := os.Getenv("SEED_DB_RETENTION_DAYS"); v != "" {
 		if i, err := strconv.Atoi(v); err == nil {
 			cfg.Database.RetentionDays = i
-		}
-	}
-	if v := os.Getenv("SEED_DB_ENABLE_WAL"); v != "" {
-		cfg.Database.EnableWAL = parseBool(v)
-	}
-	if v := os.Getenv("SEED_DB_MAX_CONNECTIONS"); v != "" {
-		if i, err := strconv.Atoi(v); err == nil {
-			cfg.Database.MaxConnections = i
 		}
 	}
 }
@@ -389,9 +371,6 @@ func (c *SystemConfig) validateDatabase() []string {
 	if c.Database.Path == "" {
 		errs = append(errs, "database.path is required")
 	}
-	if c.Database.MaxConnections < 1 {
-		errs = append(errs, "database.max_connections must be >= 1")
-	}
 	return errs
 }
 
@@ -442,8 +421,6 @@ func (c *SystemConfig) ToLegacyConfig() *Config {
 	cfg.Version = c.Version
 	cfg.Database.Path = c.Database.Path
 	cfg.Database.RetentionDays = c.Database.RetentionDays
-	cfg.Database.EnableWAL = c.Database.EnableWAL
-	cfg.Database.MaxConnections = c.Database.MaxConnections
 
 	cfg.Server.Port = c.Server.Port
 	cfg.Server.PublicOrigin = c.Server.PublicOrigin

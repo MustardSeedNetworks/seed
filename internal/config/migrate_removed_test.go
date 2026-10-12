@@ -107,6 +107,12 @@ func TestRemovedKeysAreStripped(t *testing.T) {
 			document: map[string]any{"pipeline": map[string]any{"phases": map[string]any{}}},
 		},
 		{
+			name: "database tuning nothing read (#2570)",
+			document: map[string]any{"database": map[string]any{
+				"path": "data/seed.db", "enable_wal": false, "max_connections": 10,
+			}},
+		},
+		{
 			name:     "server.https when it is already satisfied",
 			document: map[string]any{"server": map[string]any{"https": true}},
 		},

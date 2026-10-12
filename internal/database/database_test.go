@@ -66,7 +66,6 @@ func TestOpenWithConfig(t *testing.T) {
 		MaxOpenConns:    5,
 		MaxIdleConns:    2,
 		ConnMaxLifetime: time.Minute,
-		EnableWAL:       true,
 		BusyTimeout:     1000,
 	}
 

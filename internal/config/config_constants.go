@@ -64,14 +64,8 @@ const (
 	defaultRateLimitPerMinute = 60
 )
 
-// Database default constants.
-const (
-	// defaultDBRetentionDays is the default number of days to retain historical data.
-	defaultDBRetentionDays = 90
-
-	// defaultDBMaxConnections is the default maximum number of database connections.
-	defaultDBMaxConnections = 10
-)
+// defaultDBRetentionDays is the default number of days to retain historical data.
+const defaultDBRetentionDays = 90
 
 // Network port constants for common services.
 const (

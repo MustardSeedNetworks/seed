@@ -2115,7 +2115,7 @@
     "DatabaseConfig": {
       "type": "object",
       "description": "SQLite database settings for historical data storage",
-      "required": ["path", "retention_days", "enable_wal", "max_connections"],
+      "required": ["path", "retention_days"],
       "additionalProperties": false,
       "properties": {
         "path": {
@@ -2128,18 +2128,6 @@
           "description": "Days of historical data to retain (0 = forever)",
           "minimum": 0,
           "default": 90
-        },
-        "enable_wal": {
-          "type": "boolean",
-          "description": "Enable Write-Ahead Logging for better concurrency",
-          "default": true
-        },
-        "max_connections": {
-          "type": "integer",
-          "description": "Maximum number of database connections",
-          "minimum": 1,
-          "maximum": 100,
-          "default": 10
         }
       }
     }

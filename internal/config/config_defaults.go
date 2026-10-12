@@ -75,10 +75,8 @@ func DefaultConfig() *Config {
 			Compress:   true,
 		},
 		Database: DatabaseConfig{
-			Path:           "data/seed.db",
-			RetentionDays:  defaultDBRetentionDays,
-			EnableWAL:      true,
-			MaxConnections: defaultDBMaxConnections,
+			Path:          "data/seed.db",
+			RetentionDays: defaultDBRetentionDays,
 		},
 	}
 }
