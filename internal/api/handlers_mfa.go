@@ -88,12 +88,10 @@ const (
 	mfaStatusDisabled = "disabled"
 )
 
-// TOTPToggleResponse is the JSON body returned by the TOTP
-// setup/verify/disable endpoints. Using a struct rather than an
-// inline map[string]any keeps the "status"/"enabled" field name
-// strings out of goconst's eye (#85).
-type TOTPToggleResponse struct {
-	Status  string `json:"status"`
+// MFAToggleResponse is the JSON body returned when a second factor is turned
+// on or off: TOTP verify/disable and WebAuthn register/finish.
+type MFAToggleResponse struct {
+	Status  string `json:"status"  jsonschema:"enum=enabled,enum=disabled,enum=registered"`
 	Enabled bool   `json:"enabled"`
 }
 
@@ -320,7 +318,7 @@ func (s *Server) handleTOTPVerify(w http.ResponseWriter, r *http.Request) {
 	logger.InfoContext(r.Context(), "TOTP enabled",
 		"event", "mfa_setup", "username", username, "result", mfaStatusEnabled)
 
-	sendJSONResponse(w, logger, http.StatusOK, TOTPToggleResponse{
+	sendJSONResponse(w, logger, http.StatusOK, MFAToggleResponse{
 		Status:  mfaStatusEnabled,
 		Enabled: true,
 	})
@@ -393,7 +391,7 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 	recordMFAAuditEvent(r, username, mfaFactorTOTP, mfaStatusDisabled)
 	logger.InfoContext(r.Context(), "TOTP disabled",
 		"event", "mfa_disable", "username", username, "result", mfaStatusDisabled)
-	sendJSONResponse(w, logger, http.StatusOK, TOTPToggleResponse{
+	sendJSONResponse(w, logger, http.StatusOK, MFAToggleResponse{
 		Status:  mfaStatusDisabled,
 		Enabled: false,
 	})
@@ -622,7 +620,7 @@ func (s *Server) handleWebAuthnRegisterBegin(w http.ResponseWriter, r *http.Requ
 	webAuthnSessions.Put(username, "register", *sess)
 	logger.InfoContext(r.Context(), "WebAuthn registration started",
 		"event", "webauthn_register", "username", username, "result", "begin")
-	sendJSONResponse(w, logger, http.StatusOK, opts)
+	sendJSONResponse(w, logger, http.StatusOK, newWebAuthnCreationOptions(opts, user.ID))
 }
 
 // handleWebAuthnRegisterFinish completes the registration ceremony and
@@ -676,7 +674,7 @@ func (s *Server) handleWebAuthnRegisterFinish(w http.ResponseWriter, r *http.Req
 	}
 	logger.InfoContext(r.Context(), "WebAuthn credential registered",
 		"event", "webauthn_register", "username", username, "result", "registered")
-	sendJSONResponse(w, logger, http.StatusOK, TOTPToggleResponse{
+	sendJSONResponse(w, logger, http.StatusOK, MFAToggleResponse{
 		Status:  "registered",
 		Enabled: true,
 	})
@@ -685,13 +683,6 @@ func (s *Server) handleWebAuthnRegisterFinish(w http.ResponseWriter, r *http.Req
 // ----------------------------------------------------------------------
 // WebAuthn login
 // ----------------------------------------------------------------------
-
-// webAuthnLoginBeginRequest is the body for /webauthn/login/begin.
-// We accept the username here because (unlike registration) the user
-// hasn't authenticated yet.
-type webAuthnLoginBeginRequest struct {
-	Username string `json:"username" validate:"required"`
-}
 
 // handleWebAuthnLoginBegin starts the assertion ceremony for the given
 // username and returns the credential assertion options.
@@ -707,7 +698,7 @@ func (s *Server) handleWebAuthnLoginBegin(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	var req webAuthnLoginBeginRequest
+	var req WebAuthnLoginBeginRequest
 	if !decodeJSONStrictLocalized(w, r, &req, mfaBodyLimit, logger, localizer) {
 		return
 	}
@@ -733,7 +724,7 @@ func (s *Server) handleWebAuthnLoginBegin(w http.ResponseWriter, r *http.Request
 	webAuthnSessions.Put(req.Username, "login", *sess)
 	logger.InfoContext(r.Context(), "WebAuthn login started",
 		"event", "webauthn_login", "username", req.Username, "result", "begin")
-	sendJSONResponse(w, logger, http.StatusOK, opts)
+	sendJSONResponse(w, logger, http.StatusOK, newWebAuthnRequestOptions(opts))
 }
 
 // handleWebAuthnLoginFinish finishes the assertion ceremony, updates

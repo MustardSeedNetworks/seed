@@ -131,14 +131,17 @@ func (u *WebAuthnUser) WebAuthnCredentials() []webauthn.Credential {
 
 // BeginRegistration starts the registration ceremony for a new
 // authenticator. The returned *webauthn.SessionData must be stored
-// server-side and passed back to FinishRegistration.
+// server-side and passed back to FinishRegistration. The user's enrolled
+// credentials are excluded, so the browser refuses to enrol the same
+// authenticator twice.
 func (m *WebAuthnManager) BeginRegistration(
 	user *WebAuthnUser,
 ) (*protocol.CredentialCreation, *webauthn.SessionData, error) {
 	if m == nil || m.wan == nil {
 		return nil, nil, errors.New("webauthn manager not initialised")
 	}
-	opts, sess, err := m.wan.BeginRegistration(user)
+	exclude := webauthn.Credentials(user.Credentials).CredentialDescriptors()
+	opts, sess, err := m.wan.BeginRegistration(user, webauthn.WithExclusions(exclude))
 	if err != nil {
 		return nil, nil, fmt.Errorf("begin registration: %w", err)
 	}

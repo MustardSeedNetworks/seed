@@ -5030,6 +5030,21 @@ components:
                 - webauthnEnabled
                 - webauthnCredentialCount
             type: object
+        MFAToggleResponse:
+            additionalProperties: false
+            properties:
+                enabled:
+                    type: boolean
+                status:
+                    enum:
+                        - enabled
+                        - disabled
+                        - registered
+                    type: string
+            required:
+                - status
+                - enabled
+            type: object
         MedicalResults:
             additionalProperties: false
             properties:
@@ -8759,17 +8774,6 @@ components:
                 - provisioningUri
                 - qrCodePngBase64
             type: object
-        TOTPToggleResponse:
-            additionalProperties: false
-            properties:
-                enabled:
-                    type: boolean
-                status:
-                    type: string
-            required:
-                - status
-                - enabled
-            type: object
         TOTPVerifyRequest:
             additionalProperties: false
             properties:
@@ -9895,6 +9899,138 @@ components:
                 - stats
                 - severityFilter
             type: object
+        WebAuthnCreationOptions:
+            additionalProperties: false
+            properties:
+                challenge:
+                    type: string
+                excludeCredentials:
+                    items:
+                        $ref: '#/components/schemas/WebAuthnCredentialDescriptor'
+                    type: array
+                pubKeyCredParams:
+                    items:
+                        $ref: '#/components/schemas/WebAuthnCredentialParameter'
+                    type: array
+                rp:
+                    $ref: '#/components/schemas/WebAuthnRelyingParty'
+                timeout:
+                    type: integer
+                user:
+                    $ref: '#/components/schemas/WebAuthnUserEntity'
+            required:
+                - rp
+                - user
+                - challenge
+                - pubKeyCredParams
+                - timeout
+                - excludeCredentials
+            type: object
+        WebAuthnCreationOptionsResponse:
+            additionalProperties: false
+            properties:
+                publicKey:
+                    $ref: '#/components/schemas/WebAuthnCreationOptions'
+            required:
+                - publicKey
+            type: object
+        WebAuthnCredentialDescriptor:
+            additionalProperties: false
+            properties:
+                id:
+                    type: string
+                transports:
+                    items:
+                        enum:
+                            - usb
+                            - nfc
+                            - ble
+                            - smart-card
+                            - hybrid
+                            - internal
+                        type: string
+                    type: array
+                type:
+                    enum:
+                        - public-key
+                    type: string
+            required:
+                - type
+                - id
+            type: object
+        WebAuthnCredentialParameter:
+            additionalProperties: false
+            properties:
+                alg:
+                    type: integer
+                type:
+                    enum:
+                        - public-key
+                    type: string
+            required:
+                - type
+                - alg
+            type: object
+        WebAuthnLoginBeginRequest:
+            additionalProperties: false
+            properties:
+                username:
+                    type: string
+            required:
+                - username
+            type: object
+        WebAuthnRelyingParty:
+            additionalProperties: false
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+            required:
+                - name
+                - id
+            type: object
+        WebAuthnRequestOptions:
+            additionalProperties: false
+            properties:
+                allowCredentials:
+                    items:
+                        $ref: '#/components/schemas/WebAuthnCredentialDescriptor'
+                    type: array
+                challenge:
+                    type: string
+                rpId:
+                    type: string
+                timeout:
+                    type: integer
+            required:
+                - challenge
+                - timeout
+                - rpId
+                - allowCredentials
+            type: object
+        WebAuthnRequestOptionsResponse:
+            additionalProperties: false
+            properties:
+                publicKey:
+                    $ref: '#/components/schemas/WebAuthnRequestOptions'
+            required:
+                - publicKey
+            type: object
+        WebAuthnUserEntity:
+            additionalProperties: false
+            properties:
+                displayName:
+                    type: string
+                id:
+                    type: string
+                name:
+                    type: string
+            required:
+                - name
+                - displayName
+                - id
+            type: object
         WebhookSettings:
             additionalProperties: false
             properties:
@@ -10987,7 +11123,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/TOTPToggleResponse'
+                                $ref: '#/components/schemas/MFAToggleResponse'
                     description: Password and code matched; TOTP is no longer required.
                 "401":
                     content:
@@ -11079,7 +11215,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/TOTPToggleResponse'
+                                $ref: '#/components/schemas/MFAToggleResponse'
                     description: The code matched; TOTP is now required at sign-in.
                 "401":
                     content:
@@ -11117,7 +11253,19 @@ paths:
     /api/v1/auth/webauthn/login/begin:
         post:
             operationId: postApiV1AuthWebauthnLoginBegin
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/WebAuthnLoginBeginRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/WebAuthnRequestOptionsResponse'
+                    description: Request options for navigator.credentials.get(), naming the account's passkeys.
                 "405":
                     content:
                         application/json:
@@ -11141,6 +11289,12 @@ paths:
         post:
             operationId: postApiV1AuthWebauthnLoginFinish
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LoginResponse'
+                    description: The assertion verified; the session token.
                 "405":
                     content:
                         application/json:
@@ -11164,6 +11318,12 @@ paths:
         post:
             operationId: postApiV1AuthWebauthnRegisterBegin
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/WebAuthnCreationOptionsResponse'
+                    description: Creation options for navigator.credentials.create(); enrolled passkeys are excluded.
                 "401":
                     content:
                         application/json:
@@ -11201,6 +11361,12 @@ paths:
         post:
             operationId: postApiV1AuthWebauthnRegisterFinish
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/MFAToggleResponse'
+                    description: The attestation verified and the passkey is enrolled.
                 "401":
                     content:
                         application/json:

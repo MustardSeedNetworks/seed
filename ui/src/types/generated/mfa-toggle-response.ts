@@ -5,7 +5,7 @@
  * after Go DTO changes). The schema source of truth lives at
  * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
-export interface TOTPToggleResponse {
-  status: string;
+export interface MFAToggleResponse {
+  status: 'enabled' | 'disabled' | 'registered';
   enabled: boolean;
 }
