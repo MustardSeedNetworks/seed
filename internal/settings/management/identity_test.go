@@ -96,12 +96,9 @@ func TestIdentityRead(t *testing.T) {
 	svc := management.NewService(&fakeStore{cfg: cfg}, nil, nil)
 
 	settings, _ := svc.Get()
-	identity, ok := settings["identity"].(map[string]any)
-	if !ok {
-		t.Fatalf("settings has no identity object: %+v", settings["identity"])
-	}
-	if identity["name"] != "seed-idf-3b" || identity["location"] != "IDF 3B" {
-		t.Fatalf("identity read model = %+v", identity)
+	want := management.IdentitySettings{Name: "seed-idf-3b", Location: "IDF 3B"}
+	if settings.Identity != want {
+		t.Fatalf("identity read model = %+v", settings.Identity)
 	}
 }
 

@@ -41,12 +41,12 @@ import { useTheme } from '../../hooks/useTheme';
 import { useVulnerabilitySettings } from '../../hooks/useVulnerabilitySettings';
 import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
 import type { IperfSuggestion } from '../../types/generated/iperf-suggestion';
+import type { ThresholdSettings } from '../../types/generated/settings-response';
 import type {
   CableTestSettings as CableTestSettingsType,
   IpSettings,
   LinkSettings as LinkSettingsType,
   NetworkDiscoverySettings,
-  SettingsThresholds,
   SnmpSettings as SnmpSettingsType,
   TestsSettings,
   WiFiSettings as WiFiSettingsType,
@@ -140,7 +140,7 @@ export function SettingsDrawer({
     }
     prevIsOpenRef.current = isOpen;
   }, [isOpen]);
-  const [thresholds, setThresholds] = useState<SettingsThresholds>({
+  const [thresholds, setThresholds] = useState<ThresholdSettings>({
     dns: { good: 50, warning: 100 },
     gateway: { good: 20, warning: 50 },
     wifi: { good: -50, warning: -70 },

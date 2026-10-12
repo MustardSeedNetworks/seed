@@ -15,12 +15,12 @@ import { withIds } from '../components/settings/settingsDrawerNormalizer';
 import { LogComponents, logger } from '../lib/logger';
 import type { IperfSuggestion } from '../types/generated/iperf-suggestion';
 import type { LogFileResponse } from '../types/generated/log-file-response';
+import type { SettingsResponse, ThresholdSettings } from '../types/generated/settings-response';
 import type {
   CableTestSettings as CableTestSettingsType,
   IpSettings,
   LinkSettings as LinkSettingsType,
   NetworkDiscoverySettings,
-  SettingsThresholds,
   SnmpSettings as SnmpSettingsType,
   TestsSettings,
   WiFiSettings as WiFiSettingsType,
@@ -30,7 +30,7 @@ const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 interface UseSettingsDrawerLoadersArgs {
   isOpen: boolean;
-  setThresholds: React.Dispatch<React.SetStateAction<SettingsThresholds>>;
+  setThresholds: React.Dispatch<React.SetStateAction<ThresholdSettings>>;
   setIpSettings: (s: IpSettings) => void;
   setDnsInput: (value: string) => void;
   setTestsSettings: (s: TestsSettings) => void;
@@ -78,12 +78,8 @@ export function useSettingsDrawerLoaders({
     await fetch(`${API_BASE}/api/v1/settings`, { credentials: 'include' })
       .then(async (response) => {
         if (response.ok) {
-          const data = await (response.json() as Promise<{
-            thresholds?: Partial<SettingsThresholds>;
-          }>);
-          if (data.thresholds) {
-            setThresholds((prev) => ({ ...prev, ...data.thresholds }));
-          }
+          const data = await (response.json() as Promise<SettingsResponse>);
+          setThresholds(data.thresholds);
         }
       })
       .catch((err: unknown) => {

@@ -14,6 +14,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
+import type { SettingsResponse } from '../types/generated/settings-response';
 import type { SaveStatus } from '../types/settings';
 
 /** How the relay connection is encrypted. There is no plaintext mode. */
@@ -35,21 +36,6 @@ export interface AlertEmailSettings {
   from: string;
   /** Recipients as typed: comma or newline separated. */
   to: string;
-}
-
-/** The alerts slice of GET /api/v1/settings. */
-interface AlertsSettingsResponse {
-  alerts?: {
-    email?: {
-      host?: string;
-      port?: number;
-      tls?: string;
-      username?: string;
-      passwordSet?: boolean;
-      from?: string;
-      to?: string[];
-    };
-  };
 }
 
 interface UseAlertEmailSettingsResult {
@@ -87,19 +73,19 @@ export function useAlertEmailSettings(): UseAlertEmailSettingsResult {
 
   const load = async (): Promise<void> => {
     await api
-      .get<AlertsSettingsResponse>('/api/v1/settings')
+      .get<SettingsResponse>('/api/v1/settings')
       .then((data) => {
-        const stored = data.alerts?.email;
+        const stored = data.alerts.email;
         setEmail({
-          host: stored?.host ?? '',
-          port: stored?.port ?? 0,
+          host: stored.host,
+          port: stored.port,
           // The server stores an empty mode as starttls.
-          tls: stored?.tls === 'tls' ? 'tls' : 'starttls',
-          username: stored?.username ?? '',
+          tls: stored.tls === 'tls' ? 'tls' : 'starttls',
+          username: stored.username,
           password: '',
-          passwordSet: stored?.passwordSet ?? false,
-          from: stored?.from ?? '',
-          to: (stored?.to ?? []).join(', '),
+          passwordSet: stored.passwordSet,
+          from: stored.from,
+          to: stored.to.join(', '),
         });
       })
       .catch((err: unknown) => {

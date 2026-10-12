@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../../api/client';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useRole } from '../../../contexts/RoleContext';
+import type { SSOSettingsResponse } from '../../../types/generated/sso-settings-response';
 import { Button } from '../../ui/Button';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Key } from '../../ui/Icons';
@@ -35,10 +36,6 @@ interface ProviderConfig {
   redirectUrl: string;
   tenantId?: string;
   scopes?: string[];
-}
-
-interface SettingsResponse {
-  providers: { name: string; enabled: boolean }[];
 }
 
 const PROVIDER_DEFAULTS: Record<ProviderName, ProviderConfig> = {
@@ -80,7 +77,7 @@ export function SsoSettings(): React.ReactElement {
   const refresh = async (): Promise<void> => {
     setError(null);
     try {
-      const resp = await api.get<SettingsResponse>('/api/v1/sso/settings');
+      const resp = await api.get<SSOSettingsResponse>('/api/v1/sso/settings');
       const enabledByName = new Map(resp.providers.map((p) => [p.name.toLowerCase(), p.enabled]));
       setProviders((prev) => ({
         google: { ...prev.google, enabled: enabledByName.get('google') ?? false },

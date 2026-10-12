@@ -14,17 +14,13 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { api } from '../api';
+import type { SettingsResponse } from '../types/generated/settings-response';
 
 export interface DeviceIdentity {
   /** Shown in the header and the tab title. Empty means unset. */
   name: string;
   /** Where the device is installed. Empty means unset. */
   location: string;
-}
-
-/** The identity slice of GET /api/v1/settings. */
-interface IdentitySettingsResponse {
-  identity?: Partial<DeviceIdentity>;
 }
 
 export const EMPTY_DEVICE_IDENTITY: DeviceIdentity = { name: '', location: '' };
@@ -36,11 +32,8 @@ export function useDeviceIdentity(): DeviceIdentity {
   const { data } = useQuery({
     queryKey: deviceIdentityKey,
     queryFn: async (): Promise<DeviceIdentity> => {
-      const settings = await api.get<IdentitySettingsResponse>('/api/v1/settings');
-      return {
-        name: settings.identity?.name ?? '',
-        location: settings.identity?.location ?? '',
-      };
+      const settings = await api.get<SettingsResponse>('/api/v1/settings');
+      return settings.identity;
     },
     // This browser's own save invalidates it; the minute bounds how long a
     // rename made in another tab goes unseen here.

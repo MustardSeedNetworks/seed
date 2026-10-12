@@ -27,11 +27,57 @@ type Encrypter interface {
 	EncryptValue(plaintext string) (string, error)
 }
 
-// buildAlertSettings is the read model. It reports whether signing material is
-// stored, never the material: a secret served back is a secret readable by
-// anyone who can read the settings, which is the whole reason it is in the
-// keyring.
-func buildAlertSettings(cfg *config.Config) map[string]any {
+// AlertSettings is the alert receivers' read model. It reports whether
+// signing material is stored, never the material: a secret served back is a
+// secret readable by anyone who can read the settings, which is the whole
+// reason it is in the keyring.
+type AlertSettings struct {
+	Webhook     WebhookSettings    `json:"webhook"`
+	Email       EmailSettings      `json:"email"`
+	Escalations []EscalationLadder `json:"escalations"`
+	Syslog      SyslogSettings     `json:"syslog"`
+}
+
+// WebhookSettings is the webhook receiver.
+type WebhookSettings struct {
+	URL       string `json:"url"`
+	SecretSet bool   `json:"secretSet"`
+}
+
+// EmailSettings is the mail relay alerts are emailed through.
+type EmailSettings struct {
+	Host        string   `json:"host"`
+	Port        int      `json:"port"`
+	TLS         string   `json:"tls"`
+	Username    string   `json:"username"`
+	PasswordSet bool     `json:"passwordSet"`
+	From        string   `json:"from"`
+	To          []string `json:"to"`
+}
+
+// SyslogSettings is the collector alerts are forwarded to.
+type SyslogSettings struct {
+	Host      string `json:"host"`
+	Port      int    `json:"port"`
+	Transport string `json:"transport"`
+}
+
+// EscalationLadder is the wire shape of one ladder in the settings read
+// model and in an update.
+type EscalationLadder struct {
+	Rule          string            `json:"rule"`
+	Stages        []EscalationStage `json:"stages"`
+	RepeatSeconds int               `json:"repeatSeconds"`
+}
+
+// EscalationStage is one step of a ladder: who is told, and how long after
+// the alert was raised.
+type EscalationStage struct {
+	AfterSeconds int      `json:"afterSeconds"`
+	Channels     []string `json:"channels"     jsonschema:"enum=webhook,enum=email,enum=syslog"`
+}
+
+func buildAlertSettings(cfg *config.Config) AlertSettings {
 	email := cfg.Alerts.Email
 	// An unset list reads as [] rather than null, so a client iterates it
 	// without a guard.
@@ -39,48 +85,25 @@ func buildAlertSettings(cfg *config.Config) map[string]any {
 	if to == nil {
 		to = []string{}
 	}
-	return map[string]any{
-		"webhook": map[string]any{
-			"url":       cfg.Alerts.Webhook.URL,
-			"secretSet": cfg.Alerts.Webhook.Secret != "",
+	return AlertSettings{
+		Webhook: WebhookSettings{URL: cfg.Alerts.Webhook.URL, SecretSet: cfg.Alerts.Webhook.Secret != ""},
+		Email: EmailSettings{
+			Host: email.Host, Port: email.Port, TLS: email.TLS, Username: email.Username,
+			PasswordSet: email.Password != "", From: email.From, To: to,
 		},
-		"email": map[string]any{
-			"host":        email.Host,
-			"port":        email.Port,
-			"tls":         email.TLS,
-			"username":    email.Username,
-			"passwordSet": email.Password != "",
-			"from":        email.From,
-			"to":          to,
-		},
-		"escalations": escalationsView(cfg.Alerts.Escalations),
-		"syslog": map[string]any{
-			"host":      cfg.Alerts.Syslog.Host,
-			"port":      cfg.Alerts.Syslog.Port,
-			"transport": cfg.Alerts.Syslog.Transport,
+		Escalations: escalationsView(cfg.Alerts.Escalations),
+		Syslog: SyslogSettings{
+			Host: cfg.Alerts.Syslog.Host, Port: cfg.Alerts.Syslog.Port, Transport: cfg.Alerts.Syslog.Transport,
 		},
 	}
 }
 
-// escalationLadder is the wire shape of one ladder in the settings read
-// model and in an update.
-type escalationLadder struct {
-	Rule          string            `json:"rule"`
-	Stages        []escalationStage `json:"stages"`
-	RepeatSeconds int               `json:"repeatSeconds"`
-}
-
-type escalationStage struct {
-	AfterSeconds int      `json:"afterSeconds"`
-	Channels     []string `json:"channels"`
-}
-
-func escalationsView(stored []config.AlertEscalationConfig) []escalationLadder {
-	out := make([]escalationLadder, 0, len(stored))
+func escalationsView(stored []config.AlertEscalationConfig) []EscalationLadder {
+	out := make([]EscalationLadder, 0, len(stored))
 	for _, l := range stored {
-		v := escalationLadder{Rule: l.Rule, RepeatSeconds: l.RepeatSeconds}
+		v := EscalationLadder{Rule: l.Rule, RepeatSeconds: l.RepeatSeconds}
 		for _, st := range l.Stages {
-			v.Stages = append(v.Stages, escalationStage{AfterSeconds: st.AfterSeconds, Channels: st.Channels})
+			v.Stages = append(v.Stages, EscalationStage{AfterSeconds: st.AfterSeconds, Channels: st.Channels})
 		}
 		out = append(out, v)
 	}
@@ -127,7 +150,7 @@ func applyEscalationUpdates(section map[string]any, cfg *config.Config) error {
 	}
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.DisallowUnknownFields()
-	var ladders []escalationLadder
+	var ladders []EscalationLadder
 	if err = dec.Decode(&ladders); err != nil {
 		return fmt.Errorf("alerts.escalations must be a list of ladders: %w", err)
 	}

@@ -15,6 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ProfileProvider } from '../../contexts/profileContext';
 import { RoleProvider } from '../../contexts/RoleContext';
+import { SETTINGS_RESPONSE } from '../../test/settingsResponse';
 import { SettingsDrawer } from './SettingsDrawer';
 
 const SETTINGS_PATH = '/api/v1/security/devices/settings';
@@ -50,7 +51,11 @@ function deferDiscoveryLoad(): { release: () => void } {
   vi.stubGlobal(
     'fetch',
     vi.fn((url: string) => {
-      const body = url.endsWith(SETTINGS_PATH) ? { timing: { rescanIntervalMs: 120_000 } } : {};
+      const body = url.endsWith(SETTINGS_PATH)
+        ? { timing: { rescanIntervalMs: 120_000 } }
+        : url.endsWith('/api/v1/settings')
+          ? SETTINGS_RESPONSE
+          : {};
       const response = new Response(JSON.stringify(body), { status: 200 });
       return url.endsWith(SETTINGS_PATH) ? held.then(() => response) : Promise.resolve(response);
     }),
