@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.254.3](https://github.com/MustardSeedNetworks/seed/compare/v0.254.2...v0.254.3) (2026-10-12)
+
+
+### Code Refactoring
+
+* **api:** route vuln finding actions and capture downloads by pattern (S6-4 slice 32) ([#3323](https://github.com/MustardSeedNetworks/seed/issues/3323)) ([25c90c0](https://github.com/MustardSeedNetworks/seed/commit/25c90c0b74442d07e1e48b563a547e2b75c6f02d))
+* **api:** type the system health answer (S6-4 slice 33) ([#3325](https://github.com/MustardSeedNetworks/seed/issues/3325)) ([f415765](https://github.com/MustardSeedNetworks/seed/commit/f4157655db9c00f767dbc3496814ba6f97465c69))
+
 ## [0.254.2](https://github.com/MustardSeedNetworks/seed/compare/v0.254.1...v0.254.2) (2026-10-11)
 
 
