@@ -20,50 +20,19 @@ import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, layout, spacing } from '../../styles/theme';
+import type {
+  ChannelNetwork,
+  WiFiChannelGraphResponse,
+} from '../../types/generated/wifi-channel-graph-response';
 import { CardValue } from '../ui/Card';
 import { Wifi } from '../ui/Icons';
 import { SimpleBaseCard } from './BaseCard';
 
 /**
- * Network data for channel graph visualization
- */
-interface ChannelNetwork {
-  ssid: string;
-  bssid: string;
-  channel: number;
-  centerFreq: number;
-  channelWidth: number; // MHz (20, 40, 80, 160, 320)
-  signal: number; // dBm
-  band: string; // "2.4GHz", "5GHz", "6GHz"
-  isConnected: boolean;
-}
-
-/**
- * Channel graph data organized by band (normalized to camelCase)
- */
-interface ChannelGraphData {
-  networks24Ghz: ChannelNetwork[];
-  networks5Ghz: ChannelNetwork[];
-  networks6Ghz: ChannelNetwork[];
-  connectedBssid?: string;
-  scanTime: string;
-}
-
-/**
- * API response structure
- */
-export interface ChannelGraphResponse {
-  available: boolean;
-  error?: string;
-  remediation?: string;
-  data?: ChannelGraphData;
-}
-
-/**
  * Props for WiFi Channel Graph Card
  */
 interface WifiChannelGraphProps {
-  data: ChannelGraphResponse | null;
+  data: WiFiChannelGraphResponse | null;
   loading?: boolean;
   visible?: boolean;
 }
@@ -71,7 +40,7 @@ interface WifiChannelGraphProps {
 /**
  * Band selection type
  */
-type BandType = '2.4GHz' | '5GHz' | '6GHz';
+type BandType = ChannelNetwork['band'];
 
 /**
  * Get channel range for a given band
@@ -113,7 +82,7 @@ function generateNetworkPath(
   width: number,
   height: number,
 ): string {
-  const { channel, channelWidth, signal } = network;
+  const { channel, channelWidthMhz, signalDbm } = network;
   const { min, max } = channelRange;
   const channelSpan = max - min;
 
@@ -121,13 +90,13 @@ function generateNetworkPath(
   const centerX = ((channel - min) / channelSpan) * width;
 
   // Calculate width in channels (5 MHz per channel for 2.4GHz, 20 MHz spacing for 5/6GHz)
-  const channelWidthInChannels = channelWidth / 5; // Approximate
+  const channelWidthInChannels = channelWidthMhz / 5; // Approximate
 
   // Calculate half-width in pixels
   const halfWidth = (channelWidthInChannels / channelSpan) * width * 0.5;
 
   // Calculate peak height based on signal strength
-  const peakY = signalToY(signal, height);
+  const peakY = signalToY(signalDbm, height);
   const baseY = height;
 
   // Generate Gaussian-like curve using quadratic bezier
@@ -187,7 +156,7 @@ function channelAxisMarkers(
   return markers;
 }
 
-function bandNetworks(data: ChannelGraphResponse | null, band: BandType): ChannelNetwork[] {
+function bandNetworks(data: WiFiChannelGraphResponse | null, band: BandType): ChannelNetwork[] {
   if (!data?.data) {
     return [];
   }
@@ -203,7 +172,7 @@ function bandNetworks(data: ChannelGraphResponse | null, band: BandType): Channe
   }
 }
 
-function bandsWithNetworks(data: ChannelGraphResponse | null): BandType[] {
+function bandsWithNetworks(data: WiFiChannelGraphResponse | null): BandType[] {
   if (!data?.data) {
     return [];
   }
@@ -376,8 +345,8 @@ function ChannelGraph({
               channel: hoveredNetwork.channel,
             })}
           </p>
-          <p className="caption text-text-muted">{hoveredNetwork.signal} dBm</p>
-          <p className="caption text-text-muted">{hoveredNetwork.channelWidth} MHz</p>
+          <p className="caption text-text-muted">{hoveredNetwork.signalDbm} dBm</p>
+          <p className="caption text-text-muted">{hoveredNetwork.channelWidthMhz} MHz</p>
           {hoveredNetwork.isConnected ? (
             <p className="caption text-brand-primary font-medium">{tCommon('status.connected')}</p>
           ) : null}

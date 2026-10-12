@@ -9,68 +9,7 @@
 
 import { useState } from 'react';
 import { api } from '../api';
-
-/** Network data for channel graph visualization */
-export type ChannelGraphNetwork = {
-  ssid: string;
-  bssid: string;
-  channel: number;
-  centerFreq: number;
-  channelWidth: number;
-  signal: number;
-  band: string;
-  isConnected: boolean;
-};
-
-/** Parsed channel graph data with networks grouped by band */
-export type ChannelGraphData = {
-  networks24Ghz: ChannelGraphNetwork[];
-  networks5Ghz: ChannelGraphNetwork[];
-  networks6Ghz: ChannelGraphNetwork[];
-  connectedBssid?: string;
-  scanTime: string;
-};
-
-/** Normalized response for channel graph component */
-export type ChannelGraphResponse = {
-  available: boolean;
-  error?: string;
-  remediation?: string;
-  data?: ChannelGraphData;
-};
-
-/** Raw API response for channel graph data */
-type ChannelGraphApiResponse = {
-  available: boolean;
-  error?: string;
-  remediation?: string;
-  data?: Record<string, unknown>;
-};
-
-/**
- * Normalizes the API response to ensure consistent structure.
- * Converts snake_case API fields to camelCase.
- */
-const normalizeChannelGraphResponse = (response: ChannelGraphApiResponse): ChannelGraphResponse => {
-  if (!response.data) {
-    return response as ChannelGraphResponse;
-  }
-
-  const data = response.data as Record<string, unknown>;
-  const asNetworkArray = (value: unknown): ChannelGraphNetwork[] =>
-    Array.isArray(value) ? (value as ChannelGraphNetwork[]) : [];
-
-  return {
-    ...response,
-    data: {
-      networks24Ghz: asNetworkArray(data.networks_2_4ghz),
-      networks5Ghz: asNetworkArray(data.networks_5ghz),
-      networks6Ghz: asNetworkArray(data.networks_6ghz),
-      connectedBssid: typeof data.connected_bssid === 'string' ? data.connected_bssid : undefined,
-      scanTime: typeof data.scan_time === 'string' ? data.scan_time : '',
-    },
-  };
-};
+import type { WiFiChannelGraphResponse } from '../types/generated/wifi-channel-graph-response';
 
 interface UseChannelGraphProps {
   /** Whether the current interface is WiFi */
@@ -81,7 +20,7 @@ interface UseChannelGraphProps {
 
 interface UseChannelGraphReturn {
   /** Channel graph data (null if not loaded) */
-  channelGraphData: ChannelGraphResponse | null;
+  channelGraphData: WiFiChannelGraphResponse | null;
   /** Whether channel graph data is loading */
   channelGraphLoading: boolean;
   /** Fetch channel graph data */
@@ -98,7 +37,7 @@ export function useChannelGraph({
   isWifi,
   currentInterface,
 }: UseChannelGraphProps): UseChannelGraphReturn {
-  const [channelGraphData, setChannelGraphData] = useState<ChannelGraphResponse | null>(null);
+  const [channelGraphData, setChannelGraphData] = useState<WiFiChannelGraphResponse | null>(null);
   const [channelGraphLoading, setChannelGraphLoading] = useState(false);
 
   // Fetch channel graph data for WiFi visualization
@@ -108,12 +47,17 @@ export function useChannelGraph({
     }
     setChannelGraphLoading(true);
     try {
-      const response = await api.get<ChannelGraphApiResponse>(
-        `/api/v1/wifi/wifi/channel-graph?interface=${currentInterface}`,
+      setChannelGraphData(
+        await api.get<WiFiChannelGraphResponse>(
+          `/api/v1/wifi/wifi/channel-graph?interface=${currentInterface}`,
+        ),
       );
-      setChannelGraphData(normalizeChannelGraphResponse(response));
     } catch {
-      setChannelGraphData({ available: false, error: 'Failed to fetch channel data' });
+      setChannelGraphData({
+        interface: currentInterface,
+        available: false,
+        error: 'Failed to fetch channel data',
+      });
     }
     setChannelGraphLoading(false);
   };

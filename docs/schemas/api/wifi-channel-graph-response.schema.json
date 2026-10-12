@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/wifi-channel-graph-response.schema.json",
+  "$ref": "#/$defs/WiFiChannelGraphResponse",
+  "$defs": {
+    "ChannelGraphData": {
+      "properties": {
+        "networks24Ghz": {
+          "items": {
+            "$ref": "#/$defs/ChannelNetwork"
+          },
+          "type": "array"
+        },
+        "networks5Ghz": {
+          "items": {
+            "$ref": "#/$defs/ChannelNetwork"
+          },
+          "type": "array"
+        },
+        "networks6Ghz": {
+          "items": {
+            "$ref": "#/$defs/ChannelNetwork"
+          },
+          "type": "array"
+        },
+        "connectedBssid": {
+          "type": "string"
+        },
+        "scanTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "networks24Ghz",
+        "networks5Ghz",
+        "networks6Ghz",
+        "scanTime"
+      ]
+    },
+    "ChannelNetwork": {
+      "properties": {
+        "ssid": {
+          "type": "string"
+        },
+        "bssid": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "integer"
+        },
+        "centerFreqMhz": {
+          "type": "integer"
+        },
+        "channelWidthMhz": {
+          "type": "integer"
+        },
+        "signalDbm": {
+          "type": "integer"
+        },
+        "band": {
+          "type": "string",
+          "enum": [
+            "2.4GHz",
+            "5GHz",
+            "6GHz"
+          ]
+        },
+        "isConnected": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ssid",
+        "bssid",
+        "channel",
+        "centerFreqMhz",
+        "channelWidthMhz",
+        "signalDbm",
+        "band",
+        "isConnected"
+      ]
+    },
+    "WiFiChannelGraphResponse": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string"
+        },
+        "remediation": {
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/ChannelGraphData"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface",
+        "available"
+      ]
+    }
+  },
+  "title": "WiFiChannelGraphResponse",
+  "description": "WiFiChannelGraphResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

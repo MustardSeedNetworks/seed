@@ -1067,6 +1067,65 @@ components:
                 - warning
                 - critical
             type: object
+        ChannelGraphData:
+            additionalProperties: false
+            properties:
+                connectedBssid:
+                    type: string
+                networks5Ghz:
+                    items:
+                        $ref: '#/components/schemas/ChannelNetwork'
+                    type: array
+                networks6Ghz:
+                    items:
+                        $ref: '#/components/schemas/ChannelNetwork'
+                    type: array
+                networks24Ghz:
+                    items:
+                        $ref: '#/components/schemas/ChannelNetwork'
+                    type: array
+                scanTime:
+                    format: date-time
+                    type: string
+            required:
+                - networks24Ghz
+                - networks5Ghz
+                - networks6Ghz
+                - scanTime
+            type: object
+        ChannelNetwork:
+            additionalProperties: false
+            properties:
+                band:
+                    enum:
+                        - 2.4GHz
+                        - 5GHz
+                        - 6GHz
+                    type: string
+                bssid:
+                    type: string
+                centerFreqMhz:
+                    type: integer
+                channel:
+                    type: integer
+                channelWidthMhz:
+                    type: integer
+                isConnected:
+                    type: boolean
+                signalDbm:
+                    type: integer
+                ssid:
+                    type: string
+            required:
+                - ssid
+                - bssid
+                - channel
+                - centerFreqMhz
+                - channelWidthMhz
+                - signalDbm
+                - band
+                - isConnected
+            type: object
         ChannelUtilization:
             additionalProperties: false
             properties:
@@ -9559,6 +9618,23 @@ components:
                 - anomalies
                 - status
             type: object
+        WiFiChannelGraphResponse:
+            additionalProperties: false
+            properties:
+                available:
+                    type: boolean
+                data:
+                    $ref: '#/components/schemas/ChannelGraphData'
+                error:
+                    type: string
+                interface:
+                    type: string
+                remediation:
+                    type: string
+            required:
+                - interface
+                - available
+            type: object
         WiFiConnectRequest:
             additionalProperties: false
             properties:
@@ -17619,6 +17695,12 @@ paths:
         get:
             operationId: getApiV1WifiWifiChannelGraph
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/WiFiChannelGraphResponse'
+                    description: The last neighbor scan grouped by band for the channel overlap graph, or the reason the scan could not run.
                 "401":
                     content:
                         application/json:

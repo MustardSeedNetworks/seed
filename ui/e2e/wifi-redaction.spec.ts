@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import type { WiFiChannelGraphResponse } from '../src/types/generated/wifi-channel-graph-response';
 import type { WiFiResponse } from '../src/types/generated/wifi-response';
 import { skipSetupWizard } from './helpers/auth';
 
@@ -9,8 +10,14 @@ const remediation =
 
 test.beforeEach(async ({ page }) => {
   await skipSetupWizard(page);
+  const channelGraph: WiFiChannelGraphResponse = {
+    interface: 'en0',
+    available: true,
+    error: reason,
+    remediation,
+  };
   await page.route(/\/api\/v1\/wifi\/wifi\/channel-graph(?:\?|$)/, (route) =>
-    route.fulfill({ json: { available: true, error: reason, remediation, data: null } }),
+    route.fulfill({ json: channelGraph }),
   );
 });
 
