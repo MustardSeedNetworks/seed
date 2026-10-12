@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
@@ -13,17 +12,9 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 )
 
-// reportsPathPrefix is the collection path with its trailing slash, so
-// handleReportByID can recover the id (and optional /download suffix).
-const reportsPathPrefix = APIVersionPrefix + "/reports/"
-
-// downloadSuffix marks the variant of GET /reports/{id} that streams the file
-// rather than returning the record.
-const downloadSuffix = "/download"
-
 // reportIDPattern matches the [uuid.New]().String() ids Generate assigns.
 //
-// r.URL.Path arrives percent-decoded, so without this an id could carry a
+// r.PathValue is percent-decoded, so without this an id could carry a
 // newline and forge log lines. It is also plain input validation: nothing but a
 // UUID can name a report.
 var reportIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
@@ -179,36 +170,48 @@ func (s *Server) handleReportGenerate(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusAccepted, toReportInfo(report))
 }
 
-// handleReportByID serves GET and DELETE on /api/v1/reports/{id}, plus the
-// /download variant of GET.
+// handleReportByID serves GET and DELETE on /api/v1/reports/{reportId}.
 func (s *Server) handleReportByID(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-
-	rest := strings.TrimPrefix(r.URL.Path, reportsPathPrefix)
-	download := strings.HasSuffix(rest, downloadSuffix)
-	id := strings.TrimSuffix(rest, downloadSuffix)
-	if !reportIDPattern.MatchString(id) {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, i18n.FromRequest(r).T("errors.reports.invalidID"), "")
+	id, ok := reportPathID(w, r, "reportId", "errors.reports.invalidID")
+	if !ok {
 		return
 	}
-
 	gen, ok := s.reportGenerator(w, r)
 	if !ok {
 		return
 	}
 
-	switch {
-	case r.Method == http.MethodGet && download:
-		s.downloadReport(w, r, gen, id)
-	case r.Method == http.MethodGet:
-		s.getReport(w, r, gen, id)
-	case r.Method == http.MethodDelete:
+	switch r.Method {
+	case http.MethodDelete:
 		s.deleteReport(w, r, gen, id)
 	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
-			ErrCodeValidation, i18n.FromRequest(r).T("errors.api.methodNotAllowed"), "")
+		s.getReport(w, r, gen, id)
 	}
+}
+
+// handleReportDownload serves GET /api/v1/reports/{reportId}/download.
+func (s *Server) handleReportDownload(w http.ResponseWriter, r *http.Request) {
+	id, ok := reportPathID(w, r, "reportId", "errors.reports.invalidID")
+	if !ok {
+		return
+	}
+	gen, ok := s.reportGenerator(w, r)
+	if !ok {
+		return
+	}
+	s.downloadReport(w, r, gen, id)
+}
+
+// reportPathID returns the named path wildcard when it is a report or
+// schedule id, or writes a 400 with msgKey and reports false.
+func reportPathID(w http.ResponseWriter, r *http.Request, name, msgKey string) (string, bool) {
+	id := r.PathValue(name)
+	if !reportIDPattern.MatchString(id) {
+		sendErrorResponseWithDetails(w, logging.FromContext(r.Context()), http.StatusBadRequest,
+			ErrCodeValidation, i18n.FromRequest(r).T(msgKey), "")
+		return "", false
+	}
+	return id, true
 }
 
 func (s *Server) getReport(

@@ -7,7 +7,7 @@ import { skipSetupWizard } from './helpers/auth';
  * Schedules are Pro (`scheduled_reports`). The suite's daemon is unlicensed
  * (seed#2688), so these tests show the page by intercepting GET
  * /api/v1/license, and the daemon answers for itself:
- * - unlicensed, a save reaches POST /reports/schedules and is refused, and the
+ * - unlicensed, a save reaches POST /report-schedules and is refused, and the
  *   editor stays open with the reason — the gate is not only the page's;
  * - on a licensed daemon (a trial started in its HOME), an operator creates,
  *   edits and deletes a schedule, and each reload reads back what was stored.
@@ -42,7 +42,7 @@ async function save(page: Page): Promise<void> {
   const write = page.waitForResponse(
     (r) =>
       ['POST', 'PUT'].includes(r.request().method()) &&
-      r.url().includes('/api/v1/reports/schedules'),
+      r.url().includes('/api/v1/report-schedules'),
   );
   await page.getByTestId('schedule-save').click();
   await write;
@@ -57,7 +57,7 @@ test.describe('Scheduled reports', () => {
     await page.route('**/api/v1/users/me', (route) =>
       route.fulfill({ json: { username: 'reader', role: 'viewer', isActive: true } }),
     );
-    await page.route('**/api/v1/reports/schedules', (route) =>
+    await page.route('**/api/v1/report-schedules', (route) =>
       route.fulfill({
         json: {
           schedules: [
@@ -138,7 +138,7 @@ test.describe('Scheduled reports', () => {
 
     // The suite's daemon is shared: leave no schedule behind.
     const remove = page.waitForResponse(
-      (r) => r.request().method() === 'DELETE' && r.url().includes('/api/v1/reports/schedules/'),
+      (r) => r.request().method() === 'DELETE' && r.url().includes('/api/v1/report-schedules/'),
     );
     await row.getByRole('button', { name: 'Delete' }).click();
     await remove;

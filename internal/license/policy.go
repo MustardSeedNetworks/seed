@@ -113,7 +113,7 @@ func starterFeatures() []string {
 // no route and nothing that reads the branding. The code stays where it is
 // useful -- what is deleted is the claim that it is for sale. Re-add each
 // string when the capability is reachable. scheduled_reports was the third and
-// came back once /api/v1/reports/schedules gave the tick engine a way in
+// came back once /api/v1/report-schedules gave the tick engine a way in
 // (#3048).
 func proFeatures() []string {
 	pro := []string{

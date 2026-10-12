@@ -17,7 +17,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/license/licensetest"
 )
 
-const schedulesPath = "/api/v1/reports/schedules"
+const schedulesPath = "/api/v1/report-schedules"
 
 // nightlyInventory is a valid create body: the inventory template produces CSV.
 const nightlyInventory = `{"name":"Nightly inventory","template":"inventory","format":"csv",` +
@@ -201,7 +201,7 @@ func TestReportSchedules_ByIDPaths(t *testing.T) {
 		want                     int
 	}{
 		{"malformed id", http.MethodGet, schedulesPath + "/not-a-uuid", "", http.StatusBadRequest},
-		{"nested path", http.MethodGet, unknown + "/x", "", http.StatusBadRequest},
+		{"nested path", http.MethodGet, unknown + "/x", "", http.StatusNotFound},
 		{"unknown GET", http.MethodGet, unknown, "", http.StatusNotFound},
 		{"unknown PUT", http.MethodPut, unknown, nightlyInventory, http.StatusNotFound},
 		{"unknown DELETE", http.MethodDelete, unknown, "", http.StatusNotFound},

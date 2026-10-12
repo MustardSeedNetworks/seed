@@ -258,19 +258,17 @@ func TestReports_UnknownIDIsNotFound(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 }
 
-// TestReports_ByIDRejectsMalformedPaths guards the id parsing: one prefix
-// handler serves both /reports/{id} and /reports/{id}/download.
-func TestReports_ByIDRejectsMalformedPaths(t *testing.T) {
+// TestReports_ByIDRejectsMalformedIDs: a report id names a [uuid.New] value
+// and nothing else.
+func TestReports_ByIDRejectsMalformedIDs(t *testing.T) {
 	s := reportsTestServer(t)
 
 	for _, path := range []string{
-		"/api/v1/reports/",
-		"/api/v1/reports/a/b",
-		// Not a UUID: a report id names a uuid.New() value and nothing else.
 		"/api/v1/reports/no-such-report",
-		// r.URL.Path arrives percent-decoded, so %0A is a real newline by the
-		// time the handler sees it. Logging that verbatim would let a caller
-		// forge log lines (CodeQL go/log-injection).
+		"/api/v1/reports/no-such-report/download",
+		// PathValue is percent-decoded, so %0A is a real newline by the time
+		// the handler sees it. Logging that verbatim would let a caller forge
+		// log lines (CodeQL go/log-injection).
 		"/api/v1/reports/" + url.PathEscape("00000000-0000-0000-0000-000000000000\nFAKE audit entry"),
 		"/api/v1/reports/" + url.PathEscape("../../etc/passwd"),
 	} {
@@ -278,6 +276,24 @@ func TestReports_ByIDRejectsMalformedPaths(t *testing.T) {
 			rec := reportsDo(t, s, http.MethodGet, path, "")
 
 			assert.Equal(t, http.StatusBadRequest, rec.Code, "body: %s", rec.Body.String())
+		})
+	}
+}
+
+// TestReports_UnroutedPathsAreNotFound: only /reports/{reportId} and its
+// /download child are served below the collection.
+func TestReports_UnroutedPathsAreNotFound(t *testing.T) {
+	s := reportsTestServer(t)
+
+	for _, path := range []string{
+		"/api/v1/reports/",
+		"/api/v1/reports/" + absentReportID + "/file",
+		"/api/v1/reports/schedules/" + absentReportID,
+	} {
+		t.Run(path, func(t *testing.T) {
+			rec := reportsDo(t, s, http.MethodGet, path, "")
+
+			assert.Equal(t, http.StatusNotFound, rec.Code, "body: %s", rec.Body.String())
 		})
 	}
 }

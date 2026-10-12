@@ -101,7 +101,7 @@ func (s *Server) setupSecurityRoutes() {
 		// Generation sits on its own path rather than POST /reports because
 		// rateLimited wraps the whole route and the shared endpoint limiter is
 		// 5 requests/minute: on the collection it would throttle list reads.
-		// ServeMux prefers the exact pattern over the /reports/ prefix.
+		// ServeMux prefers the literal /reports/generate over /reports/{reportId}.
 		{
 			Path:    APIVersionPrefix + "/reports",
 			Handler: s.handleReports,
@@ -119,10 +119,29 @@ func (s *Server) setupSecurityRoutes() {
 			Auth:    true,
 			CSRF:    true,
 		},
-		// Scheduled reports are Pro (scheduled_reports). The more specific
-		// /reports/schedules/ pattern wins over /reports/ in ServeMux.
 		{
-			Path:    APIVersionPrefix + "/reports/schedules",
+			Path:    APIVersionPrefix + "/reports/{reportId}",
+			Handler: s.handleReportByID,
+			Methods: []string{http.MethodGet, http.MethodDelete},
+			Scope:   op, // gates DELETE only; GET stays open to viewers
+			Feature: "export_csv_json",
+			Auth:    true,
+			CSRF:    true,
+		},
+		{
+			Path:    APIVersionPrefix + "/reports/{reportId}/download",
+			Handler: s.handleReportDownload,
+			Methods: get,
+			Feature: "export_csv_json",
+			Auth:    true,
+		},
+		// Scheduled reports are Pro (scheduled_reports). They are a collection
+		// of their own rather than /reports/schedules: /reports/schedules/{id}
+		// and /reports/{reportId}/download both match /reports/schedules/download,
+		// and ServeMux refuses to register two patterns neither of which is
+		// more specific.
+		{
+			Path:    APIVersionPrefix + "/report-schedules",
 			Handler: s.handleReportSchedules,
 			Methods: getPost,
 			Scope:   op,
@@ -131,20 +150,11 @@ func (s *Server) setupSecurityRoutes() {
 			CSRF:    true,
 		},
 		{
-			Path:    APIVersionPrefix + "/reports/schedules/",
+			Path:    APIVersionPrefix + "/report-schedules/{scheduleId}",
 			Handler: s.handleReportScheduleByID,
 			Methods: []string{http.MethodGet, http.MethodPut, http.MethodDelete},
 			Scope:   op,
 			Feature: "scheduled_reports",
-			Auth:    true,
-			CSRF:    true,
-		},
-		{
-			Path:    APIVersionPrefix + "/reports/",
-			Handler: s.handleReportByID,
-			Methods: []string{http.MethodGet, http.MethodDelete},
-			Scope:   op, // gates DELETE only; GET stays open to viewers
-			Feature: "export_csv_json",
 			Auth:    true,
 			CSRF:    true,
 		},
