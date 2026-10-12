@@ -36,7 +36,7 @@ func GetGitHubDefaultScopes() []string {
 // 1. Go to https://github.com/settings/developers
 // 2. Click "New OAuth App"
 // 3. Set the Application name and Homepage URL
-// 4. Set the Authorization callback URL (e.g., https://your-domain/api/sso/callback)
+// 4. Set the Authorization callback URL (e.g., https://your-domain/api/v1/sso/callback)
 // 5. Click "Register application"
 // 6. Copy the Client ID
 // 7. Click "Generate a new client secret" and copy the secret.

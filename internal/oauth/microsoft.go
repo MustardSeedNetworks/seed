@@ -58,7 +58,7 @@ func MicrosoftEndpoint(tenantID string) oauth2.Endpoint {
 // 2. Navigate to Azure Active Directory > App registrations
 // 3. Click "New registration"
 // 4. Set a name and choose the supported account types (tenant)
-// 5. Add your redirect URI (e.g., https://your-domain/api/sso/callback)
+// 5. Add your redirect URI (e.g., https://your-domain/api/v1/sso/callback)
 // 6. Go to "Certificates & secrets" and create a new client secret
 // 7. Copy the Application (client) ID and the client secret value
 //

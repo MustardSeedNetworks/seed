@@ -22,6 +22,11 @@ const (
 	// oauthStateCookie is the name of the cookie used to store CSRF state.
 	oauthStateCookie = "oauth_state"
 
+	// oauthCookiePath scopes the handshake cookies to the routes that read
+	// them. A browser sends a cookie only to paths under its Path, so this
+	// must be the prefix /sso/login and /sso/callback are served under.
+	oauthCookiePath = APIVersionPrefix + "/sso"
+
 	// oauthStateCookieExpiry is the expiration time for the OAuth state cookie.
 	oauthStateCookieExpiry = 10 * time.Minute
 
@@ -144,7 +149,7 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     oauthStateCookie,
 		Value:    state,
-		Path:     "/api/sso",
+		Path:     oauthCookiePath,
 		MaxAge:   int(oauthStateCookieExpiry.Seconds()),
 		HttpOnly: true,
 		Secure:   true, // HTTPS required at daemon level
@@ -155,7 +160,7 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "oauth_provider",
 		Value:    providerName,
-		Path:     "/api/sso",
+		Path:     oauthCookiePath,
 		MaxAge:   int(oauthStateCookieExpiry.Seconds()),
 		HttpOnly: true,
 		Secure:   true,
@@ -432,7 +437,7 @@ func (s *Server) clearOAuthCookies(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     oauthStateCookie,
 		Value:    "",
-		Path:     "/api/sso",
+		Path:     oauthCookiePath,
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   true,
@@ -441,7 +446,7 @@ func (s *Server) clearOAuthCookies(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "oauth_provider",
 		Value:    "",
-		Path:     "/api/sso",
+		Path:     oauthCookiePath,
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   true,
