@@ -427,16 +427,11 @@ func (s *Server) handleEngineDevice(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, device)
 }
 
-// handleEngineEvents subscribes to engine events via SSE.
+// handleEngineEvents streams discovery engine events via SSE.
 //
-// GET /api/v1/discovery/engine/events opens an SSE stream for real-time updates.
-//
-// Event types:
-// - device.discovered: New device found
-// - device.updated: Device information changed
-// - device.lost: Device went offline
-// - scan.started: Scan began
-// - scan.completed: Scan finished
+// GET /api/v1/discovery/engine/events sends one frame per event, named by the
+// event's type (device.discovered, scan.completed, …) with the discovery.Event
+// as its JSON data.
 //
 // Authentication: Required
 // Rate limiting: None (streaming endpoint).
@@ -459,22 +454,19 @@ func (s *Server) handleEngineEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set SSE headers
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("X-Accel-Buffering", "no")
-
-	// Subscribe to all events
+	// The bus calls the subscriber on a fresh goroutine per event, so it only
+	// queues the frame; pumpSSE is the one writer (it never blocks the bus: a
+	// full backlog drops, re-syncable with GET /discovery/engine).
+	ch := make(chan []byte, sseFrameBuffer)
 	id, err := s.discoveryDevices.Subscribe(func(event *discovery.Event) {
 		data, marshalErr := json.Marshal(event)
 		if marshalErr != nil {
 			return
 		}
-		// Write SSE format
-		_, _ = w.Write([]byte("event: " + string(event.Type) + "\n"))
-		_, _ = w.Write([]byte("data: " + string(data) + "\n\n"))
-		flusher.Flush()
+		select {
+		case ch <- sseFrame(string(event.Type), data):
+		default:
+		}
 	})
 	if err != nil {
 		writeEngineError(w, logger, err)
@@ -482,6 +474,14 @@ func (s *Server) handleEngineEvents(w http.ResponseWriter, r *http.Request) {
 	}
 	defer s.discoveryDevices.Unsubscribe(id)
 
-	// Keep connection open until client disconnects
-	<-r.Context().Done()
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+	if _, err = w.Write([]byte(": ready\n\n")); err != nil {
+		return
+	}
+	flusher.Flush()
+
+	pumpSSE(r.Context(), w, flusher, ch, logger)
 }

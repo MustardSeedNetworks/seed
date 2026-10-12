@@ -362,6 +362,23 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/DiscoveredDevice'
+  GET /api/v1/discovery/engine/events:
+    responses:
+      "200":
+        description: >
+          A server-sent event stream that stays open until the client
+          disconnects. It opens with a `: ready` comment and sends a
+          `: heartbeat` comment every 30 s. Each discovery event is one frame
+          named by the event's type (`device.discovered`, `device.updated`,
+          `device.lost`, `scan.started`, `scan.completed`, …) whose `data` is
+          the event as JSON (`type`, `source`, `timestamp`, and `deviceMac`,
+          `device`, `changes`, `payload` or `error` where they apply). A client
+          that falls 64 frames behind loses frames; re-sync with
+          `GET /api/v1/discovery/engine`. 503 when the engine is not running.
+        content:
+          text/event-stream:
+            schema:
+              type: string
   POST /api/v1/discovery/engine/full:
     responses:
       "200":
@@ -408,6 +425,20 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/EnginesResponse'
+  GET /api/v1/events:
+    responses:
+      "200":
+        description: >
+          The live telemetry stream (Pro), open until the client disconnects.
+          Frames are unnamed; each `data` is a JSON message `{type, payload}`.
+          The first is `initial_state` (interface, whether it is wireless, and
+          the current card data); then `card_update`, `linkState`, `traceHop`,
+          `pathMonitor`, `deviceScanComplete` and `profileChanged` as they
+          happen. A `: heartbeat` comment is sent every 30 s.
+        content:
+          text/event-stream:
+            schema:
+              type: string
   GET /api/v1/flows/application-signatures:
     responses:
       "200":
@@ -558,6 +589,20 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/JobResponse'
+  GET /api/v1/jobs/events:
+    responses:
+      "200":
+        description: >
+          A server-sent event stream of every job's state changes, open until
+          the client disconnects. It opens with a `: ready` comment and sends
+          a `: heartbeat` comment every 30 s. Each change is one `job` frame
+          whose `data` is a `JobResponse`; clients filter by `id`. A client
+          that falls 64 frames behind loses frames; re-sync with
+          `GET /api/v1/jobs/{jobId}`.
+        content:
+          text/event-stream:
+            schema:
+              type: string
   GET /api/v1/jobs/{jobId}:
     responses:
       "200":
