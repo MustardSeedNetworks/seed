@@ -60,6 +60,7 @@ type ServiceStatus struct {
 	Interface       string           `json:"interface"`
 	ActiveMethods   []string         `json:"activeMethods"`
 	SNMPProbe       SNMPProbeReport  `json:"snmpProbe"` // The last sweep's SNMP probe of silent addresses
+	SweepCoverage   []SweepCoverage  `json:"sweepCoverage"`
 	RescanInterval  time.Duration    `json:"rescanInterval"`
 	ProfilingStatus *ProfilingStatus `json:"profilingStatus,omitempty"` // Detailed profiling state
 
@@ -539,6 +540,7 @@ func (s *Service) GetStatus() *ServiceStatus {
 		RescanInterval: rescanInterval,
 		ActiveMethods:  s.getActiveMethods(),
 		SNMPProbe:      s.deviceDiscovery.LastSNMPProbe(),
+		SweepCoverage:  s.deviceDiscovery.LastSweepCoverage(),
 	}
 
 	// Add profiling status

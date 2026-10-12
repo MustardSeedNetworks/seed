@@ -465,12 +465,14 @@ func TestDiscoveryServiceStatusResponseShape(t *testing.T) {
 	require.Equal(t, []string{
 		"activeMethods", "degradationStatus", "deviceCount", "interface", "lastScan", "localIP",
 		"profilingStatus", "rescanIntervalMs", "running", "scanning", "snmpProbe", "subnet", "subnets",
+		"sweepCoverage",
 	}, topLevelKeys(t, w.Body.Bytes()))
 
 	var got DiscoveryServiceStatusResponse
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
 	require.Equal(t, int64(300_000), got.RescanIntervalMs)
 	require.Equal(t, "healthy", got.DegradationStatus.OverallHealth)
+	require.Equal(t, []enumerate.SweepCoverage{}, got.SweepCoverage, "an array, not null, before the first sweep")
 }
 
 type noScanRadio struct{ statusRadio }

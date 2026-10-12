@@ -31,6 +31,21 @@ type sweepPlan struct {
 	probe bool
 }
 
+// SweepCoverage is how much of one network the last sweep probed, so an
+// operator can tell a partly swept network from a small one (seed#2686).
+// Total counts the hosts a sweep of every /24 would probe.
+type SweepCoverage struct {
+	Subnet string `json:"subnet"`
+	Swept  int    `json:"swept"`
+	Total  int    `json:"total"`
+}
+
+// coverage is what sweeping the plan covers of target.
+func (p sweepPlan) coverage(target netip.Prefix) SweepCoverage {
+	blocks := 1 << (cidrMask24 - target.Bits())
+	return SweepCoverage{Subnet: target.String(), Swept: len(p.hosts()), Total: blocks * hostsPerSubnet24}
+}
+
 // hosts lists the addresses the plan probes, in block order.
 func (p sweepPlan) hosts() []netip.Addr {
 	per := hostsPerSubnet24

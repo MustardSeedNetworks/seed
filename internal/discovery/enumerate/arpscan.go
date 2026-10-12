@@ -43,44 +43,9 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 	s.localIP = localIP
 	s.mu.Unlock()
 
-	// Perform ping sweep on primary subnet with retry logic
-	// Note: ping sweep may fail without CAP_NET_RAW - continue with ARP table
-	result := discovery.RetryWithBackoff(ctx, discovery.NetworkRetryConfig(), func() error {
-		_, sweepErr := s.pingSweep(ctx, subnet)
-		return sweepErr
-	})
-	if !result.Successful {
-		logging.GetLogger().WarnContext(ctx, "Ping sweep failed after retries (continuing with ARP table only)",
-			"subnet", subnet,
-			"attempts", result.Attempts,
-			"duration", result.TotalTime,
-			"error", result.LastError)
-	}
-
-	// Perform ping sweep on target networks with retry logic
-	var targetSwept []PingResult
-	for _, additionalSubnet := range targetNetworks {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("ping sweep cancelled: %w", ctx.Err())
-		default:
-			// Retry logic for target networks - continue even if some fail
-			subnetCopy := additionalSubnet // Capture for closure
-			var swept []PingResult
-			subnetResult := discovery.RetryWithBackoff(ctx, discovery.NetworkRetryConfig(), func() error {
-				var sweepErr error
-				swept, sweepErr = s.pingSweep(ctx, subnetCopy)
-				return sweepErr
-			})
-			targetSwept = append(targetSwept, swept...)
-			if !subnetResult.Successful {
-				logging.GetLogger().WarnContext(ctx, "Ping sweep failed for target network after retries",
-					"subnet", additionalSubnet,
-					"attempts", subnetResult.Attempts,
-					"duration", subnetResult.TotalTime,
-					"error", subnetResult.LastError)
-			}
-		}
+	targetSwept, err := s.sweepNetworks(ctx, subnet, targetNetworks)
+	if err != nil {
+		return err
 	}
 
 	// Read ARP table (will include entries from all scanned subnets)
@@ -129,10 +94,63 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 	return nil
 }
 
-// pingSweep sends ICMP echo requests to the hosts of subnet using raw sockets.
+// sweepNetworks ping-sweeps the primary subnet and then each target network,
+// records how much of each it covered, and returns the target networks'
+// results. A sweep that fails after its retries is logged and skipped: the
+// ARP table still answers for the primary subnet.
+func (s *ARPScanner) sweepNetworks(
+	ctx context.Context, subnet *net.IPNet, targetNetworks []*net.IPNet,
+) ([]PingResult, error) {
+	// Note: ping sweep may fail without CAP_NET_RAW - continue with ARP table
+	var primary SweepCoverage
+	result := discovery.RetryWithBackoff(ctx, discovery.NetworkRetryConfig(), func() error {
+		var sweepErr error
+		_, primary, sweepErr = s.pingSweep(ctx, subnet)
+		return sweepErr
+	})
+	coverage := []SweepCoverage{primary}
+	if !result.Successful {
+		logging.GetLogger().WarnContext(ctx, "Ping sweep failed after retries (continuing with ARP table only)",
+			"subnet", subnet,
+			"attempts", result.Attempts,
+			"duration", result.TotalTime,
+			"error", result.LastError)
+	}
+
+	var targetSwept []PingResult
+	for _, additionalSubnet := range targetNetworks {
+		if ctx.Err() != nil {
+			return nil, fmt.Errorf("ping sweep cancelled: %w", ctx.Err())
+		}
+		var swept []PingResult
+		var covered SweepCoverage
+		subnetResult := discovery.RetryWithBackoff(ctx, discovery.NetworkRetryConfig(), func() error {
+			var sweepErr error
+			swept, covered, sweepErr = s.pingSweep(ctx, additionalSubnet)
+			return sweepErr
+		})
+		targetSwept = append(targetSwept, swept...)
+		coverage = append(coverage, covered)
+		if !subnetResult.Successful {
+			logging.GetLogger().WarnContext(ctx, "Ping sweep failed for target network after retries",
+				"subnet", additionalSubnet,
+				"attempts", subnetResult.Attempts,
+				"duration", subnetResult.TotalTime,
+				"error", subnetResult.LastError)
+		}
+	}
+
+	s.mu.Lock()
+	s.coverage = coverage
+	s.mu.Unlock()
+	return targetSwept, nil
+}
+
+// pingSweep sends ICMP echo requests to the hosts of subnet using raw sockets,
+// and reports how much of subnet that covered; a failed sweep covered nothing.
 // A subnet wider than the per-sweep host cap is swept in the /24s planSweep
 // picks for it, so successive sweeps rotate through it (seed#2832).
-func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) ([]PingResult, error) {
+func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) ([]PingResult, SweepCoverage, error) {
 	target, ok := ipv4Prefix(subnet)
 	if !ok || target.Bits() >= cidrMask24 {
 		return s.pingSweepChunk(ctx, subnet)
@@ -156,6 +174,7 @@ func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) ([]PingRe
 	}
 	plan := turn.planSweep(target, evidence, maxHosts)
 	s.mu.Unlock()
+	coverage := plan.coverage(target)
 
 	logging.GetLogger().InfoContext(ctx, "Sweeping part of a target network wider than one sweep",
 		"subnet", target.String(),
@@ -170,24 +189,25 @@ func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) ([]PingRe
 	}
 	results, err := s.pingHosts(ctx, ips)
 	if err != nil {
-		return nil, err
+		coverage.Swept = 0
+		return nil, coverage, err
 	}
 
 	s.mu.Lock()
 	turn.commit(target, plan)
 	s.mu.Unlock()
-	return results, nil
+	return results, coverage, nil
 }
 
-// pingSweepChunk scans a single /24 or smaller subnet chunk.
-func (s *ARPScanner) pingSweepChunk(ctx context.Context, subnet *net.IPNet) ([]PingResult, error) {
+// pingSweepChunk scans a single /24 or smaller subnet chunk, all of it.
+func (s *ARPScanner) pingSweepChunk(ctx context.Context, subnet *net.IPNet) ([]PingResult, SweepCoverage, error) {
 	ones, bits := subnet.Mask.Size()
 	numHosts := 1<<(bits-ones) - subnetExcludeCount // Exclude network and broadcast
 
 	// Generate host IPs
 	baseIP := subnet.IP.Mask(subnet.Mask).To4()
 	if baseIP == nil {
-		return nil, errors.New("invalid subnet")
+		return nil, SweepCoverage{Subnet: subnet.String()}, errors.New("invalid subnet")
 	}
 
 	var ips []net.IP
@@ -196,7 +216,13 @@ func (s *ARPScanner) pingSweepChunk(ctx context.Context, subnet *net.IPNet) ([]P
 			ips = append(ips, ip)
 		}
 	}
-	return s.pingHosts(ctx, ips)
+	coverage := SweepCoverage{Subnet: (&net.IPNet{IP: baseIP, Mask: subnet.Mask}).String(), Total: len(ips)}
+	results, err := s.pingHosts(ctx, ips)
+	if err != nil {
+		return nil, coverage, err
+	}
+	coverage.Swept = coverage.Total
+	return results, coverage, nil
 }
 
 // pingHosts pings ips, skipping this host's own address, records who answered
