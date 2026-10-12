@@ -1722,6 +1722,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/TestsSettingsResponse'
+    responses:
+      "200":
+        description: The probe settings were saved. Each endpoint list replaces the stored list, so a list sent empty is cleared.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
   GET /api/v1/telemetry/publicip:
     responses:
       "200":

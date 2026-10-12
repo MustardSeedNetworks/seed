@@ -51,6 +51,7 @@ import type {
   TestsSettings,
   WiFiSettings as WiFiSettingsType,
 } from '../../types/settings';
+import { EMPTY_PROTOCOL_ENDPOINTS } from '../../types/settings';
 import { RequireAdmin } from '../ui/RequireRole';
 import { SettingsDrawerFooter } from './SettingsDrawerFooter';
 import { SettingsDrawerNetworkSection } from './SettingsDrawerNetworkSection';
@@ -168,6 +169,7 @@ export function SettingsDrawer({
     tcpPorts: [],
     udpPorts: [],
     httpEndpoints: [],
+    ...EMPTY_PROTOCOL_ENDPOINTS,
     runPerformance: true,
     runSpeedtest: true,
     runIperf: true,

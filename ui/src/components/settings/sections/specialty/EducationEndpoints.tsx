@@ -31,7 +31,6 @@ export function EducationEndpoints({
   } = useArrayItem(setTestsSettings, 'ltiEndpoints', () => ({
     name: '',
     launchUrl: 'https://',
-    consumerKey: '',
     enabled: true,
   }));
 
@@ -74,15 +73,6 @@ export function EducationEndpoints({
               }
               placeholder="https://lms.example.com/lti/launch"
               className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-            />
-            <input
-              type="text"
-              value={endpoint.consumerKey}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateLtiEndpoint(endpoint.id ?? '', 'consumerKey', e.target.value)
-              }
-              placeholder={t('health.consumerKey')}
-              className={cn(input.base, input.state.default, input.size.md, 'w-32')}
             />
             <button
               type="button"
