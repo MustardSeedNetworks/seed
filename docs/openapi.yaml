@@ -2371,6 +2371,10 @@ components:
                     items:
                         type: string
                     type: array
+                sweepCoverage:
+                    items:
+                        $ref: '#/components/schemas/SweepCoverage'
+                    type: array
             required:
                 - running
                 - scanning
@@ -2382,6 +2386,7 @@ components:
                 - interface
                 - activeMethods
                 - snmpProbe
+                - sweepCoverage
                 - rescanIntervalMs
             type: object
         DiscoveryTiming:
@@ -8831,6 +8836,20 @@ components:
                 - tcpConnections
                 - httpRequests
                 - truncated
+            type: object
+        SweepCoverage:
+            additionalProperties: false
+            properties:
+                subnet:
+                    type: string
+                swept:
+                    type: integer
+                total:
+                    type: integer
+            required:
+                - subnet
+                - swept
+                - total
             type: object
         SwitchCard:
             additionalProperties: false

@@ -16,6 +16,7 @@ export interface DiscoveryServiceStatusResponse {
   interface: string;
   activeMethods: string[];
   snmpProbe: SNMPProbeReport;
+  sweepCoverage: SweepCoverage[];
   rescanIntervalMs: number;
   profilingStatus?: ProfilingStatus;
   degradationStatus?: DegradationStatus;
@@ -25,6 +26,11 @@ export interface SNMPProbeReport {
   tried: number;
   answered: number;
   skipped?: string;
+}
+export interface SweepCoverage {
+  subnet: string;
+  swept: number;
+  total: number;
 }
 export interface ProfilingStatus {
   totalProfiled: number;

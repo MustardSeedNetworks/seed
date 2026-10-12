@@ -87,6 +87,12 @@
         "snmpProbe": {
           "$ref": "#/$defs/SNMPProbeReport"
         },
+        "sweepCoverage": {
+          "items": {
+            "$ref": "#/$defs/SweepCoverage"
+          },
+          "type": "array"
+        },
         "rescanIntervalMs": {
           "type": "integer"
         },
@@ -110,6 +116,7 @@
         "interface",
         "activeMethods",
         "snmpProbe",
+        "sweepCoverage",
         "rescanIntervalMs"
       ]
     },
@@ -177,6 +184,26 @@
         "silent",
         "tried",
         "answered"
+      ]
+    },
+    "SweepCoverage": {
+      "properties": {
+        "subnet": {
+          "type": "string"
+        },
+        "swept": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "subnet",
+        "swept",
+        "total"
       ]
     }
   },

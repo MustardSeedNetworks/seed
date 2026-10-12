@@ -23,6 +23,7 @@ const sampleStatus: DiscoveryServiceStatusResponse = {
   lastScan: new Date(Date.now() - 30000).toISOString(),
   rescanIntervalMs: 60_000,
   snmpProbe: { silent: 0, tried: 0, answered: 0 },
+  sweepCoverage: [{ subnet: '192.168.1.0/24', swept: 254, total: 254 }],
 };
 
 export const Running: Story = {

@@ -192,6 +192,7 @@ type DiscoveryServiceStatusResponse struct {
 	Interface         string                       `json:"interface"`
 	ActiveMethods     []string                     `json:"activeMethods"`
 	SNMPProbe         enumerate.SNMPProbeReport    `json:"snmpProbe"`
+	SweepCoverage     []enumerate.SweepCoverage    `json:"sweepCoverage"`
 	RescanIntervalMs  int64                        `json:"rescanIntervalMs"`
 	ProfilingStatus   *discovery.ProfilingStatus   `json:"profilingStatus,omitempty"`
 	DegradationStatus *discovery.DegradationStatus `json:"degradationStatus,omitempty"`
@@ -213,6 +214,7 @@ func (s *Server) handleDiscoveryServiceStatus(w http.ResponseWriter, r *http.Req
 		Interface:         status.Interface,
 		ActiveMethods:     status.ActiveMethods,
 		SNMPProbe:         status.SNMPProbe,
+		SweepCoverage:     status.SweepCoverage,
 		RescanIntervalMs:  status.RescanInterval.Milliseconds(),
 		ProfilingStatus:   status.ProfilingStatus,
 		DegradationStatus: status.DegradationStatus,

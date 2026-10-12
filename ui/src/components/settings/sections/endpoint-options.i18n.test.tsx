@@ -87,6 +87,7 @@ describe('endpoint options — Spanish, with no English left behind', () => {
           activeMethods: [],
           rescanIntervalMs: 0,
           snmpProbe: { silent: 0, tried: 0, answered: 0 },
+          sweepCoverage: [],
         }}
         loading={false}
         onRefresh={() => {}}
