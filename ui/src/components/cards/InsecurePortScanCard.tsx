@@ -22,8 +22,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useRole } from '../../contexts/RoleContext';
-import { type ScannedService, useInsecurePortScan } from '../../hooks/useInsecurePortScan';
+import { useInsecurePortScan } from '../../hooks/useInsecurePortScan';
 import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
+import type { ServiceInfo } from '../../types/generated/port-scan-response';
 import { Button } from '../ui/Button';
 import { Card, type Status } from '../ui/Card';
 import { AlertTriangle, CheckCircle, ShieldAlert } from '../ui/Icons';
@@ -101,7 +102,7 @@ function riskKeyFor(port: number): string | null {
   return RISK_KEYS[port] ?? null;
 }
 
-function isOpen(service: ScannedService): boolean {
+function isOpen(service: ServiceInfo): boolean {
   return service.state === 'open';
 }
 

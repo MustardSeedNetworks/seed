@@ -221,8 +221,8 @@ type PassiveProtocolResponse struct {
 	NDP  bool `json:"ndp"`
 }
 
-// PortScanResponse represents port scanning settings.
-type PortScanResponse struct {
+// PortScanSettingsResponse represents port scanning settings.
+type PortScanSettingsResponse struct {
 	Enabled  bool   `json:"enabled"`
 	Preset   string `json:"preset"`
 	TCPPorts string `json:"tcpPorts"`
@@ -230,12 +230,12 @@ type PortScanResponse struct {
 
 // OptionsResponse represents discovery options.
 type OptionsResponse struct {
-	PassiveProtocols PassiveProtocolResponse `json:"passiveProtocols"`
-	ARPScan          bool                    `json:"arpScan"`
-	ICMPScan         bool                    `json:"icmpScan"`
-	PortScan         PortScanResponse        `json:"portScan"`
-	Traceroute       bool                    `json:"traceroute"`
-	SNMPQuery        bool                    `json:"snmpQuery"`
+	PassiveProtocols PassiveProtocolResponse  `json:"passiveProtocols"`
+	ARPScan          bool                     `json:"arpScan"`
+	ICMPScan         bool                     `json:"icmpScan"`
+	PortScan         PortScanSettingsResponse `json:"portScan"`
+	Traceroute       bool                     `json:"traceroute"`
+	SNMPQuery        bool                     `json:"snmpQuery"`
 }
 
 // TimingResponse represents discovery timing settings.
@@ -329,7 +329,7 @@ func discoveryConfigToResponse(cfg config.NetworkDiscoveryConfig) NetworkDiscove
 			},
 			ARPScan:  cfg.Options.ARPScan,
 			ICMPScan: cfg.Options.ICMPScan,
-			PortScan: PortScanResponse{
+			PortScan: PortScanSettingsResponse{
 				Enabled:  cfg.Options.PortScan.Enabled,
 				Preset:   string(cfg.Options.PortScan.Preset),
 				TCPPorts: cfg.Options.PortScan.TCPPorts,

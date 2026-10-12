@@ -10,6 +10,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { COMMON_PORTS } from '../components/cards/NetworkDiscoveryCardHelpers';
 import type {
   DiscoveredDevice,
   NetworkDiscoveryData,
@@ -101,7 +102,7 @@ function expectVulnScanQueued(): Promise<void> {
 
 beforeEach(() => {
   vi.useFakeTimers();
-  mockPost.mockResolvedValue({ ip: DEVICE.ip, services: [] });
+  mockPost.mockResolvedValue({ ip: DEVICE.ip, services: [], scanTimeMs: 0 });
   mockSubmitJob.mockResolvedValue({ id: 'job-1', kind: 'vuln-scan', state: 'queued', progress: 0 });
 });
 
@@ -118,6 +119,14 @@ describe('useNetworkDiscoveryAutoScan settings', () => {
     stubDaemon(true, false);
     renderHook(() => useNetworkDiscoveryAutoScan(DISCOVERY));
     await expectPosted(PORT_SCAN_PATH, expect.objectContaining({ target: DEVICE.ip }));
+  });
+
+  // The daemon decodes the request strictly. The hook also sent a
+  // `timeout` the request does not have, so every deep scan answered 400.
+  it('posts only fields the port-scan request accepts', async () => {
+    stubDaemon(true, false);
+    renderHook(() => useNetworkDiscoveryAutoScan(DISCOVERY));
+    await expectPosted(PORT_SCAN_PATH, { target: DEVICE.ip, ports: COMMON_PORTS });
   });
 
   it('does not port-scan when port scanning is disabled', async () => {
