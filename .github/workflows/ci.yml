@@ -367,6 +367,15 @@ jobs:
       - name: Check package reachability
         run: ./scripts/check-package-reachability.sh
 
+      # The UI half of the same question. dead-code.yml's weekly grep only
+      # reported orphaned .tsx files, so AppDashboard.tsx sat unimported for
+      # months and took NetworkDiscoveryCard's only non-Pro mount with it
+      # (#2707). Needs the UI dependencies installed above for @babel/parser.
+      - name: Check UI file reachability
+        run: |
+          node --test scripts/check-ui-file-reachability.test.ts
+          node scripts/check-ui-file-reachability.ts
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
