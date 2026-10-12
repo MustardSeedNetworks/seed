@@ -278,32 +278,21 @@ jobs:
       - name: Test (port fallback)
         run: go test ./internal/api/ -run 'IsAddrInUse|BindWithFallback' -v
 
-  # Windows-tagged Go has never been linted: golangci-lint runs on ubuntu and
-  # skips *_windows.go, and the Windows job runs build/vet/tests but no linter.
-  # GOOS=windows makes golangci-lint compile and lint the whole Windows tree on
-  # Linux -- nothing Windows-side needs cgo -- so this costs one job, no runner.
-  #
-  # only-new-issues, because the tree carries 231 pre-existing findings
-  # (seed#2408); gating them all would block every PR. New Windows debt is
-  # blocked from today; the burndown is #2408 step 3. Moved lines count as
-  # new, so a PR that touches a Windows file may surface old findings on the
-  # lines it moves -- fix them, that is the ratchet working.
-  #
-  # pull_request only: only-new-issues needs a base to diff against, and on
-  # merge_group there is none -- it would fall back to all 231 and redden
-  # every merge. ci-complete accepts skipped, so this is not a deadlock.
+  # golangci-lint on ubuntu skips every *_windows.go file. GOOS=windows makes
+  # it compile and lint the whole Windows tree on Linux -- nothing Windows-side
+  # needs cgo -- so this costs one job, no runner. The tree is at zero findings
+  # (#2421), so this gates the whole tree on every event, merge queue included
+  # (#2291).
   lint-windows:
     name: Lint (GOOS=windows)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: github.event_name == 'pull_request'
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # only-new-issues diffs against the PR base, which a shallow clone
-          # does not have.
-          fetch-depth: 0
 
       - name: Set up Go
         uses: ./.github/actions/setup-go
@@ -314,7 +303,6 @@ jobs:
           GOOS: windows
         with:
           version: v2.14.0
-          only-new-issues: true
           # See the Backend (Go) step below: the action's cache key carries no
           # GOOS, so this job and that one share one entry while analysing two
           # different trees. #2511.
