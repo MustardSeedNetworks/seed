@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.255.1](https://github.com/MustardSeedNetworks/seed/compare/v0.255.0...v0.255.1) (2026-10-12)
+
+
+### Bug Fixes
+
+* **config:** drop the database tuning keys the daemon never read ([#3360](https://github.com/MustardSeedNetworks/seed/issues/3360)) ([57286d5](https://github.com/MustardSeedNetworks/seed/commit/57286d5bf3ad3930c687813a07602b615ee8912f)), closes [#2570](https://github.com/MustardSeedNetworks/seed/issues/2570)
+* **discovery:** read mDNS names whose labels contain a dot (D-SEED-61) ([#3353](https://github.com/MustardSeedNetworks/seed/issues/3353)) ([59b3a3e](https://github.com/MustardSeedNetworks/seed/commit/59b3a3e9a4bbafff26bdf4d776463220153fbb8b)), closes [#2626](https://github.com/MustardSeedNetworks/seed/issues/2626)
+* **gateway:** report a missing default route as ErrNoGateway ([#3362](https://github.com/MustardSeedNetworks/seed/issues/3362)) ([5d3aedf](https://github.com/MustardSeedNetworks/seed/commit/5d3aedf56c5424b1c7e2f842a11291a640bf3ae9)), closes [#2375](https://github.com/MustardSeedNetworks/seed/issues/2375)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3355](https://github.com/MustardSeedNetworks/seed/issues/3355)) ([2180da2](https://github.com/MustardSeedNetworks/seed/commit/2180da2c193721455981eb653a137a9e58e74df2))
+* **deps:** lock file maintenance ([#3358](https://github.com/MustardSeedNetworks/seed/issues/3358)) ([afe3b26](https://github.com/MustardSeedNetworks/seed/commit/afe3b2679f5ab6fb75bb4019165412a6164c8dba))
+* **deps:** lock file maintenance ([#3361](https://github.com/MustardSeedNetworks/seed/issues/3361)) ([d13f99f](https://github.com/MustardSeedNetworks/seed/commit/d13f99f73254f50265a0d3662baf1d809ebd2808))
+
 ## [0.255.0](https://github.com/MustardSeedNetworks/seed/compare/v0.254.5...v0.255.0) (2026-10-12)
 
 
