@@ -1019,6 +1019,54 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/LogStatsResponse'
+  GET /api/v1/report-schedules:
+    responses:
+      "200":
+        description: The report schedules.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportSchedulesResponse'
+  POST /api/v1/report-schedules:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReportScheduleRequest'
+    responses:
+      "201":
+        description: The schedule was created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportScheduleInfo'
+  GET /api/v1/report-schedules/{scheduleId}:
+    responses:
+      "200":
+        description: The schedule.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportScheduleInfo'
+  PUT /api/v1/report-schedules/{scheduleId}:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReportScheduleRequest'
+    responses:
+      "200":
+        description: The updated schedule.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportScheduleInfo'
+  DELETE /api/v1/report-schedules/{scheduleId}:
+    responses:
+      "204":
+        description: The schedule was deleted.
   GET /api/v1/reports:
     responses:
       "200":
@@ -1041,50 +1089,30 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/ReportInfo'
-  GET /api/v1/reports/schedules:
+  GET /api/v1/reports/{reportId}:
     responses:
       "200":
-        description: The report schedules.
+        description: The report record; its file is at /download once status is complete.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReportSchedulesResponse'
-  POST /api/v1/reports/schedules:
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ReportScheduleRequest'
+              $ref: '#/components/schemas/ReportInfo'
+  DELETE /api/v1/reports/{reportId}:
     responses:
-      "201":
-        description: The schedule was created.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ReportScheduleInfo'
-  GET /api/v1/reports/schedules/:
+      "204":
+        description: The report and its file were deleted.
+  GET /api/v1/reports/{reportId}/download:
     responses:
       "200":
-        description: The schedule.
+        description: >
+          The generated file, sent as the <reportId>.<format> attachment with
+          the format's media type (PDF, HTML, CSV, JSON, XLSX or Markdown).
+          An unknown report is 404, one still being generated 409.
         content:
-          application/json:
+          application/octet-stream:
             schema:
-              $ref: '#/components/schemas/ReportScheduleInfo'
-  PUT /api/v1/reports/schedules/:
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ReportScheduleRequest'
-    responses:
-      "200":
-        description: The updated schedule.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ReportScheduleInfo'
+              type: string
+              contentMediaType: application/octet-stream
   GET /api/v1/security/devices:
     responses:
       "200":

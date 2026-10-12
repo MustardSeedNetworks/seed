@@ -1011,13 +1011,37 @@ body:
   {
     "auth": true,
     "csrf": true,
+    "feature": "export_csv_json",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "DELETE"
+    ],
+    "path": "/api/v1/reports/{reportId}",
+    "rateLimited": false,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "feature": "export_csv_json",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/reports/{reportId}/download",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": true,
     "feature": "scheduled_reports",
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST"
     ],
-    "path": "/api/v1/reports/schedules",
+    "path": "/api/v1/report-schedules",
     "rateLimited": false,
     "scope": "operator"
   },
@@ -1031,20 +1055,7 @@ body:
       "PUT",
       "DELETE"
     ],
-    "path": "/api/v1/reports/schedules/",
-    "rateLimited": false,
-    "scope": "operator"
-  },
-  {
-    "auth": true,
-    "csrf": true,
-    "feature": "export_csv_json",
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET",
-      "DELETE"
-    ],
-    "path": "/api/v1/reports/",
+    "path": "/api/v1/report-schedules/{scheduleId}",
     "rateLimited": false,
     "scope": "operator"
   },

@@ -14198,6 +14198,206 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
             security: []
+    /api/v1/report-schedules:
+        get:
+            operationId: getApiV1ReportSchedules
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ReportSchedulesResponse'
+                    description: The report schedules.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+        post:
+            description: Requires an operator-scoped token.
+            operationId: postApiV1ReportSchedules
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ReportScheduleRequest'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ReportScheduleInfo'
+                    description: The schedule was created.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/report-schedules/{scheduleId}:
+        delete:
+            description: Requires an operator-scoped token.
+            operationId: deleteApiV1ReportSchedulesScheduleId
+            responses:
+                "204":
+                    description: The schedule was deleted.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+        get:
+            operationId: getApiV1ReportSchedulesScheduleId
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ReportScheduleInfo'
+                    description: The schedule.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: scheduleId
+              required: true
+              schema:
+                type: string
+        put:
+            description: Requires an operator-scoped token.
+            operationId: putApiV1ReportSchedulesScheduleId
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ReportScheduleRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ReportScheduleInfo'
+                    description: The updated schedule.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
     /api/v1/reporting/export:
         get:
             operationId: getApiV1ReportingExport
@@ -14407,11 +14607,13 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
-    /api/v1/reports/{subpath}:
+    /api/v1/reports/{reportId}:
         delete:
             description: Requires an operator-scoped token.
-            operationId: deleteApiV1ReportsSubpath
+            operationId: deleteApiV1ReportsReportId
             responses:
+                "204":
+                    description: The report and its file were deleted.
                 "401":
                     content:
                         application/json:
@@ -14446,8 +14648,14 @@ paths:
                 - BearerAuth: []
                   CsrfToken: []
         get:
-            operationId: getApiV1ReportsSubpath
+            operationId: getApiV1ReportsReportId
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ReportInfo'
+                    description: The report record; its file is at /download once status is complete.
                 "401":
                     content:
                         application/json:
@@ -14467,9 +14675,46 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
         parameters:
-            - description: Trailing path segment; this route matches by prefix.
+            - description: Path parameter.
               in: path
-              name: subpath
+              name: reportId
+              required: true
+              schema:
+                type: string
+    /api/v1/reports/{reportId}/download:
+        get:
+            operationId: getApiV1ReportsReportIdDownload
+            responses:
+                "200":
+                    content:
+                        application/octet-stream:
+                            schema:
+                                contentMediaType: application/octet-stream
+                                type: string
+                    description: |
+                        The generated file, sent as the <reportId>.<format> attachment with the format's media type (PDF, HTML, CSV, JSON, XLSX or Markdown). An unknown report is 404, one still being generated 409.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: reportId
               required: true
               schema:
                 type: string
@@ -14520,204 +14765,6 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Error'
                     description: Rate limit exceeded for this route class.
-                "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Internal error.
-            security:
-                - BearerAuth: []
-                  CsrfToken: []
-    /api/v1/reports/schedules:
-        get:
-            operationId: getApiV1ReportsSchedules
-            responses:
-                "200":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ReportSchedulesResponse'
-                    description: The report schedules.
-                "401":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Missing or invalid bearer token.
-                "405":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Method not allowed; the Allow header lists the accepted set.
-                "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Internal error.
-        post:
-            description: Requires an operator-scoped token.
-            operationId: postApiV1ReportsSchedules
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/ReportScheduleRequest'
-                required: true
-            responses:
-                "201":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ReportScheduleInfo'
-                    description: The schedule was created.
-                "401":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Missing or invalid bearer token.
-                "403":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Operator scope required, or CSRF token missing or invalid.
-                "405":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Method not allowed; the Allow header lists the accepted set.
-                "413":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Request body larger than 262144 bytes.
-                "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Internal error.
-            security:
-                - BearerAuth: []
-                  CsrfToken: []
-    /api/v1/reports/schedules/{subpath}:
-        delete:
-            description: Requires an operator-scoped token.
-            operationId: deleteApiV1ReportsSchedulesSubpath
-            responses:
-                "401":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Missing or invalid bearer token.
-                "403":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Operator scope required, or CSRF token missing or invalid.
-                "405":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Method not allowed; the Allow header lists the accepted set.
-                "413":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Request body larger than 262144 bytes.
-                "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Internal error.
-            security:
-                - BearerAuth: []
-                  CsrfToken: []
-        get:
-            operationId: getApiV1ReportsSchedulesSubpath
-            responses:
-                "200":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ReportScheduleInfo'
-                    description: The schedule.
-                "401":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Missing or invalid bearer token.
-                "405":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Method not allowed; the Allow header lists the accepted set.
-                "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Internal error.
-        parameters:
-            - description: Trailing path segment; this route matches by prefix.
-              in: path
-              name: subpath
-              required: true
-              schema:
-                type: string
-        put:
-            description: Requires an operator-scoped token.
-            operationId: putApiV1ReportsSchedulesSubpath
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/ReportScheduleRequest'
-                required: true
-            responses:
-                "200":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ReportScheduleInfo'
-                    description: The updated schedule.
-                "401":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Missing or invalid bearer token.
-                "403":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Operator scope required, or CSRF token missing or invalid.
-                "405":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Method not allowed; the Allow header lists the accepted set.
-                "413":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Request body larger than 262144 bytes.
                 "500":
                     content:
                         application/json:

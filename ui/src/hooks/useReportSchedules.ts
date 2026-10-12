@@ -15,7 +15,7 @@ import type { ReportScheduleRequest } from '../types/generated/report-schedule-r
 import type { ReportSchedulesResponse } from '../types/generated/report-schedules-response';
 import type { ReportFormat } from './useReports';
 
-const schedulesEndpoint = '/api/v1/reports/schedules';
+const schedulesEndpoint = '/api/v1/report-schedules';
 
 export type ReportTemplate = 'executive' | 'vulnerability' | 'inventory' | 'performance';
 

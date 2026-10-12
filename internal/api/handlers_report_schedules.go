@@ -13,12 +13,8 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 )
 
-// reportSchedulesPathPrefix is the schedule collection path with its trailing
-// slash, so handleReportScheduleByID can recover the id.
-const reportSchedulesPathPrefix = APIVersionPrefix + "/reports/schedules/"
-
-// ReportScheduleRequest is the body of POST /api/v1/reports/schedules and of
-// PUT /api/v1/reports/schedules/{id}. A PUT replaces the whole schedule.
+// ReportScheduleRequest is the body of POST /api/v1/report-schedules and of
+// PUT /api/v1/report-schedules/{scheduleId}. A PUT replaces the whole schedule.
 //
 // Enabled is a pointer so that leaving it out is an error rather than a
 // silently disabled schedule.
@@ -45,7 +41,7 @@ type ReportScheduleInfo struct {
 	UpdatedAt string             `json:"updatedAt"`
 }
 
-// ReportSchedulesResponse is the payload of GET /api/v1/reports/schedules.
+// ReportSchedulesResponse is the payload of GET /api/v1/report-schedules.
 type ReportSchedulesResponse struct {
 	Schedules []ReportScheduleInfo `json:"schedules"`
 }
@@ -87,7 +83,7 @@ func (s *Server) reportScheduler(
 	return s.background.Reporting.Scheduler(), true
 }
 
-// handleReportSchedules serves GET and POST on /api/v1/reports/schedules.
+// handleReportSchedules serves GET and POST on /api/v1/report-schedules.
 func (s *Server) handleReportSchedules(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
@@ -132,14 +128,12 @@ func (s *Server) handleReportSchedules(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleReportScheduleByID serves GET, PUT and DELETE on
-// /api/v1/reports/schedules/{id}.
+// /api/v1/report-schedules/{scheduleId}.
 func (s *Server) handleReportScheduleByID(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	id := strings.TrimPrefix(r.URL.Path, reportSchedulesPathPrefix)
-	if !reportIDPattern.MatchString(id) {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, i18n.FromRequest(r).T("errors.reports.invalidScheduleID"), "")
+	id, ok := reportPathID(w, r, "scheduleId", i18n.FromRequest(r).T("errors.reports.invalidScheduleID"))
+	if !ok {
 		return
 	}
 
