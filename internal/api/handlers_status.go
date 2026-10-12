@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/capabilities"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/export"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/system"
@@ -57,6 +58,10 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
+// ExportResponse is GET /reporting/export: the diagnostic export document,
+// served as the export use-case builds it.
+type ExportResponse export.Data
+
 // handleExport exports current diagnostic data as JSON (fixes #544 - split from
 // handlers.go). Accepts optional query parameter: ?interface=eth0. Thin transport
 // (ADR-0020): the export-assembly fan-out lives in the export use-case.
@@ -77,7 +82,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment; filename=seed-export.json")
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
-	if encErr := encoder.Encode(data); encErr != nil {
+	if encErr := encoder.Encode(ExportResponse(data)); encErr != nil {
 		logger.ErrorContext(r.Context(), "Error encoding export response", "error", encErr)
 	}
 }

@@ -1,0 +1,490 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/export-response.schema.json",
+  "$ref": "#/$defs/ExportResponse",
+  "$defs": {
+    "CableCard": {
+      "properties": {
+        "supported": {
+          "type": "boolean"
+        },
+        "length": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string"
+        },
+        "faults": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "supported",
+        "status",
+        "faults"
+      ]
+    },
+    "Cards": {
+      "properties": {
+        "link": {
+          "$ref": "#/$defs/LinkCard"
+        },
+        "ipConfig": {
+          "$ref": "#/$defs/IPConfigCard"
+        },
+        "switch": {
+          "$ref": "#/$defs/SwitchCard"
+        },
+        "dns": {
+          "$ref": "#/$defs/DNSCard"
+        },
+        "gateway": {
+          "$ref": "#/$defs/GatewayCard"
+        },
+        "vlan": {
+          "$ref": "#/$defs/VLANCard"
+        },
+        "wifi": {
+          "$ref": "#/$defs/WiFiCard"
+        },
+        "cable": {
+          "$ref": "#/$defs/CableCard"
+        },
+        "speedtest": {
+          "$ref": "#/$defs/SpeedtestCard"
+        },
+        "iperf": {
+          "$ref": "#/$defs/IperfCard"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "DNSCard": {
+      "properties": {
+        "server": {
+          "type": "string"
+        },
+        "testHostname": {
+          "type": "string"
+        },
+        "forward": {
+          "$ref": "#/$defs/DNSLookup"
+        },
+        "reverse": {
+          "$ref": "#/$defs/DNSLookup"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "server",
+        "testHostname"
+      ]
+    },
+    "DNSLookup": {
+      "properties": {
+        "result": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "time": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "result",
+        "time",
+        "status",
+        "error"
+      ]
+    },
+    "DeviceInfo": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "ipMode": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface",
+        "ipMode"
+      ]
+    },
+    "ExportResponse": {
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "device": {
+          "$ref": "#/$defs/DeviceInfo"
+        },
+        "cards": {
+          "$ref": "#/$defs/Cards"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "version",
+        "timestamp",
+        "device",
+        "cards"
+      ]
+    },
+    "GatewayCard": {
+      "properties": {
+        "gateway": {
+          "type": "string"
+        },
+        "reachable": {
+          "type": "boolean"
+        },
+        "sent": {
+          "type": "integer"
+        },
+        "received": {
+          "type": "integer"
+        },
+        "lossPercent": {
+          "type": "number"
+        },
+        "avgTime": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "gateway",
+        "reachable",
+        "sent",
+        "received",
+        "lossPercent",
+        "avgTime",
+        "status"
+      ]
+    },
+    "IPConfigCard": {
+      "properties": {
+        "addresses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "lease": {
+          "$ref": "#/$defs/LeaseCard"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "addresses"
+      ]
+    },
+    "IperfCard": {
+      "properties": {
+        "bandwidth": {
+          "type": "number"
+        },
+        "transfer": {
+          "type": "number"
+        },
+        "retransmits": {
+          "type": "integer"
+        },
+        "jitter": {
+          "type": "number"
+        },
+        "lostPackets": {
+          "type": "integer"
+        },
+        "lostPercent": {
+          "type": "number"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "server": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "bandwidth",
+        "transfer",
+        "retransmits",
+        "jitter",
+        "lostPackets",
+        "lostPercent",
+        "protocol",
+        "direction",
+        "duration",
+        "server",
+        "port",
+        "timestamp"
+      ]
+    },
+    "LeaseCard": {
+      "properties": {
+        "dhcpServer": {
+          "type": "string"
+        },
+        "gateway": {
+          "type": "string"
+        },
+        "leaseTime": {
+          "type": "integer"
+        },
+        "dns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "dhcpServer",
+        "gateway",
+        "leaseTime",
+        "dns"
+      ]
+    },
+    "LinkCard": {
+      "properties": {
+        "linkUp": {
+          "type": "boolean"
+        },
+        "speed": {
+          "type": "string"
+        },
+        "duplex": {
+          "type": "string"
+        },
+        "autoNeg": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "linkUp",
+        "speed",
+        "duplex",
+        "autoNeg"
+      ]
+    },
+    "NeighborRecord": {
+      "properties": {
+        "protocol": {
+          "type": "string"
+        },
+        "systemName": {
+          "type": "string"
+        },
+        "portId": {
+          "type": "string"
+        },
+        "portDescription": {
+          "type": "string"
+        },
+        "managementAddress": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "protocol",
+        "systemName",
+        "portId",
+        "portDescription",
+        "managementAddress"
+      ]
+    },
+    "SpeedtestCard": {
+      "properties": {
+        "download": {
+          "type": "number"
+        },
+        "upload": {
+          "type": "number"
+        },
+        "latency": {
+          "type": "number"
+        },
+        "server": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "distance": {
+          "type": "number"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "testDuration": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "download",
+        "upload",
+        "latency",
+        "server",
+        "location",
+        "host",
+        "distance",
+        "timestamp",
+        "testDuration"
+      ]
+    },
+    "SwitchCard": {
+      "properties": {
+        "running": {
+          "type": "boolean"
+        },
+        "neighbors": {
+          "items": {
+            "$ref": "#/$defs/NeighborRecord"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "running",
+        "neighbors"
+      ]
+    },
+    "VLANCard": {
+      "properties": {
+        "nativeVlan": {
+          "type": "integer"
+        },
+        "taggedVlans": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "voiceVlan": {
+          "type": "integer"
+        },
+        "configured": {
+          "$ref": "#/$defs/VLANConfigured"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "taggedVlans",
+        "configured"
+      ]
+    },
+    "VLANConfigured": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "id": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "id"
+      ]
+    },
+    "WiFiCard": {
+      "properties": {
+        "ssid": {
+          "type": "string"
+        },
+        "bssid": {
+          "type": "string"
+        },
+        "signal": {
+          "type": "integer"
+        },
+        "channel": {
+          "type": "integer"
+        },
+        "frequency": {
+          "type": "integer"
+        },
+        "security": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ssid",
+        "bssid",
+        "signal",
+        "channel",
+        "frequency",
+        "security"
+      ]
+    }
+  },
+  "title": "ExportResponse",
+  "description": "ExportResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

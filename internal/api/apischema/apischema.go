@@ -322,6 +322,10 @@ func Targets() []Target {
 		// flat type, named for the API.
 		{&api.GuestAuditReport{}, "guest-audit-report.schema.json"},
 
+		// The diagnostic export document /reporting/export downloads, the
+		// export use-case's own flat card types, named for the API.
+		{&api.ExportResponse{}, "export-response.schema.json"},
+
 		// #326's packet capture, a jobs-spine kind registered as the
 		// packetcapture package's own types like the two above.
 		{&packetcapture.Request{}, "packet-capture-request.schema.json"},

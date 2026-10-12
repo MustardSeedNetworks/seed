@@ -924,6 +924,24 @@ components:
             required:
                 - token
             type: object
+        CableCard:
+            additionalProperties: false
+            properties:
+                faults:
+                    items:
+                        type: string
+                    type: array
+                length:
+                    type: number
+                status:
+                    type: string
+                supported:
+                    type: boolean
+            required:
+                - supported
+                - status
+                - faults
+            type: object
         CablePairResult:
             additionalProperties: false
             properties:
@@ -1049,6 +1067,30 @@ components:
                 - healthChecks
                 - networkDiscovery
                 - performance
+            type: object
+        Cards:
+            additionalProperties: false
+            properties:
+                cable:
+                    $ref: '#/components/schemas/CableCard'
+                dns:
+                    $ref: '#/components/schemas/DNSCard'
+                gateway:
+                    $ref: '#/components/schemas/GatewayCard'
+                ipConfig:
+                    $ref: '#/components/schemas/IPConfigCard'
+                iperf:
+                    $ref: '#/components/schemas/IperfCard'
+                link:
+                    $ref: '#/components/schemas/LinkCard'
+                speedtest:
+                    $ref: '#/components/schemas/SpeedtestCard'
+                switch:
+                    $ref: '#/components/schemas/SwitchCard'
+                vlan:
+                    $ref: '#/components/schemas/VLANCard'
+                wifi:
+                    $ref: '#/components/schemas/WiFiCard'
             type: object
         CategorizedInterfacesResponse:
             additionalProperties: false
@@ -1651,6 +1693,21 @@ components:
                 - aeTitle
                 - totalTimeMs
             type: object
+        DNSCard:
+            additionalProperties: false
+            properties:
+                forward:
+                    $ref: '#/components/schemas/DNSLookup'
+                reverse:
+                    $ref: '#/components/schemas/DNSLookup'
+                server:
+                    type: string
+                testHostname:
+                    type: string
+            required:
+                - server
+                - testHostname
+            type: object
         DNSConfig:
             additionalProperties: false
             properties:
@@ -1665,6 +1722,25 @@ components:
             required:
                 - test_hostname
                 - timeout
+            type: object
+        DNSLookup:
+            additionalProperties: false
+            properties:
+                error:
+                    type: string
+                result:
+                    items:
+                        type: string
+                    type: array
+                status:
+                    type: string
+                time:
+                    type: integer
+            required:
+                - result
+                - time
+                - status
+                - error
             type: object
         DNSLookupResult:
             additionalProperties: false
@@ -1969,6 +2045,19 @@ components:
                 - subnet
                 - localIP
                 - interface
+            type: object
+        DeviceInfo:
+            additionalProperties: false
+            properties:
+                interface:
+                    type: string
+                ipMode:
+                    type: string
+                mac:
+                    type: string
+            required:
+                - interface
+                - ipMode
             type: object
         DeviceProfile:
             additionalProperties: false
@@ -2676,6 +2765,23 @@ components:
                 - bufferedEvents
                 - bufferSize
             type: object
+        ExportResponse:
+            additionalProperties: false
+            properties:
+                cards:
+                    $ref: '#/components/schemas/Cards'
+                device:
+                    $ref: '#/components/schemas/DeviceInfo'
+                timestamp:
+                    type: string
+                version:
+                    type: string
+            required:
+                - version
+                - timestamp
+                - device
+                - cards
+            type: object
         FABOptionsConfig:
             additionalProperties: false
             properties:
@@ -3072,6 +3178,32 @@ components:
                 - kind
                 - label
                 - action
+            type: object
+        GatewayCard:
+            additionalProperties: false
+            properties:
+                avgTime:
+                    type: number
+                gateway:
+                    type: string
+                lossPercent:
+                    type: number
+                reachable:
+                    type: boolean
+                received:
+                    type: integer
+                sent:
+                    type: integer
+                status:
+                    type: string
+            required:
+                - gateway
+                - reachable
+                - sent
+                - received
+                - lossPercent
+                - avgTime
+                - status
             type: object
         GatewayPingResult:
             additionalProperties: false
@@ -3779,6 +3911,18 @@ components:
             required:
                 - mode
             type: object
+        IPConfigCard:
+            additionalProperties: false
+            properties:
+                addresses:
+                    items:
+                        type: string
+                    type: array
+                lease:
+                    $ref: '#/components/schemas/LeaseCard'
+            required:
+                - addresses
+            type: object
         IPConfigResponse:
             additionalProperties: false
             properties:
@@ -4226,6 +4370,48 @@ components:
                 - name
                 - operStatus
                 - speedBps
+            type: object
+        IperfCard:
+            additionalProperties: false
+            properties:
+                bandwidth:
+                    type: number
+                direction:
+                    type: string
+                duration:
+                    type: number
+                jitter:
+                    type: number
+                lostPackets:
+                    type: integer
+                lostPercent:
+                    type: number
+                port:
+                    type: integer
+                protocol:
+                    type: string
+                retransmits:
+                    type: integer
+                server:
+                    type: string
+                timestamp:
+                    format: date-time
+                    type: string
+                transfer:
+                    type: number
+            required:
+                - bandwidth
+                - transfer
+                - retransmits
+                - jitter
+                - lostPackets
+                - lostPercent
+                - protocol
+                - direction
+                - duration
+                - server
+                - port
+                - timestamp
             type: object
         IperfClientRequest:
             additionalProperties: false
@@ -4700,6 +4886,25 @@ components:
                 - launchUrl
                 - totalTimeMs
             type: object
+        LeaseCard:
+            additionalProperties: false
+            properties:
+                dhcpServer:
+                    type: string
+                dns:
+                    items:
+                        type: string
+                    type: array
+                gateway:
+                    type: string
+                leaseTime:
+                    type: integer
+            required:
+                - dhcpServer
+                - gateway
+                - leaseTime
+                - dns
+            type: object
         LicenseStatusResponse:
             additionalProperties: false
             properties:
@@ -4731,6 +4936,23 @@ components:
                 - canMintTokens
                 - activated
                 - features
+            type: object
+        LinkCard:
+            additionalProperties: false
+            properties:
+                autoNeg:
+                    type: boolean
+                duplex:
+                    type: string
+                linkUp:
+                    type: boolean
+                speed:
+                    type: string
+            required:
+                - linkUp
+                - speed
+                - duplex
+                - autoNeg
             type: object
         LinkConfig:
             additionalProperties: false
@@ -5305,6 +5527,26 @@ components:
                 - rateLimit
                 - obtainUrl
                 - helpMessage
+            type: object
+        NeighborRecord:
+            additionalProperties: false
+            properties:
+                managementAddress:
+                    type: string
+                portDescription:
+                    type: string
+                portId:
+                    type: string
+                protocol:
+                    type: string
+                systemName:
+                    type: string
+            required:
+                - protocol
+                - systemName
+                - portId
+                - portDescription
+                - managementAddress
             type: object
         NeighbourCacheResponse:
             additionalProperties: false
@@ -8221,6 +8463,39 @@ components:
                 - classes
                 - preserved
             type: object
+        SpeedtestCard:
+            additionalProperties: false
+            properties:
+                distance:
+                    type: number
+                download:
+                    type: number
+                host:
+                    type: string
+                latency:
+                    type: number
+                location:
+                    type: string
+                server:
+                    type: string
+                testDuration:
+                    type: number
+                timestamp:
+                    format: date-time
+                    type: string
+                upload:
+                    type: number
+            required:
+                - download
+                - upload
+                - latency
+                - server
+                - location
+                - host
+                - distance
+                - timestamp
+                - testDuration
+            type: object
         SpeedtestConfig:
             additionalProperties: false
             properties:
@@ -8527,6 +8802,19 @@ components:
                 - tcpConnections
                 - httpRequests
                 - truncated
+            type: object
+        SwitchCard:
+            additionalProperties: false
+            properties:
+                neighbors:
+                    items:
+                        $ref: '#/components/schemas/NeighborRecord'
+                    type: array
+                running:
+                    type: boolean
+            required:
+                - running
+                - neighbors
             type: object
         SyslogSettings:
             additionalProperties: false
@@ -9537,7 +9825,35 @@ components:
                 - createdAt
                 - updatedAt
             type: object
+        VLANCard:
+            additionalProperties: false
+            properties:
+                configured:
+                    $ref: '#/components/schemas/VLANConfigured'
+                nativeVlan:
+                    type: integer
+                taggedVlans:
+                    items:
+                        type: integer
+                    type: array
+                voiceVlan:
+                    type: integer
+            required:
+                - taggedVlans
+                - configured
+            type: object
         VLANConfig:
+            additionalProperties: false
+            properties:
+                enabled:
+                    type: boolean
+                id:
+                    type: integer
+            required:
+                - enabled
+                - id
+            type: object
+        VLANConfigured:
             additionalProperties: false
             properties:
                 enabled:
@@ -10130,6 +10446,29 @@ components:
             required:
                 - anomalies
                 - status
+            type: object
+        WiFiCard:
+            additionalProperties: false
+            properties:
+                bssid:
+                    type: string
+                channel:
+                    type: integer
+                frequency:
+                    type: integer
+                security:
+                    type: string
+                signal:
+                    type: integer
+                ssid:
+                    type: string
+            required:
+                - ssid
+                - bssid
+                - signal
+                - channel
+                - frequency
+                - security
             type: object
         WiFiChannelGraphResponse:
             additionalProperties: false
@@ -11404,6 +11743,14 @@ paths:
         get:
             operationId: getApiV1CapturesCaptureId
             responses:
+                "200":
+                    content:
+                        application/vnd.tcpdump.pcap:
+                            schema:
+                                contentMediaType: application/vnd.tcpdump.pcap
+                                type: string
+                    description: |
+                        The pcap file a finished capture job wrote, sent as the seed-capture-<captureId>.pcap attachment. Range requests are honoured. Operator role required; an unknown capture is 404, one still being written 409.
                 "401":
                     content:
                         application/json:
@@ -13797,6 +14144,13 @@ paths:
         get:
             operationId: getApiV1ReportingExport
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ExportResponse'
+                    description: |
+                        The diagnostic export document, sent as the seed-export.json attachment. A card whose source is unavailable or has nothing to report is left out; ?interface= exports another interface.
                 "401":
                     content:
                         application/json:

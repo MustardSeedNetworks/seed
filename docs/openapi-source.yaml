@@ -565,6 +565,19 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/JobResponse'
+  GET /api/v1/captures/{captureId}:
+    responses:
+      "200":
+        description: >
+          The pcap file a finished capture job wrote, sent as the
+          seed-capture-<captureId>.pcap attachment. Range requests are honoured.
+          Operator role required; an unknown capture is 404, one still being
+          written 409.
+        content:
+          application/vnd.tcpdump.pcap:
+            schema:
+              type: string
+              contentMediaType: application/vnd.tcpdump.pcap
   GET /api/v1/license:
     responses:
       "200":
@@ -895,6 +908,17 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/RecoveryStatusResponse'
+  GET /api/v1/reporting/export:
+    responses:
+      "200":
+        description: >
+          The diagnostic export document, sent as the seed-export.json
+          attachment. A card whose source is unavailable or has nothing to
+          report is left out; ?interface= exports another interface.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportResponse'
   GET /api/v1/reporting/logs:
     responses:
       "200":
