@@ -204,10 +204,20 @@ func fillStruct(t *testing.T, typ reflect.Type) reflect.Value {
 		}
 		out.Field(i).Set(fillValue(t, field.Type))
 		for tag := range strings.SplitSeq(field.Tag.Get("jsonschema"), ",") {
-			if value, ok := strings.CutPrefix(tag, "enum="); ok && field.Type.Kind() == reflect.String {
-				out.Field(i).SetString(value)
-				break
+			value, ok := strings.CutPrefix(tag, "enum=")
+			if !ok {
+				continue
 			}
+			// jsonschema applies a []string field's enum to its items.
+			switch {
+			case field.Type.Kind() == reflect.String:
+				out.Field(i).SetString(value)
+			case field.Type.Kind() == reflect.Slice && field.Type.Elem().Kind() == reflect.String:
+				out.Field(i).Index(0).SetString(value)
+			default:
+				continue
+			}
+			break
 		}
 	}
 

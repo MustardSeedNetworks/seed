@@ -8,7 +8,8 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
-
+import { SETTINGS_RESPONSE } from '../../../test/settingsResponse';
+import type { SettingsResponse } from '../../../types/generated/settings-response';
 import {
   DEFAULT_CABLE_TEST_SETTINGS,
   DEFAULT_CARD_SETTINGS,
@@ -350,7 +351,9 @@ export const API_GET_BODIES: Record<string, unknown> = {
   // The escalation section's rule picker reads only each alert's rule.
   '/api/v1/alerts?limit=1000': { count: 1, alerts: [{ rule: 'iface.down' }] },
   '/api/v1/settings': {
+    ...SETTINGS_RESPONSE,
     alerts: {
+      syslog: SETTINGS_RESPONSE.alerts.syslog,
       webhook: { url: 'https://hooks.example.test/seed', secretSet: true },
       email: {
         host: 'smtp.example.test',
@@ -373,5 +376,5 @@ export const API_GET_BODIES: Record<string, unknown> = {
       ],
     },
     identity: { name: 'seed-idf-3b', location: 'idf-3b-rack-12' },
-  },
+  } satisfies SettingsResponse,
 };

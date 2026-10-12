@@ -16,6 +16,7 @@
  * the Go type itself, so it cannot drift into a shape the backend never sends.
  */
 import { HttpResponse, http } from 'msw';
+import { SETTINGS_RESPONSE } from '../../src/test/settingsResponse';
 import settingsDefaults from './settings-defaults.json';
 
 /** Matches internal/api/handlers_profiles.go ProfileResponse. */
@@ -142,11 +143,9 @@ export const handlers = [
     }),
   ),
 
-  // GET /api/v1/settings returns the live settings object. The settings-drawer
-  // loaders read slices of it -- thresholds, tests, snmp, ipconfig -- and the
-  // defaults document carries exactly those keys, so it stands in without
-  // inventing a second shape that could drift from the first.
-  http.get('*/api/v1/settings', () => HttpResponse.json(settingsDefaults)),
+  // GET /api/v1/settings answers its own typed shape (SettingsResponse), not
+  // the defaults document; the fixture is checked against the generated type.
+  http.get('*/api/v1/settings', () => HttpResponse.json(SETTINGS_RESPONSE)),
 
   // The Wi-Fi settings path really does double the segment; the route is
   // registered as /wifi/wifi/settings in internal/api/server_routes.go, so the
