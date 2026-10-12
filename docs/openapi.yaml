@@ -4379,6 +4379,9 @@ components:
             additionalProperties: false
             properties:
                 action:
+                    enum:
+                        - start
+                        - stop
                     type: string
                 port:
                     type: integer
@@ -16641,6 +16644,12 @@ paths:
                             $ref: '#/components/schemas/IperfClientRequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The test started in the background; poll /api/v1/telemetry/iperf/client/status for progress and the result.
                 "401":
                     content:
                         application/json:
@@ -16747,6 +16756,12 @@ paths:
                             $ref: '#/components/schemas/IperfServerRequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ServerStatus'
+                    description: The listener state after the start or stop, the same body /api/v1/telemetry/iperf/server/status serves.
                 "401":
                     content:
                         application/json:

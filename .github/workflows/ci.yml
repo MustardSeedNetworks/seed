@@ -2040,6 +2040,12 @@ jobs:
       - name: Set up Go
         uses: ./.github/actions/setup-go
 
+      # internal/api links the capture package, so its iperf3 route test needs
+      # libpcap like the backend job does.
+      - name: Install libpcap-dev
+        uses: ./.github/actions/setup-libpcap
+        timeout-minutes: 10
+
       # Built from source, not apt. Ubuntu's package is iperf3 3.16, and the
       # product refuses anything below 3.17 (minSupportedVersion) -- so the very
       # first run of this job failed on `ValidateVersion rejected the installed
@@ -2087,7 +2093,7 @@ jobs:
       - name: Run the iperf3 boundary suite
         env:
           SEED_IPERF3_TESTS: "1"
-        run: go test -count=1 -tags iperf3 -run 'TestReal_' -v ./internal/diagnostics/iperf/
+        run: go test -count=1 -tags iperf3 -run 'TestReal_' -v ./internal/diagnostics/iperf/ ./internal/api/
 
   # Phone width (owner 2026-09-15: everything works at 390x844). The fleet's one
   # definition of "works" lives in MustardSeedNetworks/.github; this job points

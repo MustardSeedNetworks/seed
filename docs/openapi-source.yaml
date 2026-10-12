@@ -1628,6 +1628,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/IperfClientRequest'
+    responses:
+      "200":
+        description: The test started in the background; poll /api/v1/telemetry/iperf/client/status for progress and the result.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
   GET /api/v1/telemetry/iperf/client/status:
     responses:
       "200":
@@ -1651,6 +1658,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/IperfServerRequest'
+    responses:
+      "200":
+        description: The listener state after the start or stop, the same body /api/v1/telemetry/iperf/server/status serves.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServerStatus'
   GET /api/v1/telemetry/iperf/server/status:
     responses:
       "200":

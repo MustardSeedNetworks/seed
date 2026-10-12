@@ -6,7 +6,11 @@
     "IperfServerRequest": {
       "properties": {
         "action": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "start",
+            "stop"
+          ]
         },
         "port": {
           "type": "integer"

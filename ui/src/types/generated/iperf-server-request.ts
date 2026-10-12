@@ -6,6 +6,6 @@
  * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
 export interface IperfServerRequest {
-  action: string;
+  action: 'start' | 'stop';
   port: number;
 }

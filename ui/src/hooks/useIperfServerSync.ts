@@ -16,13 +16,8 @@ import { useEffect, useRef } from 'react';
 import { api } from '../api';
 import { useRole } from '../contexts/RoleContext';
 import { LogComponents, logger } from '../lib/logger';
-
-export interface IperfServerStatus {
-  running: boolean;
-  port: number;
-  pid: number;
-  error?: string;
-}
+import type { IperfServerRequest } from '../types/generated/iperf-server-request';
+import type { ServerStatus } from '../types/generated/iperf-server-status';
 
 const STATUS_PATH = '/api/v1/telemetry/iperf/server/status';
 const SERVER_PATH = '/api/v1/telemetry/iperf/server';
@@ -33,7 +28,7 @@ interface UseIperfServerSyncArgs {
   enableServer: boolean;
   serverPort: number;
   /** Called with the listener's state after each successful start or stop. */
-  onStatus: (status: IperfServerStatus) => void;
+  onStatus: (status: ServerStatus) => void;
 }
 
 export function useIperfServerSync({
@@ -46,9 +41,9 @@ export function useIperfServerSync({
   const initialSyncDone = useRef(false);
 
   const manageServer = async (shouldRun: boolean, port: number): Promise<void> => {
+    const body: IperfServerRequest = { action: shouldRun ? 'start' : 'stop', port };
     await api
-      .post(SERVER_PATH, { action: shouldRun ? 'start' : 'stop', port })
-      .then(() => api.get<IperfServerStatus>(STATUS_PATH))
+      .post<ServerStatus>(SERVER_PATH, body)
       .then(onStatus)
       .catch((err: unknown) => {
         logger.error(LogComponents.IPERF, 'Failed to manage iperf server', err);
@@ -70,7 +65,7 @@ export function useIperfServerSync({
 
     const sync = async (): Promise<void> => {
       try {
-        const status = await api.get<IperfServerStatus>(STATUS_PATH);
+        const status = await api.get<ServerStatus>(STATUS_PATH);
         if (enableServer !== status.running) {
           await manageServer(enableServer, serverPort);
         }
