@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	api "github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 )
 
 // TestHandleTCPProbe tests the TCP probe endpoint.
@@ -581,12 +582,25 @@ func TestHandleAdvancedFingerprint(t *testing.T) {
 			server.Mux().ServeHTTP(w, req)
 
 			if w.Code != tt.expectedStatus {
-				t.Errorf(
+				t.Fatalf(
 					"Expected status %d, got %d: %s",
 					tt.expectedStatus,
 					w.Code,
 					w.Body.String(),
 				)
+			}
+			if w.Code != http.StatusOK {
+				return
+			}
+			// The documented AdvancedProbeResult is the whole answer.
+			dec := json.NewDecoder(w.Body)
+			dec.DisallowUnknownFields()
+			var got discovery.AdvancedProbeResult
+			if err := dec.Decode(&got); err != nil {
+				t.Fatalf("decode AdvancedProbeResult: %v", err)
+			}
+			if got.IP != tt.request["ip"] {
+				t.Errorf("ip = %q, want %q", got.IP, tt.request["ip"])
 			}
 		})
 	}

@@ -19,6 +19,28 @@ components:
                 - key
                 - bsses
             type: object
+        AdvancedProbeResult:
+            additionalProperties: false
+            properties:
+                ip:
+                    type: string
+                osFingerprint:
+                    $ref: '#/components/schemas/OSFingerprint'
+                probedAt:
+                    format: date-time
+                    type: string
+                serviceVersions:
+                    items:
+                        $ref: '#/components/schemas/ServiceVersion'
+                    type: array
+                tlsInfo:
+                    items:
+                        $ref: '#/components/schemas/TLSInfo'
+                    type: array
+            required:
+                - ip
+                - probedAt
+            type: object
         Alert:
             additionalProperties: false
             properties:
@@ -2714,6 +2736,14 @@ components:
                 - share
                 - connectTimeMs
             type: object
+        FingerprintRequest:
+            additionalProperties: false
+            properties:
+                ip:
+                    type: string
+            required:
+                - ip
+            type: object
         FingerprintingConfig:
             additionalProperties: false
             properties:
@@ -5277,6 +5307,24 @@ components:
                 - endpointUrl
                 - totalTimeMs
             type: object
+        OSFingerprint:
+            additionalProperties: false
+            properties:
+                confidence:
+                    type: integer
+                methods:
+                    items:
+                        type: string
+                    type: array
+                osFamily:
+                    type: string
+                osVersion:
+                    type: string
+                ttlObserved:
+                    type: integer
+            required:
+                - confidence
+            type: object
         ObserveRequest:
             additionalProperties: false
             properties:
@@ -7631,6 +7679,26 @@ components:
                 - port
                 - origin
             type: object
+        ServiceVersion:
+            additionalProperties: false
+            properties:
+                confidence:
+                    type: integer
+                extraInfo:
+                    type: string
+                port:
+                    type: integer
+                product:
+                    type: string
+                service:
+                    type: string
+                version:
+                    type: string
+            required:
+                - port
+                - service
+                - confidence
+            type: object
         SetInterfaceRequest:
             additionalProperties: false
             properties:
@@ -7850,6 +7918,19 @@ components:
             required:
                 - serverId
                 - autoRunOnLink
+            type: object
+        SpeedtestStartResponse:
+            additionalProperties: false
+            properties:
+                message:
+                    type: string
+                status:
+                    enum:
+                        - started
+                    type: string
+            required:
+                - status
+                - message
             type: object
         SpeedtestStatusResponse:
             additionalProperties: false
@@ -8220,6 +8301,50 @@ components:
                 - state
                 - ttl
                 - rtt
+            type: object
+        TLSInfo:
+            additionalProperties: false
+            properties:
+                certErrors:
+                    items:
+                        type: string
+                    type: array
+                cipherSuite:
+                    type: string
+                commonName:
+                    type: string
+                daysUntilExpiry:
+                    type: integer
+                issuer:
+                    type: string
+                port:
+                    type: integer
+                selfSigned:
+                    type: boolean
+                subjectAltNames:
+                    items:
+                        type: string
+                    type: array
+                validFrom:
+                    format: date-time
+                    type: string
+                validTo:
+                    format: date-time
+                    type: string
+                version:
+                    type: string
+            required:
+                - port
+                - version
+                - cipherSuite
+                - commonName
+                - issuer
+                - validFrom
+                - validTo
+                - daysUntilExpiry
+                - selfSigned
+                - subjectAltNames
+                - certErrors
             type: object
         TOTPDisableRequest:
             additionalProperties: false
@@ -14017,7 +14142,19 @@ paths:
         post:
             description: Requires an operator-scoped token.
             operationId: postApiV1SecurityDiscoveryFingerprint
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/FingerprintRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AdvancedProbeResult'
+                    description: The host's detected OS, service versions and TLS certificates.
                 "401":
                     content:
                         application/json:
@@ -16562,6 +16699,12 @@ paths:
         post:
             operationId: postApiV1TelemetrySpeedtest
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SpeedtestStartResponse'
+                    description: A background speed test was started.
                 "401":
                     content:
                         application/json:

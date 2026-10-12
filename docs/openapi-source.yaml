@@ -1072,6 +1072,20 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/DiscoveryResponse'
+  POST /api/v1/security/discovery/fingerprint:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FingerprintRequest'
+    responses:
+      "200":
+        description: The host's detected OS, service versions and TLS certificates.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvancedProbeResult'
   GET /api/v1/security/discovery/options:
     responses:
       "200":
@@ -1709,6 +1723,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/StatusMessageResponse'
+  POST /api/v1/telemetry/speedtest:
+    responses:
+      "200":
+        description: A background speed test was started.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpeedtestStartResponse'
   GET /api/v1/telemetry/speedtest/status:
     responses:
       "200":

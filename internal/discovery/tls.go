@@ -45,7 +45,7 @@ func (f *Fingerprinter) probeTLS(ctx context.Context, ip string, port int) *TLSI
 		ValidTo:           cert.NotAfter,
 		DaysUntilExpiry:   int(time.Until(cert.NotAfter).Hours() / hoursPerDay),
 		SelfSigned:        cert.Issuer.CommonName == cert.Subject.CommonName,
-		SubjectAltNames:   cert.DNSNames,
+		SubjectAltNames:   append([]string{}, cert.DNSNames...),
 		CertificateErrors: []string{},
 	}
 
