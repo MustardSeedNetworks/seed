@@ -49,7 +49,8 @@ type Candidate struct {
 	CIDR string
 	// Source is the table it was read from.
 	Source Source
-	// Router is the address of the device whose table named it.
+	// Router is the address of the device whose table named it. For a host
+	// route it is the gateway, and empty when the route is on-link.
 	Router string
 }
 
@@ -64,7 +65,8 @@ type Route struct {
 
 // HostRoute is one row of Seed's own forwarding table, narrowed by the caller
 // to the routes that leave through the active interface. Gateway is the next
-// hop, which is what tells the operator whose route this is.
+// hop, which is what tells the operator whose route this is; it is empty for
+// an on-link route.
 type HostRoute struct {
 	Destination string
 	Prefix      int
