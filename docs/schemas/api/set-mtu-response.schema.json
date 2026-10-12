@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/set-mtu-response.schema.json",
+  "$ref": "#/$defs/SetMTUResponse",
+  "$defs": {
+    "SetMTUResponse": {
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "success"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "interface": {
+          "type": "string"
+        },
+        "mtu": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "status",
+        "message",
+        "interface",
+        "mtu"
+      ]
+    }
+  },
+  "title": "SetMTUResponse",
+  "description": "SetMTUResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

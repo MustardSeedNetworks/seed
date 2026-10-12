@@ -8012,6 +8012,24 @@ components:
                 mtu:
                     type: integer
             required:
+                - mtu
+            type: object
+        SetMTUResponse:
+            additionalProperties: false
+            properties:
+                interface:
+                    type: string
+                message:
+                    type: string
+                mtu:
+                    type: integer
+                status:
+                    enum:
+                        - success
+                    type: string
+            required:
+                - status
+                - message
                 - interface
                 - mtu
             type: object
@@ -12663,6 +12681,12 @@ paths:
                             $ref: '#/components/schemas/SetMTURequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SetMTUResponse'
+                    description: The MTU is set on the named interface, or on the current one when the request names none.
                 "401":
                     content:
                         application/json:
@@ -12783,6 +12807,12 @@ paths:
                             $ref: '#/components/schemas/TracerouteRequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TracerouteResult'
+                    description: The traceroute result. Hop rtt is in nanoseconds; hops carry no route here.
                 "401":
                     content:
                         application/json:

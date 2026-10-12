@@ -21,6 +21,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
 import { button, cn, input, layout, radius, status as statusColor } from '../../../styles/theme';
+import type { SetMTURequest } from '../../../types/generated/set-mtu';
+import type { SetMTUResponse } from '../../../types/generated/set-mtu-response';
 
 export function MtuControl(): React.ReactElement {
   const { t } = useTranslation('settings');
@@ -40,7 +42,9 @@ export function MtuControl(): React.ReactElement {
     setLoading(true);
     setMessage(null);
     try {
-      await api.post('/api/v1/network/mtu', { mtu: mtuVal });
+      await api.post<SetMTUResponse>('/api/v1/network/mtu', {
+        mtu: mtuVal,
+      } satisfies SetMTURequest);
       setMessage({
         text: t('network.mtuControl.setSuccess', { value: mtuVal }),
         isError: false,
