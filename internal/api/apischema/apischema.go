@@ -72,6 +72,7 @@ func Targets() []Target {
 		// Request DTOs — strict-decode + validator surface (#1102).
 		{&api.LoginRequest{}, "login.schema.json"},
 		{&api.SetupCompleteRequest{}, "setup-complete.schema.json"},
+		{&api.SetupCompleteResponse{}, "setup-complete-response.schema.json"},
 		{&api.RecoveryCompleteRequest{}, "recovery-complete.schema.json"},
 		{&api.SetMTURequest{}, "set-mtu.schema.json"},
 		{&api.SetMTUResponse{}, "set-mtu-response.schema.json"},
@@ -200,6 +201,7 @@ func Targets() []Target {
 		{&api.RestoreRequest{}, "restore-request.schema.json"},
 		{&api.ConfigBackupResponse{}, "config-backup-response.schema.json"},
 		{&api.ClientLogRequest{}, "client-log-request.schema.json"},
+		{&api.ClientLogResponse{}, "client-log-response.schema.json"},
 		{&api.LogStatsResponse{}, "log-stats-response.schema.json"},
 		{&api.LogsRecentResponse{}, "logs-recent-response.schema.json"},
 		{&api.LogFileResponse{}, "log-file-response.schema.json"},

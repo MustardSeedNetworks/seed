@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/client-log-response.schema.json",
+  "$ref": "#/$defs/ClientLogResponse",
+  "$defs": {
+    "ClientLogResponse": {
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "accepted"
+          ]
+        },
+        "received": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "status",
+        "received"
+      ]
+    }
+  },
+  "title": "ClientLogResponse",
+  "description": "ClientLogResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
