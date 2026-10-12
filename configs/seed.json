@@ -354,8 +354,6 @@
   },
   "database": {
     "path": "data/seed.db",
-    "retention_days": 90,
-    "enable_wal": true,
-    "max_connections": 10
+    "retention_days": 90
   }
 }

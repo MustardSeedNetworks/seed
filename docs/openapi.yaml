@@ -1869,10 +1869,6 @@ components:
         DatabaseConfig:
             additionalProperties: false
             properties:
-                enable_wal:
-                    type: boolean
-                max_connections:
-                    type: integer
                 path:
                     type: string
                 retention_days:
@@ -1880,8 +1876,6 @@ components:
             required:
                 - path
                 - retention_days
-                - enable_wal
-                - max_connections
             type: object
         DefaultHTTPEndpoint:
             additionalProperties: false
