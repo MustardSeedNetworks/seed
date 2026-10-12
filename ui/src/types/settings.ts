@@ -8,35 +8,13 @@
  * is client-only by design — see `useTheme.ts` for the rationale.
  */
 
+import type { ThresholdSettings } from './generated/settings-response';
+
 // ============================================================================
 // Save Status
 // ============================================================================
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
-
-// ============================================================================
-// Threshold Types
-// ============================================================================
-
-export interface ThresholdPair {
-  good: number;
-  warning: number;
-}
-
-export interface SettingsThresholds {
-  dns: ThresholdPair;
-  gateway: ThresholdPair;
-  wifi: ThresholdPair;
-  customPing: ThresholdPair;
-  customTcp: ThresholdPair;
-  customHttp: ThresholdPair;
-  httpTimings: {
-    dns: ThresholdPair;
-    tcp: ThresholdPair;
-    tls: ThresholdPair;
-    ttfb: ThresholdPair;
-  };
-}
 
 // ============================================================================
 // Per-Card Settings
@@ -417,7 +395,7 @@ export const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
 };
 
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
-export const DEFAULT_THRESHOLDS: SettingsThresholds = {
+export const DEFAULT_THRESHOLDS: ThresholdSettings = {
   dns: { good: 50, warning: 100 },
   gateway: { good: 20, warning: 50 },
   wifi: { good: -50, warning: -70 },

@@ -68,22 +68,12 @@ func TestGetNeverServesTheWebhookSecret(t *testing.T) {
 	}
 
 	settings, _ := svc.Get()
-	section, ok := settings["alerts"].(map[string]any)
-	if !ok {
-		t.Fatalf("settings has no alerts section: %+v", settings)
+	webhook := settings.Alerts.Webhook
+	if !webhook.SecretSet {
+		t.Error("secretSet = false, want true")
 	}
-	webhook, ok := section["webhook"].(map[string]any)
-	if !ok {
-		t.Fatalf("alerts section has no webhook: %+v", section)
-	}
-	if _, present := webhook["secret"]; present {
-		t.Error("the read model serves the signing material; it must report only that one is set")
-	}
-	if webhook["secretSet"] != true {
-		t.Errorf("secretSet = %v, want true", webhook["secretSet"])
-	}
-	if webhook["url"] != "https://receiver.example.com/hook" {
-		t.Errorf("url = %v", webhook["url"])
+	if webhook.URL != "https://receiver.example.com/hook" {
+		t.Errorf("url = %v", webhook.URL)
 	}
 }
 

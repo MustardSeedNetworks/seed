@@ -1328,6 +1328,16 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/WiFiDiscoveryStatsResponse'
+  GET /api/v1/settings:
+    responses:
+      "200":
+        description: >-
+          The stored settings the settings drawer edits; the ETag header
+          carries the version a later PUT sends back as If-Match.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsResponse'
   PUT /api/v1/settings:
     summary: Update settings (partial; If-Match refuses a stale write)
     responses:

@@ -42,13 +42,17 @@ func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// SettingsResponse is GET /settings: the settings-management read model,
+// named for the API.
+type SettingsResponse management.Settings
+
 // getSettings serves the mutable application settings. Thin transport (ADR-0020):
 // the read model + ETag are assembled by the settings-management service.
 func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	settings, etag := s.settingsManagement.Get()
 	w.Header().Set("ETag", etag)
-	sendJSONResponse(w, logger, http.StatusOK, settings)
+	sendJSONResponse(w, logger, http.StatusOK, SettingsResponse(settings))
 }
 
 // updateSettings applies a settings update. Thin transport: decode, delegate the

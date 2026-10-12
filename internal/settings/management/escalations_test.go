@@ -55,8 +55,7 @@ func TestUpdateStoresEscalationLaddersAndServesThemBack(t *testing.T) {
 	}
 
 	settings, _ := svc.Get()
-	served := settings["alerts"].(map[string]any)["escalations"]
-	if got := reflect.ValueOf(served).Len(); got != 1 {
+	if got := len(settings.Alerts.Escalations); got != 1 {
 		t.Fatalf("served %d ladders, want 1", got)
 	}
 

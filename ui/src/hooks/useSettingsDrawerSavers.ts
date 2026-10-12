@@ -11,19 +11,19 @@ import type React from 'react';
 import { useCallback } from 'react';
 import { api } from '../api';
 import { normalizeTestsSettingsForSave } from '../components/settings/settingsDrawerNormalizer';
+import type { ThresholdSettings } from '../types/generated/settings-response';
 import type {
   CableTestSettings as CableTestSettingsType,
   LinkSettings as LinkSettingsType,
   NetworkDiscoverySettings,
   SaveStatus,
-  SettingsThresholds,
   SnmpSettings as SnmpSettingsType,
   TestsSettings,
   WiFiSettings as WiFiSettingsType,
 } from '../types/settings';
 
 interface UseSettingsDrawerSaversArgs {
-  thresholds: SettingsThresholds;
+  thresholds: ThresholdSettings;
   setThresholdsStatus: (status: SaveStatus) => void;
   testsSettings: TestsSettings;
   setTestsStatus: (status: SaveStatus) => void;

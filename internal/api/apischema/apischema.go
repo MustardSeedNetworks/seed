@@ -419,6 +419,9 @@ func Targets() []Target {
 		// hand-written ui/src/types/defaults.ts twin.
 		{&config.DefaultSettings{}, "default-settings.schema.json"},
 
+		// GET /settings: the stored settings the settings drawer edits.
+		{&api.SettingsResponse{}, "settings-response.schema.json"},
+
 		// Engine discovery result — the ADR-0008 pure-data exception. Reflects
 		// the discovery.* result cluster (DiscoveredDevice/EngineStats/
 		// ScanResult and their pure-data closure) directly rather than

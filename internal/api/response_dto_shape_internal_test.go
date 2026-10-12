@@ -876,3 +876,53 @@ func mustMarshal(t *testing.T, v any) []byte {
 	require.NoError(t, err)
 	return b
 }
+
+func TestSettingsResponseShape(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	cfg.Identity = config.IdentityConfig{Name: "seed-idf-3b", Location: "IDF 3B"}
+	cfg.Alerts.Webhook = config.AlertWebhookConfig{URL: "https://receiver.example.com/hook", Secret: "enc:s3cret"}
+	cfg.Alerts.Escalations = []config.AlertEscalationConfig{{
+		Rule: "iface.down", RepeatSeconds: 3600,
+		Stages: []config.AlertEscalationStage{{AfterSeconds: 300, Channels: []string{"webhook"}}},
+	}}
+	s := &Server{config: cfg}
+	s.settingsManagement = app.NewSettingsManagement(s.config, "", func() *alertdelivery.Manager { return nil })
+
+	w := serve(t, s.handleSettings, "/api/v1/settings")
+	require.NotEmpty(t, w.Header().Get("ETag"))
+	require.JSONEq(t, `{
+		"vlan": {"enabled": false, "id": 0},
+		"ip": {"mode": "dhcp"},
+		"thresholds": {
+			"dns": {"good": 50, "warning": 200},
+			"gateway": {"good": 10, "warning": 50},
+			"wifi": {"good": -70, "warning": -80},
+			"customPing": {"good": 10, "warning": 100},
+			"customTcp": {"good": 100, "warning": 500},
+			"customHttp": {"good": 500, "warning": 2000},
+			"httpTimings": {
+				"dns": {"good": 50, "warning": 500},
+				"tcp": {"good": 100, "warning": 500},
+				"tls": {"good": 150, "warning": 500},
+				"ttfb": {"good": 500, "warning": 2000}
+			}
+		},
+		"healthChecks": {"runPerformance": true, "runSpeedtest": true, "runIperf": true, "runDiscovery": true},
+		"speedtest": {"serverId": "", "autoRunOnLink": true},
+		"iperf": {
+			"autoRunOnLink": false, "server": "", "port": 5201, "protocol": "tcp",
+			"direction": "download", "duration": 10, "serverPort": 5201, "enableServer": true
+		},
+		"alerts": {
+			"webhook": {"url": "https://receiver.example.com/hook", "secretSet": true},
+			"email": {"host": "", "port": 0, "tls": "", "username": "", "passwordSet": false, "from": "", "to": []},
+			"escalations": [
+				{"rule": "iface.down", "stages": [{"afterSeconds": 300, "channels": ["webhook"]}], "repeatSeconds": 3600}
+			],
+			"syslog": {"host": "", "port": 0, "transport": ""}
+		},
+		"displayOptions": {"showPublicIP": true, "unitSystem": "sae"},
+		"identity": {"name": "seed-idf-3b", "location": "IDF 3B"}
+	}`, w.Body.String())
+}

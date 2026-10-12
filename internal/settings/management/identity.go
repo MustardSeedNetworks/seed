@@ -7,12 +7,10 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
-// buildIdentitySettings is the identity slice of the settings read model.
-func buildIdentitySettings(cfg *config.Config) map[string]any {
-	return map[string]any{
-		"name":     cfg.Identity.Name,
-		"location": cfg.Identity.Location,
-	}
+// IdentitySettings is the device's name and location (#195).
+type IdentitySettings struct {
+	Name     string `json:"name"`
+	Location string `json:"location"`
 }
 
 // applyIdentityUpdates applies the device name and location (#195). A field

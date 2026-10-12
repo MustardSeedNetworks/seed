@@ -8,13 +8,8 @@
  * for compatibility with existing components.
  */
 
-import type {
-  CardSettings,
-  DisplayOptions,
-  IperfSettings,
-  SaveStatus,
-  SettingsThresholds,
-} from '../types/settings';
+import type { ThresholdSettings } from '../types/generated/settings-response';
+import type { CardSettings, DisplayOptions, IperfSettings, SaveStatus } from '../types/settings';
 import {
   type SettingsSaveStatus,
   useProfileContext,
@@ -29,7 +24,7 @@ export interface SettingsContextValue {
   cardSettings: CardSettings;
   displayOptions: DisplayOptions;
   iperfSettings: IperfSettings;
-  thresholds: SettingsThresholds;
+  thresholds: ThresholdSettings;
 
   // Save status indicators
   status: {
@@ -43,7 +38,7 @@ export interface SettingsContextValue {
   updateCardSettings: (updates: Partial<CardSettings>) => void;
   updateDisplayOptions: (updates: Partial<DisplayOptions>) => void;
   updateIperfSettings: (updates: Partial<IperfSettings>) => void;
-  updateThresholds: (updates: Partial<SettingsThresholds>) => void;
+  updateThresholds: (updates: Partial<ThresholdSettings>) => void;
 
   // Full refresh from API
   refreshSettings: () => Promise<void>;
@@ -96,7 +91,7 @@ export function useSettings(): SettingsContextValue {
     cardSettings: cardSettings as CardSettings,
     displayOptions: displayOptions as DisplayOptions,
     iperfSettings: iperfSettings as IperfSettings,
-    thresholds: thresholds as SettingsThresholds,
+    thresholds: thresholds as ThresholdSettings,
     status: {
       cards: saveStatus,
       display: saveStatus,
@@ -106,7 +101,7 @@ export function useSettings(): SettingsContextValue {
     updateCardSettings: updateCardSettings as (updates: Partial<CardSettings>) => void,
     updateDisplayOptions: updateDisplayOptions as (updates: Partial<DisplayOptions>) => void,
     updateIperfSettings: updateIperfSettings as (updates: Partial<IperfSettings>) => void,
-    updateThresholds: updateThresholds as (updates: Partial<SettingsThresholds>) => void,
+    updateThresholds: updateThresholds as (updates: Partial<ThresholdSettings>) => void,
     refreshSettings,
     isLoaded: isSettingsLoaded,
   };
@@ -128,7 +123,7 @@ export function useSettingsOptional(): SettingsContextValue | null {
     cardSettings: context.cardSettings as CardSettings,
     displayOptions: context.displayOptions as DisplayOptions,
     iperfSettings: context.iperfSettings as IperfSettings,
-    thresholds: context.thresholds as SettingsThresholds,
+    thresholds: context.thresholds as ThresholdSettings,
     status: {
       cards: saveStatus,
       display: saveStatus,
@@ -140,7 +135,7 @@ export function useSettingsOptional(): SettingsContextValue | null {
       updates: Partial<DisplayOptions>,
     ) => void,
     updateIperfSettings: context.updateIperfSettings as (updates: Partial<IperfSettings>) => void,
-    updateThresholds: context.updateThresholds as (updates: Partial<SettingsThresholds>) => void,
+    updateThresholds: context.updateThresholds as (updates: Partial<ThresholdSettings>) => void,
     refreshSettings: context.refreshSettings,
     isLoaded: context.isSettingsLoaded,
   };

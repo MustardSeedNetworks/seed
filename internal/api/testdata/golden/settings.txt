@@ -22,52 +22,6 @@ body:
       "url": ""
     }
   },
-  "cardSettings": {
-    "dns": {
-      "autoRunOnLink": true,
-      "visible": true
-    },
-    "gateway": {
-      "autoRunOnLink": true,
-      "visible": true
-    },
-    "healthChecks": {
-      "autoRunOnLink": true,
-      "visible": true
-    },
-    "link": {
-      "autoRunOnLink": true,
-      "visible": true
-    },
-    "network": {
-      "autoRunOnLink": true,
-      "visible": true
-    },
-    "networkDiscovery": {
-      "autoRunOnLink": true,
-      "visible": true
-    },
-    "performance": {
-      "autoRunOnLink": true,
-      "iperf": {
-        "autoRunOnLink": false,
-        "enabled": false
-      },
-      "speedtest": {
-        "autoRunOnLink": true,
-        "enabled": true
-      },
-      "visible": true
-    },
-    "switch": {
-      "autoRunOnLink": true,
-      "visible": true
-    },
-    "vlan": {
-      "autoRunOnLink": true,
-      "visible": true
-    }
-  },
   "displayOptions": {
     "showPublicIP": true,
     "unitSystem": "sae"
@@ -81,10 +35,6 @@ body:
   "identity": {
     "location": "",
     "name": ""
-  },
-  "interface": {
-    "available": [],
-    "current": "lo"
   },
   "ip": {
     "mode": "dhcp"

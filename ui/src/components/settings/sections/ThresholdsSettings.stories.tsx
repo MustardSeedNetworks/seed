@@ -15,11 +15,12 @@ import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 import { useState } from 'react';
 import { cn, spacing } from '../../../styles/theme';
-import type { SaveStatus, SettingsThresholds } from '../../../types/settings';
+import type { ThresholdSettings } from '../../../types/generated/settings-response';
+import type { SaveStatus } from '../../../types/settings';
 import { expandSections } from './storyPlay';
 import { ThresholdsSettings } from './ThresholdsSettings';
 
-const defaultThresholds: SettingsThresholds = {
+const defaultThresholds: ThresholdSettings = {
   dns: { good: 50, warning: 100 },
   gateway: { good: 20, warning: 50 },
   wifi: { good: -50, warning: -70 },
@@ -34,7 +35,7 @@ const defaultThresholds: SettingsThresholds = {
   },
 };
 
-const customThresholds: SettingsThresholds = {
+const customThresholds: ThresholdSettings = {
   dns: { good: 30, warning: 80 },
   gateway: { good: 10, warning: 30 },
   wifi: { good: -40, warning: -60 },
@@ -204,11 +205,11 @@ export const RelaxedThresholds: Story = {
  */
 export const Interactive: Story = {
   render: function interactiveStory() {
-    const [thresholds, setThresholds] = useState<SettingsThresholds>(defaultThresholds);
+    const [thresholds, setThresholds] = useState<ThresholdSettings>(defaultThresholds);
     const [status, setStatus] = useState<SaveStatus>('idle');
 
     // Simulate auto-save behavior
-    const handleSetThresholds = (updater: React.SetStateAction<SettingsThresholds>): void => {
+    const handleSetThresholds = (updater: React.SetStateAction<ThresholdSettings>): void => {
       setThresholds(updater);
       setStatus('saving');
 

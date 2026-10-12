@@ -325,6 +325,25 @@ components:
                 - createdAt
                 - updatedAt
             type: object
+        AlertSettings:
+            additionalProperties: false
+            properties:
+                email:
+                    $ref: '#/components/schemas/EmailSettings'
+                escalations:
+                    items:
+                        $ref: '#/components/schemas/EscalationLadder'
+                    type: array
+                syslog:
+                    $ref: '#/components/schemas/SyslogSettings'
+                webhook:
+                    $ref: '#/components/schemas/WebhookSettings'
+            required:
+                - webhook
+                - email
+                - escalations
+                - syslog
+            type: object
         AlertSyslogConfig:
             additionalProperties: false
             properties:
@@ -2301,6 +2320,17 @@ components:
                 - showPublicIP
                 - unitSystem
             type: object
+        DisplaySettings:
+            additionalProperties: false
+            properties:
+                showPublicIP:
+                    type: boolean
+                unitSystem:
+                    type: string
+            required:
+                - showPublicIP
+                - unitSystem
+            type: object
         DriverStatsResponse:
             additionalProperties: false
             properties:
@@ -2343,6 +2373,34 @@ components:
                     items:
                         $ref: '#/components/schemas/LTITestResult'
                     type: array
+            type: object
+        EmailSettings:
+            additionalProperties: false
+            properties:
+                from:
+                    type: string
+                host:
+                    type: string
+                passwordSet:
+                    type: boolean
+                port:
+                    type: integer
+                tls:
+                    type: string
+                to:
+                    items:
+                        type: string
+                    type: array
+                username:
+                    type: string
+            required:
+                - host
+                - port
+                - tls
+                - username
+                - passwordSet
+                - from
+                - to
             type: object
         EngineCapabilities:
             additionalProperties: false
@@ -2554,6 +2612,39 @@ components:
             required:
                 - error
                 - code
+            type: object
+        EscalationLadder:
+            additionalProperties: false
+            properties:
+                repeatSeconds:
+                    type: integer
+                rule:
+                    type: string
+                stages:
+                    items:
+                        $ref: '#/components/schemas/EscalationStage'
+                    type: array
+            required:
+                - rule
+                - stages
+                - repeatSeconds
+            type: object
+        EscalationStage:
+            additionalProperties: false
+            properties:
+                afterSeconds:
+                    type: integer
+                channels:
+                    items:
+                        enum:
+                            - webhook
+                            - email
+                            - syslog
+                        type: string
+                    type: array
+            required:
+                - afterSeconds
+                - channels
             type: object
         EventBusStats:
             additionalProperties: false
@@ -3273,6 +3364,23 @@ components:
                 - statusCode
                 - isHttps
             type: object
+        HTTPTimingSettings:
+            additionalProperties: false
+            properties:
+                dns:
+                    $ref: '#/components/schemas/ThresholdPair'
+                tcp:
+                    $ref: '#/components/schemas/ThresholdPair'
+                tls:
+                    $ref: '#/components/schemas/ThresholdPair'
+                ttfb:
+                    $ref: '#/components/schemas/ThresholdPair'
+            required:
+                - dns
+                - tcp
+                - tls
+                - ttfb
+            type: object
         HTTPTimingThresholdDefaults:
             additionalProperties: false
             properties:
@@ -3408,6 +3516,23 @@ components:
                 - udpResults
                 - httpResults
                 - hasTests
+            type: object
+        HealthCheckSettings:
+            additionalProperties: false
+            properties:
+                runDiscovery:
+                    type: boolean
+                runIperf:
+                    type: boolean
+                runPerformance:
+                    type: boolean
+                runSpeedtest:
+                    type: boolean
+            required:
+                - runPerformance
+                - runSpeedtest
+                - runIperf
+                - runDiscovery
             type: object
         HealthChecksConfig:
             additionalProperties: false
@@ -3700,6 +3825,14 @@ components:
                 - lastSeen
                 - isResolved
             type: object
+        IPSetting:
+            additionalProperties: false
+            properties:
+                mode:
+                    type: string
+            required:
+                - mode
+            type: object
         IPSettingsRequest:
             additionalProperties: false
             properties:
@@ -3775,6 +3908,17 @@ components:
                 - source
             type: object
         IdentityConfig:
+            additionalProperties: false
+            properties:
+                location:
+                    type: string
+                name:
+                    type: string
+            required:
+                - name
+                - location
+            type: object
+        IdentitySettings:
             additionalProperties: false
             properties:
                 location:
@@ -4263,6 +4407,35 @@ components:
                     type: string
             required:
                 - host
+            type: object
+        IperfTestSettings:
+            additionalProperties: false
+            properties:
+                autoRunOnLink:
+                    type: boolean
+                direction:
+                    type: string
+                duration:
+                    type: integer
+                enableServer:
+                    type: boolean
+                port:
+                    type: integer
+                protocol:
+                    type: string
+                server:
+                    type: string
+                serverPort:
+                    type: integer
+            required:
+                - autoRunOnLink
+                - server
+                - port
+                - protocol
+                - direction
+                - duration
+                - serverPort
+                - enableServer
             type: object
         JobResponse:
             additionalProperties: false
@@ -7842,6 +8015,38 @@ components:
                 - interface
                 - mtu
             type: object
+        SettingsResponse:
+            additionalProperties: false
+            properties:
+                alerts:
+                    $ref: '#/components/schemas/AlertSettings'
+                displayOptions:
+                    $ref: '#/components/schemas/DisplaySettings'
+                healthChecks:
+                    $ref: '#/components/schemas/HealthCheckSettings'
+                identity:
+                    $ref: '#/components/schemas/IdentitySettings'
+                ip:
+                    $ref: '#/components/schemas/IPSetting'
+                iperf:
+                    $ref: '#/components/schemas/IperfTestSettings'
+                speedtest:
+                    $ref: '#/components/schemas/SpeedtestSettings'
+                thresholds:
+                    $ref: '#/components/schemas/ThresholdSettings'
+                vlan:
+                    $ref: '#/components/schemas/VLANSetting'
+            required:
+                - vlan
+                - ip
+                - thresholds
+                - healthChecks
+                - speedtest
+                - iperf
+                - alerts
+                - displayOptions
+                - identity
+            type: object
         SetupCompleteRequest:
             additionalProperties: false
             properties:
@@ -8010,6 +8215,17 @@ components:
                 - distance
                 - timestamp
                 - testDuration
+            type: object
+        SpeedtestSettings:
+            additionalProperties: false
+            properties:
+                autoRunOnLink:
+                    type: boolean
+                serverId:
+                    type: string
+            required:
+                - serverId
+                - autoRunOnLink
             type: object
         SpeedtestSettingsResponse:
             additionalProperties: false
@@ -8252,6 +8468,20 @@ components:
                 - tcpConnections
                 - httpRequests
                 - truncated
+            type: object
+        SyslogSettings:
+            additionalProperties: false
+            properties:
+                host:
+                    type: string
+                port:
+                    type: integer
+                transport:
+                    type: string
+            required:
+                - host
+                - port
+                - transport
             type: object
         SystemHealthApplicationResponse:
             additionalProperties: false
@@ -8788,6 +9018,17 @@ components:
                 - customHttp
                 - httpTimings
             type: object
+        ThresholdPair:
+            additionalProperties: false
+            properties:
+                good:
+                    type: integer
+                warning:
+                    type: integer
+            required:
+                - good
+                - warning
+            type: object
         ThresholdPairDefaults:
             additionalProperties: false
             properties:
@@ -8809,6 +9050,32 @@ components:
             required:
                 - good
                 - warning
+            type: object
+        ThresholdSettings:
+            additionalProperties: false
+            properties:
+                customHttp:
+                    $ref: '#/components/schemas/ThresholdPair'
+                customPing:
+                    $ref: '#/components/schemas/ThresholdPair'
+                customTcp:
+                    $ref: '#/components/schemas/ThresholdPair'
+                dns:
+                    $ref: '#/components/schemas/ThresholdPair'
+                gateway:
+                    $ref: '#/components/schemas/ThresholdPair'
+                httpTimings:
+                    $ref: '#/components/schemas/HTTPTimingSettings'
+                wifi:
+                    $ref: '#/components/schemas/ThresholdPair'
+            required:
+                - dns
+                - gateway
+                - wifi
+                - customPing
+                - customTcp
+                - customHttp
+                - httpTimings
             type: object
         ThresholdsConfig:
             additionalProperties: false
@@ -9291,6 +9558,17 @@ components:
                 - voiceVlan
                 - configured
             type: object
+        VLANSetting:
+            additionalProperties: false
+            properties:
+                enabled:
+                    type: boolean
+                id:
+                    type: integer
+            required:
+                - enabled
+                - id
+            type: object
         VideoResults:
             additionalProperties: false
             properties:
@@ -9572,6 +9850,17 @@ components:
                 - scanning
                 - stats
                 - severityFilter
+            type: object
+        WebhookSettings:
+            additionalProperties: false
+            properties:
+                secretSet:
+                    type: boolean
+                url:
+                    type: string
+            required:
+                - url
+                - secretSet
             type: object
         WiFiAccessPoint:
             additionalProperties: false
@@ -15260,6 +15549,12 @@ paths:
         get:
             operationId: getApiV1Settings
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SettingsResponse'
+                    description: The stored settings the settings drawer edits; the ETag header carries the version a later PUT sends back as If-Match.
                 "401":
                     content:
                         application/json:

@@ -2,75 +2,138 @@ package management
 
 import "github.com/MustardSeedNetworks/seed/internal/config"
 
-// Threshold-tier keys in the settings read model: "good" carries the
-// warning-boundary value, "warning" the critical-boundary value (the wire
-// contract, preserved from the original handler).
-const (
-	tierGood    = "good"
-	tierWarning = "warning"
-)
+// Settings is the read model GET /settings serves: the settings this service
+// writes, plus the VLAN and IP mode the dashboard shows beside them.
+type Settings struct {
+	VLAN           VLANSetting         `json:"vlan"`
+	IP             IPSetting           `json:"ip"`
+	Thresholds     ThresholdSettings   `json:"thresholds"`
+	HealthChecks   HealthCheckSettings `json:"healthChecks"`
+	Speedtest      SpeedtestSettings   `json:"speedtest"`
+	Iperf          IperfTestSettings   `json:"iperf"`
+	Alerts         AlertSettings       `json:"alerts"`
+	DisplayOptions DisplaySettings     `json:"displayOptions"`
+	Identity       IdentitySettings    `json:"identity"`
+}
 
-// buildThresholdSettings builds the threshold section of the settings read
-// model. Moved from *Server.buildThresholdSettings; behavior-identical.
-func buildThresholdSettings(cfg *config.Config) map[string]any {
-	t := &cfg.Thresholds
-	return map[string]any{
-		"dns": map[string]int64{
-			tierGood:    t.DNS.Warning.Milliseconds(),
-			tierWarning: t.DNS.Critical.Milliseconds(),
+// VLANSetting is the configured VLAN tag.
+type VLANSetting struct {
+	Enabled bool `json:"enabled"`
+	ID      int  `json:"id"`
+}
+
+// IPSetting is the configured addressing mode, "dhcp" or "static".
+type IPSetting struct {
+	Mode string `json:"mode"`
+}
+
+// ThresholdPair is one metric's two boundaries in milliseconds (dBm for
+// Wi-Fi signal): "good" carries the warning boundary and "warning" the
+// critical one, the wire contract the original handler set.
+type ThresholdPair struct {
+	Good    int64 `json:"good"`
+	Warning int64 `json:"warning"`
+}
+
+// ThresholdSettings are the dashboard's good/warning boundaries.
+type ThresholdSettings struct {
+	DNS         ThresholdPair      `json:"dns"`
+	Gateway     ThresholdPair      `json:"gateway"`
+	WiFi        ThresholdPair      `json:"wifi"`
+	CustomPing  ThresholdPair      `json:"customPing"`
+	CustomTCP   ThresholdPair      `json:"customTcp"`
+	CustomHTTP  ThresholdPair      `json:"customHttp"`
+	HTTPTimings HTTPTimingSettings `json:"httpTimings"`
+}
+
+// HTTPTimingSettings are the boundaries for each phase of an HTTP check.
+type HTTPTimingSettings struct {
+	DNS  ThresholdPair `json:"dns"`
+	TCP  ThresholdPair `json:"tcp"`
+	TLS  ThresholdPair `json:"tls"`
+	TTFB ThresholdPair `json:"ttfb"`
+}
+
+// HealthCheckSettings are the suites a health-check run includes.
+type HealthCheckSettings struct {
+	RunPerformance bool `json:"runPerformance"`
+	RunSpeedtest   bool `json:"runSpeedtest"`
+	RunIperf       bool `json:"runIperf"`
+	RunDiscovery   bool `json:"runDiscovery"`
+}
+
+// SpeedtestSettings choose the speed test server and when it runs.
+type SpeedtestSettings struct {
+	ServerID      string `json:"serverId"`
+	AutoRunOnLink bool   `json:"autoRunOnLink"`
+}
+
+// IperfTestSettings are the iperf3 client test and the local server.
+type IperfTestSettings struct {
+	AutoRunOnLink bool   `json:"autoRunOnLink"`
+	Server        string `json:"server"`
+	Port          int    `json:"port"`
+	Protocol      string `json:"protocol"`
+	Direction     string `json:"direction"`
+	Duration      int    `json:"duration"`
+	ServerPort    int    `json:"serverPort"`
+	EnableServer  bool   `json:"enableServer"`
+}
+
+// DisplaySettings are the dashboard's presentation choices.
+type DisplaySettings struct {
+	ShowPublicIP bool   `json:"showPublicIP"`
+	UnitSystem   string `json:"unitSystem"`
+}
+
+func buildSettings(cfg *config.Config) Settings {
+	return Settings{
+		VLAN:       VLANSetting{Enabled: cfg.VLAN.Enabled, ID: cfg.VLAN.ID},
+		IP:         IPSetting{Mode: cfg.IP.Mode},
+		Thresholds: buildThresholdSettings(&cfg.Thresholds),
+		HealthChecks: HealthCheckSettings{
+			RunPerformance: cfg.HealthChecks.RunPerformance,
+			RunSpeedtest:   cfg.HealthChecks.RunSpeedtest,
+			RunIperf:       cfg.HealthChecks.RunIperf,
+			RunDiscovery:   cfg.HealthChecks.RunDiscovery,
 		},
-		"gateway": map[string]int64{
-			tierGood:    t.Ping.Warning.Milliseconds(),
-			tierWarning: t.Ping.Critical.Milliseconds(),
+		Speedtest: SpeedtestSettings{ServerID: cfg.Speedtest.ServerID, AutoRunOnLink: cfg.Speedtest.AutoRunOnLink},
+		Iperf: IperfTestSettings{
+			AutoRunOnLink: cfg.Iperf.AutoRunOnLink, Server: cfg.Iperf.Server,
+			Port: cfg.Iperf.Port, Protocol: cfg.Iperf.Protocol,
+			Direction: cfg.Iperf.Direction, Duration: cfg.Iperf.Duration,
+			ServerPort: cfg.Iperf.ServerPort, EnableServer: cfg.Iperf.EnableServer,
 		},
-		"wifi": map[string]int{
-			tierGood:    t.WiFi.Signal.Warning,
-			tierWarning: t.WiFi.Signal.Critical,
+		Alerts: buildAlertSettings(cfg),
+		DisplayOptions: DisplaySettings{
+			ShowPublicIP: cfg.DisplayOptions.ShowPublicIP,
+			UnitSystem:   cfg.DisplayOptions.UnitSystem,
 		},
-		"customPing": map[string]int64{
-			tierGood:    t.CustomTests.Ping.Warning.Milliseconds(),
-			tierWarning: t.CustomTests.Ping.Critical.Milliseconds(),
-		},
-		"customTcp": map[string]int64{
-			tierGood:    t.CustomTests.TCP.Warning.Milliseconds(),
-			tierWarning: t.CustomTests.TCP.Critical.Milliseconds(),
-		},
-		"customHttp": map[string]int64{
-			tierGood:    t.CustomTests.HTTP.Warning.Milliseconds(),
-			tierWarning: t.CustomTests.HTTP.Critical.Milliseconds(),
-		},
-		"httpTimings": map[string]map[string]int64{
-			"dns": {
-				tierGood:    t.CustomTests.HTTPTimings.DNS.Warning.Milliseconds(),
-				tierWarning: t.CustomTests.HTTPTimings.DNS.Critical.Milliseconds(),
-			},
-			"tcp": {
-				tierGood:    t.CustomTests.HTTPTimings.TCP.Warning.Milliseconds(),
-				tierWarning: t.CustomTests.HTTPTimings.TCP.Critical.Milliseconds(),
-			},
-			"tls": {
-				tierGood:    t.CustomTests.HTTPTimings.TLS.Warning.Milliseconds(),
-				tierWarning: t.CustomTests.HTTPTimings.TLS.Critical.Milliseconds(),
-			},
-			"ttfb": {
-				tierGood:    t.CustomTests.HTTPTimings.TTFB.Warning.Milliseconds(),
-				tierWarning: t.CustomTests.HTTPTimings.TTFB.Critical.Milliseconds(),
-			},
-		},
+		Identity: IdentitySettings{Name: cfg.Identity.Name, Location: cfg.Identity.Location},
 	}
 }
 
-// buildCardSettings builds default card visibility settings.
-func buildCardSettings() map[string]any {
-	defaultCard := map[string]any{"visible": true, "autoRunOnLink": true}
-	return map[string]any{
-		"link": defaultCard, "switch": defaultCard, "vlan": defaultCard,
-		"network": defaultCard, "gateway": defaultCard, "dns": defaultCard,
-		"healthChecks": defaultCard, "networkDiscovery": defaultCard,
-		"performance": map[string]any{
-			"visible": true, "autoRunOnLink": true,
-			"speedtest": map[string]any{"enabled": true, "autoRunOnLink": true},
-			"iperf":     map[string]any{"enabled": false, "autoRunOnLink": false},
+func durationPair(t config.Threshold) ThresholdPair {
+	return ThresholdPair{Good: t.Warning.Milliseconds(), Warning: t.Critical.Milliseconds()}
+}
+
+func buildThresholdSettings(t *config.ThresholdsConfig) ThresholdSettings {
+	timings := &t.CustomTests.HTTPTimings
+	return ThresholdSettings{
+		DNS:     durationPair(t.DNS),
+		Gateway: durationPair(t.Ping),
+		WiFi: ThresholdPair{
+			Good:    int64(t.WiFi.Signal.Warning),
+			Warning: int64(t.WiFi.Signal.Critical),
+		},
+		CustomPing: durationPair(t.CustomTests.Ping),
+		CustomTCP:  durationPair(t.CustomTests.TCP),
+		CustomHTTP: durationPair(t.CustomTests.HTTP),
+		HTTPTimings: HTTPTimingSettings{
+			DNS:  durationPair(timings.DNS),
+			TCP:  durationPair(timings.TCP),
+			TLS:  durationPair(timings.TLS),
+			TTFB: durationPair(timings.TTFB),
 		},
 	}
 }
