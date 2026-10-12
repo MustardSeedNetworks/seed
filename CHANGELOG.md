@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.255.0](https://github.com/MustardSeedNetworks/seed/compare/v0.254.5...v0.255.0) (2026-10-12)
+
+
+### Features
+
+* **reports:** move schedules to /report-schedules and route reports by id (S6-4 slice 46) ([#3350](https://github.com/MustardSeedNetworks/seed/issues/3350)) ([b144b33](https://github.com/MustardSeedNetworks/seed/commit/b144b336e6236256ef5d700328e679f92837c1f9))
+
+
+### Bug Fixes
+
+* **discovery:** report how much of each network a sweep covered ([#3352](https://github.com/MustardSeedNetworks/seed/issues/3352)) ([0f56f92](https://github.com/MustardSeedNetworks/seed/commit/0f56f92d732f28ddd21c1bdd53905394692b1565))
+* **discovery:** write engine event frames from the stream handler only, and document the streams (S6-4 slice 45) ([#3349](https://github.com/MustardSeedNetworks/seed/issues/3349)) ([a04c545](https://github.com/MustardSeedNetworks/seed/commit/a04c54563870c5431bda528f6caef4e7fccb0dc6))
+* **iperf:** wait for iperf3's own listening line, and stop killing the server at 10 s ([#3344](https://github.com/MustardSeedNetworks/seed/issues/3344)) ([cb090ad](https://github.com/MustardSeedNetworks/seed/commit/cb090ad3c75e0212f1a0c928756f656681220338)), closes [#3342](https://github.com/MustardSeedNetworks/seed/issues/3342) [#3343](https://github.com/MustardSeedNetworks/seed/issues/3343)
+* **settings:** save every probe endpoint list back (S6-4 slice 40) ([#3336](https://github.com/MustardSeedNetworks/seed/issues/3336)) ([42da449](https://github.com/MustardSeedNetworks/seed/commit/42da449ba8cb57daecfe76ff12f94998455287c1))
+* **sso:** send the handshake cookies to the callback, and document the handshake (S6-4 slice 44) ([#3346](https://github.com/MustardSeedNetworks/seed/issues/3346)) ([0a53efc](https://github.com/MustardSeedNetworks/seed/commit/0a53efccfc8f2c5af9696c5f97f20d804c53ad00))
+
+
+### Code Refactoring
+
+* **api:** type the diagnostic export document (S6-4 slice 43) ([#3345](https://github.com/MustardSeedNetworks/seed/issues/3345)) ([662d6bd](https://github.com/MustardSeedNetworks/seed/commit/662d6bdc1dd144c9550246f1fa81d8869ad8d64b))
+* **api:** type the iperf client and server answers (S6-4 slice 39) ([#3334](https://github.com/MustardSeedNetworks/seed/issues/3334)) ([1db0db5](https://github.com/MustardSeedNetworks/seed/commit/1db0db5352e3be8679d5995a03176fefbf730501))
+* **api:** type the passkey ceremony options (S6-4 slice 42) ([#3339](https://github.com/MustardSeedNetworks/seed/issues/3339)) ([33706f1](https://github.com/MustardSeedNetworks/seed/commit/33706f17b559f13ad64cde34c9ef85451d0ff7f0))
+* **api:** type the setup and client-log answers (S6-4 slice 41) ([#3337](https://github.com/MustardSeedNetworks/seed/issues/3337)) ([8b8228f](https://github.com/MustardSeedNetworks/seed/commit/8b8228ff1e3a67e30f7f5c80b77062a7fd70313c))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3338](https://github.com/MustardSeedNetworks/seed/issues/3338)) ([2337a39](https://github.com/MustardSeedNetworks/seed/commit/2337a39c15c46eac7a6ac1ee71f280b61034fa37))
+* **deps:** lock file maintenance ([#3347](https://github.com/MustardSeedNetworks/seed/issues/3347)) ([d06a19a](https://github.com/MustardSeedNetworks/seed/commit/d06a19a411cda0b32edd49b60f3b3536049dc7f7))
+* **deps:** lock file maintenance ([#3351](https://github.com/MustardSeedNetworks/seed/issues/3351)) ([1cadde9](https://github.com/MustardSeedNetworks/seed/commit/1cadde9d676857d7b828de7be16c9a7a3ab9a395))
+* **deps:** update dependency @vitejs/plugin-react to v6.1.2 ([#3340](https://github.com/MustardSeedNetworks/seed/issues/3340)) ([de151cf](https://github.com/MustardSeedNetworks/seed/commit/de151cf64fbb9eec224c4d7720ebe1a42fcdc82e))
+* **deps:** update dependency postcss to v8.5.29 ([#3341](https://github.com/MustardSeedNetworks/seed/issues/3341)) ([dfe2539](https://github.com/MustardSeedNetworks/seed/commit/dfe253908b5413b681973298c627ed272a0ed0b8))
+
 ## [0.254.5](https://github.com/MustardSeedNetworks/seed/compare/v0.254.4...v0.254.5) (2026-10-12)
 
 
