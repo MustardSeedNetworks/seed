@@ -6,6 +6,6 @@
  * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
 export interface SetMTURequest {
-  interface: string;
+  interface?: string;
   mtu: number;
 }

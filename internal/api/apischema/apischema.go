@@ -74,6 +74,7 @@ func Targets() []Target {
 		{&api.SetupCompleteRequest{}, "setup-complete.schema.json"},
 		{&api.RecoveryCompleteRequest{}, "recovery-complete.schema.json"},
 		{&api.SetMTURequest{}, "set-mtu.schema.json"},
+		{&api.SetMTUResponse{}, "set-mtu-response.schema.json"},
 		{&api.PathRequest{}, "path.schema.json"},
 		{&api.WiFiConnectRequest{}, "wifi-connect.schema.json"},
 		{&api.TracerouteRequest{}, "traceroute-request.schema.json"},

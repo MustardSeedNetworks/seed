@@ -428,6 +428,36 @@ func TestHandleSetMTU(t *testing.T) {
 	}
 }
 
+// TestHandleSetMTUResponseShape pins the answer to a successful MTU change.
+func TestHandleSetMTUResponseShape(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	server := api.NewTestServer()
+	defer server.Close()
+
+	body, _ := json.Marshal(api.SetMTURequest{Interface: "lo", MTU: 1500})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/network/mtu", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	server.Mux().ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected status %d, got %d: %s", http.StatusOK, w.Code, w.Body.String())
+	}
+	dec := json.NewDecoder(w.Body)
+	dec.DisallowUnknownFields()
+	var got api.SetMTUResponse
+	if err := dec.Decode(&got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	want := api.SetMTUResponse{Status: "success", Message: "MTU updated", Interface: "lo", MTU: 1500}
+	if got != want {
+		t.Errorf("got %+v, want %+v", got, want)
+	}
+}
+
 // TestHandleSetMTUMethodNotAllowed tests non-POST methods on MTU endpoint.
 func TestHandleSetMTUMethodNotAllowed(t *testing.T) {
 	if testing.Short() {

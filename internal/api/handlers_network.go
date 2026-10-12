@@ -49,8 +49,17 @@ type SetInterfaceResponse struct {
 // MTU range 68..65535: 68 is the IPv4 minimum per RFC 791; 65535 is the
 // absolute cap (jumbo frames live below 9216 in practice).
 type SetMTURequest struct {
-	Interface string `json:"interface" validate:"required"`
-	MTU       int    `json:"mtu"       validate:"required,gte=68,lte=65535"`
+	Interface string `json:"interface,omitempty"` // empty means the current interface
+	MTU       int    `json:"mtu"                 validate:"required,gte=68,lte=65535"`
+}
+
+// SetMTUResponse is the answer to a successful MTU change; Interface names
+// the interface that was changed, resolved when the request left it empty.
+type SetMTUResponse struct {
+	Status    string `json:"status"    jsonschema:"enum=success"`
+	Message   string `json:"message"`
+	Interface string `json:"interface"`
+	MTU       int    `json:"mtu"`
 }
 
 // ============================================================================
@@ -453,11 +462,11 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"status":    statusSuccess,
-		"message":   "MTU updated",
-		"interface": iface,
-		"mtu":       req.MTU,
+	sendJSONResponse(w, nil, http.StatusOK, SetMTUResponse{
+		Status:    statusSuccess,
+		Message:   "MTU updated",
+		Interface: iface,
+		MTU:       req.MTU,
 	})
 }
 

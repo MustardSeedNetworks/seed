@@ -271,7 +271,7 @@ func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
 		result = tracer.TraceTCP(ctx, req.Target, port)
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, result)
+	sendJSONResponse(w, logger, http.StatusOK, toTracerouteResult(result, nil))
 }
 
 func validateTracerouteTarget(target string) string {
