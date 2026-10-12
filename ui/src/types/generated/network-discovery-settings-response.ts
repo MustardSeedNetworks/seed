@@ -18,7 +18,7 @@ export interface OptionsResponse {
   passiveProtocols: PassiveProtocolResponse;
   arpScan: boolean;
   icmpScan: boolean;
-  portScan: PortScanResponse;
+  portScan: PortScanSettingsResponse;
   traceroute: boolean;
   snmpQuery: boolean;
 }
@@ -28,7 +28,7 @@ export interface PassiveProtocolResponse {
   edp: boolean;
   ndp: boolean;
 }
-export interface PortScanResponse {
+export interface PortScanSettingsResponse {
   enabled: boolean;
   preset: string;
   tcpPorts: string;

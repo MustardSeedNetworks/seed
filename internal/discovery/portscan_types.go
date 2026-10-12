@@ -40,7 +40,7 @@ const (
 // ServiceInfo contains information about a detected service.
 type ServiceInfo struct {
 	Port     int       `json:"port"`
-	State    PortState `json:"state"`
+	State    PortState `json:"state"              jsonschema:"enum=open,enum=closed,enum=filtered"`
 	Service  string    `json:"service"`            // Service name (http, ssh, etc.)
 	Banner   string    `json:"banner,omitempty"`   // Raw banner text
 	Version  string    `json:"version,omitempty"`  // Parsed version if available

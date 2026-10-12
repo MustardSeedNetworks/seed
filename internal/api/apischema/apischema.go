@@ -156,7 +156,7 @@ func Targets() []Target {
 		{&api.IperfSettingsResponse{}, "iperf-settings-response.schema.json"},
 		{&api.SpeedtestSettingsResponse{}, "speedtest-settings-response.schema.json"},
 		{&api.PassiveProtocolResponse{}, "passive-protocol-response.schema.json"},
-		{&api.PortScanResponse{}, "port-scan-response.schema.json"},
+		{&api.PortScanSettingsResponse{}, "port-scan-settings-response.schema.json"},
 		{&api.TimingResponse{}, "timing-response.schema.json"},
 		{&api.FingerprintingResponse{}, "fingerprinting-response.schema.json"},
 
@@ -167,6 +167,7 @@ func Targets() []Target {
 		{&api.IperfResultResponse{}, "iperf-result-response.schema.json"},
 		{&api.IperfSuggestion{}, "iperf-suggestion.schema.json"},
 		{&api.PortScanRequest{}, "port-scan-request.schema.json"},
+		{&api.PortScanResponse{}, "port-scan-response.schema.json"},
 		{&api.TCPProbeRequest{}, "tcp-probe-request.schema.json"},
 		{&api.DNSResponse{}, "dns-response.schema.json"},
 		{&api.EngineScanRequest{}, "engine-scan-request.schema.json"},

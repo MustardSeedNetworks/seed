@@ -3,7 +3,9 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -544,6 +546,46 @@ func TestWiFiChannelGraphResponseShape(t *testing.T) {
 	require.JSONEq(t, `{"networks24Ghz":[],"networks6Ghz":[],"networks5Ghz":[{"ssid":"lab",`+
 		`"bssid":"aa:bb:cc:dd:ee:ff","channel":36,"centerFreqMhz":5180,"channelWidthMhz":80,`+
 		`"signalDbm":-51,"band":"5GHz","isConnected":false}]}`, string(data))
+}
+
+// The port scan sent the domain result, whose scanTime was a Go duration in
+// nanoseconds; the answer now carries milliseconds under scanTimeMs.
+func TestPortScanResponseShape(t *testing.T) {
+	t.Parallel()
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = ln.Close() })
+	go func() {
+		for {
+			conn, acceptErr := ln.Accept()
+			if acceptErr != nil {
+				return
+			}
+			_, _ = conn.Write([]byte("lab banner\r\n"))
+			_ = conn.Close()
+		}
+	}()
+	port := ln.Addr().(*net.TCPAddr).Port
+
+	w := httptest.NewRecorder()
+	body := fmt.Sprintf(`{"target":"127.0.0.1","ports":[%d]}`, port)
+	(&Server{}).handlePortScan(w, httptest.NewRequest(http.MethodPost,
+		APIVersionPrefix+"/security/discovery/portscan", strings.NewReader(body)))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	require.Equal(t, []string{"ip", "scanTimeMs", "services"}, topLevelKeys(t, w.Body.Bytes()))
+	var got PortScanResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+	require.Len(t, got.Services, 1)
+	require.Equal(t, port, got.Services[0].Port)
+	require.Equal(t, discovery.PortOpen, got.Services[0].State)
+	require.Less(t, got.ScanTimeMs, int64(10_000))
+}
+
+func TestPortScanResponseCarriesMilliseconds(t *testing.T) {
+	t.Parallel()
+	got := newPortScanResponse(&discovery.PortScanResult{IP: "192.0.2.1", ScanTime: 1500 * time.Millisecond})
+	require.Equal(t, int64(1500), got.ScanTimeMs)
 }
 
 func TestWiFiChannelGraphUnavailableHasNoData(t *testing.T) {

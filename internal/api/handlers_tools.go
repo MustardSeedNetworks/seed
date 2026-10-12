@@ -328,6 +328,27 @@ type PortScanRequest struct {
 	Workers int    `json:"workers,omitempty"` // Concurrent workers (default: 20)
 }
 
+// PortScanResponse is one host's port scan: the open ports found and how long
+// the scan took. Error is set when the target did not resolve or the scan was
+// cut short.
+type PortScanResponse struct {
+	IP         string                  `json:"ip"`
+	Hostname   string                  `json:"hostname,omitempty"`
+	Services   []discovery.ServiceInfo `json:"services"`
+	ScanTimeMs int64                   `json:"scanTimeMs"`
+	Error      string                  `json:"error,omitempty"`
+}
+
+func newPortScanResponse(result *discovery.PortScanResult) PortScanResponse {
+	return PortScanResponse{
+		IP:         result.IP,
+		Hostname:   result.Hostname,
+		Services:   result.Services,
+		ScanTimeMs: result.ScanTime.Milliseconds(),
+		Error:      result.Error,
+	}
+}
+
 // defaultPortScanWorkers is the concurrency used when a caller does not ask
 // for a specific number.
 const defaultPortScanWorkers = 20
@@ -417,7 +438,7 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, result)
+	sendJSONResponse(w, logger, http.StatusOK, newPortScanResponse(result))
 }
 
 // FingerprintRequest is POST /security/discovery/fingerprint: the host to

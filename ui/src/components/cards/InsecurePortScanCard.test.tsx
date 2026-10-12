@@ -64,7 +64,7 @@ describe('InsecurePortScanCard', () => {
         { port: 445, state: 'open', service: 'microsoft-ds' },
         { port: 22, state: 'closed', service: 'ssh' },
       ],
-      scanTime: 1200,
+      scanTimeMs: 1200,
     });
     renderCard();
 
@@ -94,7 +94,7 @@ describe('InsecurePortScanCard', () => {
     mockPost.mockResolvedValue({
       ip: '192.0.2.10',
       services: [{ port: 6003, state: 'open', service: 'x11' }],
-      scanTime: 90,
+      scanTimeMs: 90,
     });
     renderCard();
 
@@ -109,7 +109,7 @@ describe('InsecurePortScanCard', () => {
     mockPost.mockResolvedValue({
       ip: '192.0.2.10',
       services: [{ port: 1099, state: 'open', service: '' }],
-      scanTime: 40,
+      scanTimeMs: 40,
     });
     renderCard();
 
@@ -123,7 +123,7 @@ describe('InsecurePortScanCard', () => {
 
   it('says so plainly when nothing insecure is open', async () => {
     asUser('operator');
-    mockPost.mockResolvedValue({ ip: '192.0.2.10', services: [], scanTime: 30 });
+    mockPost.mockResolvedValue({ ip: '192.0.2.10', services: [], scanTimeMs: 30 });
     renderCard();
 
     await userEvent.type(await screen.findByLabelText('Target address'), '192.0.2.10');

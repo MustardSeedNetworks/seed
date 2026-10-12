@@ -5509,7 +5509,7 @@ components:
                 passiveProtocols:
                     $ref: '#/components/schemas/PassiveProtocolResponse'
                 portScan:
-                    $ref: '#/components/schemas/PortScanResponse'
+                    $ref: '#/components/schemas/PortScanSettingsResponse'
                 snmpQuery:
                     type: boolean
                 traceroute:
@@ -5932,6 +5932,26 @@ components:
                 - target
             type: object
         PortScanResponse:
+            additionalProperties: false
+            properties:
+                error:
+                    type: string
+                hostname:
+                    type: string
+                ip:
+                    type: string
+                scanTimeMs:
+                    type: integer
+                services:
+                    items:
+                        $ref: '#/components/schemas/ServiceInfo'
+                    type: array
+            required:
+                - ip
+                - services
+                - scanTimeMs
+            type: object
+        PortScanSettingsResponse:
             additionalProperties: false
             properties:
                 enabled:
@@ -7706,6 +7726,30 @@ components:
                 - running
                 - port
                 - pid
+            type: object
+        ServiceInfo:
+            additionalProperties: false
+            properties:
+                banner:
+                    type: string
+                port:
+                    type: integer
+                protocol:
+                    type: string
+                service:
+                    type: string
+                state:
+                    enum:
+                        - open
+                        - closed
+                        - filtered
+                    type: string
+                version:
+                    type: string
+            required:
+                - port
+                - state
+                - service
             type: object
         ServiceInstance:
             additionalProperties: false
@@ -14358,6 +14402,12 @@ paths:
                             $ref: '#/components/schemas/PortScanRequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PortScanResponse'
+                    description: The open ports found on the host and how long the scan took.
                 "401":
                     content:
                         application/json:

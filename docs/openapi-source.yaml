@@ -1115,6 +1115,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/PortScanRequest'
+    responses:
+      "200":
+        description: The open ports found on the host and how long the scan took.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortScanResponse'
   POST /api/v1/security/discovery/probe:
     requestBody:
       required: true

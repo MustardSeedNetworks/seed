@@ -22,13 +22,13 @@ import type {
   DiscoveredDevice,
   DiscoverySettingsForAutoScan,
   NetworkDiscoveryData,
-  PortScanApiResponse,
   PortScanResult,
-  ServiceInfo,
 } from '../components/cards/networkDiscoveryCardTypes';
 import { submitJob } from '../lib/jobsClient';
 import { LogComponents, logger } from '../lib/logger';
 import type { DiscoveryOptionsResponse } from '../types/generated/discovery-options-response';
+import type { PortScanRequest } from '../types/generated/port-scan-request';
+import type { PortScanResponse, ServiceInfo } from '../types/generated/port-scan-response';
 import type { VulnScanRequest } from '../types/generated/vuln-scan-request';
 
 interface UseNetworkDiscoveryAutoScanResult {
@@ -162,13 +162,10 @@ export function useNetworkDiscoveryAutoScan(
     const device = data?.devices.find((d) => d.ip === ip);
 
     try {
-      const apiResponse = await api.post<PortScanApiResponse>(
+      const request: PortScanRequest = { target: ip, ports: COMMON_PORTS };
+      const apiResponse = await api.post<PortScanResponse>(
         '/api/v1/security/discovery/portscan',
-        {
-          target: ip,
-          ports: COMMON_PORTS,
-          timeout: 2000,
-        },
+        request,
       );
 
       // Transform backend response to frontend format

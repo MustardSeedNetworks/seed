@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/port-scan-settings-response.schema.json",
+  "$ref": "#/$defs/PortScanSettingsResponse",
+  "$defs": {
+    "PortScanSettingsResponse": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "preset": {
+          "type": "string"
+        },
+        "tcpPorts": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "preset",
+        "tcpPorts"
+      ]
+    }
+  },
+  "title": "PortScanSettingsResponse",
+  "description": "PortScanSettingsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

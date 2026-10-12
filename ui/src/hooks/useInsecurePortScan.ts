@@ -14,28 +14,11 @@ import { useState } from 'react';
 
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
-
-/** One port the scanner reported. Mirrors discovery.ServiceInfo. */
-export interface ScannedService {
-  port: number;
-  state: string;
-  service: string;
-  banner?: string;
-  version?: string;
-  protocol?: string;
-}
-
-/** Mirrors discovery.PortScanResult. */
-export interface PortScanResult {
-  ip: string;
-  hostname?: string;
-  services: ScannedService[];
-  scanTime: number;
-  error?: string;
-}
+import type { PortScanRequest } from '../types/generated/port-scan-request';
+import type { PortScanResponse } from '../types/generated/port-scan-response';
 
 interface InsecurePortScan {
-  result: PortScanResult | null;
+  result: PortScanResponse | null;
   scanning: boolean;
   error: string | null;
   scan: (target: string) => Promise<void>;
@@ -43,7 +26,7 @@ interface InsecurePortScan {
 }
 
 export function useInsecurePortScan(): InsecurePortScan {
-  const [result, setResult] = useState<PortScanResult | null>(null);
+  const [result, setResult] = useState<PortScanResponse | null>(null);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,10 +35,11 @@ export function useInsecurePortScan(): InsecurePortScan {
     setError(null);
     setResult(null);
     try {
-      const scanned = await api.post<PortScanResult>('/api/v1/security/discovery/portscan', {
-        target,
-        profile: 'insecure',
-      });
+      const request: PortScanRequest = { target, profile: 'insecure' };
+      const scanned = await api.post<PortScanResponse>(
+        '/api/v1/security/discovery/portscan',
+        request,
+      );
       setResult(scanned);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Insecure port scan failed';
