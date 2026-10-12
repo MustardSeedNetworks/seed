@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.254.5](https://github.com/MustardSeedNetworks/seed/compare/v0.254.4...v0.254.5) (2026-10-12)
+
+
+### Code Refactoring
+
+* **api:** type the MTU and traceroute answers (S6-4 slice 38) ([#3333](https://github.com/MustardSeedNetworks/seed/issues/3333)) ([ef4680c](https://github.com/MustardSeedNetworks/seed/commit/ef4680ca1ebc43593a6f56069ef61a39a4d1d044))
+* **api:** type the port scan answer (S6-4 slice 36) ([#3329](https://github.com/MustardSeedNetworks/seed/issues/3329)) ([e3f90ac](https://github.com/MustardSeedNetworks/seed/commit/e3f90acfb75918987748790b5cb3c3bda7fdd374))
+* **api:** type the settings answer (S6-4 slice 37) ([#3331](https://github.com/MustardSeedNetworks/seed/issues/3331)) ([3474ea3](https://github.com/MustardSeedNetworks/seed/commit/3474ea3d0ac7f8f51579a9cda07df64408af1226))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3332](https://github.com/MustardSeedNetworks/seed/issues/3332)) ([a8a68af](https://github.com/MustardSeedNetworks/seed/commit/a8a68afa0a4ae0093354e81f38645dd7474b4a9e))
+
 ## [0.254.4](https://github.com/MustardSeedNetworks/seed/compare/v0.254.3...v0.254.4) (2026-10-12)
 
 
