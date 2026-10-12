@@ -34,7 +34,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { useSettings } from '../../contexts/useSettings';
-import { type IperfServerStatus, useIperfServerSync } from '../../hooks/useIperfServerSync';
+import { useIperfServerSync } from '../../hooks/useIperfServerSync';
 import { LogComponents, logger } from '../../lib/logger';
 import { useTestRunSignal, useTestRunStore } from '../../stores/testRunStore';
 import {
@@ -45,6 +45,8 @@ import {
   spacing,
   status as statusColor,
 } from '../../styles/theme';
+import type { IperfClientRequest } from '../../types/generated/iperf-client-request';
+import type { ServerStatus } from '../../types/generated/iperf-server-status';
 import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
 import { Gauge } from '../ui/Icons';
 import { ProgressRing, PulsingDot, SpeedGauge } from '../ui/SpeedGauge';
@@ -176,7 +178,7 @@ export function PerformanceCard({
   const [iperfInfo, setIperfInfo] = useState<IperfInfo | null>(null);
   const [iperfClientStatus, setIperfClientStatus] = useState<IperfClientStatus | null>(null);
   const [iperfResult, setIperfResult] = useState<IperfResult | null>(null);
-  const [iperfServerStatus, setIperfServerStatus] = useState<IperfServerStatus | null>(null);
+  const [iperfServerStatus, setIperfServerStatus] = useState<ServerStatus | null>(null);
   const [iperfError, setIperfError] = useState<string | null>(null);
   const [iperfClientRunning, setIperfClientRunning] = useState(false);
 
@@ -366,7 +368,7 @@ export function PerformanceCard({
         reverse: iperfSettings.direction === 'download',
         duration: iperfSettings.duration,
         parallel: 1,
-      });
+      } satisfies IperfClientRequest);
     } catch (err) {
       setIperfError(err instanceof Error ? err.message : t('performance.iperfFailed'));
       setIperfClientStatus({ running: false, phase: 'idle', progress: 0 });
