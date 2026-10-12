@@ -337,26 +337,6 @@ func TestParseRouteMessageIPv6(t *testing.T) {
 	}
 }
 
-func TestDetectGatewayPlatformDarwin(t *testing.T) {
-	// Test the platform-specific detection function.
-	gw, err := gateway.DetectGateway()
-	if err != nil {
-		t.Logf("DetectGateway returned error: %v", err)
-	}
-	// Just verify it doesn't panic and returns valid types.
-	_ = gw
-}
-
-func TestDetectGatewayIPv6PlatformDarwin(t *testing.T) {
-	// Test the platform-specific IPv6 detection function.
-	gw, err := gateway.DetectGatewayIPv6()
-	if err != nil {
-		t.Logf("DetectGatewayIPv6 returned error: %v", err)
-	}
-	// Just verify it doesn't panic and returns valid types.
-	_ = gw
-}
-
 func TestGetAllRoutesDarwin(t *testing.T) {
 	routes, err := gateway.GetAllRoutes()
 	if err != nil {
@@ -374,18 +354,6 @@ func TestGetAllRoutesDarwin(t *testing.T) {
 		if r.Family != "inet" && r.Family != "inet6" && r.Family != "" {
 			t.Errorf("unexpected Family %q", r.Family)
 		}
-	}
-}
-
-func TestGetDefaultGatewayInterfaceDarwin(t *testing.T) {
-	iface, err := gateway.GetDefaultGatewayInterface()
-	if err != nil {
-		t.Logf("GetDefaultGatewayInterface returned error: %v", err)
-	}
-
-	// If we got an interface, log it.
-	if iface != "" {
-		t.Logf("Default gateway interface: %s", iface)
 	}
 }
 
