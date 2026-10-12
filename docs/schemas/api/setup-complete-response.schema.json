@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/setup-complete-response.schema.json",
+  "$ref": "#/$defs/SetupCompleteResponse",
+  "$defs": {
+    "SetupCompleteResponse": {
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "success"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "status"
+      ]
+    }
+  },
+  "title": "SetupCompleteResponse",
+  "description": "SetupCompleteResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

@@ -1246,6 +1246,19 @@ components:
             required:
                 - entries
             type: object
+        ClientLogResponse:
+            additionalProperties: false
+            properties:
+                received:
+                    type: integer
+                status:
+                    enum:
+                        - accepted
+                    type: string
+            required:
+                - status
+                - received
+            type: object
         Config:
             additionalProperties: false
             properties:
@@ -8079,6 +8092,16 @@ components:
                 - password
                 - setupToken
             type: object
+        SetupCompleteResponse:
+            additionalProperties: false
+            properties:
+                status:
+                    enum:
+                        - success
+                    type: string
+            required:
+                - status
+            type: object
         SetupStatusResponse:
             additionalProperties: false
             properties:
@@ -13664,6 +13687,12 @@ paths:
                             $ref: '#/components/schemas/ClientLogRequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ClientLogResponse'
+                    description: The batch was accepted; received counts its entries.
                 "401":
                     content:
                         application/json:
@@ -15899,6 +15928,12 @@ paths:
                             $ref: '#/components/schemas/SetupCompleteRequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SetupCompleteResponse'
+                    description: The admin password is set and first-run setup is complete.
                 "405":
                     content:
                         application/json:

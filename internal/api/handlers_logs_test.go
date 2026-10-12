@@ -61,15 +61,14 @@ func TestHandleClientLogsWireContract(t *testing.T) {
 				return
 			}
 
-			var body struct {
-				Status   string `json:"status"`
-				Received int    `json:"received"`
-			}
-			if err := json.NewDecoder(w.Body).Decode(&body); err != nil {
+			var body api.ClientLogResponse
+			dec := json.NewDecoder(w.Body)
+			dec.DisallowUnknownFields()
+			if err := dec.Decode(&body); err != nil {
 				t.Fatalf("decode response: %v", err)
 			}
-			if body.Received != 1 {
-				t.Errorf("received = %d, want 1", body.Received)
+			if body.Status != "accepted" || body.Received != 1 {
+				t.Errorf("body = %+v, want accepted with 1 received", body)
 			}
 		})
 	}

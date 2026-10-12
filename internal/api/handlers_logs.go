@@ -38,6 +38,12 @@ type ClientLogEntry struct {
 	Stack     string         `json:"stack,omitempty"`
 }
 
+// ClientLogResponse acknowledges a frontend log batch.
+type ClientLogResponse struct {
+	Status   string `json:"status"   jsonschema:"enum=accepted"`
+	Received int    `json:"received"`
+}
+
 // LogQueryResponse represents the response for log queries.
 type LogQueryResponse struct {
 	Logs       []LogEntry `json:"logs"`
@@ -148,9 +154,9 @@ func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 		broadcaster.Write(logEntry)
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"status":   "accepted",
-		"received": len(req.Entries),
+	sendJSONResponse(w, logger, http.StatusOK, ClientLogResponse{
+		Status:   "accepted",
+		Received: len(req.Entries),
 	})
 }
 

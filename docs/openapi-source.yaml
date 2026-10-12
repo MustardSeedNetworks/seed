@@ -872,6 +872,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/ClientLogRequest'
+    responses:
+      "200":
+        description: The batch was accepted; received counts its entries.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientLogResponse'
   GET /api/v1/reporting/logs/query:
     responses:
       "200":
@@ -1437,6 +1444,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/SetupCompleteRequest'
+    responses:
+      "200":
+        description: The admin password is set and first-run setup is complete.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetupCompleteResponse'
   GET /api/v1/setup/status:
     responses:
       "200":
