@@ -413,7 +413,6 @@ func requestEndpointTargets(req *TestsSettingsResponse) config.HealthChecksConfi
 	return hc
 }
 
-// applyPerformanceSettings applies performance test configuration from request.
 // updateHealthChecksSettings persists the health-checks settings. Thin transport
 // (ADR-0020): decode, map the wire DTO to the domain model, and delegate the
 // probe-table + config persistence + tester sync to the service.

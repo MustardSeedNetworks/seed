@@ -42,7 +42,6 @@ export function HealthChecksSettingsEnterprise({
     host: '',
     port: 5432,
     database: '',
-    username: '',
     enabled: true,
   }));
 
@@ -54,7 +53,7 @@ export function HealthChecksSettingsEnterprise({
     name: '',
     protocol: 'smb' as const,
     host: '',
-    sharePath: '',
+    share: '',
     enabled: true,
   }));
 
@@ -67,6 +66,7 @@ export function HealthChecksSettingsEnterprise({
     host: '',
     port: 389,
     useTls: false,
+    startTls: false,
     baseDn: '',
     enabled: true,
   }));
@@ -189,20 +189,6 @@ export function HealthChecksSettingsEnterprise({
                   'flex-1 bg-surface-raised',
                 )}
               />
-              <input
-                type="text"
-                value={endpoint.username}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateSqlEndpoint(endpoint.id ?? '', 'username', e.target.value)
-                }
-                placeholder={t('health.username')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'flex-1 bg-surface-raised',
-                )}
-              />
             </div>
           </div>
         ))}
@@ -263,9 +249,9 @@ export function HealthChecksSettingsEnterprise({
             />
             <input
               type="text"
-              value={endpoint.sharePath}
+              value={endpoint.share}
               onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateFileShareEndpoint(endpoint.id ?? '', 'sharePath', e.target.value)
+                updateFileShareEndpoint(endpoint.id ?? '', 'share', e.target.value)
               }
               placeholder={t('health.sharePath')}
               className={cn(input.base, input.state.default, input.size.md, 'flex-1')}

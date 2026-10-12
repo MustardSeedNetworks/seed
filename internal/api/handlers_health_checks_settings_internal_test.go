@@ -68,6 +68,12 @@ func TestHealthChecksSettingsRoundTrip(t *testing.T) {
 	w := putHealthChecksSettings(t, s, req)
 	require.Equal(t, http.StatusOK, w.Code, "PUT body: %s", w.Body.String())
 
+	dec := json.NewDecoder(w.Body)
+	dec.DisallowUnknownFields()
+	var ack StatusMessageResponse
+	require.NoError(t, dec.Decode(&ack), "PUT answers the documented StatusMessageResponse")
+	require.Equal(t, statusSuccess, ack.Status)
+
 	// The probes table now holds exactly the two endpoints, as their kinds.
 	probes, err := s.dbConn.Probes().ListProbes(t.Context(), database.DefaultClientID, "")
 	require.NoError(t, err)

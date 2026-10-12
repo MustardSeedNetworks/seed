@@ -41,16 +41,16 @@ ui/src/hooks/useNetworkFetchers.ts:500  # read-only — bypasses the client 401 
 ui/src/hooks/useNetworkFetchers.ts:529  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkFetchers.ts:533  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useReports.ts:36  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useSettingsDrawerLoaders.ts:78  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useSettingsDrawerLoaders.ts:91  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useSettingsDrawerLoaders.ts:111  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useSettingsDrawerLoaders.ts:162  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useSettingsDrawerLoaders.ts:180  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useSettingsDrawerLoaders.ts:197  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useSettingsDrawerLoaders.ts:234  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useSettingsDrawerLoaders.ts:251  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useSettingsDrawerLoaders.ts:275  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useSettingsDrawerLoaders.ts:292  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useSettingsDrawerLoaders.ts:79  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useSettingsDrawerLoaders.ts:92  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useSettingsDrawerLoaders.ts:112  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useSettingsDrawerLoaders.ts:173  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useSettingsDrawerLoaders.ts:191  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useSettingsDrawerLoaders.ts:208  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useSettingsDrawerLoaders.ts:245  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useSettingsDrawerLoaders.ts:262  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useSettingsDrawerLoaders.ts:286  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useSettingsDrawerLoaders.ts:303  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useSubnetSettings.ts:43  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useVulnerabilitySettings.ts:38  # read-only — bypasses the client 401 refresh/retry
 ui/src/lib/logger.ts:267  # mutating but CSRF-exempt by design (the route declares no CSRF) — correct as a raw fetch

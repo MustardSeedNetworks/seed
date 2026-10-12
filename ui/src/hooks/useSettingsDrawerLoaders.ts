@@ -16,6 +16,7 @@ import { LogComponents, logger } from '../lib/logger';
 import type { IperfSuggestion } from '../types/generated/iperf-suggestion';
 import type { LogFileResponse } from '../types/generated/log-file-response';
 import type { SettingsResponse, ThresholdSettings } from '../types/generated/settings-response';
+import type { TestsSettingsResponse } from '../types/generated/tests-settings-response';
 import type {
   CableTestSettings as CableTestSettingsType,
   IpSettings,
@@ -111,7 +112,7 @@ export function useSettingsDrawerLoaders({
     await fetch(`${API_BASE}/api/v1/telemetry/probes/settings`, { credentials: 'include' })
       .then(async (response) => {
         if (response.ok) {
-          const data = await (response.json() as Promise<Partial<TestsSettings>>);
+          const data = await (response.json() as Promise<Partial<TestsSettingsResponse>>);
           setTestsSettings({
             dnsHostname: data.dnsHostname || 'google.com',
             dnsServers: withIds(data.dnsServers || []).map((server) => ({
@@ -137,6 +138,16 @@ export function useSettingsDrawerLoaders({
               expectedStatus: endpoint.expectedStatus || 200,
               enabled: endpoint.enabled !== false,
             })),
+            rtspEndpoints: withIds(data.rtspEndpoints),
+            dicomEndpoints: withIds(data.dicomEndpoints),
+            hl7Endpoints: withIds(data.hl7Endpoints),
+            fhirEndpoints: withIds(data.fhirEndpoints),
+            sqlEndpoints: withIds(data.sqlEndpoints),
+            fileShareEndpoints: withIds(data.fileShareEndpoints),
+            ldapEndpoints: withIds(data.ldapEndpoints),
+            ltiEndpoints: withIds(data.ltiEndpoints),
+            opcuaEndpoints: withIds(data.opcuaEndpoints),
+            modbusEndpoints: withIds(data.modbusEndpoints),
             runPerformance: data.runPerformance ?? true,
             runSpeedtest: data.runSpeedtest ?? true,
             runIperf: data.runIperf ?? true,

@@ -16981,6 +16981,12 @@ paths:
                             $ref: '#/components/schemas/TestsSettingsResponse'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The probe settings were saved. Each endpoint list replaces the stored list, so a list sent empty is cleared.
                 "401":
                     content:
                         application/json:
