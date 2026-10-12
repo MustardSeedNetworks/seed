@@ -78,13 +78,10 @@ const (
 	// The answer is instant for a healthy binary; the slack is for a loaded host.
 	versionCheckTimeout = 5 * time.Second
 
-	// serverStartTimeout is the maximum time allowed for iperf3 server to start listening.
-	// Includes time to parse command, bind to port, and begin accepting connections.
-	serverStartTimeout = 10 * time.Second
-
-	// portCheckTimeout is the maximum time allowed for TCP port availability check.
-	// Short timeout since port bind should succeed or fail immediately.
-	portCheckTimeout = 2 * time.Second
+	// serverListenTimeout is how long a started iperf3 server gets to print
+	// that it is listening. Binding succeeds or fails at once; the slack is
+	// for a loaded host.
+	serverListenTimeout = 2 * time.Second
 
 	// minSupportedVersion is the minimum iperf3 version required for reliable operation.
 	// Version 3.17+ provides stable JSON output format for programmatic parsing.
@@ -115,9 +112,6 @@ const (
 	// searchPathsPrealloc is the preallocation size for the slice storing searched binary paths.
 	// This covers typical search locations: embedded, system PATH, and legacy paths.
 	searchPathsPrealloc = 8
-
-	// portCheckIntervalMs is the interval in milliseconds between port availability checks.
-	portCheckIntervalMs = 100
 
 	// progressConnectingPercent is the progress percentage when client enters "connecting" phase.
 	progressConnectingPercent = 10

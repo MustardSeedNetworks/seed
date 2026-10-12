@@ -1,11 +1,13 @@
 package iperf
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"os/exec"
 	"strconv"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/validation"
@@ -32,30 +34,42 @@ func (m *Manager) StartServer(port int) error {
 		return err
 	}
 
-	// Use timeout context for server startup monitoring
-	ctx, cancel := context.WithTimeout(context.Background(), serverStartTimeout)
+	// No deadline: the context lives as long as the server and exists so
+	// StopServer can cancel it. A start deadline here used to kill every
+	// server ten seconds after the operator started it (seed#3343).
+	ctx, cancel := context.WithCancel(context.Background())
 	m.serverCancel = cancel
 
-	// Start iperf3 server: iperf3 -s -p <port>
-
-	cmd := exec.CommandContext(ctx, binaryPath, "-s", "-p", strconv.Itoa(port))
+	// --forceflush, because into a pipe iperf3 otherwise buffers its stdout
+	// and the listening banner would not arrive until the buffer filled.
+	listening := newListenWatcher()
+	cmd := exec.CommandContext(ctx, binaryPath, "-s", "-p", strconv.Itoa(port), "--forceflush")
+	cmd.Stdout = listening
 	if startErr := procrun.Start(cmd); startErr != nil {
 		cancel()
 		return fmt.Errorf("failed to start iperf3 server: %w", startErr)
 	}
 
-	// Wait for port to be ready
-	if portErr := waitForPortReady(port, portCheckTimeout); portErr != nil {
-		// Kill the process if port check fails
-		if cmd.Process != nil {
-			_ = cmd.Process.Kill()
-			// Reap it. Kill alone leaves a zombie for the life of the daemon:
-			// nothing else calls Wait on this path, since the monitoring
-			// goroutine below is only started once the server is up.
-			_ = cmd.Wait()
-		}
+	exited := make(chan error, 1)
+	go func() { exited <- cmd.Wait() }()
+
+	// Readiness comes from iperf3 itself, never from dialing the port: iperf3
+	// serves one test at a time and takes any connection as a client, so a
+	// probe ties it up and the operator's first client can be refused while
+	// it resets (seed#3342).
+	select {
+	case <-listening.seen:
+	case waitErr := <-exited:
 		cancel()
-		return fmt.Errorf("iperf3 server failed to start listening: %w", portErr)
+		if waitErr == nil {
+			return errors.New("iperf3 server exited before listening")
+		}
+		return fmt.Errorf("iperf3 server exited before listening: %w", waitErr)
+	case <-time.After(serverListenTimeout):
+		_ = cmd.Process.Kill()
+		<-exited
+		cancel()
+		return fmt.Errorf("iperf3 server failed to start listening on port %d within %v", port, serverListenTimeout)
 	}
 
 	m.serverCmd = cmd
@@ -67,7 +81,7 @@ func (m *Manager) StartServer(port int) error {
 
 	// Monitor the server process
 	go func() {
-		waitErr := cmd.Wait()
+		waitErr := <-exited
 
 		m.mu.RLock()
 		phase := m.monitorPhase
@@ -128,4 +142,42 @@ func (m *Manager) StopServer() error {
 	m.serverCancel = nil
 
 	return nil
+}
+
+// listeningBanner is what iperf3 -s prints once its control socket is
+// listening; it writes the line straight after listen().
+const listeningBanner = "Server listening on"
+
+// listenBannerSearchLimit bounds how much output is searched for the banner.
+// iperf3 prints it within its first hundred bytes.
+const listenBannerSearchLimit = 4096
+
+// listenWatcher is the iperf3 server's stdout. It closes seen when the
+// listening banner appears and discards all output.
+type listenWatcher struct {
+	head    []byte
+	seen    chan struct{}
+	stopped bool
+}
+
+func newListenWatcher() *listenWatcher {
+	return &listenWatcher{seen: make(chan struct{})}
+}
+
+// Write is only called from the one goroutine [exec.Cmd] copies stdout on.
+func (w *listenWatcher) Write(p []byte) (int, error) {
+	if w.stopped {
+		return len(p), nil
+	}
+
+	w.head = append(w.head, p...)
+	switch {
+	case bytes.Contains(w.head, []byte(listeningBanner)):
+		close(w.seen)
+		w.stopped, w.head = true, nil
+	case len(w.head) > listenBannerSearchLimit:
+		w.stopped, w.head = true, nil
+	}
+
+	return len(p), nil
 }

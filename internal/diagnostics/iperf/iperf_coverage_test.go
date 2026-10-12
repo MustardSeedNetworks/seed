@@ -3,7 +3,6 @@ package iperf_test
 import (
 	"context"
 	"encoding/json"
-	"net"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -460,65 +459,6 @@ func TestGetLegacyPathsFormat(t *testing.T) {
 		if filepath.Base(path) != "iperf3" {
 			t.Errorf("Path should end with 'iperf3': %q", path)
 		}
-	}
-}
-
-// TestWaitForPortReadyValidPorts tests port readiness with valid ports.
-func TestWaitForPortReadyValidPorts(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		port    int
-		timeout time.Duration
-		setup   func() (cleanup func(), port int)
-		wantErr bool
-	}{
-		{
-			name:    "listening port",
-			timeout: 2 * time.Second,
-			setup: func() (func(), int) {
-				listener, err := net.Listen("tcp", "127.0.0.1:0")
-				if err != nil {
-					return func() {}, 0
-				}
-				port := listener.Addr().(*net.TCPAddr).Port
-				return func() { _ = listener.Close() }, port
-			},
-			wantErr: false,
-		},
-		{
-			name:    "non-listening port",
-			port:    59998,
-			timeout: 200 * time.Millisecond,
-			setup:   nil,
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			port := tt.port
-			var cleanup func()
-
-			if tt.setup != nil {
-				cleanup, port = tt.setup()
-				if port == 0 {
-					t.Skip("Could not set up listener")
-				}
-				defer cleanup()
-			}
-
-			err := iperf.WaitForPortReady(port, tt.timeout)
-
-			if tt.wantErr && err == nil {
-				t.Error("Expected error, got nil")
-			} else if !tt.wantErr && err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-		})
 	}
 }
 

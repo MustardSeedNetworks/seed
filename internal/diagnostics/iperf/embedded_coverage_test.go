@@ -565,21 +565,3 @@ func TestVersionCheckTimeoutExported(t *testing.T) {
 		t.Error("VersionCheckTimeout should be positive")
 	}
 }
-
-// TestServerStartTimeoutExported tests exported timeout constant.
-func TestServerStartTimeoutExported(t *testing.T) {
-	t.Parallel()
-
-	if iperf.ServerStartTimeout <= 0 {
-		t.Error("ServerStartTimeout should be positive")
-	}
-}
-
-// TestPortCheckTimeoutExported tests exported timeout constant.
-func TestPortCheckTimeoutExported(t *testing.T) {
-	t.Parallel()
-
-	if iperf.PortCheckTimeout <= 0 {
-		t.Error("PortCheckTimeout should be positive")
-	}
-}

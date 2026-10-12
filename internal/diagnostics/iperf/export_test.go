@@ -2,7 +2,6 @@ package iperf
 
 import (
 	"testing"
-	"time"
 )
 
 // This file is only compiled during testing.
@@ -124,11 +123,6 @@ func GetPlatformBinaryMap() map[string]string {
 	return getPlatformBinaryMap()
 }
 
-// WaitForPortReady exposes the internal waitForPortReady function for testing.
-func WaitForPortReady(port int, timeout time.Duration) error {
-	return waitForPortReady(port, timeout)
-}
-
 // ExtractEmbeddedBinary exposes the internal extractEmbeddedBinary function for testing.
 func ExtractEmbeddedBinary() (string, error) {
 	return extractEmbeddedBinary()
@@ -146,12 +140,6 @@ func ClearIperfBinaryPath() {
 
 // VersionCheckTimeout exposes the version check timeout constant for testing.
 const VersionCheckTimeout = versionCheckTimeout
-
-// ServerStartTimeout exposes the server start timeout constant for testing.
-const ServerStartTimeout = serverStartTimeout
-
-// PortCheckTimeout exposes the port check timeout constant for testing.
-const PortCheckTimeout = portCheckTimeout
 
 // MaxHostnameLength exposes the max hostname length constant for testing.
 const MaxHostnameLength = maxHostnameLength

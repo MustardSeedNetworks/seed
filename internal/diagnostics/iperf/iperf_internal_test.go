@@ -2,7 +2,6 @@ package iperf_test
 
 import (
 	"context"
-	"net"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -12,134 +11,6 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 )
-
-// TestWaitForPortReady tests the port readiness check function.
-func TestWaitForPortReady(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name      string
-		port      int
-		timeout   time.Duration
-		setup     func(t *testing.T) (int, func())
-		wantError bool
-		errorMsg  string
-	}{
-		{
-			name:      "invalid port negative",
-			port:      -1,
-			timeout:   100 * time.Millisecond,
-			wantError: true,
-		},
-		{
-			name:      "invalid port zero",
-			port:      0,
-			timeout:   100 * time.Millisecond,
-			wantError: true,
-		},
-		{
-			name:      "invalid port too high",
-			port:      65536,
-			timeout:   100 * time.Millisecond,
-			wantError: true,
-		},
-		{
-			name:      "port not listening timeout",
-			port:      59999, // unlikely to be in use
-			timeout:   100 * time.Millisecond,
-			wantError: true,
-			errorMsg:  "not ready",
-		},
-		{
-			name:    "port listening success",
-			port:    0, // will be assigned dynamically
-			timeout: 2 * time.Second,
-			setup: func(t *testing.T) (int, func()) {
-				// Start a TCP listener on a random port
-				listener, err := net.Listen("tcp", "127.0.0.1:0")
-				if err != nil {
-					t.Skipf("Could not create listener: %v", err)
-				}
-				cleanup := func() {
-					_ = listener.Close()
-				}
-				return listener.Addr().(*net.TCPAddr).Port, cleanup
-			},
-			wantError: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			runWaitForPortReadyCase(t, tt)
-		})
-	}
-}
-
-func runWaitForPortReadyCase(
-	t *testing.T,
-	tt struct {
-		name      string
-		port      int
-		timeout   time.Duration
-		setup     func(t *testing.T) (int, func())
-		wantError bool
-		errorMsg  string
-	},
-) {
-	t.Helper()
-
-	port := tt.port
-	var cleanup func()
-	if tt.setup != nil {
-		var setupPort int
-		setupPort, cleanup = tt.setup(t)
-		if cleanup != nil {
-			defer cleanup()
-		}
-		if setupPort != 0 {
-			port = setupPort
-		}
-	}
-
-	err := iperf.WaitForPortReady(port, tt.timeout)
-
-	if tt.wantError {
-		if err == nil {
-			t.Error("Expected error, got nil")
-			return
-		}
-		if tt.errorMsg != "" && !strings.Contains(err.Error(), tt.errorMsg) {
-			t.Errorf("Error should contain %q, got: %v", tt.errorMsg, err)
-		}
-		return
-	}
-
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-}
-
-// TestWaitForPortReadyWithListener tests port readiness with an actual listener.
-func TestWaitForPortReadyWithListener(t *testing.T) {
-	t.Parallel()
-
-	// Start a TCP listener
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("Failed to create listener: %v", err)
-	}
-	defer func() { _ = listener.Close() }()
-
-	port := listener.Addr().(*net.TCPAddr).Port
-
-	err = iperf.WaitForPortReady(port, 2*time.Second)
-	if err != nil {
-		t.Errorf("WaitForPortReady should succeed for listening port: %v", err)
-	}
-}
 
 // TestCompareVersionsEdgeCases tests version comparison edge cases.
 func TestCompareVersionsEdgeCases(t *testing.T) {
@@ -526,14 +397,6 @@ func TestConstantsValues(t *testing.T) {
 
 	if iperf.VersionCheckTimeout != 5*time.Second {
 		t.Errorf("VersionCheckTimeout = %v, want 5s", iperf.VersionCheckTimeout)
-	}
-
-	if iperf.ServerStartTimeout != 10*time.Second {
-		t.Errorf("ServerStartTimeout = %v, want 10s", iperf.ServerStartTimeout)
-	}
-
-	if iperf.PortCheckTimeout != 2*time.Second {
-		t.Errorf("PortCheckTimeout = %v, want 2s", iperf.PortCheckTimeout)
 	}
 
 	if iperf.MaxHostnameLength != 253 {
