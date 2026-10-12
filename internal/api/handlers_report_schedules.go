@@ -132,7 +132,7 @@ func (s *Server) handleReportSchedules(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleReportScheduleByID(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	id, ok := reportPathID(w, r, "scheduleId", "errors.reports.invalidScheduleID")
+	id, ok := reportPathID(w, r, "scheduleId", i18n.FromRequest(r).T("errors.reports.invalidScheduleID"))
 	if !ok {
 		return
 	}

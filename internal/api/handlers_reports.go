@@ -172,7 +172,7 @@ func (s *Server) handleReportGenerate(w http.ResponseWriter, r *http.Request) {
 
 // handleReportByID serves GET and DELETE on /api/v1/reports/{reportId}.
 func (s *Server) handleReportByID(w http.ResponseWriter, r *http.Request) {
-	id, ok := reportPathID(w, r, "reportId", "errors.reports.invalidID")
+	id, ok := reportPathID(w, r, "reportId", i18n.FromRequest(r).T("errors.reports.invalidID"))
 	if !ok {
 		return
 	}
@@ -191,7 +191,7 @@ func (s *Server) handleReportByID(w http.ResponseWriter, r *http.Request) {
 
 // handleReportDownload serves GET /api/v1/reports/{reportId}/download.
 func (s *Server) handleReportDownload(w http.ResponseWriter, r *http.Request) {
-	id, ok := reportPathID(w, r, "reportId", "errors.reports.invalidID")
+	id, ok := reportPathID(w, r, "reportId", i18n.FromRequest(r).T("errors.reports.invalidID"))
 	if !ok {
 		return
 	}
@@ -203,12 +203,12 @@ func (s *Server) handleReportDownload(w http.ResponseWriter, r *http.Request) {
 }
 
 // reportPathID returns the named path wildcard when it is a report or
-// schedule id, or writes a 400 with msgKey and reports false.
-func reportPathID(w http.ResponseWriter, r *http.Request, name, msgKey string) (string, bool) {
+// schedule id, or writes a 400 with msg and reports false.
+func reportPathID(w http.ResponseWriter, r *http.Request, name, msg string) (string, bool) {
 	id := r.PathValue(name)
 	if !reportIDPattern.MatchString(id) {
 		sendErrorResponseWithDetails(w, logging.FromContext(r.Context()), http.StatusBadRequest,
-			ErrCodeValidation, i18n.FromRequest(r).T(msgKey), "")
+			ErrCodeValidation, msg, "")
 		return "", false
 	}
 	return id, true
