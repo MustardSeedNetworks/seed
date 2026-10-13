@@ -28,6 +28,10 @@ type Node struct {
 	LastSeen     time.Time
 	ExpiresAt    time.Time
 	MetadataJSON string
+	// PollInterval is the shortest cadence of the enabled polling targets
+	// that resolve to this node, the interval LastSeen should advance by.
+	// Zero when no enabled target polls it any more, so nothing will.
+	PollInterval time.Duration
 }
 
 // ListOptions narrows a topology_nodes query.

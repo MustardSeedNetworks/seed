@@ -34,12 +34,13 @@ import {
   RecordRow,
 } from '../ui/ListDetail';
 import { TopologyGraph } from '../ui/TopologyGraph';
+import { nodeFreshness } from './topologyFreshness';
 
 export function TopologyPage(): JSX.Element {
   const [selectedID, setSelectedID] = useState<string>('');
   // One nodes read feeds both halves, so the map and the list can never
   // disagree about what was discovered.
-  const { nodes, loading, error, refresh } = useTopologyNodes();
+  const { nodes, fetchedAt, loading, error, refresh } = useTopologyNodes();
   const { links, error: linksError } = useTopologyLinks();
 
   return (
@@ -54,6 +55,7 @@ export function TopologyPage(): JSX.Element {
       <ListDetail>
         <NodeList
           nodes={nodes}
+          fetchedAt={fetchedAt}
           loading={loading}
           error={error}
           refresh={refresh}
@@ -68,6 +70,7 @@ export function TopologyPage(): JSX.Element {
 
 interface NodeListProps {
   nodes: TopologyNode[];
+  fetchedAt: number;
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -77,6 +80,7 @@ interface NodeListProps {
 
 function NodeList({
   nodes,
+  fetchedAt,
   loading,
   error,
   refresh,
@@ -120,10 +124,9 @@ function NodeList({
               name={n.displayName || n.sysName}
               meta={n.primaryIp || undefined}
               value={n.deviceType || t('common:status.notApplicable')}
-              // A node the reconcilers have never dated is not healthy or
-              // unhealthy; it is unmeasured, and the bar says so rather than
-              // showing the green that "seen" would imply.
-              state={n.lastSeen ? 'ok' : 'unknown'}
+              // Green only while the node is polled on schedule; a node that
+              // has missed polls, or that nothing polls, does not get it.
+              state={nodeFreshness(n.lastSeen, n.pollIntervalSeconds, fetchedAt)}
               selected={selectedID === n.id}
               onSelect={(): void => onSelect(n.id)}
             />

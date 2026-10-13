@@ -70,6 +70,10 @@ type TopologyNode struct {
 	FirstSeen    string          `json:"firstSeen"`
 	LastSeen     string          `json:"lastSeen"`
 	Metadata     json.RawMessage `json:"metadata"     jsonschema:"type=object"`
+	// PollIntervalSeconds is the cadence lastSeen should advance by, so a
+	// reader can tell a fresh node from a stale one. Omitted when no enabled
+	// polling target resolves to the node.
+	PollIntervalSeconds int `json:"pollIntervalSeconds,omitempty"`
 }
 
 // JSONSchemaExtend opens metadata to any keys; the reflector otherwise closes
@@ -318,18 +322,19 @@ func parseTopologyListOptions(r *http.Request) (topology.ListOptions, error) {
 // stable when DB columns evolve.
 func encodeNode(n *topology.Node) TopologyNode {
 	return TopologyNode{
-		ID:           n.ID,
-		ClientID:     n.ClientID,
-		IdentityHash: n.IdentityHash,
-		DisplayName:  n.DisplayName,
-		DeviceType:   n.DeviceType,
-		ChassisID:    n.ChassisID,
-		SysName:      n.SysName,
-		PrimaryMAC:   n.PrimaryMAC,
-		PrimaryIP:    n.PrimaryIP,
-		FirstSeen:    formatTime(n.FirstSeen),
-		LastSeen:     formatTime(n.LastSeen),
-		Metadata:     rawJSON(n.MetadataJSON),
+		ID:                  n.ID,
+		ClientID:            n.ClientID,
+		IdentityHash:        n.IdentityHash,
+		DisplayName:         n.DisplayName,
+		DeviceType:          n.DeviceType,
+		ChassisID:           n.ChassisID,
+		SysName:             n.SysName,
+		PrimaryMAC:          n.PrimaryMAC,
+		PrimaryIP:           n.PrimaryIP,
+		FirstSeen:           formatTime(n.FirstSeen),
+		LastSeen:            formatTime(n.LastSeen),
+		Metadata:            rawJSON(n.MetadataJSON),
+		PollIntervalSeconds: int(n.PollInterval / time.Second),
 	}
 }
 

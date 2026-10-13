@@ -28,13 +28,19 @@ import type { ReactNode } from 'react';
 import { cn } from '../styles/theme';
 import type { RollupState } from './StatusRollup';
 
-/** A record's state uses the same vocabulary as the rollup — one language. */
-export type RecordState = RollupState;
+/**
+ * A record's state uses the rollup's vocabulary — one language — plus `stale`,
+ * which only a record can be: a reading that was current and has since missed
+ * its refreshes. A rollup is computed now, so it never is.
+ */
+export type RecordState = RollupState | 'stale';
 
 const STATE_BAR: Record<RecordState, string> = {
   ok: 'bg-status-success',
   warn: 'bg-status-warning',
   crit: 'bg-status-error',
+  // Neutral: not health any more, and not yet a reading that says nothing.
+  stale: 'bg-text-muted',
   // Unknown is not a problem to alarm about, but it is not health either.
   unknown: 'bg-text-disabled',
 };
@@ -43,6 +49,7 @@ const STATE_VALUE: Record<RecordState, string> = {
   ok: 'text-text-secondary',
   warn: 'text-status-warning',
   crit: 'text-status-error',
+  stale: 'text-text-muted',
   unknown: 'text-text-muted',
 };
 
@@ -153,6 +160,7 @@ export function RecordRow({
       type="button"
       onClick={onSelect}
       aria-current={selected ? 'true' : undefined}
+      data-state={state}
       data-testid={testId}
       className={cn(
         'flex w-full items-center gap-default px-cell py-2 text-left',

@@ -41,6 +41,9 @@
         "metadata": {
           "additionalProperties": true,
           "type": "object"
+        },
+        "pollIntervalSeconds": {
+          "type": "integer"
         }
       },
       "additionalProperties": false,

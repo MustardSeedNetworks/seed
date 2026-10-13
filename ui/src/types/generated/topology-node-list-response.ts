@@ -24,4 +24,5 @@ export interface TopologyNode {
   metadata: {
     [k: string]: unknown;
   };
+  pollIntervalSeconds?: number;
 }
