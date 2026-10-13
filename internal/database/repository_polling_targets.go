@@ -24,7 +24,7 @@ type PollingTargetRepository struct {
 const selectPollingTarget = `
 	SELECT id, client_id, name, ip_address, snmp_version,
 		credentials_id, poll_interval_seconds, enabled, collector_chain,
-		last_polled_at, last_status, last_error, created_at, updated_at
+		last_polled_at, last_success_at, last_status, last_error, created_at, updated_at
 	FROM polling_targets
 `
 
@@ -224,17 +224,21 @@ func randomID() string {
 }
 
 // UpdateLastPoll records the outcome of the most recent poll attempt.
-// errMsg may be empty on success.
+// errMsg may be empty on success. A success also stamps last_success_at; a
+// failure leaves it, so a failing target still says when it last answered.
 func (r *PollingTargetRepository) UpdateLastPoll(ctx context.Context, id, status, errMsg string) error {
+	now := time.Now().UTC().Format(time.RFC3339Nano)
 	_, err := r.db.Exec(ctx, `
 		UPDATE polling_targets
-		SET last_polled_at = ?, last_status = ?, last_error = ?, updated_at = ?
+		SET last_polled_at = ?, last_status = ?, last_error = ?, updated_at = ?,
+			last_success_at = CASE WHEN ? = 'ok' THEN ? ELSE last_success_at END
 		WHERE id = ?
 	`,
-		time.Now().UTC().Format(time.RFC3339Nano),
+		now,
 		status,
 		toNullString(errMsg),
-		time.Now().UTC().Format(time.RFC3339Nano),
+		now,
+		status, now,
 		id,
 	)
 	if err != nil {
@@ -251,6 +255,7 @@ func scanPollingTarget(scan func(...any) error) (*polling.Target, error) {
 		credentialsID sql.NullString
 		chainJSON     sql.NullString
 		lastPolledAt  sql.NullString
+		lastSuccessAt sql.NullString
 		lastStatus    sql.NullString
 		lastError     sql.NullString
 		enabledInt    int
@@ -260,7 +265,7 @@ func scanPollingTarget(scan func(...any) error) (*polling.Target, error) {
 	err := scan(
 		&t.ID, &t.ClientID, &t.Name, &t.IPAddress, &t.SNMPVersion,
 		&credentialsID, &t.PollIntervalSec, &enabledInt, &chainJSON,
-		&lastPolledAt, &lastStatus, &lastError, &createdAtStr, &updatedAtStr,
+		&lastPolledAt, &lastSuccessAt, &lastStatus, &lastError, &createdAtStr, &updatedAtStr,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, polling.ErrTargetNotFound
@@ -282,6 +287,11 @@ func scanPollingTarget(scan func(...any) error) (*polling.Target, error) {
 	if lastPolledAt.Valid {
 		if parsed, parseErr := time.Parse(time.RFC3339Nano, lastPolledAt.String); parseErr == nil {
 			t.LastPolledAt = parsed
+		}
+	}
+	if lastSuccessAt.Valid {
+		if parsed, parseErr := time.Parse(time.RFC3339Nano, lastSuccessAt.String); parseErr == nil {
+			t.LastSuccessAt = parsed
 		}
 	}
 	if lastStatus.Valid {

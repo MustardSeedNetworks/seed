@@ -147,7 +147,7 @@ describe('PollingTargetsPage — real locale copy', () => {
     }
     expect(screen.queryByPlaceholderText('Filter 2 targets')).toBeNull();
     expect(screen.queryByRole('searchbox', { name: 'Filter polling targets' })).toBeNull();
-    for (const english of ['Edit', 'Delete']) {
+    for (const english of ['Edit', 'Delete', 'Test target']) {
       expect(screen.queryByRole('button', { name: english })).toBeNull();
     }
 
@@ -165,7 +165,10 @@ describe('PollingTargetsPage — real locale copy', () => {
     expect(screen.queryByText('Polling paused')).toBeNull();
     expect(screen.queryByText('No poll completed yet')).toBeNull();
     expect(screen.getByText('Sondeo pausado')).toBeVisible();
-    expect(screen.getByText('Nunca')).toBeVisible();
+    // Never polled, so never answered either: last poll and last success.
+    expect(screen.getAllByText('Nunca')).toHaveLength(2);
+    expect(screen.getByText('Último sondeo correcto')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Probar destino' })).toBeVisible();
   });
 
   it('leaves protocol names and collector ids alone under es', async () => {

@@ -6297,6 +6297,8 @@ components:
                     type: string
                 lastStatus:
                     type: string
+                lastSuccessAt:
+                    type: string
                 name:
                     type: string
                 pollIntervalSeconds:
@@ -13655,6 +13657,63 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Error'
                     description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/polling-targets/{targetId}/poll:
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: targetId
+              required: true
+              schema:
+                type: string
+        post:
+            description: Requires an operator-scoped token.
+            operationId: postApiV1PollingTargetsTargetIdPoll
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PollingTargetResponse'
+                    description: The target after one poll run now, enabled or not; lastStatus and lastError carry the outcome. 503 when the SNMP poller is not running (below Starter, or no credential keyring).
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "429":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Rate limit exceeded for this route class.
                 "500":
                     content:
                         application/json:
