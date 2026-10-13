@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.257.1](https://github.com/MustardSeedNetworks/seed/compare/v0.257.0...v0.257.1) (2026-10-13)
+
+
+### Bug Fixes
+
+* **system:** measure CPU over the sampler's own window so darwin reads non-zero ([#3384](https://github.com/MustardSeedNetworks/seed/issues/3384)) ([7c72412](https://github.com/MustardSeedNetworks/seed/commit/7c724121c46814f1bc28629c0f271fe4b0030f3c)), closes [#2773](https://github.com/MustardSeedNetworks/seed/issues/2773)
+
+
+### Miscellaneous
+
+* **config:** delete the SystemConfig loader nothing calls ([#3382](https://github.com/MustardSeedNetworks/seed/issues/3382)) ([b150a59](https://github.com/MustardSeedNetworks/seed/commit/b150a59a6a3786cf8c599ab320e783f7a12d9f18)), closes [#3359](https://github.com/MustardSeedNetworks/seed/issues/3359)
+
 ## [0.257.0](https://github.com/MustardSeedNetworks/seed/compare/v0.256.0...v0.257.0) (2026-10-13)
 
 
