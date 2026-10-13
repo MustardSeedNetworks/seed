@@ -2,6 +2,7 @@ package wifianomaly
 
 import (
 	"fmt"
+	"net"
 	"sort"
 	"strconv"
 	"strings"
@@ -53,10 +54,6 @@ type Detector struct {
 	coChannelThreshold   int
 	ssidSprawlThreshold  int
 	deauthFloodThreshold int
-	// wiredMACs is the set of MAC addresses known on the wired side (e.g. the
-	// discovery ARP/switch table), lowercased. A captured BSSID found here is an
-	// AP bridged to the LAN. Empty (the default) keeps the rogue-AP rule dormant.
-	wiredMACs map[string]struct{}
 }
 
 // Option tunes a Detector.
@@ -95,27 +92,6 @@ func WithDeauthFloodThreshold(n int) Option {
 	}
 }
 
-// WithWiredMACs supplies the set of MAC addresses known on the wired network
-// (e.g. from discovery's ARP/switch table). A captured BSSID in this set raises
-// the rogue-AP-on-LAN rule. Addresses are matched case-insensitively. With no
-// wired MACs the rule is dormant — the default, until a wired source is wired in.
-func WithWiredMACs(macs ...string) Option {
-	return func(d *Detector) {
-		if len(macs) == 0 {
-			return
-		}
-		if d.wiredMACs == nil {
-			d.wiredMACs = make(map[string]struct{}, len(macs))
-		}
-		for _, m := range macs {
-			if m == "" {
-				continue
-			}
-			d.wiredMACs[strings.ToLower(m)] = struct{}{}
-		}
-	}
-}
-
 // NewDetector returns a Detector with the given options applied.
 func NewDetector(opts ...Option) *Detector {
 	d := &Detector{
@@ -132,8 +108,9 @@ func NewDetector(opts ...Option) *Detector {
 // Detect runs every Wi-Fi rule over the airspace tree and returns the resulting
 // detections in a deterministic order (by def, then subject), so identical input
 // yields identical output. The engine, not Detect, decides severity escalation
-// and deduplication.
-func (d *Detector) Detect(tree []airspace.SSIDGroup) []anomaly.Detection {
+// and deduplication. wiredMACs is the set of MAC addresses currently known on
+// the wired side; with none, the rules in [WiredDataRules] cannot fire.
+func (d *Detector) Detect(tree []airspace.SSIDGroup, wiredMACs []string) []anomaly.Detection {
 	var out []anomaly.Detection
 	out = append(out, perBSSDetections(tree)...)
 	out = append(out, ssidGroupDetections(tree)...)
@@ -141,7 +118,7 @@ func (d *Detector) Detect(tree []airspace.SSIDGroup) []anomaly.Detection {
 	out = append(out, countryConflictDetections(tree)...)
 	out = append(out, d.ssidSprawlDetections(tree)...)
 	out = append(out, d.deauthFloodDetections(tree)...)
-	out = append(out, d.rogueAPOnLANDetections(tree)...)
+	out = append(out, rogueAPOnLANDetections(tree, wiredMACs)...)
 
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].DefKey != out[j].DefKey {
@@ -385,17 +362,26 @@ func (d *Detector) deauthFloodDetections(tree []airspace.SSIDGroup) []anomaly.De
 }
 
 // rogueAPOnLANDetections is the Wi-Fi × wired cross-reference: it flags any
-// captured BSSID whose MAC also appears in the injected wired-MAC set (the
-// discovery ARP/switch table) — an access point bridged onto the LAN. With no
-// wired set the rule emits nothing, so it stays dormant until a wired source is
-// supplied via WithWiredMACs.
-func (d *Detector) rogueAPOnLANDetections(tree []airspace.SSIDGroup) []anomaly.Detection {
-	if len(d.wiredMACs) == 0 {
+// BSSID whose MAC also appears in the wired-MAC set (discovery's ARP/NDP
+// registry and the switch forwarding tables) — an access point bridged onto the
+// LAN. MACs are compared in canonical form, so case and separators do not matter.
+func rogueAPOnLANDetections(tree []airspace.SSIDGroup, wiredMACs []string) []anomaly.Detection {
+	wired := make(map[string]struct{}, len(wiredMACs))
+	for _, m := range wiredMACs {
+		if hw, err := net.ParseMAC(m); err == nil {
+			wired[hw.String()] = struct{}{}
+		}
+	}
+	if len(wired) == 0 {
 		return nil
 	}
 	var out []anomaly.Detection
 	forEachBSS(tree, func(_ airspace.SSIDGroup, _ airspace.APGroup, b airspace.BSSView) {
-		if _, ok := d.wiredMACs[strings.ToLower(b.BSSID)]; !ok {
+		hw, err := net.ParseMAC(b.BSSID)
+		if err != nil {
+			return
+		}
+		if _, ok := wired[hw.String()]; !ok {
 			return
 		}
 		ev := bssEvidence(b)

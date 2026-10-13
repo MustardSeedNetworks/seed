@@ -806,7 +806,16 @@ func (s *Server) initWiFiUseCases() {
 	s.wifiDiscovery = app.NewWiFiDiscovery(s.wifiBridge)
 	if v := s.wifiVisibility(); v != nil {
 		v.SetScanSource(app.WiFiScanSource(s.wifiManagement))
+		v.SetWiredSource(app.WiFiWiredSource(s.wiredDevices, s.db))
 	}
+}
+
+// wiredDevices lists discovery's wired registry, or nothing before it exists.
+func (s *Server) wiredDevices() []*enumerate.DiscoveredDevice {
+	if d := s.deviceDiscovery(); d != nil {
+		return d.GetDevices()
+	}
+	return nil
 }
 
 // rescheduleProbeEngine reschedules the running probe engine after a settings

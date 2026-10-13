@@ -48,6 +48,7 @@ export interface Status {
   anomalies: number;
   lastEvaluated?: string;
   needsCapture?: Rule[];
+  needsWiredData?: Rule[];
 }
 export interface Rule {
   id: string;

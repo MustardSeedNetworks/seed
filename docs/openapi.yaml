@@ -10008,6 +10008,10 @@ components:
                     items:
                         $ref: '#/components/schemas/Rule'
                     type: array
+                needsWiredData:
+                    items:
+                        $ref: '#/components/schemas/Rule'
+                    type: array
                 source:
                     type: string
                 ssids:

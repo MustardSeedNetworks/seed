@@ -105,13 +105,13 @@ func on24GHz(channel int) func(n *wifi.ScannedNetwork) {
 // fire it through the real scan mapping. BSSIDs are the RFC 7042 documentation
 // range; 02:00:5e is a locally administered twin for the second vendor.
 func scanCases(t *testing.T) map[string]struct {
-	nets []*wifi.ScannedNetwork
-	opts []wifianomaly.Option
+	nets  []*wifi.ScannedNetwork
+	wired []string
 } {
 	t.Helper()
 	type scanCase = struct {
-		nets []*wifi.ScannedNetwork
-		opts []wifianomaly.Option
+		nets  []*wifi.ScannedNetwork
+		wired []string
 	}
 	one := func(edit func(n *wifi.ScannedNetwork)) scanCase {
 		return scanCase{nets: []*wifi.ScannedNetwork{scanNet("00:00:5e:00:53:01", "corp", edit)}}
@@ -168,13 +168,13 @@ func scanCases(t *testing.T) map[string]struct {
 			scanNet("00:00:5e:00:53:44", "e", nil),
 		}},
 		wifianomaly.DefRogueAPOnLAN: {
-			nets: []*wifi.ScannedNetwork{scanNet("00:00:5e:00:53:01", "corp", nil)},
-			opts: []wifianomaly.Option{wifianomaly.WithWiredMACs("00:00:5e:00:53:01")},
+			nets:  []*wifi.ScannedNetwork{scanNet("00:00:5e:00:53:01", "corp", nil)},
+			wired: []string{"00:00:5e:00:53:01"},
 		},
 	}
 }
 
-func scanFires(t *testing.T, nets []*wifi.ScannedNetwork, opts []wifianomaly.Option) map[string]bool {
+func scanFires(t *testing.T, nets []*wifi.ScannedNetwork, wired []string) map[string]bool {
 	t.Helper()
 	src := WiFiScanSource(
 		troubleshooting.NewManagement(fakeRadio{wireless: true, networks: nets}, nil, fixedInterface("wlan0")),
@@ -184,7 +184,7 @@ func scanFires(t *testing.T, nets []*wifi.ScannedNetwork, opts []wifianomaly.Opt
 		t.Fatalf("scan: %v", err)
 	}
 	fired := map[string]bool{}
-	for _, d := range wifianomaly.NewDetector(opts...).Detect(airspace.TreeFromBSSViews(views)) {
+	for _, d := range wifianomaly.NewDetector().Detect(airspace.TreeFromBSSViews(views), wired) {
 		fired[d.DefKey] = true
 	}
 	return fired
@@ -202,7 +202,7 @@ func TestCaptureOnlyRulesAreExactlyTheOnesAScanCannotFeed(t *testing.T) {
 	cases := scanCases(t)
 	everyScan := map[string]bool{}
 	for _, c := range cases {
-		maps.Copy(everyScan, scanFires(t, c.nets, c.opts))
+		maps.Copy(everyScan, scanFires(t, c.nets, c.wired))
 	}
 	for _, d := range wifianomaly.Defs() {
 		t.Run(d.ID, func(t *testing.T) {
@@ -214,7 +214,7 @@ func TestCaptureOnlyRulesAreExactlyTheOnesAScanCannotFeed(t *testing.T) {
 				t.Error("listed as capture-only but a scan fired it")
 			case !captureOnly[d.ID] && !hasCase:
 				t.Error("no scan case: add one, or list the rule in CaptureOnlyRules")
-			case !captureOnly[d.ID] && !scanFires(t, c.nets, c.opts)[d.ID]:
+			case !captureOnly[d.ID] && !scanFires(t, c.nets, c.wired)[d.ID]:
 				t.Error("its scan case did not fire it")
 			}
 		})

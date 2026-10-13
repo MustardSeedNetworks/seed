@@ -13,7 +13,7 @@ func TestDeauthFlood(t *testing.T) {
 	flooded := bss("00:00:00:00:00:01", "corp", "WPA3", "5 GHz", 36)
 	flooded.PMFRequired = true
 	flooded.RecentDeauths = 5
-	if !hasDef(det.Detect(tree("corp", flooded)), wifianomaly.DefDeauthFlood) {
+	if !hasDef(det.Detect(tree("corp", flooded), nil), wifianomaly.DefDeauthFlood) {
 		t.Error("a deauth burst at the threshold should raise deauth-flood")
 	}
 
@@ -21,7 +21,7 @@ func TestDeauthFlood(t *testing.T) {
 	calm := bss("00:00:00:00:00:02", "corp", "WPA3", "5 GHz", 40)
 	calm.PMFRequired = true
 	calm.RecentDeauths = 2
-	if hasDef(det.Detect(tree("corp", calm)), wifianomaly.DefDeauthFlood) {
+	if hasDef(det.Detect(tree("corp", calm), nil), wifianomaly.DefDeauthFlood) {
 		t.Error("a handful of deauths must not raise deauth-flood")
 	}
 }
@@ -31,7 +31,7 @@ func TestDeauthFloodThresholdConfigurable(t *testing.T) {
 	b := bss("00:00:00:00:00:01", "corp", "WPA3", "5 GHz", 36)
 	b.PMFRequired = true
 	b.RecentDeauths = 3
-	if !hasDef(det.Detect(tree("corp", b)), wifianomaly.DefDeauthFlood) {
+	if !hasDef(det.Detect(tree("corp", b), nil), wifianomaly.DefDeauthFlood) {
 		t.Error("lowered threshold should flag at 3 deauths")
 	}
 
@@ -40,7 +40,7 @@ func TestDeauthFloodThresholdConfigurable(t *testing.T) {
 	one := bss("00:00:00:00:00:02", "corp", "WPA3", "5 GHz", 40)
 	one.PMFRequired = true
 	one.RecentDeauths = 1
-	if hasDef(clamped.Detect(tree("corp", one)), wifianomaly.DefDeauthFlood) {
+	if hasDef(clamped.Detect(tree("corp", one), nil), wifianomaly.DefDeauthFlood) {
 		t.Error("threshold must clamp to a floor of 2; a single deauth must not flag")
 	}
 }
