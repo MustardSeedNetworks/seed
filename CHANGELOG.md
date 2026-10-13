@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.257.0](https://github.com/MustardSeedNetworks/seed/compare/v0.256.0...v0.257.0) (2026-10-13)
+
+
+### Features
+
+* **polling:** test a target with one poll now and record its last success ([#3379](https://github.com/MustardSeedNetworks/seed/issues/3379)) ([979c3a2](https://github.com/MustardSeedNetworks/seed/commit/979c3a2386ac54ff6001cf7214e915488791e64a))
+
+
+### Bug Fixes
+
+* **ci:** run the storybook defect contract on its own story file ([#3381](https://github.com/MustardSeedNetworks/seed/issues/3381)) ([d95b14e](https://github.com/MustardSeedNetworks/seed/commit/d95b14e5a5a6f4cda49cf8fb5ca6142621aab302))
+
 ## [0.256.0](https://github.com/MustardSeedNetworks/seed/compare/v0.255.3...v0.256.0) (2026-10-13)
 
 
