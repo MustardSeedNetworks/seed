@@ -9,13 +9,20 @@ if [ -z "$(node -p 'require("./package.json").scripts["test:storybook:run"] ?? "
   exit 1
 fi
 
+# The injected defects live only in this story file, so only it runs. Running the
+# whole suite here proved nothing more and ran it twice more per job, where three
+# of the four recorded Storybook hangs happened (#3283).
+gate_stories=src/test/storybook/StorybookGate.stories.tsx
+
 verify_defect() {
   local defect=$1
   local expected=$2
   local log_file
   log_file=$(mktemp)
 
-  if VITE_STORYBOOK_INJECT_DEFECT="$defect" npm run test:storybook:run >"$log_file" 2>&1; then
+  # Streamed as well as kept: a run that hangs is killed by the job timeout
+  # before anything could print the file.
+  if VITE_STORYBOOK_INJECT_DEFECT="$defect" npm run test:storybook:run -- "$gate_stories" 2>&1 | tee "$log_file"; then
     echo "Injected $defect defect did not fail Storybook tests" >&2
     rm -f "$log_file"
     return 1
@@ -23,7 +30,6 @@ verify_defect() {
 
   if ! grep -Eqi "$expected" "$log_file"; then
     echo "Injected $defect defect failed for the wrong reason" >&2
-    cat "$log_file" >&2
     rm -f "$log_file"
     return 1
   fi
