@@ -28,3 +28,8 @@ func Baudrates(rib []byte) map[int]uint64 {
 func InterfaceSpeed(name string) int64 {
 	return getInterfaceSpeed(nil, name)
 }
+
+// PCIIDs exposes pciIDs for testing.
+func PCIIDs(name string) (vendor, device uint16, ok bool) {
+	return pciIDs(name)
+}

@@ -7,11 +7,20 @@ package detection
 // seed#2520: a fork() out of this cgo/ObjC process can wedge the child before
 // execve, and DetectAll forks once per interface at once.
 
+/*
+#cgo LDFLAGS: -framework CoreFoundation -framework IOKit
+#include <stdlib.h>
+#include "pci_darwin.h"
+*/
+import "C"
+
 import (
 	"encoding/binary"
+	"fmt"
 	"math"
 	"net"
 	"syscall"
+	"unsafe"
 
 	"golang.org/x/net/route"
 )
@@ -67,12 +76,29 @@ func baudrates(rib []byte) map[int]uint64 {
 	return speeds
 }
 
-// identifyByPlatformUncached reports no chipset on macOS. There is no fork-free
-// source for it yet: the previous system_profiler keyword scan matched "ice"
-// inside "device" and named every interface an Intel E810. An IOKit lookup is
-// the real fix (seed#2528).
-func (db *ChipsetDatabase) identifyByPlatformUncached(_ string) *ChipsetInfo {
-	return nil
+// identifyByPlatformUncached matches the PCI IDs of the device behind the
+// interface against the database, the same IDs Linux reads from sysfs. They come
+// from the IORegistry in process: the system_profiler keyword scan this replaced
+// forked (seed#2530) and matched "ice" inside "device", naming every interface
+// an Intel E810 (seed#2528).
+func (db *ChipsetDatabase) identifyByPlatformUncached(name string) *ChipsetInfo {
+	vendor, device, ok := pciIDs(name)
+	if !ok {
+		return nil
+	}
+	return db.IdentifyByPCI(fmt.Sprintf("%04x", vendor), fmt.Sprintf("%04x", device))
+}
+
+// pciIDs returns the vendor and device IDs of the PCI device behind the
+// interface, or false when there is none.
+func pciIDs(name string) (vendor, device uint16, ok bool) {
+	cname := C.CString(name)
+	defer C.free(unsafe.Pointer(cname))
+	var v, d C.uint16_t
+	if C.netif_pci_ids(cname, &v, &d) == 0 {
+		return 0, 0, false
+	}
+	return uint16(v), uint16(d), true
 }
 
 // hasTDRCapability checks if the interface supports Time Domain Reflectometry.

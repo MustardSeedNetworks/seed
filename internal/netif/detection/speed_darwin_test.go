@@ -157,14 +157,34 @@ func TestInterfaceSpeedReadsTheKernel(t *testing.T) {
 	}
 }
 
-// TestIdentifyByPlatformReportsNothing pins the darwin chipset path to "unknown".
-// The system_profiler keyword scan it replaced matched "ice" inside "device" and
-// so reported every interface, utun and bridge included, as an Intel E810.
-func TestIdentifyByPlatformReportsNothing(t *testing.T) {
+// TestIdentifyByPlatformIgnoresVirtualInterfaces pins the darwin chipset path
+// to the device behind the interface. The system_profiler keyword scan it
+// replaced matched "ice" inside "device" and so reported every interface, utun
+// and bridge included, as an Intel E810 (seed#2528).
+func TestIdentifyByPlatformIgnoresVirtualInterfaces(t *testing.T) {
 	db := detection.NewChipsetDatabase()
-	for _, name := range []string{"en0", "utun0", "bridge0"} {
+	for _, name := range []string{"lo0", "utun0", "bridge0", "no-such-interface"} {
 		if info := db.IdentifyByInterface(name, ""); info != nil {
 			t.Errorf("IdentifyByInterface(%q) = %s %s, want nil", name, info.Vendor, info.Model)
 		}
 	}
+}
+
+// TestPCIIDsReadTheIORegistry holds the IORegistry walk to its contract: no
+// IDs for an interface without a PCI device, the controller's IDs for en0,
+// which every Mac backs with a PCI(e) Ethernet or Wi-Fi controller.
+func TestPCIIDsReadTheIORegistry(t *testing.T) {
+	for _, name := range []string{"lo0", "no-such-interface"} {
+		if vendor, device, ok := detection.PCIIDs(name); ok {
+			t.Errorf("PCIIDs(%q) = %04x:%04x, want none", name, vendor, device)
+		}
+	}
+	if _, err := net.InterfaceByName("en0"); err != nil {
+		t.Skip("no en0 on this machine")
+	}
+	vendor, device, ok := detection.PCIIDs("en0")
+	if !ok || vendor == 0 || vendor == 0xffff {
+		t.Fatalf("PCIIDs(en0) = %04x:%04x, %v; want the controller's IDs", vendor, device, ok)
+	}
+	t.Logf("en0 is PCI %04x:%04x", vendor, device)
 }
