@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.255.3](https://github.com/MustardSeedNetworks/seed/compare/v0.255.2...v0.255.3) (2026-10-13)
+
+
+### Bug Fixes
+
+* **build:** make local lint and E2E cleanup match CI on Linux ([#3370](https://github.com/MustardSeedNetworks/seed/issues/3370)) ([4353e33](https://github.com/MustardSeedNetworks/seed/commit/4353e33deba40f461a921cb1fca51e48d5159521)), closes [#2730](https://github.com/MustardSeedNetworks/seed/issues/2730) [#2826](https://github.com/MustardSeedNetworks/seed/issues/2826)
+
+
+### Code Refactoring
+
+* **enumerate:** split the BLE scan into stages ([#3372](https://github.com/MustardSeedNetworks/seed/issues/3372)) ([20a3b82](https://github.com/MustardSeedNetworks/seed/commit/20a3b824c20fd872c34bd094c5913a68e9abb1b6))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3373](https://github.com/MustardSeedNetworks/seed/issues/3373)) ([34127ea](https://github.com/MustardSeedNetworks/seed/commit/34127eaa4aa5bdc8a0b262e3f6cc0d78c6337e93))
+
 ## [0.255.2](https://github.com/MustardSeedNetworks/seed/compare/v0.255.1...v0.255.2) (2026-10-13)
 
 
