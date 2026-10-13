@@ -1,4 +1,4 @@
--- 00026_device_config_backups.sql — device configuration backup over SSH (P-D1,
+-- 00028_device_config_backups.sql — device configuration backup over SSH (P-D1,
 -- #348).
 --
 -- Two changes:
