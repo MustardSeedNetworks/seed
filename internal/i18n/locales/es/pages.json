@@ -285,6 +285,7 @@
     "nodeCount_one": "{{count}} nodo",
     "nodeCount_other": "{{count}} nodos",
     "noNodes": "Aún no hay nodos. Añada un destino de sondeo y espere un ciclo de sondeo.",
+    "missedPolls": "Sondeos perdidos",
     "selectedNode": "Nodo seleccionado",
     "deviceType": "Tipo de dispositivo",
     "vendor": "Fabricante",

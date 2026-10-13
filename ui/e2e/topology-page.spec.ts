@@ -245,7 +245,11 @@ test.describe('Topology Page — the map', () => {
     });
     await gotoTopology(page);
 
-    await expect(page.getByTestId('node-row-med-core-01')).toHaveAttribute('data-state', 'stale');
-    await expect(page.getByTestId('node-row-med-fw-01')).toHaveAttribute('data-state', 'ok');
+    const late = page.getByTestId('node-row-med-core-01');
+    await expect(late).toHaveAttribute('data-state', 'unknown');
+    await expect(late).toContainText('Missed polls');
+    const fresh = page.getByTestId('node-row-med-fw-01');
+    await expect(fresh).toHaveAttribute('data-state', 'ok');
+    await expect(fresh).not.toContainText('Missed polls');
   });
 });

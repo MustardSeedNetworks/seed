@@ -285,6 +285,7 @@
     "nodeCount_one": "{{count}} node",
     "nodeCount_other": "{{count}} nodes",
     "noNodes": "No nodes yet. Add a polling target and wait a poll cycle.",
+    "missedPolls": "Missed polls",
     "selectedNode": "Selected node",
     "deviceType": "Device type",
     "vendor": "Vendor",

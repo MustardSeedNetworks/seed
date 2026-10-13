@@ -115,22 +115,30 @@ function NodeList({
     >
       {error || nodes.length === 0
         ? null
-        : nodes.map((n) => (
-            <RecordRow
-              key={n.id}
-              data-testid={`node-row-${n.id}`}
-              // A hostname is a figure, not prose — it is an identifier the
-              // operator matches against other screens character by character.
-              name={n.displayName || n.sysName}
-              meta={n.primaryIp || undefined}
-              value={n.deviceType || t('common:status.notApplicable')}
-              // Green only while the node is polled on schedule; a node that
-              // has missed polls, or that nothing polls, does not get it.
-              state={nodeFreshness(n.lastSeen, n.pollIntervalSeconds, fetchedAt)}
-              selected={selectedID === n.id}
-              onSelect={(): void => onSelect(n.id)}
-            />
-          ))}
+        : nodes.map((n) => {
+            const freshness = nodeFreshness(n.lastSeen, n.pollIntervalSeconds, fetchedAt);
+            return (
+              <RecordRow
+                key={n.id}
+                data-testid={`node-row-${n.id}`}
+                // A hostname is a figure, not prose — it is an identifier the
+                // operator matches against other screens character by character.
+                name={n.displayName || n.sysName}
+                meta={
+                  [n.primaryIp, freshness === 'stale' ? t('topology.missedPolls') : '']
+                    .filter(Boolean)
+                    .join(' · ') || undefined
+                }
+                value={n.deviceType || t('common:status.notApplicable')}
+                // Green only while the node is polled on schedule. A stale
+                // node is neutral and says so in its meta line; the fleet
+                // state vocabulary has no stale member.
+                state={freshness === 'current' ? 'ok' : 'unknown'}
+                selected={selectedID === n.id}
+                onSelect={(): void => onSelect(n.id)}
+              />
+            );
+          })}
     </RecordPane>
   );
 }

@@ -6,8 +6,8 @@ const ago = (seconds: number): string => new Date(NOW - seconds * 1000).toISOStr
 
 describe('nodeFreshness', () => {
   it.each([
-    ['polled on schedule', ago(60), 300, 'ok'],
-    ['exactly two intervals old', ago(600), 300, 'ok'],
+    ['polled on schedule', ago(60), 300, 'current'],
+    ['exactly two intervals old', ago(600), 300, 'current'],
     ['three missed polls', ago(900), 300, 'stale'],
     ['exactly ten intervals old', ago(3000), 300, 'stale'],
     ['an hour old on a ten-minute cadence', ago(3600), 600, 'stale'],

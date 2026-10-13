@@ -297,14 +297,15 @@ describe('TopologyPage — archetype rules', () => {
 
     const row = (id: string) => screen.getByTestId(`node-row-${id}`);
     expect(row('fresh').dataset.state).toBe('ok');
-    expect(row('late').dataset.state).toBe('stale');
+    expect(row('late').dataset.state).toBe('unknown');
     expect(row('gone').dataset.state).toBe('unknown');
     expect(row('unpolled').dataset.state).toBe('unknown');
     expect(row('unseen').dataset.state).toBe('unknown');
-    // Stale is neutral: never the success colour.
-    expect(row('late').querySelector('span[aria-hidden="true"]')?.className).not.toContain(
-      'bg-status-success',
-    );
+    // Stale is neutral and named; only a node within ten intervals is stale.
+    expect(within(row('late')).getByText('Missed polls')).toBeInTheDocument();
+    for (const id of ['fresh', 'gone', 'unpolled', 'unseen']) {
+      expect(within(row(id)).queryByText('Missed polls')).not.toBeInTheDocument();
+    }
   });
 });
 
