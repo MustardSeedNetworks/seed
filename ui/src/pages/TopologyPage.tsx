@@ -34,12 +34,13 @@ import {
   RecordRow,
 } from '../ui/ListDetail';
 import { TopologyGraph } from '../ui/TopologyGraph';
+import { nodeFreshness } from './topologyFreshness';
 
 export function TopologyPage(): JSX.Element {
   const [selectedID, setSelectedID] = useState<string>('');
   // One nodes read feeds both halves, so the map and the list can never
   // disagree about what was discovered.
-  const { nodes, loading, error, refresh } = useTopologyNodes();
+  const { nodes, fetchedAt, loading, error, refresh } = useTopologyNodes();
   const { links, error: linksError } = useTopologyLinks();
 
   return (
@@ -54,6 +55,7 @@ export function TopologyPage(): JSX.Element {
       <ListDetail>
         <NodeList
           nodes={nodes}
+          fetchedAt={fetchedAt}
           loading={loading}
           error={error}
           refresh={refresh}
@@ -68,6 +70,7 @@ export function TopologyPage(): JSX.Element {
 
 interface NodeListProps {
   nodes: TopologyNode[];
+  fetchedAt: number;
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -77,6 +80,7 @@ interface NodeListProps {
 
 function NodeList({
   nodes,
+  fetchedAt,
   loading,
   error,
   refresh,
@@ -111,23 +115,30 @@ function NodeList({
     >
       {error || nodes.length === 0
         ? null
-        : nodes.map((n) => (
-            <RecordRow
-              key={n.id}
-              data-testid={`node-row-${n.id}`}
-              // A hostname is a figure, not prose — it is an identifier the
-              // operator matches against other screens character by character.
-              name={n.displayName || n.sysName}
-              meta={n.primaryIp || undefined}
-              value={n.deviceType || t('common:status.notApplicable')}
-              // A node the reconcilers have never dated is not healthy or
-              // unhealthy; it is unmeasured, and the bar says so rather than
-              // showing the green that "seen" would imply.
-              state={n.lastSeen ? 'ok' : 'unknown'}
-              selected={selectedID === n.id}
-              onSelect={(): void => onSelect(n.id)}
-            />
-          ))}
+        : nodes.map((n) => {
+            const freshness = nodeFreshness(n.lastSeen, n.pollIntervalSeconds, fetchedAt);
+            return (
+              <RecordRow
+                key={n.id}
+                data-testid={`node-row-${n.id}`}
+                // A hostname is a figure, not prose — it is an identifier the
+                // operator matches against other screens character by character.
+                name={n.displayName || n.sysName}
+                meta={
+                  [n.primaryIp, freshness === 'stale' ? t('topology.missedPolls') : '']
+                    .filter(Boolean)
+                    .join(' · ') || undefined
+                }
+                value={n.deviceType || t('common:status.notApplicable')}
+                // Green only while the node is polled on schedule. A stale
+                // node is neutral and says so in its meta line; the fleet
+                // state vocabulary has no stale member.
+                state={freshness === 'current' ? 'ok' : 'unknown'}
+                selected={selectedID === n.id}
+                onSelect={(): void => onSelect(n.id)}
+              />
+            );
+          })}
     </RecordPane>
   );
 }

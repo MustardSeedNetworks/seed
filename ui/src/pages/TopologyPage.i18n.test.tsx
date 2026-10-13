@@ -78,6 +78,7 @@ const state = {
 vi.mock('../hooks/useTopology', () => ({
   useTopologyNodes: () => ({
     nodes: state.nodes,
+    fetchedAt: 0,
     loading: false,
     error: null,
     refresh: vi.fn(),

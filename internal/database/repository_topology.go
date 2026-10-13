@@ -24,9 +24,7 @@ func (r *TopologyRepository) GetByIdentityHash(
 	hash string,
 ) (*topology.Node, error) {
 	row := r.db.QueryRow(ctx, `
-		SELECT id, client_id, identity_hash, display_name, device_type,
-		       chassis_id, sys_name, primary_mac, primary_ip,
-		       first_seen, last_seen, expires_at, metadata_json
+		SELECT `+topologyNodeColumns+`
 		FROM topology_nodes WHERE identity_hash = ?
 	`, hash)
 	return scanTopologyNode(row.Scan)
@@ -138,9 +136,7 @@ func (r *TopologyRepository) List(
 	const defaultLimit, maxLimit = 100, 5000
 
 	query, args := newListQueryBuilder(`
-		SELECT id, client_id, identity_hash, display_name, device_type,
-		       chassis_id, sys_name, primary_mac, primary_ip,
-		       first_seen, last_seen, expires_at, metadata_json
+		SELECT `+topologyNodeColumns+`
 		FROM topology_nodes
 		WHERE 1=1
 	`).
@@ -381,6 +377,17 @@ func (r *TopologyRepository) NodeIDForSysName(ctx context.Context, clientID, sys
 	return id, nil
 }
 
+// topologyNodeColumns is the select list scanTopologyNode reads. The last
+// column is the node's poll cadence, taken from the enabled polling targets the
+// sysinfo reconciler mapped to it; NULL when none still poll it.
+const topologyNodeColumns = `id, client_id, identity_hash, display_name, device_type,
+		       chassis_id, sys_name, primary_mac, primary_ip,
+		       first_seen, last_seen, expires_at, metadata_json,
+		       (SELECT MIN(pt.poll_interval_seconds)
+		        FROM topology_target_nodes ttn
+		        JOIN polling_targets pt ON pt.client_id = ttn.client_id AND pt.id = ttn.target_id
+		        WHERE ttn.node_id = topology_nodes.id AND pt.enabled = 1)`
+
 func scanTopologyNode(scan func(...any) error) (*topology.Node, error) {
 	var (
 		node         topology.Node
@@ -393,11 +400,12 @@ func scanTopologyNode(scan func(...any) error) (*topology.Node, error) {
 		metadataJSON sql.NullString
 		firstSeenStr string
 		lastSeenStr  string
+		pollSeconds  sql.NullInt64
 	)
 	err := scan(
 		&node.ID, &node.ClientID, &node.IdentityHash, &node.DisplayName,
 		&deviceType, &chassisID, &sysName, &primaryMAC, &primaryIP,
-		&firstSeenStr, &lastSeenStr, &expiresAt, &metadataJSON,
+		&firstSeenStr, &lastSeenStr, &expiresAt, &metadataJSON, &pollSeconds,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, topology.ErrTopologyNodeNotFound
@@ -422,6 +430,9 @@ func scanTopologyNode(scan func(...any) error) (*topology.Node, error) {
 	}
 	if metadataJSON.Valid {
 		node.MetadataJSON = metadataJSON.String
+	}
+	if pollSeconds.Valid {
+		node.PollInterval = time.Duration(pollSeconds.Int64) * time.Second
 	}
 	if parsed, perr := time.Parse(time.RFC3339Nano, firstSeenStr); perr == nil {
 		node.FirstSeen = parsed
