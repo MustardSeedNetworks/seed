@@ -30,6 +30,6 @@ func InterfaceSpeed(name string) int64 {
 }
 
 // PCIIDs exposes pciIDs for testing.
-func PCIIDs(name string) (vendor, device uint16, ok bool) {
+func PCIIDs(name string) (uint16, uint16, bool) {
 	return pciIDs(name)
 }

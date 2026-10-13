@@ -91,7 +91,7 @@ func (db *ChipsetDatabase) identifyByPlatformUncached(name string) *ChipsetInfo 
 
 // pciIDs returns the vendor and device IDs of the PCI device behind the
 // interface, or false when there is none.
-func pciIDs(name string) (vendor, device uint16, ok bool) {
+func pciIDs(name string) (uint16, uint16, bool) {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	var v, d C.uint16_t
