@@ -17,6 +17,7 @@
  */
 import { HttpResponse, http } from 'msw';
 import { SETTINGS_RESPONSE } from '../../src/test/settingsResponse';
+import type { DeviceCredentialListResponse } from '../../src/types/generated/device-credential-list-response';
 import settingsDefaults from './settings-defaults.json';
 
 /** Matches internal/api/handlers_profiles.go ProfileResponse. */
@@ -243,6 +244,35 @@ export const handlers = [
   http.get('*/api/v1/reporting/logs', () => HttpResponse.json({ logs: [], total: 0 })),
   // AlertEscalationSettings lists recent alerts to offer their rule names.
   http.get('*/api/v1/alerts', () => HttpResponse.json({ count: 0, alerts: [] })),
+
+  // The polling-target form's credential picker lists the vault.
+  http.get('*/api/v1/device-credentials', () =>
+    HttpResponse.json<DeviceCredentialListResponse>({
+      count: 2,
+      credentials: [
+        {
+          id: 'cred-core',
+          clientId: 'default',
+          name: 'core-switches',
+          kind: 'v2c',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+        {
+          id: 'cred-noc',
+          clientId: 'default',
+          name: 'noc-v3',
+          kind: 'v3',
+          securityLevel: 'authPriv',
+          snmpV3User: 'noc',
+          snmpV3AuthProto: 'SHA256',
+          snmpV3PrivProto: 'AES',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ],
+    }),
+  ),
 
   // useSubnetSettings expects a bare array (it checks Array.isArray and falls
   // back to [] otherwise), not an envelope.
