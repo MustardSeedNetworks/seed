@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.256.0](https://github.com/MustardSeedNetworks/seed/compare/v0.255.3...v0.256.0) (2026-10-13)
+
+
+### Features
+
+* **ui:** pick the polling target's credential from the vault ([#3374](https://github.com/MustardSeedNetworks/seed/issues/3374)) ([29bc7a0](https://github.com/MustardSeedNetworks/seed/commit/29bc7a0646291005693c7d8e648c1c932f2f2729))
+
+
+### Bug Fixes
+
+* **topology:** judge node freshness against its poll interval ([#3375](https://github.com/MustardSeedNetworks/seed/issues/3375)) ([bcafc4c](https://github.com/MustardSeedNetworks/seed/commit/bcafc4c8f0b110c9bfb29b2a2807bca6403b0fff))
+* **ui:** put the polling-target form in the shared Modal ([#3377](https://github.com/MustardSeedNetworks/seed/issues/3377)) ([da2f797](https://github.com/MustardSeedNetworks/seed/commit/da2f7979260e65aa0a1a57288847032f417ca70a)), closes [#2524](https://github.com/MustardSeedNetworks/seed/issues/2524)
+
 ## [0.255.3](https://github.com/MustardSeedNetworks/seed/compare/v0.255.2...v0.255.3) (2026-10-13)
 
 
