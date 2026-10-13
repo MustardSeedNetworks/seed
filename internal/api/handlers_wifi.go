@@ -13,6 +13,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/validation"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 )
@@ -236,7 +237,11 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 // Thin handler (ADR-0016): it resolves the requested interface from the request
 // and delegates to the Wi-Fi management use-case, which owns the degrade logic.
 func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
-	res := s.wifiManagement.Scan(s.getInterfaceFromRequest(r))
+	iface, ok := wifiScanInterface(w, r)
+	if !ok {
+		return
+	}
+	res := s.wifiManagement.Scan(iface)
 	sendJSONResponse(w, nil, http.StatusOK, WiFiScanResponse{
 		Interface:   res.Interface,
 		Available:   res.Available,
@@ -244,6 +249,26 @@ func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 		Remediation: res.Remediation,
 		Error:       res.Error,
 	})
+}
+
+// wifiScanInterface returns the radio a scan request names. Without the
+// parameter it is empty, which the use-case resolves to the configured Wi-Fi
+// interface; getInterfaceFromRequest would fall back to the wired one and
+// report it as the scanned radio (#2881). A malformed name is refused with 400.
+func wifiScanInterface(w http.ResponseWriter, r *http.Request) (string, bool) {
+	iface := r.URL.Query().Get("interface")
+	if iface == "" {
+		return "", true
+	}
+	if err := validation.ValidateInterface(iface); err != nil {
+		logger := logging.FromContext(r.Context())
+		// Log err, not the name, which arrives straight from the query (CWE-117).
+		logger.WarnContext(r.Context(), "Invalid interface", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+			ErrCodeValidation, i18n.FromRequest(r).T("errors.network.invalidInterface"), "")
+		return "", false
+	}
+	return iface, true
 }
 
 // handleWiFiStatus returns the WiFi adapter status without performing a scan.
@@ -442,7 +467,11 @@ func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request)
 // handleWiFiChannelGraph returns channel overlap graph data for WiFi visualization.
 // It scans available networks and organizes them by frequency band with channel overlap information.
 func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) {
-	res := s.wifiManagement.Scan(s.getInterfaceFromRequest(r))
+	iface, ok := wifiScanInterface(w, r)
+	if !ok {
+		return
+	}
+	res := s.wifiManagement.Scan(iface)
 	response := WiFiChannelGraphResponse{
 		Interface:   res.Interface,
 		Available:   res.Available,

@@ -90,8 +90,9 @@ func TestSSOSettingsResponseShape(t *testing.T) {
 
 type statusRadio struct{ troubleshooting.Hardware }
 
-func (statusRadio) ManagerAvailable() bool { return true }
-func (statusRadio) IsWireless() bool       { return true }
+func (statusRadio) ManagerAvailable() bool          { return true }
+func (statusRadio) IsWireless() bool                { return true }
+func (statusRadio) IsWirelessInterface(string) bool { return true }
 
 type wirelessNames []string
 
@@ -483,7 +484,7 @@ type scanRadio struct{ statusRadio }
 
 func (scanRadio) ScannerAvailable() bool { return true }
 func (scanRadio) SetInterface(string)    {}
-func (scanRadio) Scan() ([]*wifi.ScannedNetwork, error) {
+func (scanRadio) Scan(string) ([]*wifi.ScannedNetwork, error) {
 	return []*wifi.ScannedNetwork{{
 		SSID: "lab", BSSID: "aa:bb:cc:dd:ee:ff", Signal: -51, Channel: 36,
 		Frequency: 5180, Security: "WPA2", ChannelWidth: 80, LastSeen: time.Unix(0, 0).UTC(),

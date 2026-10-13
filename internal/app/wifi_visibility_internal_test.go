@@ -18,11 +18,12 @@ type fakeRadio struct {
 	err      error
 }
 
-func (f fakeRadio) ManagerAvailable() bool                { return true }
-func (f fakeRadio) ScannerAvailable() bool                { return true }
-func (f fakeRadio) IsWireless() bool                      { return f.wireless }
-func (f fakeRadio) SetInterface(string)                   {}
-func (f fakeRadio) Scan() ([]*wifi.ScannedNetwork, error) { return f.networks, f.err }
+func (f fakeRadio) ManagerAvailable() bool                      { return true }
+func (f fakeRadio) ScannerAvailable() bool                      { return true }
+func (f fakeRadio) IsWireless() bool                            { return f.wireless }
+func (f fakeRadio) IsWirelessInterface(string) bool             { return f.wireless }
+func (f fakeRadio) SetInterface(string)                         {}
+func (f fakeRadio) Scan(string) ([]*wifi.ScannedNetwork, error) { return f.networks, f.err }
 func (f fakeRadio) Connect(string, string) (*wifi.ConnectionResult, error) {
 	return nil, errors.ErrUnsupported
 }
