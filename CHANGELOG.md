@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.255.2](https://github.com/MustardSeedNetworks/seed/compare/v0.255.1...v0.255.2) (2026-10-13)
+
+
+### Bug Fixes
+
+* **discovery:** name an on-link learned host route without a dangling "via" ([#3363](https://github.com/MustardSeedNetworks/seed/issues/3363)) ([aa679e4](https://github.com/MustardSeedNetworks/seed/commit/aa679e4e285d90c49d6e03affbd92092bb7a1c30)), closes [#2827](https://github.com/MustardSeedNetworks/seed/issues/2827)
+
+
+### Continuous Integration
+
+* block orphaned UI modules on every PR ([#3367](https://github.com/MustardSeedNetworks/seed/issues/3367)) ([9877660](https://github.com/MustardSeedNetworks/seed/commit/9877660f9f2b61c8505c0651cfd302a7888ac59a)), closes [#2707](https://github.com/MustardSeedNetworks/seed/issues/2707)
+* gate the whole GOOS=windows tree on every event ([#3365](https://github.com/MustardSeedNetworks/seed/issues/3365)) ([265d80f](https://github.com/MustardSeedNetworks/seed/commit/265d80ffe5be6615cbacfa3cf21fbb5cc6a94249)), closes [#2291](https://github.com/MustardSeedNetworks/seed/issues/2291)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3369](https://github.com/MustardSeedNetworks/seed/issues/3369)) ([9d8b16c](https://github.com/MustardSeedNetworks/seed/commit/9d8b16c4dfb243b914d9f66481eef764887a3c05))
+* **deps:** update dependency js-yaml to v5.4.3 ([#3368](https://github.com/MustardSeedNetworks/seed/issues/3368)) ([c57f165](https://github.com/MustardSeedNetworks/seed/commit/c57f1650114def9b54fccd3a0579b5e378336b2b))
+* **deps:** update dependency nanoid to v6.0.2 ([#3366](https://github.com/MustardSeedNetworks/seed/issues/3366)) ([054e418](https://github.com/MustardSeedNetworks/seed/commit/054e418c2c76e84e71385155a375ca0ff9ad6fc3))
+
 ## [0.255.1](https://github.com/MustardSeedNetworks/seed/compare/v0.255.0...v0.255.1) (2026-10-12)
 
 
