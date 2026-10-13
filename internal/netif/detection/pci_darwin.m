@@ -30,12 +30,12 @@ int netif_pci_ids(const char *ifname, uint16_t *vendor, uint16_t *device)
     if (entry == IO_OBJECT_NULL) {
         return 0;
     }
-    int found = 0;
-    while (!found) {
+    for (;;) {
         if (IOObjectConformsTo(entry, "IOPCIDevice")) {
-            found = read_id(entry, CFSTR("vendor-id"), vendor) &&
-                    read_id(entry, CFSTR("device-id"), device);
-            break;
+            int found = read_id(entry, CFSTR("vendor-id"), vendor) &&
+                        read_id(entry, CFSTR("device-id"), device);
+            IOObjectRelease(entry);
+            return found;
         }
         io_registry_entry_t parent;
         kern_return_t       kr = IORegistryEntryGetParentEntry(entry, kIOServicePlane, &parent);
@@ -45,6 +45,4 @@ int netif_pci_ids(const char *ifname, uint16_t *vendor, uint16_t *device)
         }
         entry = parent;
     }
-    IOObjectRelease(entry);
-    return found;
 }
