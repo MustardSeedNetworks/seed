@@ -58,12 +58,6 @@ const (
 	defaultLogMaxAgeDays = 30
 )
 
-// API and rate limiting constants.
-const (
-	// defaultRateLimitPerMinute is the default API rate limit per client per minute.
-	defaultRateLimitPerMinute = 60
-)
-
 // defaultDBRetentionDays is the default number of days to retain historical data.
 const defaultDBRetentionDays = 90
 
