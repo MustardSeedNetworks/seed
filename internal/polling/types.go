@@ -31,6 +31,7 @@ type Target struct {
 	Enabled         bool      `json:"enabled"`
 	CollectorChain  []string  `json:"collectorChain"`
 	LastPolledAt    time.Time `json:"lastPolledAt,omitzero"`
+	LastSuccessAt   time.Time `json:"lastSuccessAt,omitzero"`
 	LastStatus      string    `json:"lastStatus,omitempty"`
 	LastError       string    `json:"lastError,omitempty"`
 	CreatedAt       time.Time `json:"createdAt"`

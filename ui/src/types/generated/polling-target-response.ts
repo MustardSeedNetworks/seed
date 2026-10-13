@@ -18,6 +18,7 @@ export interface PollingTargetResponse {
   lastStatus: string;
   lastError: string;
   lastPolledAt?: string;
+  lastSuccessAt?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -23,6 +23,7 @@ const targets: PollingTargetResponse[] = [
     lastStatus: 'ok',
     lastError: '',
     lastPolledAt: '2026-08-17T10:00:00Z',
+    lastSuccessAt: '2026-08-17T10:00:00Z',
     createdAt: '',
     updatedAt: '',
   },
@@ -43,6 +44,7 @@ const targets: PollingTargetResponse[] = [
   },
 ];
 
+const mockPoll = vi.fn<(id: string) => Promise<PollingTargetResponse>>();
 vi.mock('../hooks/usePollingTargets', () => ({
   usePollingTargets: () => ({
     targets,
@@ -51,6 +53,7 @@ vi.mock('../hooks/usePollingTargets', () => ({
     create: vi.fn(),
     update: vi.fn(),
     remove: vi.fn(),
+    poll: mockPoll,
   }),
 }));
 
@@ -78,6 +81,7 @@ function renderAs(role: CurrentUser['role']): void {
 describe('PollingTargetsPage — list + detail', () => {
   beforeEach(() => {
     mockGet.mockReset();
+    mockPoll.mockReset();
     renderAs('operator');
   });
 
@@ -102,6 +106,30 @@ describe('PollingTargetsPage — list + detail', () => {
     expect(screen.getByText('if_table')).toBeTruthy();
   });
 
+  it('says when a target last answered, and that a paused one never has', async () => {
+    await userEvent.click(screen.getByTestId('target-row-healthy'));
+    expect(screen.getByText('Last success')).toBeTruthy();
+    expect(screen.getAllByText(new Date('2026-08-17T10:00:00Z').toLocaleString())).toHaveLength(2);
+
+    await userEvent.click(screen.getByTestId('target-row-paused'));
+    expect(screen.getAllByText('Never')).toHaveLength(2);
+  });
+
+  it('tests a paused target with one poll, and says so when the poll cannot run', async () => {
+    mockPoll.mockRejectedValueOnce(new Error('snmp poller is not running'));
+    await userEvent.click(screen.getByTestId('target-row-paused'));
+
+    await userEvent.click(screen.getByTestId('target-test'));
+
+    expect(mockPoll).toHaveBeenCalledWith('paused');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Could not run the test poll: snmp poller is not running',
+    );
+    // The failure belongs to that target, not to whichever is selected next.
+    await userEvent.click(screen.getByTestId('target-row-healthy'));
+    expect(screen.queryByTestId('target-test-error')).toBeNull();
+  });
+
   it('filters the list down to failing targets without losing the counts', async () => {
     await userEvent.click(screen.getByRole('button', { name: /^Paused/ }));
 
@@ -121,13 +149,14 @@ describe('PollingTargetsPage — viewer gating', () => {
     mockGet.mockReset();
   });
 
-  it('disables add, edit and delete for a viewer and says why', async () => {
+  it('disables add, test, edit and delete for a viewer and says why', async () => {
     renderAs('viewer');
     await userEvent.click(screen.getByTestId('target-row-healthy'));
 
     await waitFor(() => {
       expect(screen.getByTestId('target-add')).toHaveAttribute('aria-disabled', 'true');
     });
+    expect(screen.getByTestId('target-test')).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByTestId('target-edit')).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByTestId('target-delete')).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByTestId('target-add')).toHaveAccessibleDescription(/operator role/);
@@ -148,6 +177,7 @@ describe('PollingTargetsPage — viewer gating', () => {
     await waitFor(() => {
       expect(screen.getByTestId('target-add')).toBeEnabled();
     });
+    expect(screen.getByTestId('target-test')).toBeEnabled();
     expect(screen.getByTestId('target-edit')).toBeEnabled();
     expect(screen.getByTestId('target-delete')).toBeEnabled();
   });

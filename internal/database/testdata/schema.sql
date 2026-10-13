@@ -843,7 +843,7 @@ CREATE TABLE "polling_targets" (
 				created_at TEXT NOT NULL,
 				updated_at TEXT NOT NULL,
 				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
-				collector_chain TEXT NOT NULL DEFAULT '["sys_info","if_table","lldp","arp","fdb"]',
+				collector_chain TEXT NOT NULL DEFAULT '["sys_info","if_table","lldp","arp","fdb"]', last_success_at TEXT,
 				FOREIGN KEY (client_id, credentials_id)
 					REFERENCES device_credentials(client_id, id) ON DELETE RESTRICT
 			) STRICT;

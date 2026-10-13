@@ -55,6 +55,50 @@ func TestUpdateLastPollRecordsASuccess(t *testing.T) {
 	if got.LastError != "" {
 		t.Errorf("lastError = %q, want empty after a success", got.LastError)
 	}
+	if !got.LastSuccessAt.Equal(got.LastPolledAt) {
+		t.Errorf("lastSuccessAt = %v, want the successful poll's time %v", got.LastSuccessAt, got.LastPolledAt)
+	}
+}
+
+// A failure after a success moves lastPolledAt and keeps lastSuccessAt, so a
+// failing target still says when it last answered (seed#2523).
+func TestUpdateLastPollFailureKeepsLastSuccess(t *testing.T) {
+	db, target := lastPollTarget(t)
+	ctx := context.Background()
+
+	if err := db.PollingTargets().UpdateLastPoll(ctx, target.ID, "error", "request timeout"); err != nil {
+		t.Fatalf("UpdateLastPoll(error): %v", err)
+	}
+	never, err := db.PollingTargets().Get(ctx, database.DefaultClientID, target.ID)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if !never.LastSuccessAt.IsZero() {
+		t.Errorf("lastSuccessAt = %v before any success, want zero", never.LastSuccessAt)
+	}
+
+	if updErr := db.PollingTargets().UpdateLastPoll(ctx, target.ID, "ok", ""); updErr != nil {
+		t.Fatalf("UpdateLastPoll(ok): %v", updErr)
+	}
+	ok, err := db.PollingTargets().Get(ctx, database.DefaultClientID, target.ID)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if updErr := db.PollingTargets().UpdateLastPoll(ctx, target.ID, "error", "request timeout"); updErr != nil {
+		t.Fatalf("UpdateLastPoll(error): %v", updErr)
+	}
+	failed, err := db.PollingTargets().Get(ctx, database.DefaultClientID, target.ID)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+
+	if !failed.LastSuccessAt.Equal(ok.LastSuccessAt) {
+		t.Errorf("lastSuccessAt = %v after a failure, want the earlier success %v",
+			failed.LastSuccessAt, ok.LastSuccessAt)
+	}
+	if !failed.LastPolledAt.After(ok.LastPolledAt) {
+		t.Errorf("lastPolledAt = %v, want later than the success at %v", failed.LastPolledAt, ok.LastPolledAt)
+	}
 }
 
 // TestUpdateLastPollRecordsAFailureAndThenClearsIt covers the operator-visible

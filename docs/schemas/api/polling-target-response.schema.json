@@ -44,6 +44,9 @@
         "lastPolledAt": {
           "type": "string"
         },
+        "lastSuccessAt": {
+          "type": "string"
+        },
         "createdAt": {
           "type": "string"
         },

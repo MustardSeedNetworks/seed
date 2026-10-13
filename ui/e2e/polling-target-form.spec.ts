@@ -47,3 +47,25 @@ test('opens, tabs through every control in order, and escapes by keyboard', asyn
   await expect(dialog).toBeHidden();
   await expect(add).toBeFocused();
 });
+
+/**
+ * The shared Modal drew its scrim over its own panel: the scrim is positioned
+ * and the panel was not, so every pointer click inside the dialog landed on
+ * the scrim. Keyboard users never saw it; anyone with a mouse could not save.
+ */
+test('takes mouse clicks on its own controls', async ({ page }) => {
+  await skipSetupWizard(page);
+  await page.goto('/polling-targets');
+  await page.getByTestId('target-add').click();
+
+  const dialog = page.getByRole('dialog', { name: 'Add polling target' });
+  await expect(dialog).toBeVisible();
+  // Under the scrim bug the click never lands: Playwright reports the scrim
+  // intercepting pointer events until the action times out.
+  const name = dialog.getByLabel('Name', { exact: true });
+  await name.click();
+  await expect(name).toBeFocused();
+
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(dialog).toBeHidden();
+});

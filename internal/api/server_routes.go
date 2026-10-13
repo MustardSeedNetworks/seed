@@ -88,6 +88,17 @@ func (s *Server) setupTopologyRoutes() {
 			Auth:    true,
 			CSRF:    true,
 		},
+		// One poll now, the target form's "Test target" (#2523). Rate-limited:
+		// each call is an outbound SNMP conversation.
+		{
+			Path:    APIVersionPrefix + "/polling-targets/{targetId}/poll",
+			Handler: s.handlePollingTargetPoll,
+			Methods: []string{http.MethodPost},
+			Scope:   op,
+			Limiter: limitEndpoint,
+			Auth:    true,
+			CSRF:    true,
+		},
 		// Device-credential vault CRUD (#1799). Operator+ on the mutating
 		// routes, matching /polling-targets: a credential is polling
 		// configuration, and an operator who can add targets but not the

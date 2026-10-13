@@ -10,6 +10,7 @@ package api
 //   GET    /api/v1/polling-targets/{id}    fetch one
 //   PUT    /api/v1/polling-targets/{id}    full update
 //   DELETE /api/v1/polling-targets/{id}    delete
+//   POST   /api/v1/polling-targets/{id}/poll  poll once now ("Test target")
 //
 // List is read-only; the mutating routes go through writeGated so
 // only operator+ roles can add/edit/remove devices to poll. A create past
@@ -23,13 +24,16 @@ package api
 // owned by another client is indistinguishable from one that does not exist.
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
+	snmppoller "github.com/MustardSeedNetworks/seed/internal/polling/snmp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/targets"
 )
 
@@ -50,7 +54,7 @@ type PollingTargetRequest struct {
 // PollingTargetResponse is one polling target on the wire. It is built
 // explicitly from the domain row so the wire format stays stable when DB
 // columns evolve. Timestamps are RFC 3339 UTC; lastPolledAt is absent until
-// the first poll.
+// the first poll, lastSuccessAt until the first successful one.
 type PollingTargetResponse struct {
 	ID              string   `json:"id"`
 	ClientID        string   `json:"clientId"`
@@ -64,6 +68,7 @@ type PollingTargetResponse struct {
 	LastStatus      string   `json:"lastStatus"`
 	LastError       string   `json:"lastError"`
 	LastPolledAt    string   `json:"lastPolledAt,omitempty"`
+	LastSuccessAt   string   `json:"lastSuccessAt,omitempty"`
 	CreatedAt       string   `json:"createdAt"`
 	UpdatedAt       string   `json:"updatedAt"`
 }
@@ -227,6 +232,45 @@ func (s *Server) deletePollingTarget(w http.ResponseWriter, r *http.Request, id 
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// pollNowTimeout bounds a "Test target" run. A healthy device answers the
+// default chain in a second or two; an unreachable one would otherwise hold the
+// request for every collector's timeout and retries in turn.
+const pollNowTimeout = 20 * time.Second
+
+// handlePollingTargetPoll runs the target's chain once and answers the target
+// as it now reads. A failed poll is still a 200: the poll ran, and its reason
+// is in lastError, the same place a scheduled failure puts it.
+func (s *Server) handlePollingTargetPoll(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	clientID, ok := s.callerClient(w, r)
+	if !ok {
+		return
+	}
+	id := r.PathValue("targetId")
+	target, err := s.pollingTargets.Get(r.Context(), clientID, id)
+	if err != nil {
+		writePollingError(w, r, err, "Failed to load target")
+		return
+	}
+	if s.snmpPoller == nil {
+		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, snmppoller.ErrNotRunning.Error())
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), pollNowTimeout)
+	defer cancel()
+	if pollErr := s.snmpPoller.PollNow(ctx, target); pollErr != nil {
+		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, pollErr.Error())
+		return
+	}
+	polled, err := s.pollingTargets.Get(r.Context(), clientID, id)
+	if err != nil {
+		logger.ErrorContext(r.Context(), "re-read polling_target after poll failed", "id", id, "error", err)
+		writePollingError(w, r, err, "Failed to load target")
+		return
+	}
+	sendJSONResponse(w, logger, http.StatusOK, encodePollingTarget(polled))
+}
+
 // writePollingError maps a polling-targets use-case error to its HTTP status: the
 // store unwired → 503 (the prior "Database not initialized"), a missing target →
 // 404, a repo validation error → 400 with its message, anything else → 500.
@@ -304,6 +348,7 @@ func encodePollingTarget(t *polling.Target) PollingTargetResponse {
 		LastStatus:      t.LastStatus,
 		LastError:       t.LastError,
 		LastPolledAt:    formatTime(t.LastPolledAt),
+		LastSuccessAt:   formatTime(t.LastSuccessAt),
 		CreatedAt:       formatTime(t.CreatedAt),
 		UpdatedAt:       formatTime(t.UpdatedAt),
 	}

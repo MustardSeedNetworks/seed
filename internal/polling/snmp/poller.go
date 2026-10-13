@@ -27,6 +27,11 @@ const (
 // chain runs.
 var ErrCollectorNotRegistered = errors.New("collector not registered")
 
+// ErrNotRunning is returned by PollNow when the poller has not started: below
+// Starter the engine is never registered, and without a keyring it is never
+// built.
+var ErrNotRunning = errors.New("snmp poller is not running")
+
 // PollerStorage is the narrowed surface the Poller needs from the
 // database layer. Tests inject a fake.
 type PollerStorage interface {
@@ -296,6 +301,21 @@ func (p *Poller) Stop(ctx context.Context) error {
 	return nil
 }
 
+// PollNow runs target's collector chain once, outside its schedule, and
+// records the outcome exactly as a scheduled poll does. It is the operator's
+// "Test target", so the target need not be enabled: testing a paused target
+// before switching it on is the point.
+func (p *Poller) PollNow(ctx context.Context, target *polling.Target) error {
+	p.runMu.Lock()
+	running := p.started
+	p.runMu.Unlock()
+	if !running {
+		return ErrNotRunning
+	}
+	p.runChain(ctx, target)
+	return nil
+}
+
 // runChain walks the target's collector chain. Each collector is
 // invoked sequentially; failures are logged and the chain
 // continues. After the chain runs, last_status / last_error /
@@ -354,6 +374,8 @@ func (p *Poller) recordPollOutcome(ctx context.Context, target *polling.Target, 
 		status = pollStatusError
 		errMsg = pollErr.Error()
 	}
+	// A poll cut short by its deadline still has an outcome to record.
+	ctx = context.WithoutCancel(ctx)
 	if updErr := p.storage.UpdateLastPoll(ctx, target.ID, status, errMsg); updErr != nil {
 		p.logger.WarnContext(ctx, "snmp poller: update last_poll failed",
 			"target_id", target.ID, "error", updErr)

@@ -810,6 +810,14 @@ operations:
     responses:
       "204":
         description: The target was deleted.
+  POST /api/v1/polling-targets/{targetId}/poll:
+    responses:
+      "200":
+        description: The target after one poll run now, enabled or not; lastStatus and lastError carry the outcome. 503 when the SNMP poller is not running (below Starter, or no credential keyring).
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PollingTargetResponse'
   GET /api/v1/profiles:
     responses:
       "200":

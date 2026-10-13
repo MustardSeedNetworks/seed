@@ -71,12 +71,14 @@ function matchesFacet(target: PollingTargetResponse, facet: Facet): boolean {
 export function PollingTargetsPage(): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
   const { canWrite } = useRole();
-  const { targets, loading, error, create, update, remove } = usePollingTargets();
+  const { targets, loading, error, create, update, remove, poll } = usePollingTargets();
   const [editing, setEditing] = useState<PollingTargetResponse | null>(null);
   const [showCreate, setShowCreate] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [facet, setFacet] = useState<Facet>('all');
   const [query, setQuery] = useState('');
+  const [testing, setTesting] = useState<boolean>(false);
+  const [testError, setTestError] = useState<{ id: string; reason: string } | null>(null);
 
   const needle = query.trim().toLowerCase();
   const shown = targets.filter(
@@ -92,6 +94,17 @@ export function PollingTargetsPage(): JSX.Element {
   // edit and delete could only 403 (#1254). The list and detail stay readable:
   // writeGated passes GET for every role.
   const readOnlyReason = canWrite ? undefined : t('pollingTargets.readOnly');
+
+  // A poll that ran and failed is a result, shown in the target's own status;
+  // testError is only for a poll that could not run at all.
+  const testTarget = async (id: string): Promise<void> => {
+    setTesting(true);
+    setTestError(null);
+    await poll(id).catch((err: unknown) => {
+      setTestError({ id, reason: err instanceof Error ? err.message : String(err) });
+    });
+    setTesting(false);
+  };
 
   return (
     <>
@@ -179,6 +192,21 @@ export function PollingTargetsPage(): JSX.Element {
             status={<TargetStatus target={selected} />}
             actions={
               <>
+                <Tooltip text={readOnlyReason ?? t('pollingTargets.testTargetHint')}>
+                  <button
+                    type="button"
+                    onClick={(): void => {
+                      void testTarget(selected.id);
+                    }}
+                    disabled={!canWrite || testing}
+                    data-testid="target-test"
+                    className="rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {testing
+                      ? t('pollingTargets.testTargetRunning')
+                      : t('pollingTargets.testTarget')}
+                  </button>
+                </Tooltip>
                 <Tooltip text={readOnlyReason}>
                   <button
                     type="button"
@@ -228,12 +256,29 @@ export function PollingTargetsPage(): JSX.Element {
                     : t('common:status.never'),
                 },
                 {
+                  label: t('pollingTargets.labelLastSuccess'),
+                  testId: 'target-last-success',
+                  value: selected.lastSuccessAt
+                    ? new Date(selected.lastSuccessAt).toLocaleString()
+                    : t('common:status.never'),
+                },
+                {
                   label: t('pollingTargets.labelLastStatus'),
+                  testId: 'target-last-status',
                   value: selected.lastError || selected.lastStatus || '—',
                   prose: Boolean(selected.lastError),
                 },
               ]}
             />
+            {testError?.id === selected.id ? (
+              <p
+                role="alert"
+                data-testid="target-test-error"
+                className="body-small text-status-error-strong"
+              >
+                {t('pollingTargets.testTargetFailed', { reason: testError.reason })}
+              </p>
+            ) : null}
             <CollectorChain chain={selected.collectorChain} />
           </DetailPane>
         ) : (

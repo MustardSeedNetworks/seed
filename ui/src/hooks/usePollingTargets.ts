@@ -1,7 +1,8 @@
 /**
  * Data hook for the /api/v1/polling-targets surface.
  *
- * Exposes the read-list + the three CRUD mutations as a single
+ * Exposes the read-list, the three CRUD mutations and the one-shot poll
+ * ("Test target") as a single
  * object so the page component doesn't have to weave together
  * useEffect, fetch state, and refresh-on-mutate logic itself.
  *
@@ -28,6 +29,8 @@ export interface UsePollingTargetsResult {
   create: (input: PollingTargetRequest) => Promise<PollingTargetResponse>;
   update: (id: string, input: PollingTargetRequest) => Promise<PollingTargetResponse>;
   remove: (id: string) => Promise<void>;
+  /** Polls the target once now and answers it with that poll's outcome. */
+  poll: (id: string) => Promise<PollingTargetResponse>;
 }
 
 export function usePollingTargets(): UsePollingTargetsResult {
@@ -79,5 +82,11 @@ export function usePollingTargets(): UsePollingTargetsResult {
     await refresh();
   };
 
-  return { targets, loading, error, refresh, create, update, remove };
+  const poll = async (id: string): Promise<PollingTargetResponse> => {
+    const polled = await api.post<PollingTargetResponse>(`${ENDPOINT}/${id}/poll`);
+    await refresh();
+    return polled;
+  };
+
+  return { targets, loading, error, refresh, create, update, remove, poll };
 }
