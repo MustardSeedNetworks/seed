@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.257.2](https://github.com/MustardSeedNetworks/seed/compare/v0.257.1...v0.257.2) (2026-10-13)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-i18next to v17.0.16 ([#3386](https://github.com/MustardSeedNetworks/seed/issues/3386)) ([e3a4f23](https://github.com/MustardSeedNetworks/seed/commit/e3a4f23042f7b69411676fecf5dcfb7ba061adbb))
+* **e2e:** build the E2E backend with cgo on macOS ([#3385](https://github.com/MustardSeedNetworks/seed/issues/3385)) ([5b2240c](https://github.com/MustardSeedNetworks/seed/commit/5b2240cabace98c0edff5bbb871306922e030fa8)), closes [#2518](https://github.com/MustardSeedNetworks/seed/issues/2518)
+* **netif:** identify darwin chipsets from the IORegistry ([#3388](https://github.com/MustardSeedNetworks/seed/issues/3388)) ([d65e20f](https://github.com/MustardSeedNetworks/seed/commit/d65e20feef17a3aaa3d189af86c0a3dda1b69a52))
+
 ## [0.257.1](https://github.com/MustardSeedNetworks/seed/compare/v0.257.0...v0.257.1) (2026-10-13)
 
 
