@@ -12,6 +12,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -273,29 +274,19 @@ func parseHCIToolOutput(output string) ([]BluetoothDevice, error) {
 	return devices, nil
 }
 
-// scanBLE uses hcitool lescan for BLE discovery.
-//
-//nolint:gocognit // multi-step BLE discovery (lescan spawn, hcidump parse, dedupe); splitting prematurely would obscure data flow — TODO refactor into stages.
+// scanBLE uses hcitool lescan for BLE discovery. lescan never exits on its
+// own, so the scan runs until the configured duration expires and is then
+// killed.
 func (s *BluetoothScanner) scanBLE(
 	ctx context.Context,
 	adapter string,
 	config *BluetoothScanConfig,
 ) ([]BluetoothDevice, error) {
-	// hcitool lescan requires root, timeout after configured duration
-	scanDuration := time.Duration(config.ScanDurationSec) * time.Second
-	if scanDuration == 0 {
-		scanDuration = defaultBLEScanSeconds * time.Second
-	}
-
-	scanCtx, cancel := context.WithTimeout(ctx, scanDuration)
+	scanCtx, cancel := context.WithTimeout(ctx, bleScanDuration(config))
 	defer cancel()
 
-	args := []string{"lescan", "--duplicates"}
-	if adapter != "" {
-		args = []string{"-i", adapter, "lescan", "--duplicates"}
-	}
-
-	cmd := exec.CommandContext(scanCtx, "hcitool", args...)
+	// hcitool lescan requires root.
+	cmd := exec.CommandContext(scanCtx, "hcitool", lescanArgs(adapter)...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stdout pipe: %w", err)
@@ -305,71 +296,88 @@ func (s *BluetoothScanner) scanBLE(
 		return nil, fmt.Errorf("hcitool lescan failed: %w", startErr)
 	}
 
-	// Collect devices while scanning
+	devices := parseLEScanOutput(stdout)
+
+	_ = cmd.Process.Kill()
+	_ = cmd.Wait()
+
+	return devices, nil
+}
+
+func bleScanDuration(config *BluetoothScanConfig) time.Duration {
+	if config.ScanDurationSec == 0 {
+		return defaultBLEScanSeconds * time.Second
+	}
+	return time.Duration(config.ScanDurationSec) * time.Second
+}
+
+func lescanArgs(adapter string) []string {
+	if adapter == "" {
+		return []string{"lescan", "--duplicates"}
+	}
+	return []string{"-i", adapter, "lescan", "--duplicates"}
+}
+
+// parseLEScanOutput reads hcitool lescan output until EOF, one device per
+// address. With --duplicates an address repeats, often first as "(unknown)"
+// and later with its name, so a name seen later fills an empty one.
+//
+//	LE Scan ...
+//	AA:BB:CC:DD:EE:FF DeviceName
+//	AA:BB:CC:DD:EE:FF (unknown)
+func parseLEScanOutput(r io.Reader) []BluetoothDevice {
 	deviceMap := make(map[string]*BluetoothDevice)
-	scanner := bufio.NewScanner(stdout)
+	scanner := bufio.NewScanner(r)
 	now := time.Now()
 
-	// hcitool lescan output format:
-	// LE Scan ...
-	// AA:BB:CC:DD:EE:FF DeviceName
-	// AA:BB:CC:DD:EE:FF (unknown)
-
 	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "LE Scan") {
+		address, name, ok := parseLEScanLine(scanner.Text())
+		if !ok {
 			continue
 		}
 
-		parts := strings.SplitN(strings.TrimSpace(line), " ", minimumDeviceParts)
-		if len(parts) < 1 {
-			continue
-		}
-
-		address := parts[0]
-		if !isValidMACAddress(address) {
-			continue
-		}
-
-		name := ""
-		if len(parts) > 1 {
-			name = parts[1]
-			if name == "(unknown)" {
-				name = ""
-			}
-		}
-
-		if existing, ok := deviceMap[address]; ok {
-			// Update with better name if we got one
+		if existing, seen := deviceMap[address]; seen {
 			if name != "" && existing.Name == "" {
 				existing.Name = name
 			}
 			existing.LastSeen = time.Now()
-		} else {
-			deviceMap[address] = &BluetoothDevice{
-				Address:       address,
-				Name:          name,
-				Type:          BluetoothTypeBLE,
-				DeviceClass:   BluetoothClassUncategorized,
-				IsConnectable: true,
-				FirstSeen:     now,
-				LastSeen:      now,
-				Metadata:      make(map[string]any),
-			}
+			continue
+		}
+
+		deviceMap[address] = &BluetoothDevice{
+			Address:       address,
+			Name:          name,
+			Type:          BluetoothTypeBLE,
+			DeviceClass:   BluetoothClassUncategorized,
+			IsConnectable: true,
+			FirstSeen:     now,
+			LastSeen:      now,
+			Metadata:      make(map[string]any),
 		}
 	}
 
-	// Kill the scan (it runs until killed or timeout)
-	_ = cmd.Process.Kill()
-	_ = cmd.Wait()
-
-	// Convert map to slice
 	devices := make([]BluetoothDevice, 0, len(deviceMap))
 	for _, dev := range deviceMap {
 		devices = append(devices, *dev)
 	}
 
-	return devices, nil
+	return devices
+}
+
+// parseLEScanLine returns the address and name on one lescan line; "(unknown)"
+// is reported as an empty name.
+func parseLEScanLine(line string) (string, string, bool) {
+	parts := strings.SplitN(strings.TrimSpace(line), " ", minimumDeviceParts)
+	if !isValidMACAddress(parts[0]) {
+		return "", "", false
+	}
+
+	name := ""
+	if len(parts) > 1 && parts[1] != "(unknown)" {
+		name = parts[1]
+	}
+
+	return parts[0], name, true
 }
 
 // isValidMACAddress checks if a string looks like a MAC address.
