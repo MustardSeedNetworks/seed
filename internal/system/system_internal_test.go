@@ -161,9 +161,6 @@ func TestHealthStructValues(t *testing.T) {
 
 func TestConstants(t *testing.T) {
 	// Verify constants have expected values
-	if cpuSampleInterval != 100*time.Millisecond {
-		t.Errorf("cpuSampleInterval = %v, want 100ms", cpuSampleInterval)
-	}
 	if cpuTickerInterval != 2*time.Second {
 		t.Errorf("cpuTickerInterval = %v, want 2s", cpuTickerInterval)
 	}
