@@ -15,6 +15,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../../i18n';
 import { emptyInput, TargetForm, type TargetFormProps } from './TargetForm';
 
+vi.mock('../../hooks/useDeviceCredentials', () => ({
+  useDeviceCredentials: () => ({ credentials: [], loading: false, error: null }),
+}));
+
 beforeEach(async () => {
   await i18n.changeLanguage('es');
 });
@@ -40,6 +44,7 @@ describe('TargetForm — Spanish, with no English left behind', () => {
       'Nombre',
       'Dirección IP',
       'Versión de SNMP',
+      'Credencial',
       'Intervalo de sondeo (segundos)',
     ]) {
       expect(screen.getByText(label)).toBeVisible();
@@ -49,6 +54,7 @@ describe('TargetForm — Spanish, with no English left behind', () => {
       'Name',
       'IP address',
       'SNMP version',
+      'Credential',
       'Poll interval (seconds)',
     ]) {
       expect(screen.queryByText(english)).toBeNull();

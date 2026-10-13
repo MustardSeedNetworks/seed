@@ -6,9 +6,12 @@
  * pass still to come.
  */
 
+import type { TFunction } from 'i18next';
 import { X } from 'lucide-react';
 import { type FormEvent, type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDeviceCredentials } from '../../hooks/useDeviceCredentials';
+import type { Credentials } from '../../types/generated/device-credential-list-response';
 import type { PollingTargetRequest } from '../../types/generated/polling-target-request';
 import type { PollingTargetResponse } from '../../types/generated/polling-target-response';
 
@@ -24,12 +27,25 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
   const [form, setForm] = useState<PollingTargetRequest>(initial);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const vault = useDeviceCredentials();
+
+  // The poller speaks the target's version with whatever the credential holds,
+  // so a v3 credential on a v2c target can never authenticate. Only matching
+  // kinds are offered.
+  const offered = vault.credentials.filter((c) => c.kind === form.snmpVersion);
+  const chosen = offered.find((c) => c.id === form.credentialsId);
 
   function update<K extends keyof PollingTargetRequest>(
     key: K,
     value: PollingTargetRequest[K],
   ): void {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function changeVersion(version: string): void {
+    // A version change orphans the chosen credential; keeping it would save a
+    // pairing the select no longer shows.
+    setForm((prev) => ({ ...prev, snmpVersion: version, credentialsId: undefined }));
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
@@ -55,6 +71,22 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function credentialSummary(): string {
+    if (vault.error) {
+      return t('pollingTargets.credentialsLoadFailed', { reason: vault.error });
+    }
+    if (vault.loading) {
+      return t('pollingTargets.credentialsLoading');
+    }
+    if (chosen) {
+      return describeCredential(chosen, t);
+    }
+    if (offered.length === 0) {
+      return t('pollingTargets.credentialNoneForVersion', { version: form.snmpVersion });
+    }
+    return t('pollingTargets.credentialPick');
   }
 
   return (
@@ -115,12 +147,37 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
           <Field label={t('pollingTargets.fieldSnmpVersion')}>
             <select
               value={form.snmpVersion}
-              onChange={(e): void => update('snmpVersion', e.target.value)}
+              onChange={(e): void => changeVersion(e.target.value)}
+              data-testid="target-version"
               className={inputClass}
             >
               <option value="v2c">v2c</option>
               <option value="v3">v3</option>
             </select>
+          </Field>
+          <Field label={t('pollingTargets.fieldCredential')}>
+            <div>
+              <select
+                value={chosen?.id ?? ''}
+                onChange={(e): void => update('credentialsId', e.target.value || undefined)}
+                disabled={vault.loading}
+                data-testid="target-credential"
+                className={inputClass}
+              >
+                <option value="">{t('pollingTargets.credentialNone')}</option>
+                {offered.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <p
+                data-testid="target-credential-summary"
+                className="mt-tight text-xs text-text-muted"
+              >
+                {credentialSummary()}
+              </p>
+            </div>
           </Field>
           <Field label={t('pollingTargets.fieldPollInterval')}>
             <input
@@ -194,17 +251,28 @@ function Field({ label, children }: { label: string; children: JSX.Element }): J
   );
 }
 
+/** describeCredential says what the poller will authenticate with, minus the secrets. */
+function describeCredential(c: Credentials, t: TFunction<['pages', 'common']>): string {
+  if (c.kind !== 'v3') {
+    return t('pollingTargets.credentialSummaryV2c');
+  }
+  const detail = [c.securityLevel, c.snmpV3AuthProto, c.snmpV3PrivProto]
+    .filter(Boolean)
+    .join(' · ');
+  return t('pollingTargets.credentialSummaryV3', { user: c.snmpV3User ?? '', detail });
+}
+
 const inputClass: string =
   'w-full rounded-md border border-surface-border bg-surface-sunken px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-brand-primary focus:outline-none';
 
 /**
  * emptyInput is the create-form default.
  *
- * It creates disabled: an enabled target needs a credential and this form has
- * no way to attach one yet (that is SE-2's credential picker), so an enabled
- * default would be refused on every first submit. The collector chain is
- * omitted rather than sent empty — the repository fills an absent chain with
- * its own default, and `[]` is not that default.
+ * It creates disabled: an enabled target needs a credential, and a fresh form
+ * has none chosen, so an enabled default would be refused on every submit that
+ * skips the picker. The collector chain is omitted rather than sent empty —
+ * the repository fills an absent chain with its own default, and `[]` is not
+ * that default.
  */
 export function emptyInput(): PollingTargetRequest {
   return {
