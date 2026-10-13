@@ -15,14 +15,15 @@ exit_status=0
 # daemon. Killing only $server_pid leaves those children reparented to init,
 # spinning; one bad afternoon left 2 056 of them and a load average of 971.
 #
-# The server is started under `set -m`, which makes it a process-group leader
-# with pgid == $server_pid, so `kill -- -$server_pid` reaches it and everything
-# it forked. TERM first, then KILL for anything that ignored it.
+# The server starts in its own session, so it leads a process group with
+# pgid == $server_pid and `kill -TERM -$server_pid` reaches it and everything it
+# forked. TERM first, then KILL for anything that ignored it. No `--` before the
+# negative pid: dash's kill rejects it as "Illegal number: -" (seed#2826).
 kill_group() {
-  kill -TERM -- "-$1" 2>/dev/null || kill -TERM "$1" 2>/dev/null || return 0
+  kill -TERM "-$1" 2>/dev/null || return 0
   # Give the group a moment to go down cleanly before insisting.
   sleep 1
-  kill -KILL -- "-$1" 2>/dev/null || true
+  kill -KILL "-$1" 2>/dev/null || true
 }
 
 cleanup() {
@@ -71,14 +72,13 @@ fi
 
 port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')
 
-# Job control, so the daemon below becomes a process-group leader and cleanup
-# can reap its children as well as itself. Turned off again immediately: with
-# `set -m` left on, this script's own foreground commands get their own groups
-# and stop inheriting the terminal's signals as expected.
-set -m
-"$repo_dir/scripts/e2e-daemon.sh" "$run_dir" "$port" >"$server_log" 2>&1 &
+# A new session, so the daemon leads its own process group and cleanup can reap
+# its children as well as itself. Not `set -m`: dash turns job control off
+# without a tty, which left CI and ssh runs with no group to kill (seed#2826).
+# Not setsid(1) either: macOS has none, and python3 is already required above.
+python3 -c 'import os, sys; os.setsid(); os.execvp(sys.argv[1], sys.argv[1:])' \
+  "$repo_dir/scripts/e2e-daemon.sh" "$run_dir" "$port" >"$server_log" 2>&1 &
 server_pid=$!
-set +m
 
 base_url=
 attempt=0
