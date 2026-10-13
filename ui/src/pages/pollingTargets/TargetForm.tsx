@@ -7,9 +7,9 @@
  */
 
 import type { TFunction } from 'i18next';
-import { X } from 'lucide-react';
-import { type FormEvent, type JSX, useState } from 'react';
+import { type FormEvent, type JSX, type ReactNode, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Modal, ModalFooter } from '../../components/ui/Modal';
 import { useDeviceCredentials } from '../../hooks/useDeviceCredentials';
 import type { Credentials } from '../../types/generated/device-credential-list-response';
 import type { PollingTargetRequest } from '../../types/generated/polling-target-request';
@@ -28,6 +28,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
   const vault = useDeviceCredentials();
+  const id = useId();
 
   // The poller speaks the target's version with whatever the credential holds,
   // so a v3 credential on a v2c target can never authenticate. Only matching
@@ -90,41 +91,34 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex-center bg-scrim/60">
+    <Modal
+      isOpen
+      onClose={onCancel}
+      title={
+        mode === 'create' ? t('pollingTargets.formCreateTitle') : t('pollingTargets.formEditTitle')
+      }
+      // A stray click outside would throw away a half-typed target; Escape
+      // and the close button are deliberate.
+      closeOnBackdropClick={false}
+    >
       <form
         onSubmit={(e): void => {
           void handleSubmit(e);
         }}
-        className="w-full max-w-md rounded-lg border border-surface-border bg-surface-raised pad-lg shadow-xl"
       >
-        <div className="flex-between border-b border-surface-border pb-3">
-          <h2 className="text-lg font-semibold text-text-primary">
-            {mode === 'create'
-              ? t('pollingTargets.formCreateTitle')
-              : t('pollingTargets.formEditTitle')}
-          </h2>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-text-muted hover:text-text-primary"
-            aria-label={t('common:buttons.close')}
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
         {formError ? (
           <div
             data-testid="target-form-error"
-            className="mt-heading rounded-md border border-status-error/40 bg-status-error/10 pad-xs text-sm text-status-error-strong"
+            className="mb-content rounded-md border border-status-error/40 bg-status-error/10 pad-xs text-sm text-status-error-strong"
           >
             {formError}
           </div>
         ) : null}
 
-        <div className="mt-content stack">
-          <Field label={t('pollingTargets.fieldName')}>
+        <div className="stack">
+          <Field id={`${id}-name`} label={t('pollingTargets.fieldName')}>
             <input
+              id={`${id}-name`}
               type="text"
               value={form.name}
               onChange={(e): void => update('name', e.target.value)}
@@ -133,8 +127,9 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
               className={inputClass}
             />
           </Field>
-          <Field label={t('pollingTargets.fieldIpAddress')}>
+          <Field id={`${id}-ip`} label={t('pollingTargets.fieldIpAddress')}>
             <input
+              id={`${id}-ip`}
               type="text"
               value={form.ipAddress}
               onChange={(e): void => update('ipAddress', e.target.value)}
@@ -144,8 +139,9 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
               className={inputClass}
             />
           </Field>
-          <Field label={t('pollingTargets.fieldSnmpVersion')}>
+          <Field id={`${id}-version`} label={t('pollingTargets.fieldSnmpVersion')}>
             <select
+              id={`${id}-version`}
               value={form.snmpVersion}
               onChange={(e): void => changeVersion(e.target.value)}
               data-testid="target-version"
@@ -155,32 +151,34 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
               <option value="v3">v3</option>
             </select>
           </Field>
-          <Field label={t('pollingTargets.fieldCredential')}>
-            <div>
-              <select
-                value={chosen?.id ?? ''}
-                onChange={(e): void => update('credentialsId', e.target.value || undefined)}
-                disabled={vault.loading}
-                data-testid="target-credential"
-                className={inputClass}
-              >
-                <option value="">{t('pollingTargets.credentialNone')}</option>
-                {offered.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              <p
-                data-testid="target-credential-summary"
-                className="mt-tight text-xs text-text-muted"
-              >
-                {credentialSummary()}
-              </p>
-            </div>
+          <Field id={`${id}-credential`} label={t('pollingTargets.fieldCredential')}>
+            <select
+              id={`${id}-credential`}
+              value={chosen?.id ?? ''}
+              onChange={(e): void => update('credentialsId', e.target.value || undefined)}
+              disabled={vault.loading}
+              aria-describedby={`${id}-credential-summary`}
+              data-testid="target-credential"
+              className={inputClass}
+            >
+              <option value="">{t('pollingTargets.credentialNone')}</option>
+              {offered.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <p
+              id={`${id}-credential-summary`}
+              data-testid="target-credential-summary"
+              className="mt-tight text-xs text-text-muted"
+            >
+              {credentialSummary()}
+            </p>
           </Field>
-          <Field label={t('pollingTargets.fieldPollInterval')}>
+          <Field id={`${id}-interval`} label={t('pollingTargets.fieldPollInterval')}>
             <input
+              id={`${id}-interval`}
               type="number"
               min={10}
               max={3600}
@@ -197,19 +195,20 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
             />
             {t('pollingTargets.enabledHint')}
           </label>
-          <Field label={t('pollingTargets.collectorChain')}>
-            {/* Read-only: the chain is the server's, and a form that retypes
-                the server's default is the mirror this row exists to remove.
-                An absent chain is filled in on create by the repository. */}
-            <div data-testid="target-chain" className="text-sm text-text-secondary">
+          {/* Read-only: the chain is the server's, and a form that retypes
+              the server's default is the mirror this row exists to remove.
+              An absent chain is filled in on create by the repository. */}
+          <div>
+            <span className={labelClass}>{t('pollingTargets.collectorChain')}</span>
+            <div data-testid="target-chain" className="mt-tight text-sm text-text-secondary">
               {form.collectorChain?.length
                 ? form.collectorChain.join(', ')
                 : t('pollingTargets.chainServerDefault')}
             </div>
-          </Field>
+          </div>
         </div>
 
-        <div className="mt-5 flex justify-end gap-compact border-t border-surface-border pt-section">
+        <ModalFooter>
           <button
             type="button"
             onClick={onCancel}
@@ -229,24 +228,27 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
                 ? t('pollingTargets.addTarget')
                 : t('pollingTargets.saveChanges')}
           </button>
-        </div>
+        </ModalFooter>
       </form>
-    </div>
+    </Modal>
   );
 }
 
-function Field({ label, children }: { label: string; children: JSX.Element }): JSX.Element {
-  // Using a div wrapper rather than a bare label avoids the
-  // a11y/noLabelWithoutControl warning when children is a select or
-  // a wrapped composite — the inner input element is itself a
-  // labelable element which screen readers find via the surrounding
-  // <span> text.
+function Field({
+  id,
+  label,
+  children,
+}: {
+  id: string;
+  label: string;
+  children: ReactNode;
+}): JSX.Element {
   return (
-    <div className="block">
-      <span className="block text-xs font-medium uppercase tracking-wide text-text-muted">
+    <div>
+      <label htmlFor={id} className={labelClass}>
         {label}
-      </span>
-      <span className="mt-tight block">{children}</span>
+      </label>
+      <div className="mt-tight">{children}</div>
     </div>
   );
 }
@@ -261,6 +263,8 @@ function describeCredential(c: Credentials, t: TFunction<['pages', 'common']>): 
     .join(' · ');
   return t('pollingTargets.credentialSummaryV3', { user: c.snmpV3User ?? '', detail });
 }
+
+const labelClass: string = 'block text-xs font-medium uppercase tracking-wide text-text-muted';
 
 const inputClass: string =
   'w-full rounded-md border border-surface-border bg-surface-sunken px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-brand-primary focus:outline-none';

@@ -47,7 +47,7 @@ describe('TargetForm — Spanish, with no English left behind', () => {
       'Credencial',
       'Intervalo de sondeo (segundos)',
     ]) {
-      expect(screen.getByText(label)).toBeVisible();
+      expect(screen.getByLabelText(label)).toBeVisible();
     }
     for (const english of [
       'Add polling target',
@@ -59,10 +59,10 @@ describe('TargetForm — Spanish, with no English left behind', () => {
     ]) {
       expect(screen.queryByText(english)).toBeNull();
     }
-    expect(screen.getByRole('button', { name: 'Cerrar' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Cerrar ventana' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Cancelar' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Agregar destino' })).toBeVisible();
-    for (const english of ['Close', 'Cancel', 'Add target']) {
+    for (const english of ['Close modal', 'Cancel', 'Add target']) {
       expect(screen.queryByRole('button', { name: english })).toBeNull();
     }
   });
