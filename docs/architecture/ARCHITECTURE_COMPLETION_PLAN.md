@@ -137,7 +137,7 @@ WS-A (handlers shrink when strangled). Non-handler targets incl. `snmp/interface
 
 ### WS-E — Kill legacy/compat shims (pre-v1 no-compat law)
 
-- E1 Remove `config.ToLegacyConfig()` + migrate callers to `SystemConfig`.
+- E1 Done (#3359): `SystemConfig` and `ToLegacyConfig()` deleted. Nothing loaded them; `config.Load` is the one loader.
 - E2 Resolve `inMemorySuppressionStore` "legacy backend".
 - E3 Rename the `revive`-stutter `//nolint`s away (`logging`, `update/types`) — real renames, delete suppressions.
 - E4 Remove deprecated `netif.LinkUp` field, assess `survey/migration.go`.
