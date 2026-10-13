@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.257.3](https://github.com/MustardSeedNetworks/seed/compare/v0.257.2...v0.257.3) (2026-10-13)
+
+
+### Bug Fixes
+
+* **deps:** update module golang.org/x/sys to v0.49.0 ([#3394](https://github.com/MustardSeedNetworks/seed/issues/3394)) ([c9580b6](https://github.com/MustardSeedNetworks/seed/commit/c9580b6d01df20813ef5f70a3b26da29d3d555f2))
+* **wifi:** feed the rogue-AP rule discovery's wired MACs ([#3390](https://github.com/MustardSeedNetworks/seed/issues/3390)) ([97a08a8](https://github.com/MustardSeedNetworks/seed/commit/97a08a89aadfce5da7c05ff6927e0a7d358d8ae8)), closes [#2882](https://github.com/MustardSeedNetworks/seed/issues/2882)
+* **wifi:** scan the radio the request names, refuse a wired one ([#3393](https://github.com/MustardSeedNetworks/seed/issues/3393)) ([f3501f2](https://github.com/MustardSeedNetworks/seed/commit/f3501f217af95fd4d31246d857a48b06e0675e58)), closes [#2881](https://github.com/MustardSeedNetworks/seed/issues/2881)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3391](https://github.com/MustardSeedNetworks/seed/issues/3391)) ([015c506](https://github.com/MustardSeedNetworks/seed/commit/015c5068f8706f141fab4816e50daacc5551d914))
+
 ## [0.257.2](https://github.com/MustardSeedNetworks/seed/compare/v0.257.1...v0.257.2) (2026-10-13)
 
 
