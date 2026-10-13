@@ -59,10 +59,13 @@ test('takes mouse clicks on its own controls', async ({ page }) => {
   await page.getByTestId('target-add').click();
 
   const dialog = page.getByRole('dialog', { name: 'Add polling target' });
+  await expect(dialog).toBeVisible();
+  // Under the scrim bug the click never lands: Playwright reports the scrim
+  // intercepting pointer events until the action times out.
   const name = dialog.getByLabel('Name', { exact: true });
-  await name.click({ timeout: 5000 });
+  await name.click();
   await expect(name).toBeFocused();
 
-  await dialog.getByRole('button', { name: 'Cancel' }).click({ timeout: 5000 });
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
   await expect(dialog).toBeHidden();
 });
