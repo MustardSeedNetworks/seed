@@ -5,6 +5,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/shirou/gopsutil/v4/cpu"
 )
 
 // TestCollectorReusesItsCaches is the regression this package exists to prevent.
@@ -26,9 +28,6 @@ func TestCollectorReusesItsCaches(t *testing.T) {
 	c := NewCollector()
 	t.Cleanup(func() { _ = c.Close() })
 
-	// Let the sampler take its first reading so it is not counted as growth.
-	time.Sleep(cpuSampleInterval + 50*time.Millisecond)
-
 	before := runtime.NumGoroutine()
 	for range 200 {
 		_, _ = c.Health()
@@ -46,6 +45,10 @@ func TestCollectorReusesItsCaches(t *testing.T) {
 // The old code started a sampler per call and read the fresh state immediately,
 // so CPUPercent was always exactly 0 — and because GetHealth only collected top
 // processes above a 75% threshold, that also made the CPU branch dead code.
+//
+// On darwin it also caught a sampler that measured over 100 ms windows while
+// the OS advances its tick counters about once a second, so most readings saw
+// no change and stored 0 (seed#2773).
 func TestCollectorSamplesCPU(t *testing.T) {
 	c := NewCollector()
 	t.Cleanup(func() { _ = c.Close() })
@@ -61,9 +64,37 @@ func TestCollectorSamplesCPU(t *testing.T) {
 		"writing back into the cache the Collector reads")
 }
 
+// TestBusyPercent pins the arithmetic over two cumulative readings, and that a
+// window in which the counters did not move reports no reading rather than 0%:
+// that is the normal case on darwin for any window under a second (seed#2773).
+func TestBusyPercent(t *testing.T) {
+	base := cpu.TimesStat{User: 100, System: 50, Idle: 800, Iowait: 50}
+	tests := []struct {
+		name   string
+		cur    cpu.TimesStat
+		want   float64
+		wantOK bool
+	}{
+		{"counters unchanged", base, 0, false},
+		{"all idle", cpu.TimesStat{User: 100, System: 50, Idle: 900, Iowait: 50}, 0, true},
+		{"all busy", cpu.TimesStat{User: 150, System: 100, Idle: 800, Iowait: 50}, 100, true},
+		{"quarter busy", cpu.TimesStat{User: 110, System: 60, Idle: 860, Iowait: 50}, 25, true},
+		{"iowait counts as idle", cpu.TimesStat{User: 110, System: 50, Idle: 820, Iowait: 120}, 10, true},
+		{"counters went backwards", cpu.TimesStat{User: 10, System: 5, Idle: 80, Iowait: 5}, 0, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := busyPercent(base, tt.cur)
+			if ok != tt.wantOK || got != tt.want {
+				t.Errorf("busyPercent = (%v, %v), want (%v, %v)", got, ok, tt.want, tt.wantOK)
+			}
+		})
+	}
+}
+
 // TestCollectorCloseStopsTheSampler pins that Close is not advisory. Without it
 // a long-lived process accumulates one ticker goroutine per Collector, each
-// waking every cpuTickerInterval to burn cpuSampleInterval measuring CPU.
+// waking every cpuTickerInterval to read the CPU counters.
 //
 // It used to compare [runtime.NumGoroutine] either side of Close. That number is
 // process-global, so any goroutine another test happened to be running counted
@@ -76,7 +107,6 @@ func TestCollectorSamplesCPU(t *testing.T) {
 // Close waited, rather than merely signalling and returning.
 func TestCollectorCloseStopsTheSampler(t *testing.T) {
 	c := NewCollector()
-	time.Sleep(cpuSampleInterval + 50*time.Millisecond)
 	if err := c.Close(); err != nil {
 		t.Fatalf("Close: %v", err)
 	}
