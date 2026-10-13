@@ -31,7 +31,7 @@ func TestRegulatoryViolation(t *testing.T) {
 		{"DE", 14, "channel 14 is JP-only even where 12-13 are fine"},
 	}
 	for _, v := range violations {
-		if !hasDef(det.Detect(reg(v.country, v.ch)), id) {
+		if !hasDef(det.Detect(reg(v.country, v.ch), nil), id) {
 			t.Errorf("expected regulatory-violation: %s (country=%s ch=%d)", v.why, v.country, v.ch)
 		}
 	}
@@ -47,7 +47,7 @@ func TestRegulatoryViolation(t *testing.T) {
 		{"GB", 6},  // common channel, any domain
 	}
 	for _, c := range clean {
-		if hasDef(det.Detect(reg(c.country, c.ch)), id) {
+		if hasDef(det.Detect(reg(c.country, c.ch), nil), id) {
 			t.Errorf("false positive regulatory-violation for country=%s ch=%d", c.country, c.ch)
 		}
 	}
@@ -55,7 +55,7 @@ func TestRegulatoryViolation(t *testing.T) {
 	// No country code → cannot assess → no detection.
 	noCountry := bss("00:00:00:00:00:09", "corp", "WPA3", "2.4 GHz", 13)
 	noCountry.PMFRequired = true
-	if hasDef(det.Detect(tree("corp", noCountry)), id) {
+	if hasDef(det.Detect(tree("corp", noCountry), nil), id) {
 		t.Error("must not flag a regulatory violation without a declared country")
 	}
 
@@ -63,7 +63,7 @@ func TestRegulatoryViolation(t *testing.T) {
 	fiveGHz := bss("00:00:00:00:00:0a", "corp", "WPA3", "5 GHz", 36)
 	fiveGHz.PMFRequired = true
 	fiveGHz.CountryCode = "US"
-	if hasDef(det.Detect(tree("corp", fiveGHz)), id) {
+	if hasDef(det.Detect(tree("corp", fiveGHz), nil), id) {
 		t.Error("5 GHz must not raise regulatory-violation (out of scope)")
 	}
 }

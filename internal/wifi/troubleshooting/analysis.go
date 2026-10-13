@@ -35,7 +35,7 @@ func AnalyzeBSSes(
 
 	engine := anomaly.NewEngine(catalog)
 	tree := airspace.TreeFromBSSViews(bsses)
-	for _, det := range detector.Detect(tree) {
+	for _, det := range detector.Detect(tree, nil) {
 		if obsErr := engine.Observe(det, at); obsErr != nil {
 			return nil, obsErr
 		}
