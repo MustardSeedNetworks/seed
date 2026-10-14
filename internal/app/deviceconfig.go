@@ -17,14 +17,15 @@ import (
 )
 
 // NewDeviceConfigBackups builds the configuration backup use-case over a lazy
-// database accessor, the keyring that decrypts vault passwords, and the fetcher
-// that logs in to devices (deviceconfig.SSHFetcher in production).
+// database accessor, the keyring that decrypts vault passwords and encrypts
+// stored configurations, and the fetcher that logs in to devices
+// (deviceconfig.SSHFetcher in production).
 func NewDeviceConfigBackups(
 	db func() *database.DB,
-	decrypter deviceconfig.Decrypter,
+	cipher deviceconfig.Cipher,
 	fetcher deviceconfig.Fetcher,
 ) (*deviceconfig.Service, error) {
-	return deviceconfig.NewService(deviceConfigRepo{db: db}, deviceConfigCreds{db: db}, decrypter, fetcher)
+	return deviceconfig.NewService(deviceConfigRepo{db: db}, deviceConfigCreds{db: db}, cipher, fetcher)
 }
 
 type deviceConfigCreds struct {
@@ -89,12 +90,20 @@ func (a deviceConfigRepo) DeleteTarget(ctx context.Context, clientID, id string)
 	return repo.DeleteTarget(ctx, clientID, id)
 }
 
-func (a deviceConfigRepo) PinHostKey(ctx context.Context, clientID, id, fingerprint string) error {
+func (a deviceConfigRepo) SetPendingHostKey(ctx context.Context, clientID, id, fingerprint string) error {
 	repo, err := a.repo()
 	if err != nil {
 		return err
 	}
-	return repo.PinHostKey(ctx, clientID, id, fingerprint)
+	return repo.SetPendingHostKey(ctx, clientID, id, fingerprint)
+}
+
+func (a deviceConfigRepo) ConfirmHostKey(ctx context.Context, clientID, id, fingerprint string) error {
+	repo, err := a.repo()
+	if err != nil {
+		return err
+	}
+	return repo.ConfirmHostKey(ctx, clientID, id, fingerprint)
 }
 
 func (a deviceConfigRepo) ClearHostKey(ctx context.Context, clientID, id string) error {
@@ -111,6 +120,14 @@ func (a deviceConfigRepo) InsertBackup(ctx context.Context, b *deviceconfig.Back
 		return err
 	}
 	return repo.InsertBackup(ctx, b)
+}
+
+func (a deviceConfigRepo) PruneBackups(ctx context.Context, clientID, targetID string, keep int) error {
+	repo, err := a.repo()
+	if err != nil {
+		return err
+	}
+	return repo.PruneBackups(ctx, clientID, targetID, keep)
 }
 
 func (a deviceConfigRepo) ListBackups(

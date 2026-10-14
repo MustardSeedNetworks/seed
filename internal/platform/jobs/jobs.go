@@ -93,8 +93,12 @@ func States() []State {
 // Job is an immutable snapshot of a unit of work. Get and JobEvent hand out
 // copies; mutating one never affects the runner's state.
 type Job struct {
-	ID       string
-	Kind     string
+	ID   string
+	Kind string
+	// ClientID is the client that owns the job, or empty for a job no client
+	// owns. The runner only records it; the HTTP layer decides who may see
+	// the job.
+	ClientID string
 	State    State
 	Progress float64 // fraction in [0,1]
 	Result   any     // set on success; nil otherwise
@@ -215,10 +219,17 @@ func (r *Runner) Register(kind string, h Handler) error {
 	return nil
 }
 
-// Submit enqueues a job of kind with params and returns its id. It rejects with
-// ErrUnknownKind if no handler is registered, ErrAtCapacity if the concurrency
-// cap is reached, or ErrClosed after shutdown. The job runs asynchronously.
+// Submit enqueues a job of kind with params that no client owns and returns
+// its id; see SubmitFor.
 func (r *Runner) Submit(kind string, params any) (string, error) {
+	return r.SubmitFor("", kind, params)
+}
+
+// SubmitFor enqueues a job of kind with params, owned by clientID, and returns
+// its id. It rejects with ErrUnknownKind if no handler is registered,
+// ErrAtCapacity if the concurrency cap is reached, or ErrClosed after
+// shutdown. The job runs asynchronously.
+func (r *Runner) SubmitFor(clientID, kind string, params any) (string, error) {
 	r.mu.Lock()
 	if r.closed {
 		r.mu.Unlock()
@@ -237,7 +248,7 @@ func (r *Runner) Submit(kind string, params any) (string, error) {
 	id := uuid.New().String()
 	ctx, cancel := context.WithCancel(context.Background())
 	e := &entry{
-		job:    Job{ID: id, Kind: kind, State: StateQueued},
+		job:    Job{ID: id, Kind: kind, ClientID: clientID, State: StateQueued},
 		cancel: cancel,
 	}
 	r.jobs[id] = e

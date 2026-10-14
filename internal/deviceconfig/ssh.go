@@ -25,9 +25,11 @@ const (
 // SSHFetcher runs the configuration command over an SSH exec channel.
 type SSHFetcher struct{}
 
-// Fetch logs in with password or keyboard-interactive authentication (network
-// operating systems offer one or the other for the same password), checks the
-// host key against the pin, and runs req.Command.
+// Fetch checks the host key against the pin, logs in with password or
+// keyboard-interactive authentication (network operating systems offer one or
+// the other for the same password), and runs req.Command. The host key is
+// checked during key exchange, before any authentication method runs, so an
+// unpinned or mismatched key never receives the password.
 func (SSHFetcher) Fetch(ctx context.Context, req FetchRequest) (FetchResult, error) {
 	addr := net.JoinHostPort(req.Host, strconv.Itoa(req.Port))
 	var dialer net.Dialer
@@ -41,7 +43,6 @@ func (SSHFetcher) Fetch(ctx context.Context, req FetchRequest) (FetchResult, err
 	stop := context.AfterFunc(ctx, func() { _ = conn.Close() })
 	defer stop()
 
-	var presented string
 	cfg := &ssh.ClientConfig{
 		User: req.User,
 		Auth: []ssh.AuthMethod{
@@ -55,8 +56,11 @@ func (SSHFetcher) Fetch(ctx context.Context, req FetchRequest) (FetchResult, err
 			}),
 		},
 		HostKeyCallback: func(_ string, _ net.Addr, key ssh.PublicKey) error {
-			presented = ssh.FingerprintSHA256(key)
-			if req.PinnedHostKey != "" && presented != req.PinnedHostKey {
+			presented := ssh.FingerprintSHA256(key)
+			switch {
+			case req.PinnedHostKey == "":
+				return &HostKeyUnconfirmedError{Fingerprint: presented}
+			case presented != req.PinnedHostKey:
 				return fmt.Errorf("%w: device presented %s, pinned %s",
 					ErrHostKeyMismatch, presented, req.PinnedHostKey)
 			}
@@ -95,7 +99,7 @@ func (SSHFetcher) Fetch(ctx context.Context, req FetchRequest) (FetchResult, err
 		}
 		return FetchResult{}, fmt.Errorf("%w: %w: %s", ErrCommand, runErr, msg)
 	}
-	return FetchResult{Output: stdout.String(), HostKey: presented}, nil
+	return FetchResult{Output: stdout.String()}, nil
 }
 
 // classifyHandshake names a failed SSH handshake. The library has no typed
@@ -103,7 +107,7 @@ func (SSHFetcher) Fetch(ctx context.Context, req FetchRequest) (FetchResult, err
 // returns once every offered method has been refused.
 func classifyHandshake(ctx context.Context, err error) error {
 	switch {
-	case errors.Is(err, ErrHostKeyMismatch):
+	case errors.Is(err, ErrHostKeyMismatch), errors.As(err, new(*HostKeyUnconfirmedError)):
 		return err
 	case strings.Contains(err.Error(), "unable to authenticate"):
 		return fmt.Errorf("%w: %w", ErrAuth, err)

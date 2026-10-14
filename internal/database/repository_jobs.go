@@ -20,6 +20,7 @@ var ErrJobNotFound = errors.New("job not found")
 type JobRecord struct {
 	ID          string    `json:"id"`
 	Kind        string    `json:"kind"`
+	ClientID    string    `json:"clientId,omitempty"`
 	State       string    `json:"state"`
 	Progress    float64   `json:"progress"`
 	ResultJSON  string    `json:"resultJson,omitempty"`
@@ -59,9 +60,9 @@ func (r *JobRepository) Save(ctx context.Context, rec *JobRecord) error {
 	}
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO jobs
-		  (id, kind, state, progress, result_json, error,
+		  (id, kind, client_id, state, progress, result_json, error,
 		   created_at, updated_at, completed_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			state        = excluded.state,
 			progress     = excluded.progress,
@@ -70,7 +71,7 @@ func (r *JobRepository) Save(ctx context.Context, rec *JobRecord) error {
 			updated_at   = excluded.updated_at,
 			completed_at = excluded.completed_at
 	`,
-		rec.ID, rec.Kind, rec.State, rec.Progress,
+		rec.ID, rec.Kind, toNullString(rec.ClientID), rec.State, rec.Progress,
 		toNullString(rec.ResultJSON), toNullString(rec.Error),
 		rec.CreatedAt.UTC().Format(time.RFC3339Nano),
 		rec.UpdatedAt.UTC().Format(time.RFC3339Nano),
@@ -85,7 +86,7 @@ func (r *JobRepository) Save(ctx context.Context, rec *JobRecord) error {
 // Get returns the job by id, or ErrJobNotFound when absent.
 func (r *JobRepository) Get(ctx context.Context, id string) (*JobRecord, error) {
 	row := r.db.QueryRow(ctx, `
-		SELECT id, kind, state, progress, result_json, error,
+		SELECT id, kind, client_id, state, progress, result_json, error,
 			created_at, updated_at, completed_at
 		FROM jobs WHERE id = ?
 	`, id)
@@ -96,7 +97,7 @@ func (r *JobRepository) Get(ctx context.Context, id string) (*JobRecord, error) 
 // GET /jobs listing and for restart recovery (find jobs left non-terminal).
 func (r *JobRepository) List(ctx context.Context) ([]*JobRecord, error) {
 	rows, err := r.db.Query(ctx, `
-		SELECT id, kind, state, progress, result_json, error,
+		SELECT id, kind, client_id, state, progress, result_json, error,
 			created_at, updated_at, completed_at
 		FROM jobs ORDER BY created_at DESC
 	`)
@@ -192,6 +193,7 @@ func (r *JobRepository) RecordIdempotency(ctx context.Context, key, requestHash,
 func scanJob(scan func(...any) error) (*JobRecord, error) {
 	var (
 		rec          JobRecord
+		clientID     sql.NullString
 		resultJSON   sql.NullString
 		errStr       sql.NullString
 		createdAtStr string
@@ -199,7 +201,7 @@ func scanJob(scan func(...any) error) (*JobRecord, error) {
 		completedAt  sql.NullString
 	)
 	err := scan(
-		&rec.ID, &rec.Kind, &rec.State, &rec.Progress,
+		&rec.ID, &rec.Kind, &clientID, &rec.State, &rec.Progress,
 		&resultJSON, &errStr, &createdAtStr, &updatedAtStr, &completedAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -209,6 +211,7 @@ func scanJob(scan func(...any) error) (*JobRecord, error) {
 		return nil, fmt.Errorf("scan job: %w", err)
 	}
 
+	rec.ClientID = clientID.String
 	if resultJSON.Valid {
 		rec.ResultJSON = resultJSON.String
 	}

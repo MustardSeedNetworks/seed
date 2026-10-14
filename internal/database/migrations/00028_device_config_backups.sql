@@ -16,7 +16,12 @@
 --     A failed attempt is a row with a status and an error and no config, so
 --     "this switch stopped accepting our credential last Tuesday" is history
 --     rather than a log line. The target's pinned host key is what turns a
---     changed key into a refusal instead of a silent re-trust.
+--     changed key into a refusal instead of a silent re-trust. Configurations
+--     are stored as vault ciphertext: they carry secrets of their own.
+--
+--   * jobs learns the client that owns a job. A configuration backup run
+--     belongs to one client, and the job routes answer for it only to that
+--     client; NULL is a job no client owns.
 --
 -- Regenerate the gate golden after edits:
 --   UPDATE_SCHEMA_GOLDEN=1 go test ./internal/database/ -run TestSchemaSnapshot
@@ -120,8 +125,9 @@ CREATE INDEX idx_device_credentials_name   ON device_credentials(name);
 -- The credential reference is the (client, id) pair with RESTRICT, as on
 -- polling_targets: a target cannot borrow another client's credential, and a
 -- credential in use cannot be deleted out from under it. host_key_sha256 is
--- the SHA256 fingerprint pinned on first contact (OpenSSH's "SHA256:…" form);
--- NULL means nothing is pinned yet.
+-- the SHA256 fingerprint an operator confirmed (OpenSSH's "SHA256:…" form);
+-- NULL means nothing is pinned yet. pending_host_key_sha256 is the key an
+-- unpinned device last presented, waiting for that confirmation.
 CREATE TABLE device_config_targets (
 				id              TEXT NOT NULL PRIMARY KEY,
 				client_id       TEXT NOT NULL REFERENCES clients(id),
@@ -131,6 +137,7 @@ CREATE TABLE device_config_targets (
 				platform        TEXT NOT NULL CHECK (platform IN ('cisco-ios','cisco-nxos','arista-eos','juniper-junos')),
 				credentials_id  TEXT NOT NULL,
 				host_key_sha256 TEXT CHECK (host_key_sha256 IS NULL OR host_key_sha256 GLOB 'SHA256:*'),
+				pending_host_key_sha256 TEXT CHECK (pending_host_key_sha256 IS NULL OR pending_host_key_sha256 GLOB 'SHA256:*'),
 				created_at      TEXT NOT NULL,
 				updated_at      TEXT NOT NULL,
 				UNIQUE (client_id, id),
@@ -140,23 +147,25 @@ CREATE TABLE device_config_targets (
 			) STRICT;
 CREATE INDEX idx_device_config_targets_credentials ON device_config_targets(client_id, credentials_id);
 
--- A successful attempt has the configuration and its digest and no error; any
--- other status has an error and no configuration.
+-- A successful attempt has the configuration and its digest (over the
+-- plaintext) and no error; any other status has an error and no configuration.
 CREATE TABLE device_config_backups (
 				id         TEXT NOT NULL PRIMARY KEY,
 				client_id  TEXT NOT NULL,
 				target_id  TEXT NOT NULL,
 				taken_at   TEXT NOT NULL,
-				status     TEXT NOT NULL CHECK (status IN ('ok','auth_failed','host_key_mismatch','unreachable','command_failed','error')),
+				status     TEXT NOT NULL CHECK (status IN ('ok','auth_failed','host_key_mismatch','host_key_unconfirmed','unreachable','command_failed','error')),
 				error      TEXT,
-				config     TEXT,
+				config_enc BLOB CHECK (config_enc IS NULL OR CAST(config_enc AS TEXT) GLOB 'enc:v[0-9]*:*'),
 				sha256     TEXT,
-				CHECK (status <> 'ok' OR (config IS NOT NULL AND sha256 IS NOT NULL AND error IS NULL)),
-				CHECK (status = 'ok' OR (config IS NULL AND sha256 IS NULL AND error IS NOT NULL)),
+				CHECK (status <> 'ok' OR (config_enc IS NOT NULL AND sha256 IS NOT NULL AND error IS NULL)),
+				CHECK (status = 'ok' OR (config_enc IS NULL AND sha256 IS NULL AND error IS NOT NULL)),
 				FOREIGN KEY (client_id, target_id)
 					REFERENCES device_config_targets(client_id, id) ON DELETE CASCADE
 			) STRICT;
 CREATE INDEX idx_device_device_config_backups_target ON device_config_backups(client_id, target_id, taken_at);
+
+ALTER TABLE jobs ADD COLUMN client_id TEXT;
 
 COMMIT;
 PRAGMA foreign_keys=ON;
@@ -165,6 +174,7 @@ PRAGMA foreign_keys=ON;
 PRAGMA foreign_keys=OFF;
 BEGIN;
 
+ALTER TABLE jobs DROP COLUMN client_id;
 DROP TABLE device_config_backups;
 DROP TABLE device_config_targets;
 

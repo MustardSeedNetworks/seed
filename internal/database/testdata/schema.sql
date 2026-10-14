@@ -555,12 +555,12 @@ CREATE TABLE device_config_backups (
 				client_id  TEXT NOT NULL,
 				target_id  TEXT NOT NULL,
 				taken_at   TEXT NOT NULL,
-				status     TEXT NOT NULL CHECK (status IN ('ok','auth_failed','host_key_mismatch','unreachable','command_failed','error')),
+				status     TEXT NOT NULL CHECK (status IN ('ok','auth_failed','host_key_mismatch','host_key_unconfirmed','unreachable','command_failed','error')),
 				error      TEXT,
-				config     TEXT,
+				config_enc BLOB CHECK (config_enc IS NULL OR CAST(config_enc AS TEXT) GLOB 'enc:v[0-9]*:*'),
 				sha256     TEXT,
-				CHECK (status <> 'ok' OR (config IS NOT NULL AND sha256 IS NOT NULL AND error IS NULL)),
-				CHECK (status = 'ok' OR (config IS NULL AND sha256 IS NULL AND error IS NOT NULL)),
+				CHECK (status <> 'ok' OR (config_enc IS NOT NULL AND sha256 IS NOT NULL AND error IS NULL)),
+				CHECK (status = 'ok' OR (config_enc IS NULL AND sha256 IS NULL AND error IS NOT NULL)),
 				FOREIGN KEY (client_id, target_id)
 					REFERENCES device_config_targets(client_id, id) ON DELETE CASCADE
 			) STRICT;
@@ -575,6 +575,7 @@ CREATE TABLE device_config_targets (
 				platform        TEXT NOT NULL CHECK (platform IN ('cisco-ios','cisco-nxos','arista-eos','juniper-junos')),
 				credentials_id  TEXT NOT NULL,
 				host_key_sha256 TEXT CHECK (host_key_sha256 IS NULL OR host_key_sha256 GLOB 'SHA256:*'),
+				pending_host_key_sha256 TEXT CHECK (pending_host_key_sha256 IS NULL OR pending_host_key_sha256 GLOB 'SHA256:*'),
 				created_at      TEXT NOT NULL,
 				updated_at      TEXT NOT NULL,
 				UNIQUE (client_id, id),
@@ -776,7 +777,7 @@ CREATE TABLE jobs (
 	created_at   TEXT NOT NULL,
 	updated_at   TEXT NOT NULL,
 	completed_at TEXT
-) STRICT;
+, client_id TEXT) STRICT;
 
 -- table: listener_events
 CREATE TABLE listener_events (

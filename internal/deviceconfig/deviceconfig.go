@@ -8,10 +8,16 @@
 // result, not the run's failure; the run fails only when it cannot record
 // results at all.
 //
-// Host keys are pinned on first contact. A later login that presents a
-// different key is refused and recorded as host_key_mismatch until an operator
-// clears the pin: a backup job that silently re-trusted a new key would hand
-// the device password to whoever answered on that address.
+// Host keys are never trusted on first use. A target with no pinned key is
+// contacted only far enough to learn the key it presents: the handshake stops
+// before authentication, so the password is not sent, and the key is recorded
+// as pending (host_key_unconfirmed) until an operator confirms it. A pinned
+// target that presents a different key is refused as host_key_mismatch: a
+// backup job that silently re-trusted a new key would hand the device password
+// to whoever answered on that address.
+//
+// Configurations hold secrets of their own (enable hashes, SNMP communities,
+// RADIUS keys), so they are stored encrypted with the credential vault's key.
 //
 // This is not internal/config/backups, which is Seed backing up its own
 // configuration.
@@ -63,9 +69,12 @@ const (
 	StatusOK              Status = "ok"
 	StatusAuthFailed      Status = "auth_failed"
 	StatusHostKeyMismatch Status = "host_key_mismatch"
-	StatusUnreachable     Status = "unreachable"
-	StatusCommandFailed   Status = "command_failed"
-	StatusError           Status = "error"
+	// StatusHostKeyUnconfirmed: the target has no pinned key; the presented
+	// key is pending until an operator confirms it, and nothing was sent.
+	StatusHostKeyUnconfirmed Status = "host_key_unconfirmed"
+	StatusUnreachable        Status = "unreachable"
+	StatusCommandFailed      Status = "command_failed"
+	StatusError              Status = "error"
 )
 
 // DefaultPort is the SSH port a target uses when none is given.
@@ -78,6 +87,9 @@ const (
 	// runConcurrency is how many devices one run logs in to at once. Small on
 	// purpose: AAA servers rate-limit, and a backup is not urgent.
 	runConcurrency = 4
+	// backupRetention is how many attempts a target keeps; older ones are
+	// pruned after each new attempt is recorded.
+	backupRetention = 50
 )
 
 // Fetch failure classes. A Fetcher wraps its errors in one of these so the
@@ -88,6 +100,16 @@ var (
 	ErrUnreachable     = errors.New("device unreachable")
 	ErrCommand         = errors.New("configuration command failed")
 )
+
+// HostKeyUnconfirmedError is a Fetcher's answer for a target with no pinned
+// key: the device presented Fingerprint and the login went no further.
+type HostKeyUnconfirmedError struct {
+	Fingerprint string
+}
+
+func (e *HostKeyUnconfirmedError) Error() string {
+	return "host key " + e.Fingerprint + " is not confirmed"
+}
 
 // Service errors the handler maps onto status codes.
 var (
@@ -102,20 +124,24 @@ func (e ValidationError) Error() string { return e.Msg }
 
 // Target is a device to back up.
 type Target struct {
-	ID            string    `json:"id"`
-	ClientID      string    `json:"clientId"`
-	Name          string    `json:"name"`
-	Host          string    `json:"host"`
-	Port          int       `json:"port"`
-	Platform      Platform  `json:"platform"`
-	CredentialsID string    `json:"credentialsId"`
-	HostKeySHA256 string    `json:"hostKeySha256,omitempty"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
+	ID            string   `json:"id"`
+	ClientID      string   `json:"clientId"`
+	Name          string   `json:"name"`
+	Host          string   `json:"host"`
+	Port          int      `json:"port"`
+	Platform      Platform `json:"platform"`
+	CredentialsID string   `json:"credentialsId"`
+	HostKeySHA256 string   `json:"hostKeySha256,omitempty"`
+	// PendingHostKeySHA256 is the key the device last presented while nothing
+	// was pinned, waiting for an operator to confirm it.
+	PendingHostKeySHA256 string    `json:"pendingHostKeySha256,omitempty"`
+	CreatedAt            time.Time `json:"createdAt"`
+	UpdatedAt            time.Time `json:"updatedAt"`
 }
 
 // Backup is one attempt to back up a target. Config is set only when a single
-// backup is read; lists leave it out.
+// backup is read; lists leave it out. ConfigCT is the stored ciphertext and
+// never leaves the service.
 type Backup struct {
 	ID       string    `json:"id"`
 	ClientID string    `json:"clientId"`
@@ -125,22 +151,43 @@ type Backup struct {
 	Error    string    `json:"error,omitempty"`
 	SHA256   string    `json:"sha256,omitempty"`
 	Config   string    `json:"config,omitempty"`
+	ConfigCT string    `json:"-"`
 }
 
 // Repository is the persistence surface the service needs.
 type Repository interface {
+	TargetStore
+	BackupStore
+}
+
+// TargetStore keeps backup targets and their host keys.
+type TargetStore interface {
 	ListTargets(ctx context.Context, clientID string) ([]Target, error)
 	GetTarget(ctx context.Context, clientID, id string) (Target, error)
 	// SaveTarget creates the target when ID is blank (filling in ID) and
 	// otherwise replaces it, host key included.
 	SaveTarget(ctx context.Context, t *Target) error
 	DeleteTarget(ctx context.Context, clientID, id string) error
-	// PinHostKey records a fingerprint only where none is pinned, so two
-	// runs racing on a new target cannot overwrite each other's pin.
-	PinHostKey(ctx context.Context, clientID, id, fingerprint string) error
+	// SetPendingHostKey records the key an unpinned target presented. It
+	// does nothing once a key is pinned.
+	SetPendingHostKey(ctx context.Context, clientID, id, fingerprint string) error
+	// ConfirmHostKey pins the pending key, provided it is still fingerprint.
+	ConfirmHostKey(ctx context.Context, clientID, id, fingerprint string) error
+	// ClearHostKey forgets both the pinned and the pending key.
 	ClearHostKey(ctx context.Context, clientID, id string) error
+}
+
+// BackupStore keeps backup attempts.
+type BackupStore interface {
+	// InsertBackup records an attempt; ConfigCT is the configuration's
+	// ciphertext.
 	InsertBackup(ctx context.Context, b *Backup) error
+	// PruneBackups keeps the target's newest keep attempts.
+	PruneBackups(ctx context.Context, clientID, targetID string, keep int) error
+	// ListBackups returns a target's newest attempts first, without their
+	// configurations.
 	ListBackups(ctx context.Context, clientID, targetID string, limit int) ([]Backup, error)
+	// GetBackup returns one attempt with ConfigCT set.
 	GetBackup(ctx context.Context, clientID, id string) (Backup, error)
 }
 
@@ -150,9 +197,10 @@ type CredentialStore interface {
 	Get(ctx context.Context, id, clientID string) (*polling.Credentials, error)
 }
 
-// Decrypter turns vault ciphertext into the plaintext a login needs; satisfied
-// by config.Keyring.
-type Decrypter interface {
+// Cipher decrypts vault passwords for a login and encrypts the configurations
+// it retrieves; satisfied by config.Keyring.
+type Cipher interface {
+	EncryptValue(plaintext string) (string, error)
 	DecryptValue(encrypted string) (string, error)
 }
 
@@ -163,15 +211,15 @@ type FetchRequest struct {
 	User     string
 	Password string
 	Command  string
-	// PinnedHostKey is the expected SHA256 fingerprint; empty trusts and
-	// reports whatever key the device presents.
+	// PinnedHostKey is the expected SHA256 fingerprint. Empty means none is
+	// pinned: the Fetcher must stop before authenticating and return a
+	// *HostKeyUnconfirmedError naming the key the device presented.
 	PinnedHostKey string
 }
 
 // FetchResult is what a successful login returned.
 type FetchResult struct {
-	Output  string
-	HostKey string // SHA256 fingerprint the device presented
+	Output string
 }
 
 // Fetcher logs in to one device and runs one command.
@@ -208,19 +256,19 @@ type RunResult struct {
 
 // Service is the configuration backup use-case.
 type Service struct {
-	repo    Repository
-	creds   CredentialStore
-	decrypt Decrypter
-	fetch   Fetcher
-	now     func() time.Time
+	repo   Repository
+	creds  CredentialStore
+	cipher Cipher
+	fetch  Fetcher
+	now    func() time.Time
 }
 
 // NewService builds the use-case. Every dependency is required.
-func NewService(repo Repository, creds CredentialStore, decrypt Decrypter, fetch Fetcher) (*Service, error) {
-	if repo == nil || creds == nil || decrypt == nil || fetch == nil {
+func NewService(repo Repository, creds CredentialStore, cipher Cipher, fetch Fetcher) (*Service, error) {
+	if repo == nil || creds == nil || cipher == nil || fetch == nil {
 		return nil, ErrUnavailable
 	}
-	return &Service{repo: repo, creds: creds, decrypt: decrypt, fetch: fetch, now: time.Now}, nil
+	return &Service{repo: repo, creds: creds, cipher: cipher, fetch: fetch, now: time.Now}, nil
 }
 
 // ListTargets returns the client's targets.
@@ -234,8 +282,8 @@ func (s *Service) GetTarget(ctx context.Context, clientID, id string) (Target, e
 }
 
 // SaveTarget validates and writes a target. Moving a target to another host or
-// port drops its pinned key, since the key belonged to the old address;
-// anything else keeps it.
+// port drops its pinned and pending keys, since they belonged to the old
+// address; anything else keeps them.
 func (s *Service) SaveTarget(ctx context.Context, in TargetInput) (Target, error) {
 	t := Target{
 		ID:            in.ID,
@@ -260,6 +308,7 @@ func (s *Service) SaveTarget(ctx context.Context, in TargetInput) (Target, error
 		}
 		if prev.Host == t.Host && prev.Port == t.Port {
 			t.HostKeySHA256 = prev.HostKeySHA256
+			t.PendingHostKeySHA256 = prev.PendingHostKeySHA256
 		}
 		t.CreatedAt = prev.CreatedAt
 	}
@@ -301,11 +350,25 @@ func (s *Service) DeleteTarget(ctx context.Context, clientID, id string) error {
 	return s.repo.DeleteTarget(ctx, clientID, id)
 }
 
-// ClearHostKey forgets a target's pinned key; the next backup pins whatever
-// the device presents. This is the operator's answer to a legitimate key
-// change, such as a replaced supervisor.
+// ClearHostKey forgets a target's pinned key; the next backup records the
+// key the device presents as pending, for an operator to confirm. This is the
+// operator's answer to a legitimate key change, such as a replaced supervisor.
 func (s *Service) ClearHostKey(ctx context.Context, clientID, id string) error {
 	return s.repo.ClearHostKey(ctx, clientID, id)
+}
+
+// ConfirmHostKey pins the target's pending key. fingerprint is the key the
+// operator was shown; it must still be the pending one, so a key that changed
+// after the operator looked is not the key that gets trusted.
+func (s *Service) ConfirmHostKey(ctx context.Context, clientID, id, fingerprint string) error {
+	t, err := s.repo.GetTarget(ctx, clientID, id)
+	if err != nil {
+		return err
+	}
+	if t.PendingHostKeySHA256 == "" || t.PendingHostKeySHA256 != fingerprint {
+		return ValidationError{Msg: "fingerprint does not match the target's pending host key"}
+	}
+	return s.repo.ConfirmHostKey(ctx, clientID, id, fingerprint)
 }
 
 // ListBackups returns a target's attempts, newest first, without the
@@ -314,9 +377,19 @@ func (s *Service) ListBackups(ctx context.Context, clientID, targetID string, li
 	return s.repo.ListBackups(ctx, clientID, targetID, limit)
 }
 
-// GetBackup returns one attempt with its configuration.
+// GetBackup returns one attempt with its configuration decrypted.
 func (s *Service) GetBackup(ctx context.Context, clientID, id string) (Backup, error) {
-	return s.repo.GetBackup(ctx, clientID, id)
+	b, err := s.repo.GetBackup(ctx, clientID, id)
+	if err != nil {
+		return Backup{}, err
+	}
+	if b.ConfigCT != "" {
+		if b.Config, err = s.cipher.DecryptValue(b.ConfigCT); err != nil {
+			return Backup{}, fmt.Errorf("decrypt configuration %s: %w", id, err)
+		}
+		b.ConfigCT = ""
+	}
+	return b, nil
 }
 
 // Run backs up the named targets, or every target of the client when ids is
@@ -385,48 +458,81 @@ func (s *Service) runTargets(ctx context.Context, clientID string, ids []string)
 
 // backupOne attempts one device and records the attempt. The returned error is
 // a cancelled run or a failure to record the attempt; the device's own
-// failure is in the result.
+// failure is in the result. A configuration identical to the target's latest
+// backup is not stored again: the result names the backup that already holds
+// it.
 func (s *Service) backupOne(ctx context.Context, t Target) (DeviceResult, error) {
 	b := Backup{ClientID: t.ClientID, TargetID: t.ID, TakenAt: s.now().UTC()}
-	output, fpr, fetchErr := s.login(ctx, t)
-	if fetchErr != nil {
-		b.Status = statusOf(fetchErr)
-		b.Error = fetchErr.Error()
-	} else {
-		b.Status = StatusOK
-		b.Config = output
-		sum := sha256.Sum256([]byte(output))
-		b.SHA256 = hex.EncodeToString(sum[:])
-	}
+	output, fetchErr := s.login(ctx, t)
 	// A cancelled run records nothing for the devices it interrupted: the
 	// attempt did not fail, it was abandoned.
 	if err := ctx.Err(); err != nil {
 		return DeviceResult{}, err
 	}
-	if fetchErr == nil && t.HostKeySHA256 == "" {
-		if err := s.repo.PinHostKey(ctx, t.ClientID, t.ID, fpr); err != nil {
-			return DeviceResult{}, fmt.Errorf("pin host key for %s: %w", t.ID, err)
+	if fetchErr == nil {
+		sum := sha256.Sum256([]byte(output))
+		b.SHA256 = hex.EncodeToString(sum[:])
+		b.ConfigCT, fetchErr = s.encryptConfig(output)
+	}
+	if fetchErr != nil {
+		b.SHA256 = ""
+		b.Status = statusOf(fetchErr)
+		b.Error = fetchErr.Error()
+	} else {
+		b.Status = StatusOK
+	}
+
+	if unconfirmed, ok := errors.AsType[*HostKeyUnconfirmedError](fetchErr); ok {
+		if err := s.repo.SetPendingHostKey(ctx, t.ClientID, t.ID, unconfirmed.Fingerprint); err != nil {
+			return DeviceResult{}, fmt.Errorf("record pending host key for %s: %w", t.ID, err)
+		}
+	}
+
+	if b.Status == StatusOK {
+		latest, err := s.repo.ListBackups(ctx, t.ClientID, t.ID, 1)
+		if err != nil {
+			return DeviceResult{}, fmt.Errorf("read latest backup of %s: %w", t.ID, err)
+		}
+		if len(latest) == 1 && latest[0].Status == StatusOK && latest[0].SHA256 == b.SHA256 {
+			return DeviceResult{TargetID: t.ID, Name: t.Name, BackupID: latest[0].ID, Status: StatusOK}, nil
 		}
 	}
 	if err := s.repo.InsertBackup(ctx, &b); err != nil {
 		return DeviceResult{}, fmt.Errorf("record backup of %s: %w", t.ID, err)
 	}
+	if err := s.repo.PruneBackups(ctx, t.ClientID, t.ID, backupRetention); err != nil {
+		return DeviceResult{}, fmt.Errorf("prune backups of %s: %w", t.ID, err)
+	}
 	return DeviceResult{TargetID: t.ID, Name: t.Name, BackupID: b.ID, Status: b.Status, Error: b.Error}, nil
 }
 
-func (s *Service) login(ctx context.Context, t Target) (string, string, error) {
+// encryptConfig encrypts a configuration for storage. The keyring passes
+// through anything already shaped like its ciphertext, so a device whose
+// output begins that way would be stored as sent; that output is refused.
+func (s *Service) encryptConfig(output string) (string, error) {
+	ct, err := s.cipher.EncryptValue(output)
+	if err != nil {
+		return "", fmt.Errorf("encrypt configuration: %w", err)
+	}
+	if ct == output {
+		return "", fmt.Errorf("%w: the output is not a configuration", ErrCommand)
+	}
+	return ct, nil
+}
+
+func (s *Service) login(ctx context.Context, t Target) (string, error) {
 	cred, err := s.creds.Get(ctx, t.CredentialsID, t.ClientID)
 	if err != nil {
-		return "", "", fmt.Errorf("read credential: %w", err)
+		return "", fmt.Errorf("read credential: %w", err)
 	}
 	// The target was validated against an SSH credential, but the credential
 	// can be edited into another kind afterwards.
 	if cred.Kind != polling.CredentialKindSSH {
-		return "", "", fmt.Errorf("credential %s is %s, not SSH", cred.ID, cred.Kind)
+		return "", fmt.Errorf("credential %s is %s, not SSH", cred.ID, cred.Kind)
 	}
-	password, err := s.decrypt.DecryptValue(cred.SSHPasswordCT)
+	password, err := s.cipher.DecryptValue(cred.SSHPasswordCT)
 	if err != nil {
-		return "", "", fmt.Errorf("decrypt SSH password: %w", err)
+		return "", fmt.Errorf("decrypt SSH password: %w", err)
 	}
 	command, _ := t.Platform.Command()
 
@@ -441,15 +547,15 @@ func (s *Service) login(ctx context.Context, t Target) (string, string, error) {
 		PinnedHostKey: t.HostKeySHA256,
 	})
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	// Devices answer in CRLF; storing LF keeps the history diffable whatever
 	// the platform.
 	output := strings.ReplaceAll(res.Output, "\r\n", "\n")
 	if strings.TrimSpace(output) == "" {
-		return "", "", fmt.Errorf("%w: the device returned no configuration", ErrCommand)
+		return "", fmt.Errorf("%w: the device returned no configuration", ErrCommand)
 	}
-	return output, res.HostKey, nil
+	return output, nil
 }
 
 func statusOf(err error) Status {
@@ -458,6 +564,8 @@ func statusOf(err error) Status {
 		return StatusAuthFailed
 	case errors.Is(err, ErrHostKeyMismatch):
 		return StatusHostKeyMismatch
+	case errors.As(err, new(*HostKeyUnconfirmedError)):
+		return StatusHostKeyUnconfirmed
 	case errors.Is(err, ErrUnreachable):
 		return StatusUnreachable
 	case errors.Is(err, ErrCommand):

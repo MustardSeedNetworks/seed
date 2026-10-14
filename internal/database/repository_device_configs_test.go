@@ -101,23 +101,39 @@ func TestDeviceConfigTargetsAreScopedAndUnique(t *testing.T) {
 		database.ErrCredentialInUse, "a credential a backup target uses cannot be deleted")
 }
 
-func TestDeviceConfigHostKeyPinsOnceAndClears(t *testing.T) {
+func TestDeviceConfigHostKeyIsPendingUntilConfirmed(t *testing.T) {
 	db, cleanup := testDB(t)
 	defer cleanup()
 	ctx := context.Background()
 	repo := db.DeviceConfigs()
+	client := database.DefaultClientID
 
-	tgt := newDeviceConfigTarget(saveSSHCredential(t, db, database.DefaultClientID), "10.0.0.1")
+	tgt := newDeviceConfigTarget(saveSSHCredential(t, db, client), "10.0.0.1")
 	require.NoError(t, repo.SaveTarget(ctx, tgt))
 
-	require.NoError(t, repo.PinHostKey(ctx, database.DefaultClientID, tgt.ID, "SHA256:first"))
-	require.NoError(t, repo.PinHostKey(ctx, database.DefaultClientID, tgt.ID, "SHA256:second"))
-	got, err := repo.GetTarget(ctx, database.DefaultClientID, tgt.ID)
+	require.NoError(t, repo.SetPendingHostKey(ctx, client, tgt.ID, "SHA256:first"))
+	require.NoError(t, repo.SetPendingHostKey(ctx, client, tgt.ID, "SHA256:second"))
+	got, err := repo.GetTarget(ctx, client, tgt.ID)
 	require.NoError(t, err)
-	require.Equal(t, "SHA256:first", got.HostKeySHA256, "a pin must never be overwritten by a later run")
+	require.Empty(t, got.HostKeySHA256, "a presented key is not trusted until confirmed")
+	require.Equal(t, "SHA256:second", got.PendingHostKeySHA256)
 
-	require.NoError(t, repo.ClearHostKey(ctx, database.DefaultClientID, tgt.ID))
-	got, err = repo.GetTarget(ctx, database.DefaultClientID, tgt.ID)
+	require.ErrorIs(t, repo.ConfirmHostKey(ctx, client, tgt.ID, "SHA256:first"), deviceconfig.ErrNotFound,
+		"only the key still pending can be confirmed")
+	require.ErrorIs(t, repo.ConfirmHostKey(ctx, "tenant-x", tgt.ID, "SHA256:second"), deviceconfig.ErrNotFound)
+	require.NoError(t, repo.ConfirmHostKey(ctx, client, tgt.ID, "SHA256:second"))
+	got, err = repo.GetTarget(ctx, client, tgt.ID)
+	require.NoError(t, err)
+	require.Equal(t, "SHA256:second", got.HostKeySHA256)
+	require.Empty(t, got.PendingHostKeySHA256)
+
+	require.NoError(t, repo.SetPendingHostKey(ctx, client, tgt.ID, "SHA256:attacker"))
+	got, err = repo.GetTarget(ctx, client, tgt.ID)
+	require.NoError(t, err)
+	require.Empty(t, got.PendingHostKeySHA256, "a pinned target records no pending key")
+
+	require.NoError(t, repo.ClearHostKey(ctx, client, tgt.ID))
+	got, err = repo.GetTarget(ctx, client, tgt.ID)
 	require.NoError(t, err)
 	require.Empty(t, got.HostKeySHA256)
 
@@ -136,7 +152,7 @@ func TestDeviceConfigBackupsRecordAttemptsAndCascade(t *testing.T) {
 	t0 := time.Date(2026, 10, 5, 3, 0, 0, 0, time.UTC)
 	ok := &deviceconfig.Backup{
 		ClientID: database.DefaultClientID, TargetID: tgt.ID, TakenAt: t0,
-		Status: deviceconfig.StatusOK, Config: "hostname core\n", SHA256: "abc",
+		Status: deviceconfig.StatusOK, ConfigCT: "enc:v1:aG9zdG5hbWUgY29yZQo=", SHA256: "abc",
 	}
 	failed := &deviceconfig.Backup{
 		ClientID: database.DefaultClientID, TargetID: tgt.ID, TakenAt: t0.Add(time.Hour),
@@ -155,17 +171,61 @@ func TestDeviceConfigBackupsRecordAttemptsAndCascade(t *testing.T) {
 
 	got, err := repo.GetBackup(ctx, database.DefaultClientID, ok.ID)
 	require.NoError(t, err)
-	require.Equal(t, "hostname core\n", got.Config)
+	require.Equal(t, "enc:v1:aG9zdG5hbWUgY29yZQo=", got.ConfigCT)
+	require.Empty(t, got.Config, "the repository holds ciphertext only")
 	require.True(t, got.TakenAt.Equal(t0))
 	_, err = repo.GetBackup(ctx, "tenant-x", ok.ID)
 	require.ErrorIs(t, err, deviceconfig.ErrNotFound)
 
-	// An ok attempt without a configuration is not a backup.
+	// An ok attempt without a configuration is not a backup, and the schema
+	// refuses a configuration that is not ciphertext.
 	require.Error(t, repo.InsertBackup(ctx, &deviceconfig.Backup{
 		ClientID: database.DefaultClientID, TargetID: tgt.ID, TakenAt: t0, Status: deviceconfig.StatusOK,
 	}))
+	require.ErrorContains(t, repo.InsertBackup(ctx, &deviceconfig.Backup{
+		ClientID: database.DefaultClientID, TargetID: tgt.ID, TakenAt: t0, Status: deviceconfig.StatusOK,
+		ConfigCT: "hostname core\nsnmp-server community secret\n", SHA256: "def",
+	}), "CHECK constraint failed")
 
 	require.NoError(t, repo.DeleteTarget(ctx, database.DefaultClientID, tgt.ID))
 	_, err = repo.GetBackup(ctx, database.DefaultClientID, ok.ID)
 	require.ErrorIs(t, err, deviceconfig.ErrNotFound, "history goes with its target")
+}
+
+func TestDeviceConfigBackupsPruneToTheNewest(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+	ctx := context.Background()
+	repo := db.DeviceConfigs()
+	client := database.DefaultClientID
+
+	tgt := newDeviceConfigTarget(saveSSHCredential(t, db, client), "10.0.0.1")
+	require.NoError(t, repo.SaveTarget(ctx, tgt))
+	other := newDeviceConfigTarget(saveSSHCredential(t, db, client), "10.0.0.2")
+	require.NoError(t, repo.SaveTarget(ctx, other))
+
+	t0 := time.Date(2026, 10, 5, 3, 0, 0, 0, time.UTC)
+	var ids []string
+	for i := range 5 {
+		b := &deviceconfig.Backup{
+			ClientID: client, TargetID: tgt.ID, TakenAt: t0.Add(time.Duration(i) * time.Hour),
+			Status: deviceconfig.StatusUnreachable, Error: "unreachable",
+		}
+		require.NoError(t, repo.InsertBackup(ctx, b))
+		ids = append(ids, b.ID)
+	}
+	require.NoError(t, repo.InsertBackup(ctx, &deviceconfig.Backup{
+		ClientID: client, TargetID: other.ID, TakenAt: t0, Status: deviceconfig.StatusUnreachable, Error: "x",
+	}))
+
+	require.NoError(t, repo.PruneBackups(ctx, client, tgt.ID, 2))
+
+	list, err := repo.ListBackups(ctx, client, tgt.ID, 10)
+	require.NoError(t, err)
+	require.Len(t, list, 2)
+	require.Equal(t, ids[4], list[0].ID)
+	require.Equal(t, ids[3], list[1].ID)
+	list, err = repo.ListBackups(ctx, client, other.ID, 10)
+	require.NoError(t, err)
+	require.Len(t, list, 1, "pruning one target leaves another's history alone")
 }

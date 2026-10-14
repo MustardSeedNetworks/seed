@@ -7,6 +7,7 @@ package api
 //   GET    /api/v1/device-config-targets/{id}            fetch one
 //   PUT    /api/v1/device-config-targets/{id}            full update
 //   DELETE /api/v1/device-config-targets/{id}            delete, history included
+//   PUT    /api/v1/device-config-targets/{id}/host-key   pin the pending key
 //   DELETE /api/v1/device-config-targets/{id}/host-key   forget the pinned key
 //   POST   /api/v1/device-configs/run                    start a run (a job)
 //   GET    /api/v1/device-configs?targetId=&limit=       a target's attempts
@@ -14,7 +15,8 @@ package api
 //
 // Every route is Pro (compliance_advanced, the feature #348 was filed under),
 // operator+ on its mutating methods, and scoped to the client on the caller's
-// session claim, as the credential vault is.
+// session claim, as the credential vault is. Reading backups is operator+ too:
+// a running configuration carries the device's secrets, as a capture does.
 //
 // A run is a job so the UI can follow it on /jobs/events. It is started here
 // rather than through POST /jobs because /jobs is tenant-blind: the job's
@@ -115,6 +117,12 @@ type deviceConfigTargetInput struct {
 	CredentialsID string                `json:"credentialsId"`
 }
 
+// hostKeyConfirmInput is the host-key PUT body: the pending fingerprint the
+// operator was shown and is confirming.
+type hostKeyConfirmInput struct {
+	Fingerprint string `json:"fingerprint"`
+}
+
 // deviceConfigRunInput is the run body; no targetIds backs up every target.
 type deviceConfigRunInput struct {
 	TargetIDs []string `json:"targetIds,omitempty"`
@@ -150,7 +158,7 @@ func (s *Server) handleDeviceConfigTargets(w http.ResponseWriter, r *http.Reques
 func (s *Server) handleDeviceConfigTargetByID(w http.ResponseWriter, r *http.Request) {
 	rest := strings.TrimPrefix(r.URL.Path, deviceConfigTargetsPathPrefix)
 	id, hostKey := strings.CutSuffix(rest, hostKeySuffix)
-	if !deviceConfigTargetIDPattern.MatchString(id) || (hostKey && r.Method != http.MethodDelete) {
+	if !deviceConfigTargetIDPattern.MatchString(id) || (hostKey && r.Method == http.MethodGet) {
 		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Missing or invalid backup target id")
 		return
 	}
@@ -159,11 +167,25 @@ func (s *Server) handleDeviceConfigTargetByID(w http.ResponseWriter, r *http.Req
 		return
 	}
 	switch {
+	case hostKey && r.Method == http.MethodPut:
+		var in hostKeyConfirmInput
+		if !decodeJSONStrict(w, r, &in, MaxBodySizeJSON) {
+			return
+		}
+		if err := s.deviceConfigs.ConfirmHostKey(r.Context(), clientID, id, in.Fingerprint); err != nil {
+			writeDeviceConfigError(w, r, err)
+			return
+		}
+		s.auditDeviceConfig(r, "device_config.host_key.confirm", "Configuration backup host key confirmed",
+			"target_id", id, "fingerprint", in.Fingerprint)
+		w.WriteHeader(http.StatusNoContent)
 	case hostKey:
 		if err := s.deviceConfigs.ClearHostKey(r.Context(), clientID, id); err != nil {
 			writeDeviceConfigError(w, r, err)
 			return
 		}
+		s.auditDeviceConfig(r, "device_config.host_key.clear", "Configuration backup host key cleared",
+			"target_id", id)
 		w.WriteHeader(http.StatusNoContent)
 	case r.Method == http.MethodGet:
 		t, err := s.deviceConfigs.GetTarget(r.Context(), clientID, id)
@@ -179,6 +201,8 @@ func (s *Server) handleDeviceConfigTargetByID(w http.ResponseWriter, r *http.Req
 			writeDeviceConfigError(w, r, err)
 			return
 		}
+		s.auditDeviceConfig(r, "device_config.target.delete", "Configuration backup target deleted",
+			"target_id", id)
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
@@ -201,6 +225,8 @@ func (s *Server) saveDeviceConfigTarget(w http.ResponseWriter, r *http.Request, 
 		writeDeviceConfigError(w, r, err)
 		return
 	}
+	s.auditDeviceConfig(r, "device_config.target.save", "Configuration backup target saved",
+		"target_id", t.ID, "host", t.Host, "port", t.Port)
 	status := http.StatusOK
 	if id == "" {
 		status = http.StatusCreated
@@ -224,17 +250,23 @@ func (s *Server) handleDeviceConfigRun(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	logger := logging.FromContext(r.Context())
-	id, err := s.jobsRunner().Submit(deviceConfigJobKind, deviceConfigJob{ClientID: clientID, TargetIDs: in.TargetIDs})
+	id, err := s.jobsRunner().SubmitFor(clientID, deviceConfigJobKind,
+		deviceConfigJob{ClientID: clientID, TargetIDs: in.TargetIDs})
 	if err != nil {
 		writeJobError(w, logger, err)
 		return
 	}
+	s.auditDeviceConfig(r, "device_config.run", "Configuration backup run started",
+		"job_id", id, "target_ids", in.TargetIDs)
 	j, _ := s.jobsRunner().Get(id)
 	w.Header().Set("Location", jobsPath+"/"+id)
 	sendJSONResponse(w, logger, http.StatusCreated, toJobResponse(j))
 }
 
 func (s *Server) handleDeviceConfigBackups(w http.ResponseWriter, r *http.Request) {
+	if !s.requireRole(w, r, roles.Operator) {
+		return
+	}
 	clientID, ok := s.deviceConfigCaller(w, r)
 	if !ok {
 		return
@@ -267,6 +299,9 @@ func (s *Server) handleDeviceConfigBackups(w http.ResponseWriter, r *http.Reques
 }
 
 func (s *Server) handleDeviceConfigBackupByID(w http.ResponseWriter, r *http.Request) {
+	if !s.requireRole(w, r, roles.Operator) {
+		return
+	}
 	id := strings.TrimPrefix(r.URL.Path, deviceConfigsPathPrefix)
 	if !deviceConfigBackupIDPattern.MatchString(id) {
 		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Missing or invalid backup id")
@@ -281,7 +316,19 @@ func (s *Server) handleDeviceConfigBackupByID(w http.ResponseWriter, r *http.Req
 		writeDeviceConfigError(w, r, err)
 		return
 	}
+	s.auditDeviceConfig(r, "device_config.read", "Configuration backup read",
+		"backup_id", id, "target_id", b.TargetID)
 	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, b)
+}
+
+// auditDeviceConfig writes the security audit line for a configuration backup
+// action, in the shape the Seed configuration backup routes use.
+func (s *Server) auditDeviceConfig(r *http.Request, event, msg string, attrs ...any) {
+	attrs = append(attrs,
+		"username", usernameFromContext(r),
+		"client_ip", s.getClientIP(r),
+		"event", event)
+	logging.FromContext(r.Context()).InfoContext(r.Context(), msg, attrs...)
 }
 
 // deviceConfigCaller resolves the caller's client and answers 503 when the

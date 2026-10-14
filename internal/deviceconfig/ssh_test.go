@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -23,6 +24,9 @@ import (
 type sshDevice struct {
 	addr        string
 	fingerprint string
+	// authAttempts counts the authentication callbacks the device ran: how
+	// many times a client offered it the password.
+	authAttempts *atomic.Int32
 }
 
 type deviceOpts struct {
@@ -40,9 +44,11 @@ func startSSHDevice(t *testing.T, opts deviceOpts) sshDevice {
 	signer, err := ssh.NewSignerFromKey(priv)
 	require.NoError(t, err)
 
+	attempts := new(atomic.Int32)
 	cfg := &ssh.ServerConfig{}
 	if opts.keyboardInteractiveOnly {
 		cfg.KeyboardInteractiveCallback = func(_ ssh.ConnMetadata, challenge ssh.KeyboardInteractiveChallenge) (*ssh.Permissions, error) {
+			attempts.Add(1)
 			answers, chErr := challenge("", "", []string{"Password: "}, []bool{false})
 			if chErr != nil || len(answers) != 1 || answers[0] != opts.password {
 				return nil, errors.New("denied")
@@ -51,6 +57,7 @@ func startSSHDevice(t *testing.T, opts deviceOpts) sshDevice {
 		}
 	} else {
 		cfg.PasswordCallback = func(_ ssh.ConnMetadata, pw []byte) (*ssh.Permissions, error) {
+			attempts.Add(1)
 			if string(pw) != opts.password {
 				return nil, errors.New("denied")
 			}
@@ -72,7 +79,11 @@ func startSSHDevice(t *testing.T, opts deviceOpts) sshDevice {
 			go serveSSH(conn, cfg, opts.commands)
 		}
 	}()
-	return sshDevice{addr: ln.Addr().String(), fingerprint: ssh.FingerprintSHA256(signer.PublicKey())}
+	return sshDevice{
+		addr:         ln.Addr().String(),
+		fingerprint:  ssh.FingerprintSHA256(signer.PublicKey()),
+		authAttempts: attempts,
+	}
 }
 
 func serveSSH(conn net.Conn, cfg *ssh.ServerConfig, commands map[string]string) {
@@ -136,15 +147,35 @@ func TestSSHFetcherReturnsTheConfigurationAndHostKey(t *testing.T) {
 			commands:                map[string]string{"show running-config": "hostname core\r\n"},
 		})
 
-		res, err := deviceconfig.SSHFetcher{}.Fetch(fetchCtx(t), dev.request(t, "s3cret", "show running-config", ""))
+		res, err := deviceconfig.SSHFetcher{}.Fetch(fetchCtx(t),
+			dev.request(t, "s3cret", "show running-config", dev.fingerprint))
 		require.NoError(t, err, "keyboard-interactive only = %v", kbd)
 		require.Equal(t, "hostname core\r\n", res.Output)
-		require.Equal(t, dev.fingerprint, res.HostKey)
+	}
+}
 
-		// The pinned key is accepted on the next login.
+// TestSSHFetcherNeverAuthenticatesToAnUnconfirmedKey: with nothing pinned, or
+// a pin the device does not match, the handshake stops at key exchange and
+// the device never sees an authentication attempt.
+func TestSSHFetcherNeverAuthenticatesToAnUnconfirmedKey(t *testing.T) {
+	t.Parallel()
+	for _, kbd := range []bool{false, true} {
+		dev := startSSHDevice(t, deviceOpts{
+			password:                "s3cret",
+			keyboardInteractiveOnly: kbd,
+			commands:                map[string]string{"show running-config": "hostname core\n"},
+		})
+
+		_, err := deviceconfig.SSHFetcher{}.Fetch(fetchCtx(t), dev.request(t, "s3cret", "show running-config", ""))
+		unconfirmed, ok := errors.AsType[*deviceconfig.HostKeyUnconfirmedError](err)
+		require.True(t, ok, "unpinned: %v", err)
+		require.Equal(t, dev.fingerprint, unconfirmed.Fingerprint)
+
 		_, err = deviceconfig.SSHFetcher{}.Fetch(fetchCtx(t),
-			dev.request(t, "s3cret", "show running-config", dev.fingerprint))
-		require.NoError(t, err)
+			dev.request(t, "s3cret", "show running-config", "SHA256:someoneelse"))
+		require.ErrorIs(t, err, deviceconfig.ErrHostKeyMismatch)
+
+		require.Zero(t, dev.authAttempts.Load(), "keyboard-interactive only = %v", kbd)
 	}
 }
 
@@ -155,14 +186,12 @@ func TestSSHFetcherClassifiesFailures(t *testing.T) {
 		commands: map[string]string{"show running-config": "hostname core\n"},
 	})
 
-	_, err := deviceconfig.SSHFetcher{}.Fetch(fetchCtx(t), dev.request(t, "wrong", "show running-config", ""))
+	_, err := deviceconfig.SSHFetcher{}.Fetch(fetchCtx(t),
+		dev.request(t, "wrong", "show running-config", dev.fingerprint))
 	require.ErrorIs(t, err, deviceconfig.ErrAuth)
 
 	_, err = deviceconfig.SSHFetcher{}.Fetch(fetchCtx(t),
-		dev.request(t, "s3cret", "show running-config", "SHA256:someoneelse"))
-	require.ErrorIs(t, err, deviceconfig.ErrHostKeyMismatch)
-
-	_, err = deviceconfig.SSHFetcher{}.Fetch(fetchCtx(t), dev.request(t, "s3cret", "show configuration", ""))
+		dev.request(t, "s3cret", "show configuration", dev.fingerprint))
 	require.ErrorIs(t, err, deviceconfig.ErrCommand)
 	require.ErrorContains(t, err, "Invalid input detected", "the device's own error is kept")
 

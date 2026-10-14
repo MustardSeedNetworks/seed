@@ -22,21 +22,22 @@ type DeviceConfigRepository struct {
 var ErrDeviceConfigTargetConflict = errors.New("device_config_targets: a target already uses this host and port")
 
 const deviceConfigTargetColumns = `id, client_id, name, host, port, platform,
-	credentials_id, host_key_sha256, created_at, updated_at`
+	credentials_id, host_key_sha256, pending_host_key_sha256, created_at, updated_at`
 
 func scanDeviceConfigTarget(row interface{ Scan(...any) error }) (deviceconfig.Target, error) {
 	var (
 		t                    deviceconfig.Target
 		platform             string
-		hostKey              sql.NullString
+		hostKey, pendingKey  sql.NullString
 		createdAt, updatedAt string
 	)
 	if err := row.Scan(&t.ID, &t.ClientID, &t.Name, &t.Host, &t.Port, &platform,
-		&t.CredentialsID, &hostKey, &createdAt, &updatedAt); err != nil {
+		&t.CredentialsID, &hostKey, &pendingKey, &createdAt, &updatedAt); err != nil {
 		return deviceconfig.Target{}, err
 	}
 	t.Platform = deviceconfig.Platform(platform)
 	t.HostKeySHA256 = hostKey.String
+	t.PendingHostKeySHA256 = pendingKey.String
 	t.CreatedAt = parseCredentialTime(createdAt)
 	t.UpdatedAt = parseCredentialTime(updatedAt)
 	return t, nil
@@ -89,16 +90,16 @@ func (r *DeviceConfigRepository) SaveTarget(ctx context.Context, t *deviceconfig
 	if t.ID == "" {
 		t.ID = "dct-" + randomID()
 		res, err = r.db.Exec(ctx, `INSERT INTO device_config_targets (`+deviceConfigTargetColumns+`)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			t.ID, t.ClientID, t.Name, t.Host, t.Port, string(t.Platform),
-			t.CredentialsID, nullIfEmpty(t.HostKeySHA256), now, now)
+			t.CredentialsID, nullIfEmpty(t.HostKeySHA256), nullIfEmpty(t.PendingHostKeySHA256), now, now)
 	} else {
 		res, err = r.db.Exec(ctx, `UPDATE device_config_targets SET
 				name = ?, host = ?, port = ?, platform = ?, credentials_id = ?,
-				host_key_sha256 = ?, updated_at = ?
+				host_key_sha256 = ?, pending_host_key_sha256 = ?, updated_at = ?
 			WHERE id = ? AND client_id = ?`,
 			t.Name, t.Host, t.Port, string(t.Platform), t.CredentialsID,
-			nullIfEmpty(t.HostKeySHA256), now, t.ID, t.ClientID)
+			nullIfEmpty(t.HostKeySHA256), nullIfEmpty(t.PendingHostKeySHA256), now, t.ID, t.ClientID)
 	}
 	if err != nil {
 		if isUniqueConstraintError(err) {
@@ -119,19 +120,34 @@ func (r *DeviceConfigRepository) DeleteTarget(ctx context.Context, clientID, id 
 	return requireOneRow(res)
 }
 
-// PinHostKey records the fingerprint only where none is pinned yet.
-func (r *DeviceConfigRepository) PinHostKey(ctx context.Context, clientID, id, fingerprint string) error {
-	_, err := r.db.Exec(ctx, `UPDATE device_config_targets SET host_key_sha256 = ?
+// SetPendingHostKey records the key an unpinned target presented; a target
+// whose key was pinned in the meantime is left alone.
+func (r *DeviceConfigRepository) SetPendingHostKey(ctx context.Context, clientID, id, fingerprint string) error {
+	_, err := r.db.Exec(ctx, `UPDATE device_config_targets SET pending_host_key_sha256 = ?
 		WHERE id = ? AND client_id = ? AND host_key_sha256 IS NULL`, fingerprint, id, clientID)
 	if err != nil {
-		return fmt.Errorf("pin device_config_targets host key: %w", err)
+		return fmt.Errorf("record device_config_targets pending host key: %w", err)
 	}
 	return nil
 }
 
-// ClearHostKey forgets a target's pinned key.
+// ConfirmHostKey pins the pending key when it is still fingerprint; otherwise
+// it matches nothing and is deviceconfig.ErrNotFound.
+func (r *DeviceConfigRepository) ConfirmHostKey(ctx context.Context, clientID, id, fingerprint string) error {
+	res, err := r.db.Exec(ctx, `UPDATE device_config_targets
+		SET host_key_sha256 = pending_host_key_sha256, pending_host_key_sha256 = NULL, updated_at = ?
+		WHERE id = ? AND client_id = ? AND pending_host_key_sha256 = ?`,
+		time.Now().UTC().Format(time.RFC3339), id, clientID, fingerprint)
+	if err != nil {
+		return fmt.Errorf("confirm device_config_targets host key: %w", err)
+	}
+	return requireOneRow(res)
+}
+
+// ClearHostKey forgets a target's pinned and pending keys.
 func (r *DeviceConfigRepository) ClearHostKey(ctx context.Context, clientID, id string) error {
-	res, err := r.db.Exec(ctx, `UPDATE device_config_targets SET host_key_sha256 = NULL, updated_at = ?
+	res, err := r.db.Exec(ctx, `UPDATE device_config_targets
+		SET host_key_sha256 = NULL, pending_host_key_sha256 = NULL, updated_at = ?
 		WHERE id = ? AND client_id = ?`, time.Now().UTC().Format(time.RFC3339), id, clientID)
 	if err != nil {
 		return fmt.Errorf("clear device_config_targets host key: %w", err)
@@ -139,16 +155,31 @@ func (r *DeviceConfigRepository) ClearHostKey(ctx context.Context, clientID, id 
 	return requireOneRow(res)
 }
 
-// InsertBackup records one attempt, generating its id.
+// InsertBackup records one attempt, generating its id. The configuration is
+// stored as b.ConfigCT, its ciphertext.
 func (r *DeviceConfigRepository) InsertBackup(ctx context.Context, b *deviceconfig.Backup) error {
 	b.ID = "dcb-" + randomID()
 	_, err := r.db.Exec(ctx, `INSERT INTO device_config_backups
-			(id, client_id, target_id, taken_at, status, error, config, sha256)
+			(id, client_id, target_id, taken_at, status, error, config_enc, sha256)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		b.ID, b.ClientID, b.TargetID, b.TakenAt.UTC().Format(time.RFC3339Nano), string(b.Status),
-		nullIfEmpty(b.Error), nullIfEmpty(b.Config), nullIfEmpty(b.SHA256))
+		nullIfEmpty(b.Error), blobOrNull(b.ConfigCT), nullIfEmpty(b.SHA256))
 	if err != nil {
 		return fmt.Errorf("insert device_config_backups: %w", err)
+	}
+	return nil
+}
+
+// PruneBackups deletes all but the target's newest keep attempts, in the
+// order ListBackups returns them.
+func (r *DeviceConfigRepository) PruneBackups(ctx context.Context, clientID, targetID string, keep int) error {
+	_, err := r.db.Exec(ctx, `DELETE FROM device_config_backups
+		WHERE client_id = ? AND target_id = ? AND id NOT IN (
+			SELECT id FROM device_config_backups WHERE client_id = ? AND target_id = ?
+			ORDER BY taken_at DESC, id LIMIT ?)`,
+		clientID, targetID, clientID, targetID, keep)
+	if err != nil {
+		return fmt.Errorf("prune device_config_backups: %w", err)
 	}
 	return nil
 }
@@ -188,14 +219,15 @@ func (r *DeviceConfigRepository) ListBackups(
 	return out, nil
 }
 
-// GetBackup returns one attempt with its configuration.
+// GetBackup returns one attempt with its configuration's ciphertext.
 func (r *DeviceConfigRepository) GetBackup(ctx context.Context, clientID, id string) (deviceconfig.Backup, error) {
 	var (
-		b                   deviceconfig.Backup
-		takenAt, status     string
-		msg, config, digest sql.NullString
+		b               deviceconfig.Backup
+		takenAt, status string
+		msg, digest     sql.NullString
+		config          []byte
 	)
-	err := r.db.QueryRow(ctx, `SELECT id, client_id, target_id, taken_at, status, error, config, sha256
+	err := r.db.QueryRow(ctx, `SELECT id, client_id, target_id, taken_at, status, error, config_enc, sha256
 		FROM device_config_backups WHERE id = ? AND client_id = ?`, id, clientID).
 		Scan(&b.ID, &b.ClientID, &b.TargetID, &takenAt, &status, &msg, &config, &digest)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -207,7 +239,7 @@ func (r *DeviceConfigRepository) GetBackup(ctx context.Context, clientID, id str
 	b.TakenAt = parseBackupTime(takenAt)
 	b.Status = deviceconfig.Status(status)
 	b.Error = msg.String
-	b.Config = config.String
+	b.ConfigCT = string(config)
 	b.SHA256 = digest.String
 	return b, nil
 }

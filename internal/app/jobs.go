@@ -38,6 +38,7 @@ func (s *JobStore) Save(ctx context.Context, j jobs.Job) error {
 	rec := &database.JobRecord{
 		ID:        j.ID,
 		Kind:      j.Kind,
+		ClientID:  j.ClientID,
 		State:     string(j.State),
 		Progress:  j.Progress,
 		Error:     j.Err,
@@ -70,6 +71,7 @@ func (s *JobStore) Load(ctx context.Context, id string) (jobs.Job, bool, error) 
 	j := jobs.Job{
 		ID:       rec.ID,
 		Kind:     rec.Kind,
+		ClientID: rec.ClientID,
 		State:    jobs.State(rec.State),
 		Progress: rec.Progress,
 		Err:      rec.Error,

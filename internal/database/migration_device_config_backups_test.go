@@ -1,13 +1,16 @@
 package database_test
 
 // 00028 rebuilds device_credentials to admit the SSH kind and adds the
-// configuration backup tables. Existing SNMP credentials, and the polling
-// targets bound to them, survive the rebuild in both directions.
+// configuration backup tables, and gives jobs an owning client. Existing SNMP
+// credentials, and the polling targets bound to them, survive the rebuild in
+// both directions.
 
 import (
 	"context"
 	"testing"
 )
+
+const jobsClientColumn = `SELECT count(*) FROM pragma_table_info('jobs') WHERE name = 'client_id'`
 
 const credentialRows = `SELECT group_concat(row, ';') FROM (
 	SELECT id || ',' || client_id || ',' || kind || ',' || coalesce(security_level, '-') || ',' ||
@@ -47,6 +50,9 @@ func TestMigration00028AddsSSHCredentialsAndKeepsSNMPOnes(t *testing.T) {
 	if got := scanString(t, db, `SELECT count(*) FROM pragma_foreign_key_check`); got != "0" {
 		t.Errorf("foreign key violations after up: %s", got)
 	}
+	if got := scanString(t, db, jobsClientColumn); got != "1" {
+		t.Errorf("jobs.client_id after up: %s columns, want 1", got)
+	}
 
 	downTo(t, db, 27)
 
@@ -60,5 +66,8 @@ func TestMigration00028AddsSSHCredentialsAndKeepsSNMPOnes(t *testing.T) {
 	}
 	if got := scanString(t, db, `SELECT count(*) FROM pragma_foreign_key_check`); got != "0" {
 		t.Errorf("foreign key violations after down: %s", got)
+	}
+	if got := scanString(t, db, jobsClientColumn); got != "0" {
+		t.Errorf("jobs.client_id after down: %s columns, want 0", got)
 	}
 }
