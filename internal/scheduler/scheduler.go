@@ -20,6 +20,11 @@
 //     Stop() waits for in-flight Run calls to return via WaitGroup so
 //     shutdown is graceful.
 //
+//   - No self-overlap: while a job's Run is in flight the scheduler
+//     neither calls its NextRun nor dispatches it again. A job slower
+//     than its interval runs back to back, never concurrently, and its
+//     schedule state needs no lock of its own.
+//
 //   - Configurable tick: callers choose the tick interval. Tick is the
 //     worst-case precision for NextRun. Reporting reports use 1 minute.
 //     DNS monitors use 1 minute. Each collector instantiates its own Scheduler with the
@@ -50,6 +55,7 @@ type Job interface {
 	// Run when now is at or past the returned time. Returning the
 	// zero time signals "do not run again until further notice" —
 	// the job stays registered but is skipped on subsequent ticks.
+	// It is never called while the job's own Run is in flight.
 	NextRun(now time.Time) time.Time
 
 	// Run performs the job's work. It executes on its own goroutine.
@@ -78,10 +84,12 @@ type Scheduler struct {
 	logger   *slog.Logger
 	clk      clock
 
-	mu     sync.RWMutex
-	jobs   map[string]Job
-	cancel context.CancelFunc
-	wg     sync.WaitGroup
+	mu   sync.RWMutex
+	jobs map[string]Job
+	// inflight holds the IDs whose Run has not returned yet; guarded by mu.
+	inflight map[string]struct{}
+	cancel   context.CancelFunc
+	wg       sync.WaitGroup
 	// runMu serializes calls to dispatch so tests can observe a
 	// deterministic ordering. Production behavior is unaffected.
 	runMu sync.Mutex
@@ -104,6 +112,7 @@ func NewWithClock(interval time.Duration, logger *slog.Logger, clk clock) *Sched
 		logger:   logger,
 		clk:      clk,
 		jobs:     make(map[string]Job),
+		inflight: make(map[string]struct{}),
 	}
 }
 
@@ -134,30 +143,38 @@ func (s *Scheduler) dispatch(ctx context.Context, now time.Time) {
 	s.runMu.Lock()
 	defer s.runMu.Unlock()
 
-	s.mu.RLock()
-	due := make([]Job, 0, len(s.jobs))
-	for _, j := range s.jobs {
-		next := j.NextRun(now)
-		if next.IsZero() {
+	s.mu.Lock()
+	due := make(map[string]Job)
+	for id, j := range s.jobs {
+		if _, running := s.inflight[id]; running {
 			continue
 		}
-		if !now.Before(next) {
-			due = append(due, j)
+		next := j.NextRun(now)
+		if next.IsZero() || now.Before(next) {
+			continue
 		}
+		s.inflight[id] = struct{}{}
+		due[id] = j
 	}
-	s.mu.RUnlock()
+	s.mu.Unlock()
 
-	for _, j := range due {
-		s.wg.Add(1)
-		go func(job Job) {
-			defer s.wg.Done()
-			if err := job.Run(ctx); err != nil {
+	for id, j := range due {
+		s.wg.Go(func() {
+			defer s.finish(id)
+			if err := j.Run(ctx); err != nil {
 				s.logger.ErrorContext(ctx, "scheduler job failed",
-					"job_id", job.ID(),
+					"job_id", id,
 					"error", err)
 			}
-		}(j)
+		})
 	}
+}
+
+// finish makes id eligible for dispatch again once its Run has returned.
+func (s *Scheduler) finish(id string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.inflight, id)
 }
 
 // Stop cancels the tick loop and waits for in-flight Run calls to
