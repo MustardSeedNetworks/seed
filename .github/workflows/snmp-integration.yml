@@ -114,6 +114,7 @@ jobs:
             TestRoutingReadsAnAgentThatServesOnlyIPRouteTable \
             TestGetRoutesReadsAnAgentThatServesOnlyIPRouteTable \
             TestGetRoutesReadsInetCidrNextHops \
+            TestV3CredentialsAreSentAtTheirOwnSecurityLevel \
             < "$RUNNER_TEMP/integration.json"
 
       - name: Agent log

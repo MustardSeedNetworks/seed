@@ -277,7 +277,7 @@ func queryWithV3(
 		Timeout:            cfg.Timeout,
 		Retries:            cfg.Retries,
 		SecurityModel:      gosnmp.UserSecurityModel,
-		MsgFlags:           gosnmp.AuthPriv,
+		MsgFlags:           cred.MsgFlags(),
 		SecurityParameters: cred.USM(),
 	}
 
@@ -350,7 +350,7 @@ func queryMultipleWithV3(
 		Timeout:            cfg.Timeout,
 		Retries:            cfg.Retries,
 		SecurityModel:      gosnmp.UserSecurityModel,
-		MsgFlags:           gosnmp.AuthPriv,
+		MsgFlags:           cred.MsgFlags(),
 		SecurityParameters: cred.USM(),
 	}
 
@@ -511,7 +511,7 @@ func newV3WalkClient(
 		Retries:            cfg.Retries,
 		MaxRepetitions:     getMaxRepetitions(cfg),
 		SecurityModel:      gosnmp.UserSecurityModel,
-		MsgFlags:           gosnmp.AuthPriv,
+		MsgFlags:           cred.MsgFlags(),
 		SecurityParameters: cred.USM(),
 	}
 
