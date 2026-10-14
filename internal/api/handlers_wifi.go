@@ -13,6 +13,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/validation"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 )
@@ -66,6 +67,51 @@ type WiFiSettingsResponse struct {
 	IsWireless    bool     `json:"isWireless"`
 }
 
+// WiFiSettingsRequest selects the Wi-Fi interface. An empty interface clears
+// the selection, falling back to the default interface.
+type WiFiSettingsRequest struct {
+	Interface string `json:"interface"`
+}
+
+// WiFiScanResponse is a neighbor-AP scan. Error carries the reason the scan
+// could not run or complete; Remediation is set only when an operator can act
+// on it.
+type WiFiScanResponse struct {
+	Interface   string                 `json:"interface"`
+	Available   bool                   `json:"available"`
+	Networks    []*wifi.ScannedNetwork `json:"networks"`
+	Remediation string                 `json:"remediation,omitempty"`
+	Error       string                 `json:"error,omitempty"`
+}
+
+// WiFiChannelGraphResponse is the last neighbor scan grouped by band for the
+// channel overlap graph. Data is absent when the scan could not run or failed,
+// and Error then says why.
+type WiFiChannelGraphResponse struct {
+	Interface   string                 `json:"interface"`
+	Available   bool                   `json:"available"`
+	Error       string                 `json:"error,omitempty"`
+	Remediation string                 `json:"remediation,omitempty"`
+	Data        *wifi.ChannelGraphData `json:"data,omitempty"`
+}
+
+// WiFiSavedNetworksResponse lists the networks the host has credentials for.
+// Error is set when the platform could not list them.
+type WiFiSavedNetworksResponse struct {
+	Networks []wifi.SavedNetwork `json:"networks"`
+	Error    string              `json:"error,omitempty"`
+}
+
+// WiFiStatusResponse is the wireless adapter state, read without a scan.
+type WiFiStatusResponse struct {
+	Status            string   `json:"status"`
+	Message           string   `json:"message"`
+	CurrentInterface  string   `json:"currentInterface"`
+	IsWireless        bool     `json:"isWireless"`
+	AvailableAdapters []string `json:"availableAdapters"`
+	CanScan           bool     `json:"canScan"`
+}
+
 // ============================================================================
 // WiFi Settings Handlers
 // ============================================================================
@@ -107,9 +153,7 @@ func (s *Server) updateWiFiSettings(
 	logger *slog.Logger,
 	localizer *i18n.Localizer,
 ) {
-	var req struct {
-		Interface string `json:"interface"`
-	}
+	var req WiFiSettingsRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
@@ -127,9 +171,9 @@ func (s *Server) updateWiFiSettings(
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  statusSuccess,
-		"message": "WiFi settings updated",
+	sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+		Status:  statusSuccess,
+		Message: "WiFi settings updated",
 	})
 }
 
@@ -193,20 +237,38 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 // Thin handler (ADR-0016): it resolves the requested interface from the request
 // and delegates to the Wi-Fi management use-case, which owns the degrade logic.
 func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
-	res := s.wifiManagement.Scan(s.getInterfaceFromRequest(r))
+	iface, ok := wifiScanInterface(w, r)
+	if !ok {
+		return
+	}
+	res := s.wifiManagement.Scan(iface)
+	sendJSONResponse(w, nil, http.StatusOK, WiFiScanResponse{
+		Interface:   res.Interface,
+		Available:   res.Available,
+		Networks:    res.Networks,
+		Remediation: res.Remediation,
+		Error:       res.Error,
+	})
+}
 
-	resp := map[string]any{
-		"interface": res.Interface,
-		"available": res.Available,
-		"networks":  res.Networks,
+// wifiScanInterface returns the radio a scan request names. Without the
+// parameter it is empty, which the use-case resolves to the configured Wi-Fi
+// interface; getInterfaceFromRequest would fall back to the wired one and
+// report it as the scanned radio (#2881). A malformed name is refused with 400.
+func wifiScanInterface(w http.ResponseWriter, r *http.Request) (string, bool) {
+	iface := r.URL.Query().Get("interface")
+	if iface == "" {
+		return "", true
 	}
-	if res.Remediation != "" {
-		resp["remediation"] = res.Remediation
+	if err := validation.ValidateInterface(iface); err != nil {
+		logger := logging.FromContext(r.Context())
+		// Log err, not the name, which arrives straight from the query (CWE-117).
+		logger.WarnContext(r.Context(), "Invalid interface", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+			ErrCodeValidation, i18n.FromRequest(r).T("errors.network.invalidInterface"), "")
+		return "", false
 	}
-	if res.Error != "" {
-		resp["error"] = res.Error
-	}
-	sendJSONResponse(w, nil, http.StatusOK, resp)
+	return iface, true
 }
 
 // handleWiFiStatus returns the WiFi adapter status without performing a scan.
@@ -214,13 +276,18 @@ func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleWiFiStatus(w http.ResponseWriter, r *http.Request) {
 	res := s.wifiManagement.Status(s.getInterfaceFromRequest(r))
 
-	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"status":            res.Status,
-		"message":           res.Message,
-		"currentInterface":  res.CurrentInterface,
-		"isWireless":        res.IsWireless,
-		"availableAdapters": res.AvailableAdapters,
-		"canScan":           res.CanScan,
+	// A host with no adapter lists none rather than sending null.
+	adapters := res.AvailableAdapters
+	if adapters == nil {
+		adapters = []string{}
+	}
+	sendJSONResponse(w, nil, http.StatusOK, WiFiStatusResponse{
+		Status:            res.Status,
+		Message:           res.Message,
+		CurrentInterface:  res.CurrentInterface,
+		IsWireless:        res.IsWireless,
+		AvailableAdapters: adapters,
+		CanScan:           res.CanScan,
 	})
 }
 
@@ -328,25 +395,24 @@ func (s *Server) handleWiFiSavedNetworks(w http.ResponseWriter, r *http.Request)
 	logger := logging.FromContext(r.Context())
 
 	if s.wifiManager() == nil {
-		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-			"networks": []any{},
-		})
+		sendJSONResponse(w, nil, http.StatusOK, WiFiSavedNetworksResponse{Networks: []wifi.SavedNetwork{}})
 		return
 	}
 
 	networks, err := s.wifiManager().GetSavedNetworks()
 	if err != nil {
 		logger.WarnContext(r.Context(), "Failed to get saved networks", "error", err)
-		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-			"networks": []any{},
-			"error":    err.Error(),
+		sendJSONResponse(w, nil, http.StatusOK, WiFiSavedNetworksResponse{
+			Networks: []wifi.SavedNetwork{},
+			Error:    err.Error(),
 		})
 		return
 	}
-
-	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"networks": networks,
-	})
+	// A host with no saved networks lists none rather than sending null.
+	if networks == nil {
+		networks = []wifi.SavedNetwork{}
+	}
+	sendJSONResponse(w, nil, http.StatusOK, WiFiSavedNetworksResponse{Networks: networks})
 }
 
 // handleWiFiForgetNetwork handles requests to forget a saved WiFi network.
@@ -392,41 +458,34 @@ func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  statusSuccess,
-		"message": "Network forgotten",
+	sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+		Status:  statusSuccess,
+		Message: "Network forgotten",
 	})
 }
 
 // handleWiFiChannelGraph returns channel overlap graph data for WiFi visualization.
 // It scans available networks and organizes them by frequency band with channel overlap information.
 func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) {
-	res := s.wifiManagement.Scan(s.getInterfaceFromRequest(r))
-	if !res.Available || res.Error != "" {
-		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-			"interface":   res.Interface,
-			"available":   res.Available,
-			"error":       res.Error,
-			"remediation": res.Remediation,
-			"data":        nil,
-		})
+	iface, ok := wifiScanInterface(w, r)
+	if !ok {
 		return
 	}
-
-	// Get connected network BSSID
-	connectedBSSID := ""
-	if info := s.wifiManager().GetInfo(); info != nil {
-		connectedBSSID = info.BSSID
+	res := s.wifiManagement.Scan(iface)
+	response := WiFiChannelGraphResponse{
+		Interface:   res.Interface,
+		Available:   res.Available,
+		Error:       res.Error,
+		Remediation: res.Remediation,
 	}
-
-	// Generate channel graph data
-	data := wifi.GetChannelGraphData(res.Networks, connectedBSSID)
-
-	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"interface": res.Interface,
-		"available": true,
-		"data":      data,
-	})
+	if res.Available && res.Error == "" {
+		connectedBSSID := ""
+		if info := s.wifiManager().GetInfo(); info != nil {
+			connectedBSSID = info.BSSID
+		}
+		response.Data = wifi.GetChannelGraphData(res.Networks, connectedBSSID)
+	}
+	sendJSONResponse(w, nil, http.StatusOK, response)
 }
 
 // ============================================================================

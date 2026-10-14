@@ -42,10 +42,7 @@ ui/src/types/profile.ts:ProfileRequest # same Profile/config narrowing as Profil
 # wire's strings to the unions the form's <select> offers. A field-by-field
 # reconciliation against the generated Config, not a swap. Slice 2 of seed#2393.
 ui/src/types/settings.ts:DiscoveryOptions # settings-drawer view model, composed of the local PortScanConfig/TcpProbeConfig below
-ui/src/types/settings.ts:FileShareEndpoint # settings-drawer view model: UI row `id`, and `protocol` narrowed to 'smb' | 'nfs'
 ui/src/types/settings.ts:FingerprintingConfig # settings-drawer view model
-ui/src/types/settings.ts:ModbusEndpoint # settings-drawer view model: UI row `id`
 ui/src/types/settings.ts:PassiveProtocolConfig # settings-drawer view model
-ui/src/types/settings.ts:PingTarget # settings-drawer view model: UI row `id`
 ui/src/types/settings.ts:PortScanConfig # settings-drawer view model: `preset` narrowed to the PortPreset union the form offers
 ui/src/types/settings.ts:SubnetConfig # settings-drawer view model

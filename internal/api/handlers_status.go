@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/capabilities"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/export"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/system"
 	"github.com/MustardSeedNetworks/seed/internal/version"
 )
 
@@ -56,6 +58,10 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
+// ExportResponse is GET /reporting/export: the diagnostic export document,
+// served as the export use-case builds it.
+type ExportResponse export.Data
+
 // handleExport exports current diagnostic data as JSON (fixes #544 - split from
 // handlers.go). Accepts optional query parameter: ?interface=eth0. Thin transport
 // (ADR-0020): the export-assembly fan-out lives in the export use-case.
@@ -76,9 +82,16 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment; filename=seed-export.json")
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
-	if encErr := encoder.Encode(data); encErr != nil {
+	if encErr := encoder.Encode(ExportResponse(data)); encErr != nil {
 		logger.ErrorContext(r.Context(), "Error encoding export response", "error", encErr)
 	}
+}
+
+// LogFileResponse is the answer of GET /api/v1/reporting/logs: the tail of the
+// daemon's log file.
+type LogFileResponse struct {
+	Path  string   `json:"path"`
+	Lines []string `json:"lines"`
 }
 
 // handleLogs returns the tail of the application log file for troubleshooting (fixes #544 - split from handlers.go).
@@ -127,10 +140,13 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"path":  s.logPath,
-		"lines": lines,
-	})
+	sendJSONResponse(w, logger, http.StatusOK, LogFileResponse{Path: s.logPath, Lines: lines})
+}
+
+// HealthResponse is the liveness answer of GET /api/v1/health.
+type HealthResponse struct {
+	Status string  `json:"status"`
+	Uptime float64 `json:"uptime"` // seconds since the daemon started
 }
 
 // handleHealth handles GET /api/health - simple liveness check for load balancers (fixes #540, #544).
@@ -139,39 +155,56 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	// Simple health check - just return OK
 	// For detailed health, use /api/system/health
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"status": "ok",
-		"uptime": time.Since(s.startTime).Seconds(),
+	sendJSONResponse(w, logger, http.StatusOK, HealthResponse{
+		Status: "ok",
+		Uptime: time.Since(s.startTime).Seconds(),
 	})
 }
 
-// handleSystemHealth handles GET /api/system/health - returns comprehensive health metrics (fixes #540, #544).
+// SystemHealthResponse is GET /telemetry/system/health: the host's resource
+// usage, the daemon's version and uptime, and which background services run.
+type SystemHealthResponse struct {
+	System      system.Health                   `json:"system"`
+	Application SystemHealthApplicationResponse `json:"application"`
+	Services    SystemHealthServicesResponse    `json:"services"`
+}
+
+// SystemHealthApplicationResponse is the daemon half of the health answer.
+type SystemHealthApplicationResponse struct {
+	Version string  `json:"version"`
+	Uptime  float64 `json:"uptime"` // seconds since the daemon started
+}
+
+// SystemHealthServicesResponse says which background services are running.
+type SystemHealthServicesResponse struct {
+	DiscoveryService bool `json:"discoveryService"`
+	LinkMonitor      bool `json:"linkMonitor"`
+	SSEHub           bool `json:"sseHub"`
+}
+
+// handleSystemHealth handles GET /api/v1/telemetry/system/health (#540, #544).
 func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	// Get system health metrics
 	health, err := s.health.Health()
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to get system health", "error", err)
-		sendJSONResponse(w, logger, http.StatusInternalServerError, map[string]string{
-			"error": "Failed to get system health. Check server logs for details.",
-		})
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusInternalServerError, ErrCodeInternal,
+			"Failed to get system health. Check server logs for details.", "",
+		)
 		return
 	}
 
-	// Add application-specific health information
-	appHealth := map[string]any{
-		"system": health,
-		"application": map[string]any{
-			"version":     version.GetVersion(),
-			"uptime":      time.Since(s.startTime).Seconds(),
-			"uptime_text": time.Since(s.startTime).String(),
+	sendJSONResponse(w, logger, http.StatusOK, SystemHealthResponse{
+		System: *health,
+		Application: SystemHealthApplicationResponse{
+			Version: version.GetVersion(),
+			Uptime:  time.Since(s.startTime).Seconds(),
 		},
-		"services": map[string]any{
-			"discovery_service": s.discoveryService() != nil && s.discoveryService().IsRunning(),
-			"link_monitor":      s.linkMonitor() != nil,
-			"sse_hub":           s.sseHub() != nil,
+		Services: SystemHealthServicesResponse{
+			DiscoveryService: s.discoveryService() != nil && s.discoveryService().IsRunning(),
+			LinkMonitor:      s.linkMonitor() != nil,
+			SSEHub:           s.sseHub() != nil,
 		},
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, appHealth)
+	})
 }

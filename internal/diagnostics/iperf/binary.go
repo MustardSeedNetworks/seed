@@ -3,15 +3,14 @@ package iperf
 import (
 	"context"
 	"fmt"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
-	"github.com/MustardSeedNetworks/seed/internal/validation"
+
+	"github.com/MustardSeedNetworks/seed/internal/platform/procrun"
 )
 
 // findIperf3Binary returns the path of the resolved iperf3 binary.
@@ -116,7 +115,7 @@ func probeVersion(path string) (string, bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), versionCheckTimeout)
 	defer cancel()
 
-	out, err := exec.CommandContext(ctx, path, "--version").Output()
+	out, err := procrun.Output(exec.CommandContext(ctx, path, "--version"))
 	if err != nil || !strings.Contains(string(out), "iperf") {
 		return "", false
 	}
@@ -199,32 +198,4 @@ func compareVersions(v1, v2 string) int {
 	}
 
 	return 0
-}
-
-// waitForPortReady checks if a TCP port is ready to accept connections.
-func waitForPortReady(port int, timeout time.Duration) error {
-	// Validate port number
-	if err := validation.ValidatePort(port); err != nil {
-		return err
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	addr := fmt.Sprintf("127.0.0.1:%d", port)
-	dialer := &net.Dialer{Timeout: portCheckIntervalMs * time.Millisecond}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("port %d not ready after %v", port, timeout)
-		default:
-			conn, err := dialer.DialContext(ctx, "tcp", addr)
-			if err == nil {
-				_ = conn.Close()
-				return nil
-			}
-			time.Sleep(portCheckIntervalMs * time.Millisecond)
-		}
-	}
 }

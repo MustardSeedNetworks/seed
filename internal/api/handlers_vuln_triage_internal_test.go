@@ -48,20 +48,31 @@ func newTriageServer(t *testing.T) (*Server, func(osGuess string), int64) {
 
 func triage(t *testing.T, s *Server, id int64, body string) *httptest.ResponseRecorder {
 	t.Helper()
+	return triageTarget(s, strconv.FormatInt(id, 10), body)
+}
+
+// triageTarget posts body to the status action of the finding named target,
+// as alice.
+func triageTarget(s *Server, target, body string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(http.MethodPost,
-		vulnFindingsPathPrefix+strconv.FormatInt(id, 10)+"/status", strings.NewReader(body))
+		vulnFindingsPath+"/"+target+"/status", strings.NewReader(body))
 	req = req.WithContext(auth.WithUsername(req.Context(), "alice"))
 	w := httptest.NewRecorder()
-	s.handleVulnFindingAction(w, req)
+	routed(vulnFindingStatusPath, s.handleVulnFindingStatus)(w, req)
+	return w
+}
+
+func findingHistoryRaw(s *Server, id int64) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(http.MethodGet,
+		vulnFindingsPath+"/"+strconv.FormatInt(id, 10)+"/history", http.NoBody)
+	w := httptest.NewRecorder()
+	routed(vulnFindingHistoryPath, s.handleVulnFindingHistory)(w, req)
 	return w
 }
 
 func findingHistory(t *testing.T, s *Server, id int64) []VulnStatusChangeResponse {
 	t.Helper()
-	req := httptest.NewRequest(http.MethodGet,
-		vulnFindingsPathPrefix+strconv.FormatInt(id, 10)+"/history", http.NoBody)
-	w := httptest.NewRecorder()
-	s.handleVulnFindingAction(w, req)
+	w := findingHistoryRaw(s, id)
 	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
 	var resp struct {
 		History []VulnStatusChangeResponse `json:"history"`
@@ -162,11 +173,7 @@ func TestVulnTriageRefusals(t *testing.T) {
 			if tc.target != "" {
 				target = tc.target
 			}
-			req := httptest.NewRequest(http.MethodPost,
-				vulnFindingsPathPrefix+target+"/status", strings.NewReader(tc.body))
-			req = req.WithContext(auth.WithUsername(req.Context(), "alice"))
-			w := httptest.NewRecorder()
-			s.handleVulnFindingAction(w, req)
+			w := triageTarget(s, target, tc.body)
 			require.Equal(t, tc.want, w.Code, w.Body.String())
 			require.Len(t, findingHistory(t, s, id), tc.history, "a refused change writes no history")
 		})
@@ -211,42 +218,17 @@ func TestVulnFindingsList(t *testing.T) {
 	}
 }
 
-func TestVulnFindingActionMethods(t *testing.T) {
-	s, _, id := newTriageServer(t)
-	base := vulnFindingsPathPrefix + strconv.FormatInt(id, 10)
-	for _, tc := range []struct{ method, path, allow string }{
-		{http.MethodGet, base + "/status", http.MethodPost},
-		{http.MethodPost, base + "/history", http.MethodGet},
-	} {
-		w := httptest.NewRecorder()
-		s.handleVulnFindingAction(w, httptest.NewRequest(tc.method, tc.path, http.NoBody))
-		require.Equal(t, http.StatusMethodNotAllowed, w.Code, tc.path)
-		require.Equal(t, tc.allow, w.Header().Get("Allow"))
-	}
-	w := httptest.NewRecorder()
-	s.handleVulnFindingAction(w, httptest.NewRequest(http.MethodGet, base+"/notes", http.NoBody))
-	require.Equal(t, http.StatusNotFound, w.Code)
-}
-
 // TestVulnTriageStoreUnavailable pins the reply without a database: every
 // route answers 503 rather than reaching a nil store.
 func TestVulnTriageStoreUnavailable(t *testing.T) {
 	t.Parallel()
 	s := &Server{}
-	for _, req := range []*http.Request{
-		httptest.NewRequest(http.MethodGet, vulnFindingsPath, http.NoBody),
-		httptest.NewRequest(http.MethodPost, vulnFindingsPathPrefix+"1/status",
-			strings.NewReader(`{"status":"acknowledged"}`)),
-		httptest.NewRequest(http.MethodGet, vulnFindingsPathPrefix+"1/history", http.NoBody),
-	} {
-		w := httptest.NewRecorder()
-		if req.URL.Path == vulnFindingsPath {
-			s.handleVulnFindings(w, req)
-		} else {
-			s.handleVulnFindingAction(w, req)
-		}
-		require.Equal(t, http.StatusServiceUnavailable, w.Code, req.URL.Path)
-	}
+	w := httptest.NewRecorder()
+	s.handleVulnFindings(w, httptest.NewRequest(http.MethodGet, vulnFindingsPath, http.NoBody))
+	require.Equal(t, http.StatusServiceUnavailable, w.Code, vulnFindingsPath)
+	require.Equal(t, http.StatusServiceUnavailable,
+		triageTarget(s, "1", `{"status":"acknowledged"}`).Code, "status")
+	require.Equal(t, http.StatusServiceUnavailable, findingHistoryRaw(s, 1).Code, "history")
 }
 
 // TestVulnTriageRequiresOperator pins the role gate: triage is a persistent
@@ -257,6 +239,41 @@ func TestVulnTriageRequiresOperator(t *testing.T) {
 	for _, rt := range s.routes.Policies() {
 		byPath[rt.Path] = rt
 	}
-	require.Equal(t, roles.Operator, byPath[vulnFindingsPathPrefix].Scope)
+	require.Equal(t, roles.Operator, byPath[vulnFindingStatusPath].Scope)
+	require.Empty(t, byPath[vulnFindingHistoryPath].Scope)
 	require.Equal(t, []string{http.MethodGet}, byPath[vulnFindingsPath].Methods)
+}
+
+// TestVulnFindingActionBodies pins the triage and history bodies key by key,
+// so typing them cannot move the wire.
+func TestVulnFindingActionBodies(t *testing.T) {
+	s, rescan, id := newTriageServer(t)
+	keys := func(raw []byte) []string {
+		t.Helper()
+		var m map[string]json.RawMessage
+		require.NoError(t, json.Unmarshal(raw, &m))
+		out := make([]string, 0, len(m))
+		for k := range m {
+			out = append(out, k)
+		}
+		return out
+	}
+
+	w := triage(t, s, id, `{"status":"acknowledged","reason":"tracked"}`)
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	require.JSONEq(t, `{"id":`+strconv.FormatInt(id, 10)+`,"status":"acknowledged"}`, w.Body.String())
+
+	rescan("Windows 10")
+
+	w = findingHistoryRaw(s, id)
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	require.ElementsMatch(t, []string{"id", "history"}, keys(w.Body.Bytes()))
+	var resp struct {
+		History []json.RawMessage `json:"history"`
+	}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	require.Len(t, resp.History, 2)
+	// The operator's triage, then the scanner's resolve with no actor or reason.
+	require.ElementsMatch(t, []string{"from", "to", "actor", "reason", "changedAt"}, keys(resp.History[0]))
+	require.ElementsMatch(t, []string{"from", "to", "changedAt"}, keys(resp.History[len(resp.History)-1]))
 }

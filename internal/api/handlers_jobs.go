@@ -16,7 +16,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -29,13 +28,14 @@ import (
 )
 
 const (
-	// jobsPathPrefix is the /jobs/{id} item-route prefix.
-	jobsPathPrefix = APIVersionPrefix + "/jobs/"
+	// jobsPath is the job collection; a job is jobsPath + "/" + its id.
+	jobsPath = APIVersionPrefix + "/jobs"
 
-	// jobSSEBuffer bounds a connection's pending event backlog. A consumer that
-	// falls this far behind drops events (it can re-sync with GET /jobs/{id});
-	// the stream favours liveness over guaranteed delivery, like the card hub.
-	jobSSEBuffer = 64
+	// sseFrameBuffer bounds a stream connection's pending frame backlog. A
+	// consumer that falls this far behind drops frames (it can re-sync with a
+	// GET); the streams favour liveness over guaranteed delivery, like the card
+	// hub.
+	sseFrameBuffer = 64
 
 	// jobIdempotencyCapacity bounds the in-memory Idempotency-Key cache. The
 	// oldest key is evicted past this; idempotency is best-effort within that
@@ -149,20 +149,15 @@ func (s *Server) handleJobs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	j, _ := s.jobsRunner().Get(id)
-	w.Header().Set("Location", jobsPathPrefix+id)
+	w.Header().Set("Location", jobsPath+"/"+id)
 	sendJSONResponse(w, logger, http.StatusCreated, toJobResponse(j))
 }
 
-// handleJobByID is the /jobs/{id} item handler: GET inspects, DELETE cancels.
-// DELETE is operator-gated by writeGated; GET is a safe read.
+// handleJobByID is the /jobs/{jobId} item handler: GET inspects, DELETE
+// cancels. DELETE is operator-gated by writeGated; GET is a safe read.
 func (s *Server) handleJobByID(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	id := strings.TrimPrefix(r.URL.Path, jobsPathPrefix)
-	if id == "" || strings.Contains(id, "/") {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, "Missing or invalid job id", "")
-		return
-	}
+	id := r.PathValue("jobId")
 
 	switch r.Method {
 	case http.MethodGet:
@@ -183,7 +178,7 @@ func (s *Server) handleJobByID(w http.ResponseWriter, r *http.Request) {
 		sendJSONResponse(w, logger, http.StatusAccepted, toJobResponse(j))
 	default:
 		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed, "Only GET and DELETE are supported on /jobs/{id}", "")
+			ErrCodeMethodNotAllowed, "Only GET and DELETE are supported on /jobs/{jobId}", "")
 	}
 }
 
@@ -211,7 +206,7 @@ func (s *Server) handleJobsEvents(w http.ResponseWriter, r *http.Request) {
 
 	// Per-connection backlog. The bus delivers on its own goroutine; the push
 	// handler must never block it, so a full buffer drops (re-syncable via GET).
-	ch := make(chan []byte, jobSSEBuffer)
+	ch := make(chan []byte, sseFrameBuffer)
 	unsubscribe := s.subscribeJobEvents(ch)
 	defer unsubscribe()
 
@@ -222,7 +217,7 @@ func (s *Server) handleJobsEvents(w http.ResponseWriter, r *http.Request) {
 	}
 	flusher.Flush()
 
-	s.pumpJobSSE(r.Context(), w, flusher, ch, logger)
+	pumpSSE(r.Context(), w, flusher, ch, logger)
 }
 
 // subscribeJobEvents fans every job state change into ch and returns a single
@@ -239,7 +234,7 @@ func (s *Server) subscribeJobEvents(ch chan<- []byte) func() {
 			return
 		}
 		select {
-		case ch <- data:
+		case ch <- sseFrame("job", data):
 		default: // consumer too slow; drop this event
 		}
 	}
@@ -256,9 +251,11 @@ func (s *Server) subscribeJobEvents(ch chan<- []byte) func() {
 	}
 }
 
-// pumpJobSSE writes queued job frames and periodic heartbeats until the client
-// disconnects (ctx cancelled) or a write fails.
-func (s *Server) pumpJobSSE(
+// pumpSSE writes queued frames and periodic heartbeats until the client
+// disconnects (ctx cancelled) or a write fails. It is the stream's only writer:
+// producers hand it whole frames, so frames never interleave and nothing is
+// written once the handler returns.
+func pumpSSE(
 	ctx context.Context,
 	w http.ResponseWriter,
 	flusher http.Flusher,
@@ -271,9 +268,9 @@ func (s *Server) pumpJobSSE(
 		select {
 		case <-ctx.Done():
 			return
-		case data := <-ch:
-			if err := writeJobSSE(w, data); err != nil {
-				logger.DebugContext(ctx, "jobs SSE write error", "error", err)
+		case frame := <-ch:
+			if _, err := w.Write(frame); err != nil {
+				logger.DebugContext(ctx, "SSE write error", "error", err)
 				return
 			}
 			flusher.Flush()
@@ -286,16 +283,15 @@ func (s *Server) pumpJobSSE(
 	}
 }
 
-// writeJobSSE writes one `event: job` SSE frame. It uses w.Write (not a
-// value-interpolating Fprintf) so the data — already JSON-marshalled bytes —
-// is emitted verbatim and the output-escaping gate stays satisfied.
-func writeJobSSE(w http.ResponseWriter, data []byte) error {
+// sseFrame builds one named SSE frame around already-marshalled JSON. It is
+// assembled as bytes (not a value-interpolating Fprintf) so the data is
+// emitted verbatim and the output-escaping gate stays satisfied.
+func sseFrame(event string, data []byte) []byte {
 	var b bytes.Buffer
-	b.WriteString("event: job\ndata: ")
+	b.WriteString("event: " + event + "\ndata: ")
 	b.Write(data)
 	b.WriteString("\n\n")
-	_, err := w.Write(b.Bytes())
-	return err
+	return b.Bytes()
 }
 
 // writeJobError maps a runner sentinel error to its HTTP status + ErrCode.
@@ -321,8 +317,8 @@ func writeJobError(w http.ResponseWriter, logger *slog.Logger, err error) {
 
 // jobsRoutes returns the unified job-runner routes (ADR-0005). POST (create)
 // and DELETE (cancel) are mutating -> operator-gated via writeGated; GET
-// (status) and the SSE stream are safe reads. The exact /jobs/events pattern
-// out-ranks the /jobs/ subtree in net/http's ServeMux (longest match wins).
+// (status) and the SSE stream are safe reads. The literal /jobs/events pattern
+// out-ranks /jobs/{jobId} in net/http's ServeMux (the more specific wins).
 func (s *Server) jobsRoutes() []route.Route {
 	op := roles.Operator
 	return []route.Route{
@@ -342,7 +338,7 @@ func (s *Server) jobsRoutes() []route.Route {
 			Auth:    true,
 		},
 		{
-			Path:    APIVersionPrefix + "/jobs/",
+			Path:    APIVersionPrefix + "/jobs/{jobId}",
 			Handler: s.handleJobByID,
 			Methods: []string{http.MethodGet, http.MethodDelete},
 			Scope:   op,

@@ -13,14 +13,15 @@ import type React from 'react';
 import { useEffect } from 'react';
 import { withIds } from '../components/settings/settingsDrawerNormalizer';
 import { LogComponents, logger } from '../lib/logger';
+import type { IperfSuggestion } from '../types/generated/iperf-suggestion';
+import type { LogFileResponse } from '../types/generated/log-file-response';
+import type { SettingsResponse, ThresholdSettings } from '../types/generated/settings-response';
+import type { TestsSettingsResponse } from '../types/generated/tests-settings-response';
 import type {
   CableTestSettings as CableTestSettingsType,
-  IperfSuggestion,
   IpSettings,
   LinkSettings as LinkSettingsType,
-  LogsResponse,
   NetworkDiscoverySettings,
-  SettingsThresholds,
   SnmpSettings as SnmpSettingsType,
   TestsSettings,
   WiFiSettings as WiFiSettingsType,
@@ -30,7 +31,7 @@ const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 interface UseSettingsDrawerLoadersArgs {
   isOpen: boolean;
-  setThresholds: React.Dispatch<React.SetStateAction<SettingsThresholds>>;
+  setThresholds: React.Dispatch<React.SetStateAction<ThresholdSettings>>;
   setIpSettings: (s: IpSettings) => void;
   setDnsInput: (value: string) => void;
   setTestsSettings: (s: TestsSettings) => void;
@@ -78,12 +79,8 @@ export function useSettingsDrawerLoaders({
     await fetch(`${API_BASE}/api/v1/settings`, { credentials: 'include' })
       .then(async (response) => {
         if (response.ok) {
-          const data = await (response.json() as Promise<{
-            thresholds?: Partial<SettingsThresholds>;
-          }>);
-          if (data.thresholds) {
-            setThresholds((prev) => ({ ...prev, ...data.thresholds }));
-          }
+          const data = await (response.json() as Promise<SettingsResponse>);
+          setThresholds(data.thresholds);
         }
       })
       .catch((err: unknown) => {
@@ -115,7 +112,7 @@ export function useSettingsDrawerLoaders({
     await fetch(`${API_BASE}/api/v1/telemetry/probes/settings`, { credentials: 'include' })
       .then(async (response) => {
         if (response.ok) {
-          const data = await (response.json() as Promise<Partial<TestsSettings>>);
+          const data = await (response.json() as Promise<Partial<TestsSettingsResponse>>);
           setTestsSettings({
             dnsHostname: data.dnsHostname || 'google.com',
             dnsServers: withIds(data.dnsServers || []).map((server) => ({
@@ -141,6 +138,16 @@ export function useSettingsDrawerLoaders({
               expectedStatus: endpoint.expectedStatus || 200,
               enabled: endpoint.enabled !== false,
             })),
+            rtspEndpoints: withIds(data.rtspEndpoints),
+            dicomEndpoints: withIds(data.dicomEndpoints),
+            hl7Endpoints: withIds(data.hl7Endpoints),
+            fhirEndpoints: withIds(data.fhirEndpoints),
+            sqlEndpoints: withIds(data.sqlEndpoints),
+            fileShareEndpoints: withIds(data.fileShareEndpoints),
+            ldapEndpoints: withIds(data.ldapEndpoints),
+            ltiEndpoints: withIds(data.ltiEndpoints),
+            opcuaEndpoints: withIds(data.opcuaEndpoints),
+            modbusEndpoints: withIds(data.modbusEndpoints),
             runPerformance: data.runPerformance ?? true,
             runSpeedtest: data.runSpeedtest ?? true,
             runIperf: data.runIperf ?? true,
@@ -298,8 +305,8 @@ export function useSettingsDrawerLoaders({
         if (!response.ok) {
           throw new Error('Unable to load logs');
         }
-        const data = await (response.json() as Promise<LogsResponse>);
-        setLogPreview(data.lines || []);
+        const data = await (response.json() as Promise<LogFileResponse>);
+        setLogPreview(data.lines);
       })
       .catch((err: unknown) => {
         setLogPreview([]);

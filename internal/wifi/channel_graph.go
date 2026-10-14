@@ -23,24 +23,25 @@ const (
 // ChannelNetwork represents a network for channel visualization.
 // Contains all information needed to render the network on a channel overlap graph.
 type ChannelNetwork struct {
-	SSID         string `json:"ssid"`              // Network name (SSID)
-	BSSID        string `json:"bssid"`             // Access point MAC address (BSSID)
-	Channel      int    `json:"channel"`           // Primary channel number
-	CenterFreq   int    `json:"center_freq_mhz"`   // Center frequency in MHz
-	ChannelWidth int    `json:"channel_width_mhz"` // Channel width in MHz (20, 40, 80, 160, 320)
-	Signal       int    `json:"signal_dbm"`        // Signal strength in dBm
-	Band         string `json:"band"`              // Frequency band ("2.4GHz", "5GHz", "6GHz")
-	IsConnected  bool   `json:"is_connected"`      // Whether this is the connected network
+	SSID    string `json:"ssid"`
+	BSSID   string `json:"bssid"`
+	Channel int    `json:"channel"` // primary channel
+	// The units are in the wire names; ChannelWidth is 20, 40, 80, 160 or 320.
+	CenterFreq   int    `json:"centerFreqMhz"`
+	ChannelWidth int    `json:"channelWidthMhz"`
+	Signal       int    `json:"signalDbm"`
+	Band         string `json:"band"            jsonschema:"enum=2.4GHz,enum=5GHz,enum=6GHz"`
+	IsConnected  bool   `json:"isConnected"`
 }
 
 // ChannelGraphData contains data for channel overlap visualization.
 // Organizes networks by frequency band for rendering separate graphs.
 type ChannelGraphData struct {
-	Networks2_4GHz []ChannelNetwork `json:"networks_2_4ghz"`           // 2.4 GHz band networks (channels 1-14)
-	Networks5GHz   []ChannelNetwork `json:"networks_5ghz"`             // 5 GHz band networks (channels 36-165)
-	Networks6GHz   []ChannelNetwork `json:"networks_6ghz"`             // 6 GHz band networks (channels 1-233)
-	ConnectedBSSID string           `json:"connected_bssid,omitempty"` // BSSID of connected network
-	ScanTime       time.Time        `json:"scan_time"`                 // Timestamp of the scan
+	Networks2_4GHz []ChannelNetwork `json:"networks24Ghz"`
+	Networks5GHz   []ChannelNetwork `json:"networks5Ghz"`
+	Networks6GHz   []ChannelNetwork `json:"networks6Ghz"`
+	ConnectedBSSID string           `json:"connectedBssid,omitempty"`
+	ScanTime       time.Time        `json:"scanTime"`
 }
 
 // GetChannelGraphData converts scanned networks into channel graph visualization data.

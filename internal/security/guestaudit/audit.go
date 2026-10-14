@@ -166,6 +166,7 @@ func Run(ctx context.Context, opts Options) (*Report, error) {
 		starts[i] = time.Now()
 		report.Results[i] = TargetResult{
 			Target:      opts.Targets[i],
+			OpenPorts:   []int{},
 			PortResults: make([]PortResult, 0, len(ports)),
 		}
 	}

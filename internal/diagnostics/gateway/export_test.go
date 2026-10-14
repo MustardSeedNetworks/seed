@@ -75,6 +75,16 @@ func (t *Tester) TesterGetPinger() *enumerate.ICMPPinger {
 	return t.pinger
 }
 
+// TesterGetPinger6 gets the ICMPv6 pinger for testing.
+func (t *Tester) TesterGetPinger6() *enumerate.ICMPPinger {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.pinger6
+}
+
+// WithZone exposes withZone.
+func WithZone(gateway, iface string) string { return withZone(gateway, iface) }
+
 // TesterRunning returns the running status for testing.
 func (t *Tester) TesterRunning() bool {
 	t.mu.RLock()
@@ -105,10 +115,18 @@ type RoutingReads struct {
 func (r RoutingReads) reader() routingReader {
 	return routingReader{
 		routes:            func() ([]RouteInfo, error) { return r.Routes, r.RoutesErr },
-		systemGateway:     func() (string, error) { return r.SystemGateway, nil },
-		systemGatewayIPv6: func() (string, error) { return r.SystemGatewayIPv6, nil },
+		systemGateway:     func() (string, error) { return detected(r.SystemGateway) },
+		systemGatewayIPv6: func() (string, error) { return detected(r.SystemGatewayIPv6) },
 		leaseRouter:       func(iface string) (string, error) { return r.LeaseRouters[iface], r.LeaseErr },
 	}
+}
+
+// detected answers as the system detectors do: an address, or ErrNoGateway.
+func detected(gw string) (string, error) {
+	if gw == "" {
+		return "", ErrNoGateway
+	}
+	return gw, nil
 }
 
 // GatewayForInterfaceWithReads applies the IPv4 interface-scoping rule to r.

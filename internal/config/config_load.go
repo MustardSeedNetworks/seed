@@ -75,24 +75,12 @@ func decodeAndMigrate(data []byte, cfg *Config) error {
 	return nil
 }
 
-func readHTTPSPortEnvironment() (int, bool, error) {
-	value, exists := os.LookupEnv("SEED_HTTPS_PORT")
-	if !exists || value == "" {
-		return 0, false, nil
-	}
-	port, err := strconv.Atoi(value)
-	if err != nil {
-		return 0, false, fmt.Errorf("SEED_HTTPS_PORT must be an integer: %w", err)
-	}
-	return port, true, nil
-}
-
 func applyConfigServerEnv(cfg *Config) error {
-	port, exists, err := readHTTPSPortEnvironment()
-	if err != nil {
-		return err
-	}
-	if exists {
+	if value := os.Getenv("SEED_HTTPS_PORT"); value != "" {
+		port, err := strconv.Atoi(value)
+		if err != nil {
+			return fmt.Errorf("SEED_HTTPS_PORT must be an integer: %w", err)
+		}
 		cfg.Server.Port = port
 	}
 	if value := os.Getenv("SEED_PUBLIC_ORIGIN"); value != "" {

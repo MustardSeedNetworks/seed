@@ -15,6 +15,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
+import type { SettingsResponse } from '../types/generated/settings-response';
 import type { SaveStatus } from '../types/settings';
 
 /**
@@ -34,11 +35,6 @@ export interface AlertWebhookSettings {
   secret: string;
   /** Whether signing material is already stored. */
   secretSet: boolean;
-}
-
-/** The alerts slice of GET /api/v1/settings. */
-interface AlertsSettingsResponse {
-  alerts?: { webhook?: { url?: string; secretSet?: boolean } };
 }
 
 interface UseAlertWebhookSettingsResult {
@@ -63,12 +59,12 @@ export function useAlertWebhookSettings(): UseAlertWebhookSettingsResult {
 
   const fetchWebhook = async (): Promise<void> => {
     await api
-      .get<AlertsSettingsResponse>('/api/v1/settings')
+      .get<SettingsResponse>('/api/v1/settings')
       .then((data) => {
         setWebhook({
-          url: data.alerts?.webhook?.url ?? '',
+          url: data.alerts.webhook.url,
           secret: '',
-          secretSet: data.alerts?.webhook?.secretSet ?? false,
+          secretSet: data.alerts.webhook.secretSet,
         });
       })
       .catch((err: unknown) => {

@@ -19,7 +19,7 @@ import type {
   TopologyLink,
   TopologyNode,
   TopologyNodeDetailResponse,
-} from '../types/topology';
+} from '../types/generated/topology-node-detail-response';
 
 function node(over: Partial<TopologyNode>): TopologyNode {
   return {
@@ -110,6 +110,7 @@ const detail: TopologyNodeDetailResponse = {
 
 const state = {
   nodes: nodes as TopologyNode[],
+  fetchedAt: Date.parse('2026-08-19T12:00:00Z'),
   links: [] as TopologyLink[],
   linksError: null as string | null,
   listError: null as string | null,
@@ -122,6 +123,7 @@ const state = {
 vi.mock('../hooks/useTopology', () => ({
   useTopologyNodes: () => ({
     nodes: state.nodes,
+    fetchedAt: state.fetchedAt,
     loading: state.listLoading,
     error: state.listError,
     refresh: vi.fn(),
@@ -280,20 +282,30 @@ describe('TopologyPage — archetype rules', () => {
     expect(row.innerHTML).not.toMatch(/cat-/);
   });
 
-  // A node the reconcilers have never dated is unmeasured, not healthy. Green
-  // on a node that was never seen is exactly the reassuring-when-it-knows-
-  // nothing failure the shell exists to prevent.
-  it('marks a never-seen node unknown rather than ok', () => {
+  // Green only while the node is polled on schedule (seed#2525). Every dated
+  // node used to render ok, so a switch that stopped answering stayed green;
+  // and a node never dated is unmeasured, not healthy.
+  it('marks a node by the age of its last poll, not by having one', () => {
     state.nodes = [
-      node({ id: 'seen', displayName: 'seen-01', lastSeen: '2026-08-19T10:00:00Z' }),
-      node({ id: 'unseen', displayName: 'unseen-01', lastSeen: '' }),
+      node({ id: 'fresh', lastSeen: '2026-08-19T11:58:00Z', pollIntervalSeconds: 300 }),
+      node({ id: 'late', lastSeen: '2026-08-19T11:00:00Z', pollIntervalSeconds: 600 }),
+      node({ id: 'gone', lastSeen: '2026-08-12T12:00:00Z', pollIntervalSeconds: 300 }),
+      node({ id: 'unpolled', lastSeen: '2026-08-19T11:59:00Z' }),
+      node({ id: 'unseen', lastSeen: '', pollIntervalSeconds: 300 }),
     ];
     render(<TopologyPage />);
 
-    const bar = (id: string) =>
-      screen.getByTestId(`node-row-${id}`).querySelector('span[aria-hidden="true"]');
-    expect(bar('seen')?.className).toContain('bg-status-success');
-    expect(bar('unseen')?.className).toContain('bg-text-disabled');
+    const row = (id: string) => screen.getByTestId(`node-row-${id}`);
+    expect(row('fresh').dataset.state).toBe('ok');
+    expect(row('late').dataset.state).toBe('unknown');
+    expect(row('gone').dataset.state).toBe('unknown');
+    expect(row('unpolled').dataset.state).toBe('unknown');
+    expect(row('unseen').dataset.state).toBe('unknown');
+    // Stale is neutral and named; only a node within ten intervals is stale.
+    expect(within(row('late')).getByText('Missed polls')).toBeInTheDocument();
+    for (const id of ['fresh', 'gone', 'unpolled', 'unseen']) {
+      expect(within(row(id)).queryByText('Missed polls')).not.toBeInTheDocument();
+    }
   });
 });
 

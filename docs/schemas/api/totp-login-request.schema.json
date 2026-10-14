@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/totp-login-request.schema.json",
+  "$ref": "#/$defs/TOTPLoginRequest",
+  "$defs": {
+    "TOTPLoginRequest": {
+      "properties": {
+        "mfaToken": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "mfaToken",
+        "code"
+      ]
+    }
+  },
+  "title": "TOTPLoginRequest",
+  "description": "TOTPLoginRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

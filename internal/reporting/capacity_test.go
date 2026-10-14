@@ -78,26 +78,49 @@ func trueCrossing(day0 time.Time) time.Time {
 	return day0.AddDate(0, 0, 40).Add(busyHour*time.Hour + 30*time.Minute)
 }
 
-func newCapacityGenerator(t *testing.T, db *database.DB) (*reporting.GeneratorService, *reporting.AggregatorService) {
+// finishedReports passes report writes through to the store and hands each
+// finished report to the test. The forecast's generation runs on the
+// generator's own goroutine and takes minutes on a loaded host, so the tests
+// wait for it to finish rather than for a deadline the host can outrun (#3110).
+type finishedReports struct {
+	reporting.ReportRepo
+
+	finished chan string
+}
+
+func (r *finishedReports) UpdateReport(ctx context.Context, rep *reporting.Report) (bool, error) {
+	live, err := r.ReportRepo.UpdateReport(ctx, rep)
+	if rep.Status == reporting.StatusComplete || rep.Status == reporting.StatusFailed {
+		r.finished <- rep.ID
+	}
+	return live, err
+}
+
+type capacityGenerator struct {
+	*reporting.GeneratorService
+
+	reports *finishedReports
+}
+
+func newCapacityGenerator(t *testing.T, db *database.DB) (capacityGenerator, *reporting.AggregatorService) {
 	t.Helper()
 	cfg := testConfig()
 	templates := reporting.NewTemplateService(cfg)
 	require.NoError(t, templates.Load())
 	aggregator := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gen := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), templates, aggregator)
+	reports := &finishedReports{ReportRepo: store.NewReportRepo(db), finished: make(chan string, 1)}
+	gen := reporting.NewGeneratorService(cfg, reports, store.NewExportRepo(db), templates, aggregator)
 	gen.SetReportsPath(t.TempDir())
-	return gen, aggregator
+	return capacityGenerator{GeneratorService: gen, reports: reports}, aggregator
 }
 
-func generateCapacity(t *testing.T, gen *reporting.GeneratorService, format reporting.ExportFormat) *reporting.Report {
+func generateCapacity(t *testing.T, gen capacityGenerator, format reporting.ExportFormat) *reporting.Report {
 	t.Helper()
 	created, err := gen.GenerateFromTemplate(t.Context(), "capacity", format, nil)
 	require.NoError(t, err)
-	var report *reporting.Report
-	eventually(t, func() bool {
-		report, err = gen.GetReport(context.Background(), created.ID)
-		return err == nil && report.Status != reporting.StatusPending && report.Status != reporting.StatusGenerating
-	})
+	require.Equal(t, created.ID, <-gen.reports.finished)
+	report, err := gen.GetReport(t.Context(), created.ID)
+	require.NoError(t, err)
 	require.Equal(t, reporting.StatusComplete, report.Status, report.Error)
 	return report
 }

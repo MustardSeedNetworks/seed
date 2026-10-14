@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import i18n from '../../i18n';
 import { WiFiCard } from './WiFiCard';
@@ -30,7 +30,11 @@ it('shows withheld details and remediation without claiming a disconnection', ()
 it('shows a scan error instead of interpreting it as empty airspace', () => {
   render(
     <WifiChannelGraph
-      data={{ available: true, error: 'Location Services withheld the network details.' }}
+      data={{
+        interface: 'en0',
+        available: true,
+        error: 'Location Services withheld the network details.',
+      }}
       visible
     />,
   );
@@ -80,4 +84,40 @@ it('renders an authorized association with channel and signal', () => {
   expect(screen.getByTestId('wifi-associated')).toHaveTextContent('lab');
   expect(screen.getByTestId('wifi-associated')).toHaveTextContent('-52 dBm');
   expect(screen.getByTestId('wifi-associated')).toHaveTextContent('44');
+});
+
+it('draws each network from the signal and channel width the daemon sends', () => {
+  const { container } = render(
+    <WifiChannelGraph
+      data={{
+        interface: 'wlan0',
+        available: true,
+        data: {
+          networks24Ghz: [],
+          networks5Ghz: [
+            {
+              ssid: 'lab',
+              bssid: 'aa:bb:cc:dd:ee:ff',
+              channel: 36,
+              centerFreqMhz: 5180,
+              channelWidthMhz: 80,
+              signalDbm: -51,
+              band: '5GHz',
+              isConnected: false,
+            },
+          ],
+          networks6Ghz: [],
+          scanTime: '2026-10-12T00:00:00Z',
+        },
+      }}
+    />,
+  );
+  const curve = container.querySelector('path[d] > title')?.parentElement;
+  expect(curve?.getAttribute('d')).toMatch(/^M [\d.]+,/);
+  expect(curve?.getAttribute('d')).not.toContain('NaN');
+  if (curve) {
+    fireEvent.mouseEnter(curve);
+  }
+  expect(screen.getByText('-51 dBm')).toBeVisible();
+  expect(screen.getByText('80 MHz')).toBeVisible();
 });

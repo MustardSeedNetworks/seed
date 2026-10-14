@@ -42,7 +42,13 @@ func (m *Manager) IsWireless() bool {
 	iface := m.interfaceName
 	m.mu.RUnlock()
 
-	return isWirelessPlatform(iface)
+	return IsWirelessInterface(iface)
+}
+
+// IsWirelessInterface asks the platform whether name is a Wi-Fi radio. Unlike
+// the interface listing's name-prefix guess, it is right for macOS's en0.
+func IsWirelessInterface(name string) bool {
+	return isWirelessPlatform(name)
 }
 
 // GetInfo returns current wireless network information.

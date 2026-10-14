@@ -1,0 +1,59 @@
+/**
+ * AUTO-GENERATED FILE. DO NOT EDIT BY HAND.
+ *
+ * Regenerate with: `npm run gen-types` (or `make schema && npm run gen-types`
+ * after Go DTO changes). The schema source of truth lives at
+ * docs/schemas/api/; the Go DTO source lives at internal/api/.
+ */
+export interface TopologyNodeDetailResponse {
+  node: TopologyNode;
+  interfaces: TopologyInterface[];
+  links: TopologyLink[];
+}
+export interface TopologyNode {
+  id: string;
+  clientId: string;
+  identityHash: string;
+  displayName: string;
+  deviceType: string;
+  chassisId: string;
+  sysName: string;
+  primaryMac: string;
+  primaryIp: string;
+  firstSeen: string;
+  lastSeen: string;
+  metadata: {
+    [k: string]: unknown;
+  };
+  pollIntervalSeconds?: number;
+}
+export interface TopologyInterface {
+  id: number;
+  nodeId: string;
+  ifIndex: number;
+  ifName: string;
+  ifDescr: string;
+  ifAlias: string;
+  ifType: number;
+  ifAdminStatus: number;
+  ifOperStatus: number;
+  ifPhysAddr: string;
+  speedBps: number;
+  lastSeen: string;
+}
+export interface TopologyLink {
+  id: string;
+  sourceNodeId: string;
+  targetNodeId: string;
+  sourceInterface: string;
+  targetInterface: string;
+  linkType: string;
+  status: string;
+  speedMbps: number;
+  utilizationPct?: number;
+  firstSeen: string;
+  lastSeen: string;
+  evidence: {
+    [k: string]: unknown;
+  };
+}

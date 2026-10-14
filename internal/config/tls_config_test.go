@@ -70,58 +70,19 @@ func TestLoadRejectsRemovedTLSEnvironment(t *testing.T) {
 	}
 }
 
-func TestLoadSystemConfigUsesHTTPSPortEnvironment(t *testing.T) {
-	t.Setenv("SEED_HTTPS_PORT", "9443")
-	cfg, err := config.LoadSystemConfig(filepath.Join(t.TempDir(), "missing.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if cfg.Server.Port != 9443 {
-		t.Fatalf("HTTPS port = %d, want 9443", cfg.Server.Port)
-	}
-}
-
-func TestLoadSystemConfigRejectsRemovedTLSServerSettings(t *testing.T) {
-	t.Parallel()
-
-	path := filepath.Join(t.TempDir(), "system.json")
-	if err := os.WriteFile(path, []byte(`{"server":{"https":false}}`), 0o600); err != nil {
-		t.Fatalf("write system config: %v", err)
-	}
-
-	_, err := config.LoadSystemConfig(path)
-	if err == nil {
-		t.Fatal("LoadSystemConfig() accepted the removed HTTPS toggle")
-	}
-	if !strings.Contains(err.Error(), "unknown field") {
-		t.Fatalf("LoadSystemConfig() error = %q, want an unknown-field error", err)
-	}
-}
-
 func TestHTTPSServerEnvironmentOverrides(t *testing.T) {
 	t.Setenv("SEED_HTTPS_PORT", "9443")
 	t.Setenv("SEED_PUBLIC_ORIGIN", "https://seed.example.com:8443")
 	t.Setenv("SEED_TLS_CERT_FILE", "server.crt")
 	t.Setenv("SEED_TLS_KEY_FILE", "server.key")
 
-	legacy, err := config.Load(filepath.Join(t.TempDir(), "missing.json"))
+	cfg, err := config.Load(filepath.Join(t.TempDir(), "missing.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if legacy.Server.Port != 9443 || legacy.Server.PublicOrigin != "https://seed.example.com:8443" ||
-		legacy.Server.CertFile != "server.crt" || legacy.Server.KeyFile != "server.key" {
-		t.Fatalf("legacy server environment was not applied: %+v", legacy.Server)
-	}
-
-	cfg, err := config.LoadSystemConfig(filepath.Join(t.TempDir(), "missing.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if validateErr := cfg.Validate(); validateErr != nil {
-		t.Fatal(validateErr)
-	}
-	if got := cfg.ToLegacyConfig().Server.PublicOrigin; got != "https://seed.example.com:8443" {
-		t.Fatalf("legacy public origin = %q", got)
+	if cfg.Server.Port != 9443 || cfg.Server.PublicOrigin != "https://seed.example.com:8443" ||
+		cfg.Server.CertFile != "server.crt" || cfg.Server.KeyFile != "server.key" {
+		t.Fatalf("server environment was not applied: %+v", cfg.Server)
 	}
 }
 
@@ -130,10 +91,6 @@ func TestLoadRejectsInvalidHTTPSPortEnvironment(t *testing.T) {
 	if _, err := config.Load(filepath.Join(t.TempDir(), "missing.json")); err == nil ||
 		!strings.Contains(err.Error(), "SEED_HTTPS_PORT must be an integer") {
 		t.Fatalf("Load() error = %v", err)
-	}
-	if _, err := config.LoadSystemConfig(filepath.Join(t.TempDir(), "missing.json")); err == nil ||
-		!strings.Contains(err.Error(), "SEED_HTTPS_PORT must be an integer") {
-		t.Fatalf("LoadSystemConfig() error = %v", err)
 	}
 }
 

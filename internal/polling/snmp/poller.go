@@ -27,6 +27,11 @@ const (
 // chain runs.
 var ErrCollectorNotRegistered = errors.New("collector not registered")
 
+// ErrNotRunning is returned by PollNow when the poller has not started: below
+// Starter the engine is never registered, and without a keyring it is never
+// built.
+var ErrNotRunning = errors.New("snmp poller is not running")
+
 // PollerStorage is the narrowed surface the Poller needs from the
 // database layer. Tests inject a fake.
 type PollerStorage interface {
@@ -154,12 +159,15 @@ func (p *Poller) recordChainStart() {
 	p.inflightCount++
 }
 
-// recordChainEnd stamps the completion time + error and decrements
-// inflight.
-func (p *Poller) recordChainEnd(err error) {
+// recordChainEnd decrements inflight and, unless the chain was abandoned,
+// stamps its completion time + error.
+func (p *Poller) recordChainEnd(ctx context.Context, err error) {
 	p.statusMu.Lock()
 	defer p.statusMu.Unlock()
 	p.inflightCount--
+	if abandoned(ctx, err) {
+		return
+	}
 	p.lastChainAt = time.Now().UTC()
 	if err != nil {
 		p.lastChainErr = err.Error()
@@ -296,6 +304,21 @@ func (p *Poller) Stop(ctx context.Context) error {
 	return nil
 }
 
+// PollNow runs target's collector chain once, outside its schedule, and
+// records the outcome exactly as a scheduled poll does. It is the operator's
+// "Test target", so the target need not be enabled: testing a paused target
+// before switching it on is the point.
+func (p *Poller) PollNow(ctx context.Context, target *polling.Target) error {
+	p.runMu.Lock()
+	running := p.started
+	p.runMu.Unlock()
+	if !running {
+		return ErrNotRunning
+	}
+	p.runChain(ctx, target)
+	return nil
+}
+
 // runChain walks the target's collector chain. Each collector is
 // invoked sequentially; failures are logged and the chain
 // continues. After the chain runs, last_status / last_error /
@@ -305,7 +328,7 @@ func (p *Poller) runChain(ctx context.Context, target *polling.Target) {
 
 	wt := wireTarget(target)
 	var firstErr error
-	defer func() { p.recordChainEnd(firstErr) }()
+	defer func() { p.recordChainEnd(ctx, firstErr) }()
 
 	// Resolve before running any collector. A target whose credentials cannot be
 	// decrypted is misconfigured, and polling it unauthenticated would either
@@ -348,16 +371,29 @@ func (p *Poller) runChain(ctx context.Context, target *polling.Target) {
 // normal chain exit and the credential-failure path, so an unpollable target
 // surfaces its reason to the operator instead of just going quiet.
 func (p *Poller) recordPollOutcome(ctx context.Context, target *polling.Target, pollErr error) {
+	if abandoned(ctx, pollErr) {
+		return
+	}
 	status := pollStatusOK
 	errMsg := ""
 	if pollErr != nil {
 		status = pollStatusError
 		errMsg = pollErr.Error()
 	}
+	// A poll cut short by its deadline still has an outcome to record.
+	ctx = context.WithoutCancel(ctx)
 	if updErr := p.storage.UpdateLastPoll(ctx, target.ID, status, errMsg); updErr != nil {
 		p.logger.WarnContext(ctx, "snmp poller: update last_poll failed",
 			"target_id", target.ID, "error", updErr)
 	}
+}
+
+// abandoned reports whether a poll failed because its context was cancelled:
+// the poller stopping, or the operator's "Test target" request going away.
+// That failure says nothing about the device, so it is not the target's
+// outcome (seed#3204). A deadline is: the device was too slow to answer.
+func abandoned(ctx context.Context, pollErr error) bool {
+	return pollErr != nil && errors.Is(ctx.Err(), context.Canceled)
 }
 
 // credentialsForTarget resolves the decrypted credentials for a polling target.

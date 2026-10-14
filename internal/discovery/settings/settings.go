@@ -187,6 +187,10 @@ func learnedName(candidate learn.Candidate) string {
 	case learn.SourceRouteTable:
 		return "Learned from " + candidate.Router + " (routing table)"
 	case learn.SourceHostRoute:
+		// A host route with no gateway is on-link: there is no router to name.
+		if candidate.Router == "" {
+			return "Learned from this host's on-link route"
+		}
 		return "Learned from this host's route via " + candidate.Router
 	default:
 		return "Learned from " + candidate.Router

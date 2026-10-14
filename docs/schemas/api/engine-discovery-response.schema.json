@@ -315,6 +315,50 @@
         "portId"
       ]
     },
+    "EngineCapabilities": {
+      "properties": {
+        "wired": {
+          "type": "boolean"
+        },
+        "wifi": {
+          "type": "boolean"
+        },
+        "bluetooth": {
+          "type": "boolean"
+        },
+        "snmp": {
+          "type": "boolean"
+        },
+        "portScan": {
+          "type": "boolean"
+        },
+        "profiling": {
+          "type": "boolean"
+        },
+        "vulnScan": {
+          "type": "boolean"
+        },
+        "nameRes": {
+          "type": "boolean"
+        },
+        "correlation": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "wired",
+        "wifi",
+        "bluetooth",
+        "snmp",
+        "portScan",
+        "profiling",
+        "vulnScan",
+        "nameRes",
+        "correlation"
+      ]
+    },
     "EngineDiscoveryResponse": {
       "properties": {
         "devices": {
@@ -330,10 +374,7 @@
           "$ref": "#/$defs/ScanResult"
         },
         "capabilities": {
-          "additionalProperties": {
-            "type": "boolean"
-          },
-          "type": "object"
+          "$ref": "#/$defs/EngineCapabilities"
         }
       },
       "additionalProperties": false,

@@ -32,7 +32,8 @@ export function ClinicalEndpoints({
     name: '',
     host: '',
     port: 104,
-    aeTitle: '',
+    calledAe: '',
+    callingAe: '',
     enabled: true,
   }));
 
@@ -58,7 +59,7 @@ export function ClinicalEndpoints({
   } = useArrayItem(setTestsSettings, 'fhirEndpoints', () => ({
     name: '',
     baseUrl: 'https://',
-    authType: 'none' as const,
+    authType: 'none',
     enabled: true,
   }));
 
@@ -113,9 +114,9 @@ export function ClinicalEndpoints({
             />
             <input
               type="text"
-              value={endpoint.aeTitle}
+              value={endpoint.calledAe}
               onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateDicomEndpoint(endpoint.id ?? '', 'aeTitle', e.target.value)
+                updateDicomEndpoint(endpoint.id ?? '', 'calledAe', e.target.value)
               }
               placeholder="AE Title"
               className={cn(input.base, input.state.default, input.size.md, 'w-24')}

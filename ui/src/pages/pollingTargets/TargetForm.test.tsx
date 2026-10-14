@@ -8,8 +8,44 @@
  */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { UseDeviceCredentialsResult } from '../../hooks/useDeviceCredentials';
+import type { Credentials } from '../../types/generated/device-credential-list-response';
 import { emptyInput, TargetForm, type TargetFormProps, targetToInput } from './TargetForm';
+
+const vault = vi.hoisted(() => ({
+  current: { credentials: [], loading: false, error: null } as UseDeviceCredentialsResult,
+}));
+
+vi.mock('../../hooks/useDeviceCredentials', () => ({
+  useDeviceCredentials: (): UseDeviceCredentialsResult => vault.current,
+}));
+
+const community: Credentials = {
+  id: 'cred-000000000001',
+  clientId: 'c',
+  name: 'core community',
+  kind: 'v2c',
+  createdAt: '',
+  updatedAt: '',
+};
+
+const v3User: Credentials = {
+  id: 'cred-000000000002',
+  clientId: 'c',
+  name: 'noc v3',
+  kind: 'v3',
+  securityLevel: 'authPriv',
+  snmpV3User: 'noc',
+  snmpV3AuthProto: 'SHA',
+  snmpV3PrivProto: 'AES',
+  createdAt: '',
+  updatedAt: '',
+};
+
+beforeEach(() => {
+  vault.current = { credentials: [community, v3User], loading: false, error: null };
+});
 
 function fill(): Promise<void> {
   return (async (): Promise<void> => {
@@ -83,7 +119,7 @@ describe('TargetForm — collector chain', () => {
     expect(emptyInput().collectorChain).toBeUndefined();
   });
 
-  it('creates disabled, since the create form cannot yet attach a credential', () => {
+  it('creates disabled, since a fresh form has no credential chosen', () => {
     expect(emptyInput().enabled).toBe(false);
   });
 
@@ -115,5 +151,107 @@ describe('TargetForm — collector chain', () => {
     expect(chain.textContent).toContain('sys_info');
     expect(chain.textContent).toContain('if_table');
     expect(chain.querySelector('input')).toBeNull();
+  });
+});
+
+describe('TargetForm — credential picker', () => {
+  function optionNames(): string[] {
+    const select = screen.getByTestId('target-credential');
+    return Array.from(select.querySelectorAll('option')).map((o) => o.textContent ?? '');
+  }
+
+  it('offers only the credentials whose kind matches the SNMP version', async () => {
+    render(
+      <TargetForm mode="create" initial={emptyInput()} onSubmit={vi.fn()} onCancel={vi.fn()} />,
+    );
+    expect(optionNames()).toEqual(['No credential', 'core community']);
+
+    await userEvent.selectOptions(screen.getByTestId('target-version'), 'v3');
+
+    expect(optionNames()).toEqual(['No credential', 'noc v3']);
+  });
+
+  it('saves an enabled target with the credential picked from the vault', async () => {
+    const onSubmit = vi.fn<TargetFormProps['onSubmit']>().mockResolvedValue(undefined);
+    render(
+      <TargetForm
+        mode="create"
+        initial={{ ...emptyInput(), enabled: true }}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    );
+    await fill();
+
+    await userEvent.selectOptions(screen.getByTestId('target-credential'), community.id);
+    await userEvent.click(screen.getByTestId('target-save'));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ enabled: true, snmpVersion: 'v2c', credentialsId: community.id }),
+    );
+  });
+
+  it('drops the chosen credential when the version changes under it', async () => {
+    const onSubmit = vi.fn<TargetFormProps['onSubmit']>().mockResolvedValue(undefined);
+    render(
+      <TargetForm
+        mode="edit"
+        initial={{
+          ...emptyInput(),
+          name: 'core-01',
+          ipAddress: '10.44.10.2',
+          credentialsId: community.id,
+        }}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('target-credential')).toHaveValue(community.id);
+
+    await userEvent.selectOptions(screen.getByTestId('target-version'), 'v3');
+    await userEvent.click(screen.getByTestId('target-save'));
+
+    expect(screen.getByTestId('target-credential')).toHaveValue('');
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ credentialsId: undefined }));
+  });
+
+  it('summarises a v3 credential without any secret', async () => {
+    render(
+      <TargetForm
+        mode="create"
+        initial={{ ...emptyInput(), snmpVersion: 'v3' }}
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    await userEvent.selectOptions(screen.getByTestId('target-credential'), v3User.id);
+
+    expect(screen.getByTestId('target-credential-summary')).toHaveTextContent(
+      'User noc · authPriv · SHA · AES',
+    );
+  });
+
+  it('says when the vault holds nothing for the chosen version', () => {
+    vault.current = { credentials: [v3User], loading: false, error: null };
+    render(
+      <TargetForm mode="create" initial={emptyInput()} onSubmit={vi.fn()} onCancel={vi.fn()} />,
+    );
+
+    expect(optionNames()).toEqual(['No credential']);
+    expect(screen.getByTestId('target-credential-summary')).toHaveTextContent(
+      'The vault holds no SNMP v2c credential.',
+    );
+  });
+
+  it('reports a vault that failed to load instead of an empty list', () => {
+    vault.current = { credentials: [], loading: false, error: 'Forbidden' };
+    render(
+      <TargetForm mode="create" initial={emptyInput()} onSubmit={vi.fn()} onCancel={vi.fn()} />,
+    );
+
+    expect(screen.getByTestId('target-credential-summary')).toHaveTextContent(
+      'Could not load the credential vault: Forbidden',
+    );
   });
 });

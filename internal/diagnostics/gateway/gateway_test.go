@@ -1,6 +1,7 @@
 package gateway_test
 
 import (
+	"errors"
 	"net/netip"
 	"sync"
 	"testing"
@@ -297,17 +298,20 @@ func TestTesterStartStopContinuousNotRunning(t *testing.T) {
 	}
 }
 
-// The detectors report "no default route found" as an empty string with a nil
-// error, on every platform. What must always hold is that a non-empty result
-// is a real address of the right family — an empty one reaching a pinger would
-// be a defect, and handlers_security.go guards on exactly that.
+// A host without a default route is an answer, not an empty address: the
+// detectors return ErrNoGateway for it, and an address otherwise. Run under
+// `unshare -n` (a namespace with no routes) the absent case is exercised for
+// both families; dev-srv-ubuntu exercises the IPv6 one as it stands.
 func TestDetectGateway(t *testing.T) {
 	gw, err := gateway.DetectGateway()
+	if errors.Is(err, gateway.ErrNoGateway) {
+		if gw != "" {
+			t.Errorf("DetectGateway() = %q with ErrNoGateway, want an empty address", gw)
+		}
+		return
+	}
 	if err != nil {
 		t.Skipf("gateway detection unavailable on this host: %v", err)
-	}
-	if gw == "" {
-		t.Skip("host has no default IPv4 route")
 	}
 	addr, parseErr := netip.ParseAddr(gw)
 	if parseErr != nil {
@@ -924,11 +928,14 @@ func TestPingErrorMessage(t *testing.T) {
 
 func TestDetectGatewayIPv6(t *testing.T) {
 	gw, err := gateway.DetectGatewayIPv6()
+	if errors.Is(err, gateway.ErrNoGateway) {
+		if gw != "" {
+			t.Errorf("DetectGatewayIPv6() = %q with ErrNoGateway, want an empty address", gw)
+		}
+		return
+	}
 	if err != nil {
 		t.Skipf("IPv6 gateway detection unavailable on this host: %v", err)
-	}
-	if gw == "" {
-		t.Skip("host has no default IPv6 route")
 	}
 	addr, parseErr := netip.ParseAddr(gw)
 	if parseErr != nil {
@@ -946,9 +953,9 @@ func TestTesterClose(t *testing.T) {
 	// Close should not panic.
 	tester.Close()
 
-	// Verify pinger is nil after close.
-	if tester.TesterGetPinger() != nil {
-		t.Error("expected pinger to be nil after Close")
+	// Verify both pingers are nil after close.
+	if tester.TesterGetPinger() != nil || tester.TesterGetPinger6() != nil {
+		t.Error("expected both pingers to be nil after Close")
 	}
 
 	// Multiple closes should not panic.
@@ -1250,16 +1257,6 @@ func TestGetAllRoutes(t *testing.T) {
 			t.Errorf("unexpected Family %q", r.Family)
 		}
 	}
-}
-
-func TestGetDefaultGatewayInterface(t *testing.T) {
-	// Test GetDefaultGatewayInterface - should return interface name or empty.
-	iface, err := gateway.GetDefaultGatewayInterface()
-	if err != nil {
-		t.Logf("GetDefaultGatewayInterface returned error: %v", err)
-	}
-	// Just verify it doesn't panic and returns valid types.
-	_ = iface
 }
 
 func TestRouteInfoFields(t *testing.T) {

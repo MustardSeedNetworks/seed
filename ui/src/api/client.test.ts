@@ -410,6 +410,6 @@ describe('api client 204 No Content', () => {
       return Promise.resolve(new Response(null, { status: 204 }));
     });
 
-    await expect(api.delete('/api/v1/reports/schedules/s1')).resolves.toBeUndefined();
+    await expect(api.delete('/api/v1/report-schedules/s1')).resolves.toBeUndefined();
   });
 });

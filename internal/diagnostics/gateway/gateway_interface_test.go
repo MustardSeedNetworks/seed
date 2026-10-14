@@ -52,6 +52,7 @@ func TestGatewayForInterfaceScoping(t *testing.T) {
 		reads      func(r *gateway.RoutingReads)
 		want       string
 		wantSource gateway.Source
+		wantErr    error
 	}{
 		{
 			name:       "the interface carrying the default route gets its gateway",
@@ -75,10 +76,10 @@ func TestGatewayForInterfaceScoping(t *testing.T) {
 			wantSource: gateway.SourceLease,
 		},
 		{
-			name:  "an interface with neither has no gateway of its own",
-			iface: "feth0",
-			reads: func(r *gateway.RoutingReads) { r.LeaseRouters = nil },
-			want:  "",
+			name:    "an interface with neither has no gateway of its own",
+			iface:   "feth0",
+			reads:   func(r *gateway.RoutingReads) { r.LeaseRouters = nil },
+			wantErr: gateway.ErrNoGateway,
 		},
 		{
 			name:  "a second default route belongs to its own interface",
@@ -95,6 +96,12 @@ func TestGatewayForInterfaceScoping(t *testing.T) {
 			want:       testGateway,
 			wantSource: gateway.SourceRoute,
 		},
+		{
+			name:    "no selection and no system default route has no gateway",
+			iface:   "",
+			reads:   func(r *gateway.RoutingReads) { r.SystemGateway = "" },
+			wantErr: gateway.ErrNoGateway,
+		},
 	}
 
 	for _, tt := range tests {
@@ -105,8 +112,8 @@ func TestGatewayForInterfaceScoping(t *testing.T) {
 				tt.reads(&reads)
 			}
 			got, source, err := gateway.GatewayForInterfaceWithReads(tt.iface, reads)
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("got error %v, want %v", err, tt.wantErr)
 			}
 			if got != tt.want {
 				t.Errorf("got %q, want %q", got, tt.want)
@@ -122,20 +129,21 @@ func TestIPv6GatewayForInterfaceScoping(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name   string
-		iface  string
-		routes []gateway.RouteInfo
-		want   string
+		name    string
+		iface   string
+		routes  []gateway.RouteInfo
+		want    string
+		wantErr error
 	}{
 		{
-			name:  "the selected interface gets its own router, not the system default",
+			name:  "the selected interface gets its own router, zoned to that link",
 			iface: "feth0",
-			want:  "fe80::2",
+			want:  "fe80::2%feth0",
 		},
 		{
-			name:  "an interface with no IPv6 default route has no gateway",
-			iface: "feth1",
-			want:  "",
+			name:    "an interface with no IPv6 default route has no gateway",
+			iface:   "feth1",
+			wantErr: gateway.ErrNoGateway,
 		},
 		{
 			name:  "a global next hop is preferred over a link-local one",
@@ -152,7 +160,7 @@ func TestIPv6GatewayForInterfaceScoping(t *testing.T) {
 			routes: []gateway.RouteInfo{
 				defaultRoute("inet", "0.0.0.0", testGateway, "en0"),
 			},
-			want: "",
+			wantErr: gateway.ErrNoGateway,
 		},
 		{
 			name:  "a non-default route is not a gateway",
@@ -160,7 +168,7 @@ func TestIPv6GatewayForInterfaceScoping(t *testing.T) {
 			routes: []gateway.RouteInfo{
 				{Destination: "2001:db8::", Prefix: 0, Gateway: "fe80::9", Interface: "en0", Family: "inet6"},
 			},
-			want: "",
+			wantErr: gateway.ErrNoGateway,
 		},
 		{
 			name:  "no selection keeps the system-wide answer",
@@ -177,8 +185,8 @@ func TestIPv6GatewayForInterfaceScoping(t *testing.T) {
 				reads.Routes = tt.routes
 			}
 			got, err := gateway.IPv6GatewayForInterfaceWithReads(tt.iface, reads)
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("got error %v, want %v", err, tt.wantErr)
 			}
 			if got != tt.want {
 				t.Errorf("got %q, want %q", got, tt.want)

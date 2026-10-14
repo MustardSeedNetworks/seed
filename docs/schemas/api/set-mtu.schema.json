@@ -15,7 +15,6 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "interface",
         "mtu"
       ]
     }

@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/system-health-response.schema.json",
+  "$ref": "#/$defs/SystemHealthResponse",
+  "$defs": {
+    "Health": {
+      "properties": {
+        "cpuPercent": {
+          "type": "number"
+        },
+        "memoryPercent": {
+          "type": "number"
+        },
+        "memoryUsed": {
+          "type": "integer"
+        },
+        "memoryTotal": {
+          "type": "integer"
+        },
+        "diskPercent": {
+          "type": "number"
+        },
+        "diskUsed": {
+          "type": "integer"
+        },
+        "diskTotal": {
+          "type": "integer"
+        },
+        "uptime": {
+          "type": "integer"
+        },
+        "loadAvg1": {
+          "type": "number"
+        },
+        "loadAvg5": {
+          "type": "number"
+        },
+        "loadAvg15": {
+          "type": "number"
+        },
+        "goroutines": {
+          "type": "integer"
+        },
+        "processMemory": {
+          "type": "integer"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        },
+        "arch": {
+          "type": "string"
+        },
+        "numCpu": {
+          "type": "integer"
+        },
+        "topCpuProcesses": {
+          "items": {
+            "$ref": "#/$defs/ProcessInfo"
+          },
+          "type": "array"
+        },
+        "topMemoryProcesses": {
+          "items": {
+            "$ref": "#/$defs/ProcessInfo"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "cpuPercent",
+        "memoryPercent",
+        "memoryUsed",
+        "memoryTotal",
+        "diskPercent",
+        "diskUsed",
+        "diskTotal",
+        "uptime",
+        "loadAvg1",
+        "loadAvg5",
+        "loadAvg15",
+        "goroutines",
+        "processMemory",
+        "hostname",
+        "os",
+        "arch",
+        "numCpu"
+      ]
+    },
+    "ProcessInfo": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "pid": {
+          "type": "integer"
+        },
+        "cpuPercent": {
+          "type": "number"
+        },
+        "memoryMb": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "pid",
+        "cpuPercent",
+        "memoryMb"
+      ]
+    },
+    "SystemHealthApplicationResponse": {
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "uptime": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "version",
+        "uptime"
+      ]
+    },
+    "SystemHealthResponse": {
+      "properties": {
+        "system": {
+          "$ref": "#/$defs/Health"
+        },
+        "application": {
+          "$ref": "#/$defs/SystemHealthApplicationResponse"
+        },
+        "services": {
+          "$ref": "#/$defs/SystemHealthServicesResponse"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "system",
+        "application",
+        "services"
+      ]
+    },
+    "SystemHealthServicesResponse": {
+      "properties": {
+        "discoveryService": {
+          "type": "boolean"
+        },
+        "linkMonitor": {
+          "type": "boolean"
+        },
+        "sseHub": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "discoveryService",
+        "linkMonitor",
+        "sseHub"
+      ]
+    }
+  },
+  "title": "SystemHealthResponse",
+  "description": "SystemHealthResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

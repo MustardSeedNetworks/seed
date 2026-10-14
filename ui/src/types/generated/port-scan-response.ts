@@ -6,7 +6,17 @@
  * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
 export interface PortScanResponse {
-  enabled: boolean;
-  preset: string;
-  tcpPorts: string;
+  ip: string;
+  hostname?: string;
+  services: ServiceInfo[];
+  scanTimeMs: number;
+  error?: string;
+}
+export interface ServiceInfo {
+  port: number;
+  state: 'open' | 'closed' | 'filtered';
+  service: string;
+  banner?: string;
+  version?: string;
+  protocol?: string;
 }

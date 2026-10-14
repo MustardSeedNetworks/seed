@@ -1,4 +1,3 @@
-import { Tooltip } from '../../ui/Tooltip';
 /**
  * HealthChecksSettings Component (~449 lines)
  *
@@ -6,7 +5,7 @@ import { Tooltip } from '../../ui/Tooltip';
  * and customize ping targets, TCP/UDP ports, and HTTP endpoints for monitoring.
  *
  * Key Features:
- * - Ping targets: add/remove/configure ping destinations with custom names and packet counts
+ * - Ping targets: add/remove/configure ping destinations with custom names
  * - TCP ports: configure TCP connectivity tests on specific ports
  * - UDP ports: configure UDP reachability tests
  * - HTTP endpoints: configure HTTP/HTTPS monitoring with customizable URLs
@@ -74,7 +73,6 @@ export function HealthChecksSettings({
     name: '',
     host: '',
     enabled: true,
-    count: 3,
   }));
 
   // TCP port CRUD helpers
@@ -253,23 +251,6 @@ export function HealthChecksSettings({
                 placeholder={t('common.hostIp')}
                 className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
               />
-              <Tooltip text={t('health.numberOfPings')}>
-                <input
-                  type="number"
-                  aria-label={t('health.numberOfPings')}
-                  value={target.count || 3}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updatePingTarget(
-                      target.id ?? '',
-                      'count',
-                      Number.parseInt(e.target.value, 10) || 3,
-                    )
-                  }
-                  min={1}
-                  max={10}
-                  className={cn(input.base, input.state.default, input.size.md, 'w-14 text-center')}
-                />
-              </Tooltip>
               <button
                 type="button"
                 onClick={(): void => removePingTarget(target.id ?? '')}

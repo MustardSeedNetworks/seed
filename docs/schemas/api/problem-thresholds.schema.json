@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/problem-thresholds.schema.json",
+  "$ref": "#/$defs/ProblemThresholds",
+  "$defs": {
+    "ProblemThresholds": {
+      "properties": {
+        "cpuPercent": {
+          "type": "number"
+        },
+        "memoryPercent": {
+          "type": "number"
+        },
+        "diskPercent": {
+          "type": "number"
+        },
+        "tempCelsius": {
+          "type": "number"
+        },
+        "inputErrorsPerMin": {
+          "type": "integer"
+        },
+        "outputErrorsPerMin": {
+          "type": "integer"
+        },
+        "collisionsPerMin": {
+          "type": "integer"
+        },
+        "minSignalDbm": {
+          "type": "integer"
+        },
+        "maxRetryPercent": {
+          "type": "number"
+        },
+        "maxChannelUtil": {
+          "type": "number"
+        },
+        "maxCoChannelAps": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "cpuPercent",
+        "memoryPercent",
+        "diskPercent",
+        "tempCelsius",
+        "inputErrorsPerMin",
+        "outputErrorsPerMin",
+        "collisionsPerMin",
+        "minSignalDbm",
+        "maxRetryPercent",
+        "maxChannelUtil",
+        "maxCoChannelAps"
+      ]
+    }
+  },
+  "title": "ProblemThresholds",
+  "description": "ProblemThresholds — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

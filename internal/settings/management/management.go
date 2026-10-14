@@ -80,47 +80,12 @@ func NewService(store Store, encrypt Encrypter, reconfig Reconfigurer) *Service 
 	return &Service{store: store, encrypt: encrypt, reconfig: reconfig}
 }
 
-// Get returns the current settings map and the ETag header value. The map
-// mirrors the getSettings read model verbatim (behavior-preserving).
-func (s *Service) Get() (map[string]any, string) {
-	var settings map[string]any
+// Get returns the current settings and the ETag header value.
+func (s *Service) Get() (Settings, string) {
+	var settings Settings
 	var etag string
 	s.store.Read(func(cfg *config.Config) {
-		settings = map[string]any{
-			"interface": map[string]any{
-				"current":   cfg.Interface.Default,
-				"available": []string{},
-			},
-			"vlan":       map[string]any{"enabled": cfg.VLAN.Enabled, "id": cfg.VLAN.ID},
-			"ip":         map[string]any{"mode": cfg.IP.Mode},
-			"thresholds": buildThresholdSettings(cfg),
-			// Reflect the live config — these were previously hardcoded, so a GET
-			// never echoed what a prior PUT wrote (and any concurrency token derived
-			// from them would be incoherent).
-			"healthChecks": map[string]any{
-				"runPerformance": cfg.HealthChecks.RunPerformance,
-				"runSpeedtest":   cfg.HealthChecks.RunSpeedtest,
-				"runIperf":       cfg.HealthChecks.RunIperf,
-				"runDiscovery":   cfg.HealthChecks.RunDiscovery,
-			},
-			"speedtest": map[string]any{
-				"serverId":      cfg.Speedtest.ServerID,
-				"autoRunOnLink": cfg.Speedtest.AutoRunOnLink,
-			},
-			"iperf": map[string]any{
-				"autoRunOnLink": cfg.Iperf.AutoRunOnLink, "server": cfg.Iperf.Server,
-				"port": cfg.Iperf.Port, "protocol": cfg.Iperf.Protocol,
-				"direction": cfg.Iperf.Direction, "duration": cfg.Iperf.Duration,
-				"serverPort": cfg.Iperf.ServerPort, "enableServer": cfg.Iperf.EnableServer,
-			},
-			"alerts":       buildAlertSettings(cfg),
-			"cardSettings": buildCardSettings(),
-			"displayOptions": map[string]any{
-				"showPublicIP": cfg.DisplayOptions.ShowPublicIP,
-				"unitSystem":   cfg.DisplayOptions.UnitSystem,
-			},
-			"identity": buildIdentitySettings(cfg),
-		}
+		settings = buildSettings(cfg)
 		etag = cfg.SettingsETagLocked()
 	})
 	return settings, etag

@@ -31,6 +31,7 @@ interface FixtureNode {
   firstSeen: string;
   lastSeen: string;
   metadata: Record<string, unknown>;
+  pollIntervalSeconds?: number;
 }
 
 interface FixtureLink {
@@ -118,8 +119,12 @@ function hospital(): { nodes: FixtureNode[]; links: FixtureLink[] } {
   return { nodes, links };
 }
 
-async function serveHospital(page: Page): Promise<{ nodes: FixtureNode[] }> {
+async function serveHospital(
+  page: Page,
+  edit: (nodes: FixtureNode[]) => void = () => {},
+): Promise<{ nodes: FixtureNode[] }> {
   const { nodes, links } = hospital();
+  edit(nodes);
   // The detail route first: Playwright matches the most recently registered
   // handler, and /nodes/{id} would otherwise fall through to the real daemon,
   // which has never heard of this fixture.
@@ -225,5 +230,26 @@ test.describe('Topology Page — the map', () => {
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     );
     expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  // seed#2525: a node an hour past its last poll on a ten-minute cadence has
+  // missed six polls. It is stale, not the green "seen once" used to earn it.
+  test('renders a node that has missed its polls as stale', async ({ page }) => {
+    const now = Date.now();
+    await serveHospital(page, (nodes) => {
+      for (const n of nodes) {
+        if (n.id === 'med-core-01') n.lastSeen = new Date(now - 60 * 60 * 1000).toISOString();
+        if (n.id === 'med-fw-01') n.lastSeen = new Date(now).toISOString();
+        n.pollIntervalSeconds = 600;
+      }
+    });
+    await gotoTopology(page);
+
+    const late = page.getByTestId('node-row-med-core-01');
+    await expect(late).toHaveAttribute('data-state', 'unknown');
+    await expect(late).toContainText('Missed polls');
+    const fresh = page.getByTestId('node-row-med-fw-01');
+    await expect(fresh).toHaveAttribute('data-state', 'ok');
+    await expect(fresh).not.toContainText('Missed polls');
   });
 });

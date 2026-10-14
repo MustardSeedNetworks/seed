@@ -5,22 +5,65 @@
   "$defs": {
     "PortScanResponse": {
       "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "preset": {
+        "ip": {
           "type": "string"
         },
-        "tcpPorts": {
+        "hostname": {
+          "type": "string"
+        },
+        "services": {
+          "items": {
+            "$ref": "#/$defs/ServiceInfo"
+          },
+          "type": "array"
+        },
+        "scanTimeMs": {
+          "type": "integer"
+        },
+        "error": {
           "type": "string"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "enabled",
-        "preset",
-        "tcpPorts"
+        "ip",
+        "services",
+        "scanTimeMs"
+      ]
+    },
+    "ServiceInfo": {
+      "properties": {
+        "port": {
+          "type": "integer"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "open",
+            "closed",
+            "filtered"
+          ]
+        },
+        "service": {
+          "type": "string"
+        },
+        "banner": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "port",
+        "state",
+        "service"
       ]
     }
   },

@@ -12,9 +12,9 @@
 import { createContext, useContext } from 'react';
 import type { NetworkDiscoveryData } from '../components/cards/NetworkDiscoveryCard';
 import type { TraceHopMessage } from '../components/cards/PathDiscoveryCard';
-import type { ChannelGraphResponse } from '../components/cards/WiFiChannelGraph';
 import type { CardState } from '../hooks/useCardState';
 import type { PathMonitorUpdate } from '../hooks/usePathMonitor';
+import type { WiFiChannelGraphResponse } from '../types/generated/wifi-channel-graph-response';
 import type { CardSettings, DisplayOptions } from '../types/settings';
 
 export interface AppContextValue {
@@ -30,7 +30,7 @@ export interface AppContextValue {
   triggerDeviceScan: () => Promise<void>;
   registerTraceHopHandler: (handler: (msg: TraceHopMessage) => void) => () => void;
   registerPathMonitorHandler: (handler: (update: PathMonitorUpdate) => void) => () => void;
-  channelGraphData: ChannelGraphResponse | null;
+  channelGraphData: WiFiChannelGraphResponse | null;
   channelGraphLoading: boolean;
   appVersion: string;
   /**

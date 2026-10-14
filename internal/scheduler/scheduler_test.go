@@ -264,3 +264,60 @@ func idOf(n int) string {
 	}
 	return string(digits[n/10]) + string(digits[n%10])
 }
+
+// intervalJob keeps its schedule the way the probe and SNMP poller jobs do:
+// Run writes lastRun with no lock, and NextRun reads it. That is only safe if
+// the scheduler never calls NextRun while the job's Run is in flight.
+type intervalJob struct {
+	interval time.Duration
+	lastRun  time.Time
+	runFor   time.Duration
+	running  atomic.Int32
+	overlap  atomic.Int32
+	runs     atomic.Int32
+}
+
+func (*intervalJob) ID() string { return "interval" }
+
+func (j *intervalJob) NextRun(now time.Time) time.Time {
+	if j.lastRun.IsZero() {
+		return now
+	}
+	return j.lastRun.Add(j.interval)
+}
+
+func (j *intervalJob) Run(_ context.Context) error {
+	if j.running.Add(1) > 1 {
+		j.overlap.Add(1)
+	}
+	defer j.running.Add(-1)
+	j.lastRun = time.Now()
+	j.runs.Add(1)
+	time.Sleep(j.runFor)
+	return nil
+}
+
+// TestScheduler_InflightJobIsNotPolledOrRedispatched pins seed#3002: a job
+// whose Run outlasts its interval is not asked for NextRun, and not started
+// again, until that Run returns. Under -race the unsynchronised lastRun is the
+// failure on a scheduler that polls in-flight jobs.
+func TestScheduler_InflightJobIsNotPolledOrRedispatched(t *testing.T) {
+	t.Parallel()
+
+	s := scheduler.New(5 * time.Millisecond)
+	j := &intervalJob{interval: time.Millisecond, runFor: 40 * time.Millisecond}
+	s.Register(j)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+	defer cancel()
+	s.Start(ctx)
+	<-ctx.Done()
+	s.Stop()
+
+	if got := j.overlap.Load(); got != 0 {
+		t.Errorf("job started %d times while a previous Run was in flight, want 0", got)
+	}
+	if got := j.runs.Load(); got < 2 {
+		t.Errorf("job ran %d times, want >= 2 (it must run again once Run returns)", got)
+	}
+}

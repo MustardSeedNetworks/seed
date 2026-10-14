@@ -24,24 +24,6 @@ func TestOpenWithConfigEdgeCases(t *testing.T) {
 		}
 	})
 
-	t.Run("with WAL disabled", func(t *testing.T) {
-		tmpDir := t.TempDir()
-		dbPath := filepath.Join(tmpDir, "test_no_wal.db")
-
-		cfg := database.Config{
-			Path:            dbPath,
-			MaxOpenConns:    5,
-			MaxIdleConns:    2,
-			ConnMaxLifetime: time.Minute,
-			EnableWAL:       false,
-			BusyTimeout:     1000,
-		}
-
-		db, err := database.OpenWithConfig(cfg)
-		require.NoError(t, err)
-		defer func() { _ = db.Close() }()
-	})
-
 	t.Run("with zero busy timeout", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		dbPath := filepath.Join(tmpDir, "test_no_timeout.db")
@@ -51,7 +33,6 @@ func TestOpenWithConfigEdgeCases(t *testing.T) {
 			MaxOpenConns:    5,
 			MaxIdleConns:    2,
 			ConnMaxLifetime: time.Minute,
-			EnableWAL:       true,
 			BusyTimeout:     0,
 		}
 
@@ -598,9 +579,6 @@ func TestDefaultConfig(t *testing.T) {
 	}
 	if cfg.RetentionDays <= 0 {
 		t.Error("expected positive RetentionDays")
-	}
-	if !cfg.EnableWAL {
-		t.Error("expected EnableWAL to be true")
 	}
 	if cfg.BusyTimeout <= 0 {
 		t.Error("expected positive BusyTimeout")

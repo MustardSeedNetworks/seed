@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/iperf-suggestion.schema.json",
+  "$ref": "#/$defs/IperfSuggestion",
+  "$defs": {
+    "IperfSuggestion": {
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "latencyMs": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "host"
+      ]
+    }
+  },
+  "title": "IperfSuggestion",
+  "description": "IperfSuggestion — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

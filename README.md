@@ -172,13 +172,14 @@ See [docs/EDITIONS.md](docs/EDITIONS.md).
 }
 ```
 
-Common environment overrides:
+Environment overrides for the `server` block (every other setting lives in
+the config file, for example `logging.level` and `database.path`):
 
 ```bash
 SEED_HTTPS_PORT=8443
 SEED_PUBLIC_ORIGIN=https://seed.example.com
-SEED_LOG_LEVEL=info       # debug | info | warn | error
-SEED_DB_PATH=/var/lib/seed/data.db
+SEED_TLS_CERT_FILE=/etc/seed/server.crt
+SEED_TLS_KEY_FILE=/etc/seed/server.key
 ```
 
 Leave `cert_file` and `key_file` empty to use Seed's generated self-signed

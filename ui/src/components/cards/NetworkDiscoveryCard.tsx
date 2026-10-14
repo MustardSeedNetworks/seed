@@ -37,7 +37,6 @@ export type {
   NetworkDiscoveryData,
   OpenPort,
   PortScanResult,
-  ServiceInfo,
   SNMPEntity,
   SNMPFullData,
   SNMPInterface,

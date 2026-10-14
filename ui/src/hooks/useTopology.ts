@@ -8,13 +8,13 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
+import type { TopologyLinkListResponse } from '../types/generated/topology-link-list-response';
 import type {
   TopologyLink,
-  TopologyLinksResponse,
   TopologyNode,
   TopologyNodeDetailResponse,
-  TopologyNodesResponse,
-} from '../types/topology';
+} from '../types/generated/topology-node-detail-response';
+import type { TopologyNodeListResponse } from '../types/generated/topology-node-list-response';
 
 const ENDPOINT = '/api/v1/topology';
 
@@ -25,6 +25,9 @@ const PAGE_LIMIT = 1000;
 
 export interface UseTopologyNodesResult {
   nodes: TopologyNode[];
+  /** When `nodes` was read, in epoch ms; 0 before the first read. Node
+   * freshness is judged as of the read, not as of each render. */
+  fetchedAt: number;
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -36,6 +39,7 @@ export interface UseTopologyNodesResult {
  * land when the operator UX needs them. */
 export function useTopologyNodes(): UseTopologyNodesResult {
   const [nodes, setNodes] = useState<TopologyNode[]>([]);
+  const [fetchedAt, setFetchedAt] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,9 +47,10 @@ export function useTopologyNodes(): UseTopologyNodesResult {
     setLoading(true);
     setError(null);
     await api
-      .get<TopologyNodesResponse>(`${ENDPOINT}/nodes?limit=${PAGE_LIMIT}`)
+      .get<TopologyNodeListResponse>(`${ENDPOINT}/nodes?limit=${PAGE_LIMIT}`)
       .then((resp) => {
         setNodes(resp.nodes ?? []);
+        setFetchedAt(Date.now());
       })
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : 'Failed to load topology');
@@ -57,7 +62,7 @@ export function useTopologyNodes(): UseTopologyNodesResult {
     void refresh();
   }, [refresh]);
 
-  return { nodes, loading, error, refresh };
+  return { nodes, fetchedAt, loading, error, refresh };
 }
 
 export interface UseTopologyNodeResult {
@@ -120,7 +125,7 @@ export function useTopologyLinks(): UseTopologyLinksResult {
     setLoading(true);
     setError(null);
     await api
-      .get<TopologyLinksResponse>(`${ENDPOINT}/links?limit=${PAGE_LIMIT}`)
+      .get<TopologyLinkListResponse>(`${ENDPOINT}/links?limit=${PAGE_LIMIT}`)
       .then((resp) => {
         setLinks(resp.links ?? []);
       })

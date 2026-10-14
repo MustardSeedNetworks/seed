@@ -456,8 +456,6 @@ export interface LoggingConfig {
 export interface DatabaseConfig {
   path: string;
   retention_days: number;
-  enable_wal: boolean;
-  max_connections: number;
 }
 export interface LinkConfig {
   mode?: string;

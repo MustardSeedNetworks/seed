@@ -17,16 +17,16 @@ import {
   radius,
   spacing,
 } from '../../../styles/theme';
-import type { SettingsThresholds } from '../../../types/settings';
+import type { ThresholdSettings } from '../../../types/generated/settings-response';
 import { Info } from '../../ui/Icons';
 import { Tooltip } from '../../ui/Tooltip';
 
 interface ThresholdsHttpSectionProps {
-  thresholds: SettingsThresholds;
-  setThresholds: React.Dispatch<React.SetStateAction<SettingsThresholds>>;
+  thresholds: ThresholdSettings;
+  setThresholds: React.Dispatch<React.SetStateAction<ThresholdSettings>>;
   /** The parent's category updater; the total-request row writes `customHttp`. */
   updateThreshold: (
-    category: keyof Omit<SettingsThresholds, 'httpTimings'>,
+    category: keyof Omit<ThresholdSettings, 'httpTimings'>,
     level: 'good' | 'warning',
     value: number,
   ) => void;
@@ -41,8 +41,8 @@ export function ThresholdsHttpSection({
 
   // Type-safe HTTP timing phase getter
   function getHttpTimingPhase(
-    httpTimings: SettingsThresholds['httpTimings'],
-    phase: keyof SettingsThresholds['httpTimings'],
+    httpTimings: ThresholdSettings['httpTimings'],
+    phase: keyof ThresholdSettings['httpTimings'],
   ): { good: number; warning: number } {
     switch (phase) {
       case 'dns':
@@ -59,7 +59,7 @@ export function ThresholdsHttpSection({
   }
 
   const updateHttpTimingThreshold = (
-    phase: keyof SettingsThresholds['httpTimings'],
+    phase: keyof ThresholdSettings['httpTimings'],
     level: 'good' | 'warning',
     value: number,
   ): void => {

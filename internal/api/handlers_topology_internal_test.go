@@ -11,6 +11,8 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
 
@@ -73,6 +75,62 @@ func seedTopology(t *testing.T, db *database.DB) string {
 		t.Fatalf("seed link: %v", linkErr)
 	}
 	return node.ID
+}
+
+// A link reports the utilization of its source port's latest rated poll
+// (seed#3024); a link whose port has none omits the field rather than
+// claiming 0.
+func TestHandleTopologyLinks_ReportsPortUtilization(t *testing.T) {
+	s := newTopologyTestServer(t)
+	nodeID := seedTopology(t, s.db())
+	ctx := context.Background()
+	now := time.Now().UTC()
+
+	target := &polling.Target{
+		ClientID: database.DefaultClientID, Name: "router-1", IPAddress: "10.0.0.1",
+		SNMPVersion: "v2c", PollIntervalSec: 60, Enabled: true, CollectorChain: []string{"if_table"},
+	}
+	if err := s.db().PollingTargets().Create(ctx, target); err != nil {
+		t.Fatalf("create target: %v", err)
+	}
+	if err := s.db().Topology().UpsertTargetNode(ctx, database.DefaultClientID, target.ID, nodeID, now); err != nil {
+		t.Fatalf("map target: %v", err)
+	}
+	if err := s.db().Topology().UpsertLink(ctx, &topology.Link{
+		ID: "link-test-1", SourceNodeID: nodeID, TargetNodeID: "node-test-2",
+		SourceInterface: "Gi0/0", LinkType: "lldp", Status: "up", LastSeen: now,
+	}); err != nil {
+		t.Fatalf("name the link's port: %v", err)
+	}
+
+	links := func() []map[string]any {
+		t.Helper()
+		w := serve(t, s.handleTopologyLinks, APIVersionPrefix+"/topology/links")
+		var resp struct {
+			Links []map[string]any `json:"links"`
+		}
+		if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		if len(resp.Links) != 1 {
+			t.Fatalf("links = %+v, want one", resp.Links)
+		}
+		return resp.Links
+	}
+	if got, ok := links()[0]["utilizationPct"]; ok {
+		t.Errorf("utilizationPct = %v before any rated poll, want absent", got)
+	}
+
+	util := ifrate.Utilization{In: 12.5, Out: 30}
+	if err := s.db().Metrics().RecordInterfaceRates(ctx, []ifrate.Rate{{
+		ClientID: database.DefaultClientID, TargetID: target.ID, IfIndex: 1, At: now,
+		Octets: &ifrate.Octets{In: 1.5e6, Out: 3.75e6, Utilization: &util},
+	}}); err != nil {
+		t.Fatalf("RecordInterfaceRates: %v", err)
+	}
+	if got := links()[0]["utilizationPct"]; got != 30.0 {
+		t.Errorf("utilizationPct = %v, want 30 (the busier direction)", got)
+	}
 }
 
 func TestHandleTopologyNodes_ReturnsSeedededNodes(t *testing.T) {
@@ -146,7 +204,7 @@ func TestHandleTopologyNodeByID_ReturnsNodeWithInterfacesAndLinks(t *testing.T) 
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/nodes/"+nodeID, http.NoBody)
 	w := httptest.NewRecorder()
-	s.handleTopologyNodeByID(w, req)
+	routed(topologyNodePath, s.handleTopologyNodeByID)(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200; body=%s", w.Code, w.Body.String())
@@ -176,19 +234,22 @@ func TestHandleTopologyNodeByID_UnknownReturns404(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/nodes/no-such-node", http.NoBody)
 	w := httptest.NewRecorder()
-	s.handleTopologyNodeByID(w, req)
+	routed(topologyNodePath, s.handleTopologyNodeByID)(w, req)
 	if w.Code != http.StatusNotFound {
 		t.Errorf("status = %d, want 404", w.Code)
 	}
 }
 
-func TestHandleTopologyNodeByID_EmptyIDReturns400(t *testing.T) {
+// An empty or nested node id is not a node: the router answers 404.
+func TestHandleTopologyNodeByID_EmptyOrNestedIDReturns404(t *testing.T) {
 	s := newTopologyTestServer(t)
-	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/nodes/", http.NoBody)
-	w := httptest.NewRecorder()
-	s.handleTopologyNodeByID(w, req)
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400", w.Code)
+	for _, path := range []string{"/topology/nodes/", "/topology/nodes/a/b"} {
+		req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+path, http.NoBody)
+		w := httptest.NewRecorder()
+		routed(topologyNodePath, s.handleTopologyNodeByID)(w, req)
+		if w.Code != http.StatusNotFound {
+			t.Errorf("%s status = %d, want 404", path, w.Code)
+		}
 	}
 }
 
@@ -325,15 +386,18 @@ func TestHandleTopologyARP_LimitClampsToMax(t *testing.T) {
 	}
 }
 
-func TestRawJSON_InvalidFallsBackToEmpty(t *testing.T) {
-	if got := string(rawJSON("not json {")); got != "{}" {
-		t.Errorf("invalid JSON should fall back to {}, got %q", got)
-	}
-	if got := string(rawJSON("")); got != "{}" {
-		t.Errorf("empty should fall back to {}, got %q", got)
-	}
-	if got := string(rawJSON(`{"ok":1}`)); got != `{"ok":1}` {
-		t.Errorf("valid JSON should pass through, got %q", got)
+func TestRawJSON_NonObjectFallsBackToEmpty(t *testing.T) {
+	for in, want := range map[string]string{
+		"not json {": "{}",
+		"":           "{}",
+		"null":       "{}",
+		"[1,2]":      "{}",
+		`"text"`:     "{}",
+		`{"ok":1}`:   `{"ok":1}`,
+	} {
+		if got := string(rawJSON(in)); got != want {
+			t.Errorf("rawJSON(%q) = %q, want %q", in, got, want)
+		}
 	}
 }
 

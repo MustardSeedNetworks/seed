@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/topology-arp-list-response.schema.json",
+  "$ref": "#/$defs/TopologyARPListResponse",
+  "$defs": {
+    "TopologyARPBinding": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "clientId": {
+          "type": "string"
+        },
+        "sourceNodeId": {
+          "type": "string"
+        },
+        "ifIndex": {
+          "type": "integer"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "macAddress": {
+          "type": "string"
+        },
+        "mediaType": {
+          "type": "integer"
+        },
+        "lastSeen": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "clientId",
+        "sourceNodeId",
+        "ifIndex",
+        "ipAddress",
+        "macAddress",
+        "mediaType",
+        "lastSeen"
+      ]
+    },
+    "TopologyARPListResponse": {
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "bindings": {
+          "items": {
+            "$ref": "#/$defs/TopologyARPBinding"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "count",
+        "bindings"
+      ]
+    }
+  },
+  "title": "TopologyARPListResponse",
+  "description": "TopologyARPListResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

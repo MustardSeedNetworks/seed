@@ -24,7 +24,8 @@ import {
   radius,
   spacing,
 } from '../../../styles/theme';
-import type { IperfSettings, IperfSuggestion } from '../../../types/settings';
+import type { IperfSuggestion } from '../../../types/generated/iperf-suggestion';
+import type { IperfSettings } from '../../../types/settings';
 
 interface PerformanceIperfSectionProps {
   iperfSettings: IperfSettings;

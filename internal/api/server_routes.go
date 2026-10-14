@@ -53,11 +53,9 @@ func (s *Server) setupTopologyRoutes() {
 	getPost := []string{http.MethodGet, http.MethodPost}
 	getPutDelete := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	s.routes.RegisterAll([]route.Route{
-		// /nodes must register BEFORE /nodes/ so the router doesn't treat the
-		// list endpoint as a /nodes/{id} request.
 		{Path: APIVersionPrefix + "/topology/nodes", Handler: s.handleTopologyNodes, Methods: get, Auth: true},
 		{
-			Path:    APIVersionPrefix + "/topology/nodes/",
+			Path:    APIVersionPrefix + "/topology/nodes/{nodeId}",
 			Handler: s.handleTopologyNodeByID,
 			Methods: get,
 			Auth:    true,
@@ -83,10 +81,21 @@ func (s *Server) setupTopologyRoutes() {
 			CSRF:    true,
 		},
 		{
-			Path:    APIVersionPrefix + "/polling-targets/",
+			Path:    APIVersionPrefix + "/polling-targets/{targetId}",
 			Handler: s.handlePollingTargetByID,
 			Methods: getPutDelete,
 			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
+		},
+		// One poll now, the target form's "Test target" (#2523). Rate-limited:
+		// each call is an outbound SNMP conversation.
+		{
+			Path:    APIVersionPrefix + "/polling-targets/{targetId}/poll",
+			Handler: s.handlePollingTargetPoll,
+			Methods: []string{http.MethodPost},
+			Scope:   op,
+			Limiter: limitEndpoint,
 			Auth:    true,
 			CSRF:    true,
 		},
@@ -104,7 +113,7 @@ func (s *Server) setupTopologyRoutes() {
 			CSRF:    true,
 		},
 		{
-			Path:    APIVersionPrefix + "/device-credentials/",
+			Path:    APIVersionPrefix + "/device-credentials/{credentialId}",
 			Handler: s.handleDeviceCredentialByID,
 			Methods: getPutDelete,
 			Scope:   op,
@@ -123,7 +132,7 @@ func (s *Server) setupTopologyRoutes() {
 			CSRF:    true,
 		},
 		{
-			Path:    APIVersionPrefix + "/alert-rules/",
+			Path:    APIVersionPrefix + "/alert-rules/{ruleId}",
 			Handler: s.handleAlertRuleByID,
 			Methods: getPutDelete,
 			Scope:   op,
@@ -152,21 +161,21 @@ func (s *Server) setupAPITokenRoutes() {
 			CSRF:    true,
 		},
 		{
-			Path:    APIVersionPrefix + "/tokens/",
-			Handler: s.handleAPITokenByID,
+			Path:    APIVersionPrefix + "/tokens/{tokenId}",
+			Handler: s.handleAPITokenRevoke,
 			Methods: del,
 			Scope:   op,
 			Auth:    true,
 			CSRF:    true,
 		},
 		{Path: APIVersionPrefix + "/license", Handler: s.handleLicenseStatus, Methods: get, Auth: true},
-		// Users CRUD (#1191): /users/me registers before /users/ for path routing.
+		// Users CRUD (#1191): the literal /users/me out-ranks /users/{username}.
 		// POST /users is admin-only AND Pro-gated, enforced inside the handler so the
 		// response carries the right 403/402 FeatureGateResponse.
 		{Path: APIVersionPrefix + "/users/me", Handler: s.handleCurrentUser, Methods: get, Auth: true},
 		{Path: APIVersionPrefix + "/users", Handler: s.handleUsers, Methods: getPost, Auth: true, CSRF: true},
 		{
-			Path:    APIVersionPrefix + "/users/",
+			Path:    APIVersionPrefix + "/users/{username}",
 			Handler: s.handleUserByName,
 			Methods: getPatchDelete,
 			Auth:    true,
@@ -183,8 +192,8 @@ func (s *Server) setupCoreRoutes() {
 	put := []string{http.MethodPut}
 	del := []string{http.MethodDelete}
 	getPut := []string{http.MethodGet, http.MethodPut}
-	getPostPut := []string{http.MethodGet, http.MethodPost, http.MethodPut}
-	crud := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
+	getPost := []string{http.MethodGet, http.MethodPost}
+	getPutDel := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	authBody := MaxBodySizeAuth  // 1 KB — auth payloads are tiny.
 	cfgBody := MaxBodySizeConfig // 64 KB — settings/config JSON.
 	s.routes.RegisterAll([]route.Route{
@@ -375,20 +384,24 @@ func (s *Server) setupCoreRoutes() {
 			Auth:         true,
 		},
 		{
+			// The collection: list and create. PUT and DELETE need an id, so they
+			// live on the /profiles/{profileId} route below; declaring them here only ever
+			// produced a 405 from the handler (#3261).
 			Path:    APIVersionPrefix + "/profiles",
 			Handler: s.handleProfiles,
-			Methods: crud,
+			Methods: getPost,
 			Scope:   op,
 			Auth:    true,
 			CSRF:    true,
 		},
 		{
+			// Read only: the UI switches profiles through /profiles/switch,
+			// and the POST and PUT aliases that once lived here were a second
+			// and third way to make the same change.
 			Path:    APIVersionPrefix + "/profiles/active",
 			Handler: s.handleActiveProfile,
-			Methods: getPostPut,
-			Scope:   op,
+			Methods: get,
 			Auth:    true,
-			CSRF:    true,
 		},
 		{
 			Path:    APIVersionPrefix + "/profiles/import",
@@ -405,11 +418,10 @@ func (s *Server) setupCoreRoutes() {
 			Auth:    true,
 		},
 		{
-			// The UI switches profiles by posting {profileId} here, which is
-			// exactly what /profiles/active accepts. Registered as its own
-			// route rather than handled inside the prefix route because a
-			// route the registry can see is a route the capability manifest
-			// and the route-consumer gate can see.
+			// The UI switches profiles by posting {profileId} here. Registered
+			// as its own route rather than handled inside the prefix route
+			// because a route the registry can see is a route the capability
+			// manifest and the route-consumer gate can see.
 			Path:    APIVersionPrefix + "/profiles/switch",
 			Handler: s.handleSetActiveProfile,
 			Methods: post,
@@ -418,12 +430,30 @@ func (s *Server) setupCoreRoutes() {
 			CSRF:    true,
 		},
 		{
-			// PATCH is here and not in crud because only this route accepts
-			// one: /profiles/{id}/settings is a partial update, and the
-			// collection routes have nothing to patch.
-			Path:    APIVersionPrefix + "/profiles/",
-			Handler: s.handleProfiles,
-			Methods: append(append([]string{}, crud...), http.MethodPatch),
+			// One pattern per shape, so the mux hands each handler its id
+			// (r.PathValue) and the OpenAPI document names every path. A
+			// single "/profiles/" prefix route parsed the id out of the URL by
+			// hand, and the duplicate handler trimmed a stale unversioned
+			// prefix: every duplicate looked up "/api/v1/profiles/<id>".
+			Path:    APIVersionPrefix + "/profiles/{profileId}",
+			Handler: s.handleProfile,
+			Methods: getPutDel,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
+		},
+		{
+			Path:    APIVersionPrefix + "/profiles/{profileId}/settings",
+			Handler: s.handleUpdateProfileSettings,
+			Methods: []string{http.MethodPatch},
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
+		},
+		{
+			Path:    APIVersionPrefix + "/profiles/{profileId}/duplicate",
+			Handler: s.handleDuplicateProfile,
+			Methods: post,
 			Scope:   op,
 			Auth:    true,
 			CSRF:    true,
@@ -511,9 +541,10 @@ func (s *Server) setupWiFiRoutes() {
 	post := []string{http.MethodPost}
 	del := []string{http.MethodDelete}
 	getPut := []string{http.MethodGet, http.MethodPut}
-	getPostPut := []string{http.MethodGet, http.MethodPost, http.MethodPut}
 	s.routes.RegisterAll([]route.Route{
-		{Path: APIVersionPrefix + "/wifi/wifi", Handler: s.handleWiFi, Methods: getPostPut, Auth: true, CSRF: true},
+		// GET only, the one method handleWiFi serves; POST and PUT were declared
+		// as well and reached the handler only to be refused with a 405 (#3261).
+		{Path: APIVersionPrefix + "/wifi/wifi", Handler: s.handleWiFi, Methods: get, Auth: true},
 		{Path: APIVersionPrefix + "/wifi/wifi/scan", Handler: s.handleWiFiScan, Methods: get, Auth: true},
 		{Path: APIVersionPrefix + "/wifi/wifi/status", Handler: s.handleWiFiStatus, Methods: get, Auth: true},
 		{

@@ -22,6 +22,10 @@ import (
 
 const guestAuditRunTimeout = 60 * time.Second
 
+// GuestAuditReport is POST /security/guest-audit/run: the audit's report
+// served as it is, named for the API.
+type GuestAuditReport guestaudit.Report
+
 // writeGuestAuditError maps a guest-audit settings error to its HTTP response: a
 // GuestAuditValidationError becomes a 400 with the field-specific i18n message and
 // the offending value as detail; anything else is a 500 save failure.
@@ -75,7 +79,7 @@ func (s *Server) handleGuestAuditSettings(w http.ResponseWriter, r *http.Request
 			w,
 			logger,
 			http.StatusOK,
-			map[string]string{"status": "updated"},
+			StatusUpdatedResponse{Status: "updated"},
 		)
 
 	default:
@@ -156,5 +160,5 @@ func (s *Server) handleGuestAuditRun(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, report)
+	sendJSONResponse(w, logger, http.StatusOK, (*GuestAuditReport)(report))
 }

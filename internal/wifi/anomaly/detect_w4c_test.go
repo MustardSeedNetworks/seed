@@ -12,12 +12,12 @@ func TestWPA3TransitionDowngrade(t *testing.T) {
 	// Transition mode (WPA2/WPA3) → flagged; pure WPA3 → clean.
 	tm := bss("00:00:00:00:00:01", "corp", "WPA2/WPA3", "5 GHz", 36)
 	tm.PMFRequired = true
-	if !hasDef(det.Detect(tree("corp", tm)), wifianomaly.DefWPA3TransitionDowngrade) {
+	if !hasDef(det.Detect(tree("corp", tm), nil), wifianomaly.DefWPA3TransitionDowngrade) {
 		t.Error("WPA2/WPA3 transition mode should be flagged as downgrade-capable")
 	}
 	pure := bss("00:00:00:00:00:02", "corp", "WPA3", "5 GHz", 36)
 	pure.PMFRequired = true
-	if hasDef(det.Detect(tree("corp", pure)), wifianomaly.DefWPA3TransitionDowngrade) {
+	if hasDef(det.Detect(tree("corp", pure), nil), wifianomaly.DefWPA3TransitionDowngrade) {
 		t.Error("pure WPA3 must not be flagged as transition downgrade")
 	}
 }
@@ -27,14 +27,14 @@ func TestDefaultSSIDName(t *testing.T) {
 	for _, name := range []string{"NETGEAR47", "linksys", "D-Link_2.4G", "default"} {
 		b := bss("00:00:00:00:00:01", name, "WPA2", "5 GHz", 36)
 		b.PMFRequired = true
-		if !hasDef(det.Detect(tree(name, b)), wifianomaly.DefDefaultSSIDName) {
+		if !hasDef(det.Detect(tree(name, b), nil), wifianomaly.DefDefaultSSIDName) {
 			t.Errorf("SSID %q should be flagged as a default name", name)
 		}
 	}
 	// A configured name is not a default.
 	b := bss("00:00:00:00:00:01", "AcmeCorp-Staff", "WPA2", "5 GHz", 36)
 	b.PMFRequired = true
-	if hasDef(det.Detect(tree("AcmeCorp-Staff", b)), wifianomaly.DefDefaultSSIDName) {
+	if hasDef(det.Detect(tree("AcmeCorp-Staff", b), nil), wifianomaly.DefDefaultSSIDName) {
 		t.Error("a configured SSID must not be flagged as default")
 	}
 }
@@ -55,10 +55,10 @@ func TestSSIDSprawl(t *testing.T) {
 		return groups
 	}
 	det := wifianomaly.NewDetector(wifianomaly.WithSSIDSprawlThreshold(3))
-	if hasDef(det.Detect(mkTree("a", "b")), wifianomaly.DefSSIDSprawl) {
+	if hasDef(det.Detect(mkTree("a", "b"), nil), wifianomaly.DefSSIDSprawl) {
 		t.Error("2 SSIDs is below sprawl threshold 3")
 	}
-	if !hasDef(det.Detect(mkTree("a", "b", "c")), wifianomaly.DefSSIDSprawl) {
+	if !hasDef(det.Detect(mkTree("a", "b", "c"), nil), wifianomaly.DefSSIDSprawl) {
 		t.Error("3 SSIDs on one AP meets sprawl threshold 3")
 	}
 }
@@ -71,7 +71,7 @@ func TestInconsistentRoaming(t *testing.T) {
 	ftNo := bss("00:00:00:00:00:02", "corp", "WPA3", "5 GHz", 40)
 	ftNo.PMFRequired = true
 	ftNo.FTSupported = false
-	if !hasDef(det.Detect(tree("corp", ftYes, ftNo)), wifianomaly.DefInconsistentRoaming) {
+	if !hasDef(det.Detect(tree("corp", ftYes, ftNo), nil), wifianomaly.DefInconsistentRoaming) {
 		t.Error("mixed 802.11r support across an SSID should be flagged")
 	}
 
@@ -80,7 +80,7 @@ func TestInconsistentRoaming(t *testing.T) {
 	a.PMFRequired, a.FTSupported, a.RRMNeighbor, a.BTMSupported = true, true, true, true
 	b := bss("00:00:00:00:00:04", "corp", "WPA3", "5 GHz", 40)
 	b.PMFRequired, b.FTSupported, b.RRMNeighbor, b.BTMSupported = true, true, true, true
-	if hasDef(det.Detect(tree("corp", a, b)), wifianomaly.DefInconsistentRoaming) {
+	if hasDef(det.Detect(tree("corp", a, b), nil), wifianomaly.DefInconsistentRoaming) {
 		t.Error("uniform roaming support must not be flagged")
 	}
 }

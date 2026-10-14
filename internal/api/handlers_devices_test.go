@@ -661,7 +661,7 @@ func TestNetworkDiscoverySettingsResponseFields(t *testing.T) {
 			},
 			ARPScan:  true,
 			ICMPScan: true,
-			PortScan: api.PortScanResponse{
+			PortScan: api.PortScanSettingsResponse{
 				Enabled:  true,
 				TCPPorts: "22,80,443",
 			},

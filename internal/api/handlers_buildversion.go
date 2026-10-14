@@ -7,15 +7,20 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/version"
 )
 
+// BuildVersionResponse is GET /__version: the build metadata plus
+// tlsFingerprint, the SHA-256 fingerprint of the active TLS certificate. The
+// field is always present so the response shape is stable; it is empty if the
+// active certificate is missing or unreadable.
+type BuildVersionResponse struct {
+	version.BuildInfo
+
+	TLSFingerprint string `json:"tlsFingerprint"`
+}
+
 // handleBuildVersion serves GET /__version with build metadata for deployment
 // validation. Unauthenticated by design — operators need to verify which
 // binary is running without holding a session. Required by the Universal
 // Build Contract; see the repository development policy.
-//
-// In addition to version.Info() the response carries `tlsFingerprint`, the
-// SHA-256 fingerprint of the active TLS certificate. The field is always
-// present so the response shape is stable; it is empty if the active
-// certificate is missing or unreadable.
 func (s *Server) handleBuildVersion(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
@@ -29,7 +34,8 @@ func (s *Server) handleBuildVersion(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-	resp := version.Info()
-	resp["tlsFingerprint"] = s.tlsFingerprintForResponse()
-	sendJSONResponse(w, logger, http.StatusOK, resp)
+	sendJSONResponse(w, logger, http.StatusOK, BuildVersionResponse{
+		BuildInfo:      version.Info(),
+		TLSFingerprint: s.tlsFingerprintForResponse(),
+	})
 }

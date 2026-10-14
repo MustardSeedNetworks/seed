@@ -2,9 +2,12 @@ package discovery_test
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 )
@@ -62,38 +65,19 @@ func TestEngineSetCollectors(t *testing.T) {
 	engine.SetProfiler(nil)
 	engine.SetAssessor(nil)
 
-	caps := engine.GetCapabilities()
-	for _, name := range []string{"wired", "wifi", "bluetooth", "snmp", "portScan", "profiling", "vulnScan", "nameRes"} {
-		if caps[name] {
-			t.Errorf("GetCapabilities()[%q] = true with no collector set, want false", name)
-		}
-	}
-	if !caps["correlation"] {
-		t.Error(`GetCapabilities()["correlation"] = false, want true — it needs no collector`)
-	}
+	// Correlation needs no collector.
+	require.Equal(t, discovery.EngineCapabilities{Correlation: true}, engine.GetCapabilities())
 }
 
-func TestEngineGetCapabilities(t *testing.T) {
+// The capability set's wire shape: every key is always sent.
+func TestEngineCapabilitiesWireShape(t *testing.T) {
 	engine := discovery.NewEngine(nil)
 	defer engine.Stop()
 
-	caps := engine.GetCapabilities()
-
-	// Without collectors, most should be false
-	if caps["wired"] {
-		t.Error("wired should be false without collector")
-	}
-	if caps["wifi"] {
-		t.Error("wifi should be false without collector")
-	}
-	if caps["bluetooth"] {
-		t.Error("bluetooth should be false without collector")
-	}
-
-	// Correlation is always available
-	if !caps["correlation"] {
-		t.Error("correlation should always be true")
-	}
+	got, err := json.Marshal(engine.GetCapabilities())
+	require.NoError(t, err)
+	require.JSONEq(t, `{"wired":false,"wifi":false,"bluetooth":false,"snmp":false,"portScan":false,`+
+		`"profiling":false,"vulnScan":false,"nameRes":false,"correlation":true}`, string(got))
 }
 
 func TestEngineScanOptions(t *testing.T) {

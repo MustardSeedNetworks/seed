@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/engine-capabilities.schema.json",
+  "$ref": "#/$defs/EngineCapabilities",
+  "$defs": {
+    "EngineCapabilities": {
+      "properties": {
+        "wired": {
+          "type": "boolean"
+        },
+        "wifi": {
+          "type": "boolean"
+        },
+        "bluetooth": {
+          "type": "boolean"
+        },
+        "snmp": {
+          "type": "boolean"
+        },
+        "portScan": {
+          "type": "boolean"
+        },
+        "profiling": {
+          "type": "boolean"
+        },
+        "vulnScan": {
+          "type": "boolean"
+        },
+        "nameRes": {
+          "type": "boolean"
+        },
+        "correlation": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "wired",
+        "wifi",
+        "bluetooth",
+        "snmp",
+        "portScan",
+        "profiling",
+        "vulnScan",
+        "nameRes",
+        "correlation"
+      ]
+    }
+  },
+  "title": "EngineCapabilities",
+  "description": "EngineCapabilities — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

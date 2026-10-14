@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/wifi-status-response.schema.json",
+  "$ref": "#/$defs/WiFiStatusResponse",
+  "$defs": {
+    "WiFiStatusResponse": {
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "currentInterface": {
+          "type": "string"
+        },
+        "isWireless": {
+          "type": "boolean"
+        },
+        "availableAdapters": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "canScan": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "status",
+        "message",
+        "currentInterface",
+        "isWireless",
+        "availableAdapters",
+        "canScan"
+      ]
+    }
+  },
+  "title": "WiFiStatusResponse",
+  "description": "WiFiStatusResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

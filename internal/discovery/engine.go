@@ -468,21 +468,35 @@ type EngineStats struct {
 	Scanning  bool          `json:"scanning"`
 }
 
+// EngineCapabilities says which discovery capabilities the engine can use. A
+// collector-backed one is true only while its collector is set and enabled.
+type EngineCapabilities struct {
+	Wired       bool `json:"wired"`
+	WiFi        bool `json:"wifi"`
+	Bluetooth   bool `json:"bluetooth"`
+	SNMP        bool `json:"snmp"`
+	PortScan    bool `json:"portScan"`
+	Profiling   bool `json:"profiling"`
+	VulnScan    bool `json:"vulnScan"`
+	NameRes     bool `json:"nameRes"`
+	Correlation bool `json:"correlation"` // needs no collector, always true
+}
+
 // GetCapabilities returns which discovery capabilities are available.
-func (e *Engine) GetCapabilities() map[string]bool {
+func (e *Engine) GetCapabilities() EngineCapabilities {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
-	return map[string]bool{
-		"wired":       e.wiredCollector != nil && e.config.EnableWired,
-		"wifi":        e.wifiCollector != nil && e.config.EnableWiFi,
-		"bluetooth":   e.bluetoothCollector != nil && e.config.EnableBluetooth,
-		"snmp":        e.snmpCollector != nil && e.config.EnableSNMP,
-		"portScan":    e.portScanner != nil && e.config.EnablePortScan,
-		"profiling":   e.profiler != nil && e.config.EnableProfiling,
-		"vulnScan":    e.assessor != nil && e.config.EnableVulnScan,
-		"nameRes":     e.wiredCollector != nil,
-		"correlation": true, // Always available
+	return EngineCapabilities{
+		Wired:       e.wiredCollector != nil && e.config.EnableWired,
+		WiFi:        e.wifiCollector != nil && e.config.EnableWiFi,
+		Bluetooth:   e.bluetoothCollector != nil && e.config.EnableBluetooth,
+		SNMP:        e.snmpCollector != nil && e.config.EnableSNMP,
+		PortScan:    e.portScanner != nil && e.config.EnablePortScan,
+		Profiling:   e.profiler != nil && e.config.EnableProfiling,
+		VulnScan:    e.assessor != nil && e.config.EnableVulnScan,
+		NameRes:     e.wiredCollector != nil,
+		Correlation: true,
 	}
 }
 

@@ -134,6 +134,7 @@ type ARPScanner struct {
 	maxHostsPerSubnet int             // Configurable limit (0 = use default)
 	snmpProber        *snmpProber     // Asks silent target-network addresses over SNMP (seed#2449)
 	snmpProbe         SNMPProbeReport // What the last sweep's SNMP probe did
+	coverage          []SweepCoverage // How much of each network the last sweep probed (seed#2686)
 }
 
 // NewARPScanner creates a new ARP scanner for the given interface.
@@ -223,6 +224,14 @@ func (s *ARPScanner) LastSNMPProbe() SNMPProbeReport {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.snmpProbe
+}
+
+// LastSweepCoverage reports how much of each network the last sweep probed,
+// the primary subnet first; empty before the first sweep.
+func (s *ARPScanner) LastSweepCoverage() []SweepCoverage {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return append([]SweepCoverage{}, s.coverage...)
 }
 
 // SetSweepEvidence records the addresses discovery has seen in use. A target

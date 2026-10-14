@@ -27,7 +27,7 @@ func GetGoogleDefaultScopes() []string {
 // 3. Enable the "Google+ API" or "People API"
 // 4. Go to Credentials > Create Credentials > OAuth Client ID
 // 5. Set Application type to "Web application"
-// 6. Add your redirect URI (e.g., https://your-domain/api/sso/callback)
+// 6. Add your redirect URI (e.g., https://your-domain/api/v1/sso/callback)
 // 7. Copy the Client ID and Client Secret.
 func NewGoogleProvider(clientID, clientSecret, redirectURL string, scopes []string) *Provider {
 	if len(scopes) == 0 {

@@ -61,7 +61,7 @@ require (
 )
 
 require (
-	github.com/MustardSeedNetworks/foundation v0.7.2
+	github.com/MustardSeedNetworks/foundation v0.7.4
 	github.com/go-pdf/fpdf v0.9.0
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/go-webauthn/webauthn v0.18.2
@@ -90,7 +90,7 @@ require (
 	golang.org/x/crypto v0.57.0
 	golang.org/x/net v0.60.0
 	golang.org/x/oauth2 v0.37.0
-	golang.org/x/sys v0.48.0
+	golang.org/x/sys v0.49.0
 	golang.org/x/text v0.42.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1

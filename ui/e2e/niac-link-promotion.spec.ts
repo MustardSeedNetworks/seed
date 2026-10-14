@@ -20,6 +20,11 @@ import { type APIRequestContext, expect, test } from '@playwright/test';
  * rescan from the save. A target is polled as soon as it is registered, and
  * the topology reconcilers turn a poll into a node on their own 30 s tick.
  *
+ * The last test adds one more target by hand, the way an operator would: v2c,
+ * the saved community picked from the vault, left disabled so the scheduler
+ * never polls it. "Test target" then has to produce its first successful
+ * poll on its own (seed#2523).
+ *
  * A node is built from the target's polled sysinfo and carries no address
  * until a later ARP pass backfills one, so it is matched on sysName: the name
  * promotion gave the target.
@@ -44,8 +49,10 @@ interface PollingTarget {
   ipAddress: string;
   enabled: boolean;
   credentialsId: string;
+  id: string;
   lastStatus: string;
   lastPolledAt?: string;
+  lastSuccessAt?: string;
 }
 
 async function csrfToken(request: APIRequestContext): Promise<string> {
@@ -77,7 +84,7 @@ test.describe('promotion over a NIAC link', () => {
   test.setTimeout(PROMOTION_MS + POLL_MS + RECONCILE_MS + 30_000);
 
   test('the active interface is listed where the UI selects it', async ({ page }) => {
-    const response = await page.request.get('/api/v1/interfaces?categorized=true');
+    const response = await page.request.get('/api/v1/interfaces');
     expect(response.status()).toBe(200);
     expect(JSON.stringify(await response.json())).toContain(`"${link}"`);
   });
@@ -149,5 +156,34 @@ test.describe('promotion over a NIAC link', () => {
       type: 'promotion',
       description: `${agentIPs.length} agents promoted ${promotedAfter} ms after the credential was saved, polled and in the topology ${Date.now() - savedAt} ms after`,
     });
+  });
+
+  test('a hand-added v2c target polls the agent on Test target', async ({ page }) => {
+    const name = 'hand-added-v2c';
+    await page.goto('/polling-targets');
+    await page.getByTestId('target-add').click();
+    const dialog = page.getByRole('dialog', { name: 'Add polling target' });
+    await dialog.getByLabel('Name', { exact: true }).fill(name);
+    await dialog.getByLabel('IP address', { exact: true }).fill(agentIPs[0] ?? '');
+    await dialog.getByLabel('SNMP version', { exact: true }).selectOption('v2c');
+    await dialog
+      .getByLabel('Credential', { exact: true })
+      .selectOption({ label: 'discovery-first-run' });
+    await dialog.getByRole('button', { name: 'Add target' }).click();
+    await expect(dialog).toBeHidden();
+
+    const added = (await pollingTargets(page.request)).find((t) => t.name === name);
+    expect(added, 'the hand-added target').toBeDefined();
+    expect(added?.enabled, 'a new target saves disabled').toBe(false);
+    expect(added?.lastPolledAt, 'nothing polled the disabled target').toBeUndefined();
+
+    await page.getByTestId(`target-row-${added?.id}`).click();
+    await page.getByTestId('target-test').click();
+
+    await expect(page.getByTestId('target-last-status')).toContainText('ok', { timeout: 25_000 });
+    await expect(page.getByTestId('target-last-success')).not.toContainText('Never');
+    const polled = (await pollingTargets(page.request)).find((t) => t.name === name);
+    expect(polled?.lastStatus).toBe('ok');
+    expect(polled?.lastSuccessAt, 'lastSuccessAt after a successful test poll').toBeTruthy();
   });
 });

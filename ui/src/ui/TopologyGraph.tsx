@@ -24,7 +24,7 @@
 
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { TopologyLink, TopologyNode } from '../types/topology';
+import type { TopologyLink, TopologyNode } from '../types/generated/topology-node-detail-response';
 import { type GraphLinkInput, type GraphNodeInput, layoutTopology } from './topologyLayout';
 
 /** The FDB reconciler's kind (internal/topology/edge_reconciler_fdb.go). Every

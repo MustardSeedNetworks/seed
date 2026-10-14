@@ -89,9 +89,12 @@ export function Modal({
       ) : (
         <div className="absolute inset-0 bg-scrim/70 backdrop-blur-sm" />
       )}
+      {/* relative: a positioned scrim paints over an unpositioned sibling
+          whatever the DOM order, and then took every click meant for the
+          panel's own controls. */}
       <div
         ref={containerRef}
-        className={`mx-4 w-full ${sizeClasses[size]} rounded-2xl border border-surface-border bg-bg-surface/95 shadow-2xl ${className}`}
+        className={`relative mx-4 w-full ${sizeClasses[size]} rounded-2xl border border-surface-border bg-bg-surface/95 shadow-2xl ${className}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : ariaLabelledBy}

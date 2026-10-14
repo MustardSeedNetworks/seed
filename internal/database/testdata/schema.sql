@@ -843,7 +843,7 @@ CREATE TABLE "polling_targets" (
 				created_at TEXT NOT NULL,
 				updated_at TEXT NOT NULL,
 				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
-				collector_chain TEXT NOT NULL DEFAULT '["sys_info","if_table","lldp","arp","fdb"]',
+				collector_chain TEXT NOT NULL DEFAULT '["sys_info","if_table","lldp","arp","fdb"]', last_success_at TEXT,
 				FOREIGN KEY (client_id, credentials_id)
 					REFERENCES device_credentials(client_id, id) ON DELETE RESTRICT
 			) STRICT;
@@ -1027,7 +1027,6 @@ CREATE TABLE topology_links (
 				link_type TEXT NOT NULL DEFAULT 'unknown',
 				status TEXT NOT NULL DEFAULT 'up',
 				speed_mbps INTEGER,
-				utilization_pct REAL,
 				first_seen TEXT NOT NULL,
 				last_seen TEXT NOT NULL,
 				evidence_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),

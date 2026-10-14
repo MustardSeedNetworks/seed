@@ -34,7 +34,6 @@ func (s *Server) vulnerabilityRoutes() []route.Route {
 	op := roles.Operator
 	get := []string{http.MethodGet}
 	post := []string{http.MethodPost}
-	getPost := []string{http.MethodGet, http.MethodPost}
 	getPut := []string{http.MethodGet, http.MethodPut}
 	return []route.Route{
 		{
@@ -64,12 +63,18 @@ func (s *Server) vulnerabilityRoutes() []route.Route {
 			Auth:    true,
 		},
 		{
-			Path:    APIVersionPrefix + "/security/vulnerabilities/findings/",
-			Handler: s.handleVulnFindingAction,
-			Methods: getPost,
+			Path:    APIVersionPrefix + "/security/vulnerabilities/findings/{findingId}/status",
+			Handler: s.handleVulnFindingStatus,
+			Methods: post,
 			Scope:   op,
 			Auth:    true,
 			CSRF:    true,
+		},
+		{
+			Path:    APIVersionPrefix + "/security/vulnerabilities/findings/{findingId}/history",
+			Handler: s.handleVulnFindingHistory,
+			Methods: get,
+			Auth:    true,
 		},
 		{
 			Path:    APIVersionPrefix + "/security/vulnerabilities/settings",
@@ -89,6 +94,15 @@ func (s *Server) vulnerabilityRoutes() []route.Route {
 	}
 }
 
+// VulnerabilityStatusResponse is the scanner's state, its result counts and
+// the configured severity threshold.
+type VulnerabilityStatusResponse struct {
+	Enabled        bool              `json:"enabled"`
+	Scanning       bool              `json:"scanning"`
+	Stats          vuln.ScannerStats `json:"stats"`
+	SeverityFilter string            `json:"severityFilter"`
+}
+
 // handleVulnerabilityStatus returns scanner status and statistics
 // GET /api/vulnerabilities/status (fixes #703).
 func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Request) {
@@ -101,14 +115,18 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	stats := s.vulnScanner().GetStats()
-
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		jsonKeyEnabled:   true,
-		"scanning":       s.vulnScanner().IsRunning(),
-		"stats":          stats,
-		"severityFilter": s.securitySettings.VulnSeverity(),
+	sendJSONResponse(w, logger, http.StatusOK, VulnerabilityStatusResponse{
+		Enabled:        true,
+		Scanning:       s.vulnScanner().IsRunning(),
+		Stats:          s.vulnScanner().GetStats(),
+		SeverityFilter: s.securitySettings.VulnSeverity(),
 	})
+}
+
+// VulnerabilityResultsResponse is every scanned device's vulnerabilities.
+type VulnerabilityResultsResponse struct {
+	Results []*discovery.DeviceVulnerabilities `json:"results"`
+	Count   int                                `json:"count"`
 }
 
 // handleVulnerabilityResults returns all vulnerability scan results
@@ -139,9 +157,9 @@ func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Reque
 		results = filtered
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"results": results,
-		"count":   len(results),
+	sendJSONResponse(w, logger, http.StatusOK, VulnerabilityResultsResponse{
+		Results: results,
+		Count:   len(results),
 	})
 }
 
@@ -200,6 +218,35 @@ func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Requ
 	sendJSONResponse(w, logger, http.StatusOK, result)
 }
 
+// VulnerabilitySettings is the GET body of /security/vulnerabilities/settings.
+// The config file keeps its snake_case keys; the wire is camelCase like every
+// other route (ADR-0010, seed#2971). The NVD API key never leaves the server:
+// HasNVDAPIKey says whether one is stored (seed#3407).
+type VulnerabilitySettings struct {
+	Enabled           bool   `json:"enabled"`
+	CVEDatabase       string `json:"cveDatabase"       jsonschema:"enum=nvd,enum=local"`
+	HasNVDAPIKey      bool   `json:"hasNvdApiKey"`
+	UpdateInterval    int    `json:"updateInterval"`
+	SeverityThreshold string `json:"severityThreshold" jsonschema:"enum=low,enum=medium,enum=high,enum=critical"`
+	MaxConcurrent     int    `json:"maxConcurrent"`
+	// AutoScan runs a vulnerability scan on each newly discovered device.
+	AutoScan bool `json:"autoScan"`
+}
+
+// VulnerabilitySettingsUpdate is the PUT body. An empty NVDAPIKey keeps the
+// stored key, so a save that never saw the key cannot erase it; removing the
+// key takes ClearNVDAPIKey.
+type VulnerabilitySettingsUpdate struct {
+	Enabled           bool   `json:"enabled"`
+	CVEDatabase       string `json:"cveDatabase"              jsonschema:"enum=nvd,enum=local"`
+	NVDAPIKey         string `json:"nvdApiKey,omitempty"`
+	ClearNVDAPIKey    bool   `json:"clearNvdApiKey,omitempty"`
+	UpdateInterval    int    `json:"updateInterval"`
+	SeverityThreshold string `json:"severityThreshold"        jsonschema:"enum=low,enum=medium,enum=high,enum=critical"`
+	MaxConcurrent     int    `json:"maxConcurrent"`
+	AutoScan          bool   `json:"autoScan"`
+}
+
 // handleVulnerabilitySettings returns or updates vulnerability scanner settings
 // GET/PUT /api/vulnerabilities/settings (fixes #703).
 func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Request) {
@@ -208,23 +255,32 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 
 	switch r.Method {
 	case http.MethodGet:
-		sendJSONResponse(w, logger, http.StatusOK, s.securitySettings.Vuln())
+		v := s.securitySettings.Vuln()
+		sendJSONResponse(w, logger, http.StatusOK, VulnerabilitySettings{
+			Enabled:           v.Enabled,
+			CVEDatabase:       v.CVEDatabase,
+			HasNVDAPIKey:      v.NVDAPIKey != "",
+			UpdateInterval:    v.UpdateInterval,
+			SeverityThreshold: v.SeverityThreshold,
+			MaxConcurrent:     v.MaxConcurrent,
+			AutoScan:          v.AutoScan,
+		})
 
 	case http.MethodPut:
-		var settings vuln.VulnerabilityScannerConfig
+		var settings VulnerabilitySettingsUpdate
 		if !decodeJSONStrictLocalized(w, r, &settings, MaxBodySizeJSON,
 			logger, localizer) {
 			return
 		}
+		if settings.ClearNVDAPIKey && settings.NVDAPIKey != "" {
+			sendErrorResponseWithDetails(
+				w, logger, http.StatusBadRequest, ErrCodeValidation,
+				localizer.T("errors.vulnerability.keyAndClear"), "",
+			)
+			return
+		}
 
-		err := s.securitySettings.UpdateVuln(securitysettings.VulnUpdate{
-			Enabled:           settings.Enabled,
-			CVEDatabase:       settings.CVEDatabase,
-			NVDAPIKey:         settings.NVDAPIKey,
-			UpdateInterval:    settings.UpdateInterval,
-			SeverityThreshold: settings.SeverityThreshold,
-			MaxConcurrent:     settings.MaxConcurrent,
-		})
+		err := s.securitySettings.UpdateVuln(securitysettings.VulnUpdate(settings))
 		if err != nil {
 			logger.ErrorContext(r.Context(), "Failed to save vulnerability config", "error", err)
 			sendErrorResponseWithDetails(
@@ -234,9 +290,7 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-			"status": "updated",
-		})
+		sendJSONResponse(w, logger, http.StatusOK, StatusUpdatedResponse{Status: "updated"})
 
 	default:
 		sendErrorResponseWithDetails(

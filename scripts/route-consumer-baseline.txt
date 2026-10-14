@@ -13,10 +13,11 @@
 #                 claims) reaches these. Each fronts a subsystem, so each is
 #                 its own change; reason on the line
 /api/v1/alert-rules                       # PAT-only allow-list (owner 2026-09-04)
-/api/v1/alert-rules/                      # PAT-only allow-list (owner 2026-09-04)
+/api/v1/alert-rules/{ruleId}              # PAT-only allow-list (owner 2026-09-04)
+/api/v1/device-credentials/{credentialId} # PAT-only allow-list (owner 2026-09-04) until the SE-2 credential picker
 /api/v1/discovery/engine                  # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/capabilities     # PAT-only allow-list (owner 2026-09-04)
-/api/v1/discovery/engine/device/          # PAT-only allow-list (owner 2026-09-04)
+/api/v1/discovery/engine/device/{mac}     # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/events           # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/full             # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/quick            # PAT-only allow-list (owner 2026-09-04)
@@ -27,7 +28,7 @@
 /api/v1/flows/threat-indicators           # scheduled: list editor needs a UI row (#3106); P-C5 backend landed first, API-edited until then
 /api/v1/health                            # non-UI: tests/smoke/run_smoke_tests.sh asserts it is authenticated
 /api/v1/history/anomalies                 # scheduled: S6-2 #325 is the UI half of #175; the backend read surface landed first
-/api/v1/history/probes/                   # scheduled: S6-2 #325, see /history/anomalies
+/api/v1/history/probes/{probeId}          # scheduled: S6-2 #325, see /history/anomalies
 /api/v1/path/traceroute                   # scheduled: Wave 4 path cluster (#165 #395 #435), one traceroute engine
 /api/v1/reporting/logs/query              # PAT-only allow-list (owner 2026-09-04)
 /api/v1/security/discovery/fingerprint    # scheduled: S4-5 #2456 reuses it (owner 2026-09-24, keep and reuse); operator+ and rate limited (#2635)
@@ -36,7 +37,8 @@
 /api/v1/security/problems/scan            # delete: see /security/problems
 /api/v1/security/problems/thresholds      # delete: see /security/problems
 /api/v1/security/vulnerabilities/findings  # scheduled: S6-2 #899 — the triage card (fleet UI driver); the backend landed first
-/api/v1/security/vulnerabilities/findings/ # scheduled: S6-2 #899, see /security/vulnerabilities/findings
+/api/v1/security/vulnerabilities/findings/{findingId}/history # scheduled: S6-2 #899, see /security/vulnerabilities/findings
+/api/v1/security/vulnerabilities/findings/{findingId}/status  # scheduled: S6-2 #899, see /security/vulnerabilities/findings
 /api/v1/security/wifi/discovery/aps       # scheduled: Wave 9 (#356 #365), pre-v1 by owner decision 2026-09-04
 /api/v1/security/wifi/discovery/networks  # scheduled: Wave 9, see /security/wifi/discovery/aps
 /api/v1/security/wifi/discovery/scan      # scheduled: Wave 9, see /security/wifi/discovery/aps

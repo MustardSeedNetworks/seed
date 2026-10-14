@@ -38,6 +38,12 @@ type ClientLogEntry struct {
 	Stack     string         `json:"stack,omitempty"`
 }
 
+// ClientLogResponse acknowledges a frontend log batch.
+type ClientLogResponse struct {
+	Status   string `json:"status"   jsonschema:"enum=accepted"`
+	Received int    `json:"received"`
+}
+
 // LogQueryResponse represents the response for log queries.
 type LogQueryResponse struct {
 	Logs       []LogEntry `json:"logs"`
@@ -83,6 +89,12 @@ func toLogEntries(entries []*logging.LogEntry) []LogEntry {
 		})
 	}
 	return out
+}
+
+// LogsRecentResponse is the answer of GET /api/v1/reporting/logs/recent.
+type LogsRecentResponse struct {
+	Logs  []LogEntry `json:"logs"`
+	Count int        `json:"count"`
 }
 
 // LogStatsResponse represents log statistics.
@@ -142,9 +154,9 @@ func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 		broadcaster.Write(logEntry)
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"status":   "accepted",
-		"received": len(req.Entries),
+	sendJSONResponse(w, logger, http.StatusOK, ClientLogResponse{
+		Status:   "accepted",
+		Received: len(req.Entries),
 	})
 }
 
@@ -290,11 +302,8 @@ func (s *Server) handleLogsRecent(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	logs := broadcaster.GetRecentLogs(limit)
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"logs":  logs,
-		"count": len(logs),
-	})
+	logs := toLogEntries(broadcaster.GetRecentLogs(limit))
+	sendJSONResponse(w, logger, http.StatusOK, LogsRecentResponse{Logs: logs, Count: len(logs)})
 }
 
 // LogSubscription represents a client's log subscription preferences.

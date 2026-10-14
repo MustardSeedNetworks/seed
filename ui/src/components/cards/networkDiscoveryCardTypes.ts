@@ -63,16 +63,6 @@ export interface NetworkDiscoveryData {
   status: DiscoveryStatus;
 }
 
-// Deep Scan (Port Scan) Types - matches backend discovery.ServiceInfo
-export interface ServiceInfo {
-  port: number;
-  state: 'open' | 'closed' | 'filtered';
-  service: string;
-  banner?: string;
-  version?: string;
-  protocol?: string;
-}
-
 // PortScanResult for display - normalized from backend response
 export interface PortScanResult {
   port: number;
@@ -81,15 +71,6 @@ export interface PortScanResult {
   banner?: string;
   version?: string;
   rtt: number; // nanoseconds (0 if not available from backend)
-}
-
-// Backend API response structure (internal to discovery pipeline)
-export interface PortScanApiResponse {
-  ip: string;
-  hostname?: string;
-  services: ServiceInfo[];
-  scanTime: number;
-  error?: string;
 }
 
 export interface DeepScanResult {

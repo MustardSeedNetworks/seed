@@ -25,7 +25,7 @@ func detectGatewayNetlink() (string, error) {
 		}
 	}
 
-	return "", nil
+	return "", ErrNoGateway
 }
 
 // detectGatewayIPv6Netlink uses netlink to detect the default IPv6 gateway.
@@ -37,22 +37,20 @@ func detectGatewayIPv6Netlink() (string, error) {
 
 	for i := range routes {
 		route := &routes[i]
-		// Default route has nil Dst (or ::/0).
-		if route.Dst == nil && route.Gw != nil {
-			// Ensure it's a valid IPv6 address (not IPv4-mapped).
-			if ip := route.Gw; ip != nil && ip.To4() == nil {
-				return ip.String(), nil
-			}
+		// Default route has nil Dst (or ::/0); the next hop must be a real
+		// IPv6 address, not IPv4-mapped.
+		isDefault := route.Dst == nil || route.Dst.String() == "::/0"
+		if !isDefault || route.Gw == nil || route.Gw.To4() != nil {
+			continue
 		}
-		// Also check for explicit ::/0 destination.
-		if route.Dst != nil && route.Dst.String() == "::/0" && route.Gw != nil {
-			if ip := route.Gw; ip != nil && ip.To4() == nil {
-				return ip.String(), nil
-			}
+		var iface string
+		if link, linkErr := netlink.LinkByIndex(route.LinkIndex); linkErr == nil {
+			iface = link.Attrs().Name
 		}
+		return withZone(route.Gw.String(), iface), nil
 	}
 
-	return "", nil
+	return "", ErrNoGateway
 }
 
 // GetAllRoutes returns all routes using netlink (for debugging/display).
@@ -94,29 +92,6 @@ func appendRouteInfo(result []RouteInfo, routes []netlink.Route, family string) 
 		result = append(result, info)
 	}
 	return result
-}
-
-// GetDefaultGatewayInterface returns the interface used for the default route.
-func GetDefaultGatewayInterface() (string, error) {
-	routes, err := netlink.RouteList(nil, netlink.FAMILY_V4)
-	if err != nil {
-		return "", err
-	}
-
-	for i := range routes {
-		route := &routes[i]
-		// Default route has nil Dst OR 0.0.0.0/0.
-		isDefault := route.Dst == nil ||
-			(route.Dst != nil && route.Dst.IP.Equal(net.IPv4zero) && route.Dst.Mask.String() == "00000000")
-		if isDefault && route.LinkIndex > 0 {
-			link, linkErr := netlink.LinkByIndex(route.LinkIndex)
-			if linkErr == nil {
-				return link.Attrs().Name, nil
-			}
-		}
-	}
-
-	return "", nil
 }
 
 // detectGatewayPlatform is the platform-specific gateway detection.

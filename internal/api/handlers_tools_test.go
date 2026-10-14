@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	api "github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 )
 
 // TestHandleTCPProbe tests the TCP probe endpoint.
@@ -351,6 +352,42 @@ func TestHandleTraceroute(t *testing.T) {
 	}
 }
 
+// TestHandleTracerouteResponseShape pins the answer to the published
+// TracerouteResult schema, the same view the path endpoint serves.
+func TestHandleTracerouteResponseShape(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	server := api.NewTestServer()
+	defer server.Close()
+
+	body, _ := json.Marshal(api.TracerouteRequest{
+		Target:   "127.0.0.1",
+		Protocol: "tcp",
+		Port:     80,
+		MaxHops:  2,
+		Timeout:  500,
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/path/traceroute", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	server.Mux().ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected status %d, got %d: %s", http.StatusOK, w.Code, w.Body.String())
+	}
+	dec := json.NewDecoder(w.Body)
+	dec.DisallowUnknownFields()
+	var got api.TracerouteResult
+	if err := dec.Decode(&got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if got.Target != "127.0.0.1" || got.TargetIP != "127.0.0.1" || got.Protocol != "tcp" || got.Port != 80 {
+		t.Errorf("unexpected result header: %+v", got)
+	}
+}
+
 // TestHandleTracerouteMethodNotAllowed tests non-POST methods on traceroute endpoint.
 func TestHandleTracerouteMethodNotAllowed(t *testing.T) {
 	if testing.Short() {
@@ -581,12 +618,25 @@ func TestHandleAdvancedFingerprint(t *testing.T) {
 			server.Mux().ServeHTTP(w, req)
 
 			if w.Code != tt.expectedStatus {
-				t.Errorf(
+				t.Fatalf(
 					"Expected status %d, got %d: %s",
 					tt.expectedStatus,
 					w.Code,
 					w.Body.String(),
 				)
+			}
+			if w.Code != http.StatusOK {
+				return
+			}
+			// The documented AdvancedProbeResult is the whole answer.
+			dec := json.NewDecoder(w.Body)
+			dec.DisallowUnknownFields()
+			var got discovery.AdvancedProbeResult
+			if err := dec.Decode(&got); err != nil {
+				t.Fatalf("decode AdvancedProbeResult: %v", err)
+			}
+			if got.IP != tt.request["ip"] {
+				t.Errorf("ip = %q, want %q", got.IP, tt.request["ip"])
 			}
 		})
 	}

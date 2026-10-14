@@ -17,7 +17,7 @@ import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../contexts/RoleContext';
 import { useAlerts } from '../hooks/useAlerts';
-import type { Alert, AlertDelivery } from '../types/alerts';
+import type { Alert, AlertDelivery } from '../types/generated/alert-list-response';
 import {
   DetailEmpty,
   DetailFacts,

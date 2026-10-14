@@ -59,7 +59,7 @@ func TestHandleSettingsGET(t *testing.T) {
 	}
 
 	// Verify expected fields are present
-	expectedFields := []string{"interface", "vlan", "ip", "thresholds", "healthChecks", "speedtest", "iperf"}
+	expectedFields := []string{"vlan", "ip", "thresholds", "healthChecks", "speedtest", "iperf"}
 	for _, field := range expectedFields {
 		if _, ok := resp[field]; !ok {
 			t.Errorf("Expected field %s in response", field)
@@ -640,34 +640,6 @@ func TestSettingsUpdateInvalidJSON(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Expected status %d, got %d", http.StatusBadRequest, w.Code)
-	}
-}
-
-// TestBuildCardSettings tests that card settings builder returns expected structure.
-func TestBuildCardSettings(t *testing.T) {
-	server := api.NewTestServer()
-	defer server.Close()
-
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/settings", http.NoBody)
-	w := httptest.NewRecorder()
-
-	server.HandleSettings(w, req)
-
-	var resp map[string]any
-	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
-		t.Fatalf("Failed to decode response: %v", err)
-	}
-
-	cardSettings, ok := resp["cardSettings"].(map[string]any)
-	if !ok {
-		t.Fatal("Expected cardSettings in response")
-	}
-
-	expectedCards := []string{"link", "switch", "vlan", "network", "gateway", "dns"}
-	for _, card := range expectedCards {
-		if _, cardOK := cardSettings[card]; !cardOK {
-			t.Errorf("Expected card %s in cardSettings", card)
-		}
 	}
 }
 

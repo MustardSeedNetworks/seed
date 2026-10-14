@@ -206,6 +206,7 @@
   },
   "vulnerability": {
     "invalidApiKey": "Invalid API key",
+    "keyAndClear": "Send a new NVD API key or clear the stored one, not both",
     "validateFailed": "Failed to validate API key",
     "invalidIp": "Invalid IP address",
     "missingIpParam": "The ip query parameter is required",
@@ -230,7 +231,6 @@
     "indicatorsFailed": "Failed to access the threat indicator list"
   },
   "history": {
-    "probeRequired": "A probe id is required",
     "invalidRange": "Invalid range: use a duration such as 24h or a number of days such as 7d, within the retained window",
     "readFailed": "Failed to read history"
   },

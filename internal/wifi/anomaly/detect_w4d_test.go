@@ -13,7 +13,7 @@ func TestBSSLoadSaturation(t *testing.T) {
 	hi.PMFRequired = true
 	hi.HasBSSLoad = true
 	hi.ChannelUtil = 200 // ~78% busy
-	if !hasDef(det.Detect(tree("corp", hi)), wifianomaly.DefBSSLoadSaturation) {
+	if !hasDef(det.Detect(tree("corp", hi), nil), wifianomaly.DefBSSLoadSaturation) {
 		t.Error("high channel utilization should raise bss-load-saturation")
 	}
 
@@ -21,7 +21,7 @@ func TestBSSLoadSaturation(t *testing.T) {
 	lo.PMFRequired = true
 	lo.HasBSSLoad = true
 	lo.ChannelUtil = 40 // ~16% busy
-	if hasDef(det.Detect(tree("corp", lo)), wifianomaly.DefBSSLoadSaturation) {
+	if hasDef(det.Detect(tree("corp", lo), nil), wifianomaly.DefBSSLoadSaturation) {
 		t.Error("low utilization must not raise bss-load-saturation")
 	}
 
@@ -29,7 +29,7 @@ func TestBSSLoadSaturation(t *testing.T) {
 	none := bss("00:00:00:00:00:03", "corp", "WPA3", "5 GHz", 44)
 	none.PMFRequired = true
 	none.ChannelUtil = 250
-	if hasDef(det.Detect(tree("corp", none)), wifianomaly.DefBSSLoadSaturation) {
+	if hasDef(det.Detect(tree("corp", none), nil), wifianomaly.DefBSSLoadSaturation) {
 		t.Error("without HasBSSLoad the utilization figure is meaningless")
 	}
 }
@@ -40,14 +40,14 @@ func TestWideChannel24GHz(t *testing.T) {
 	wide := bss("00:00:00:00:00:01", "corp", "WPA3", "2.4 GHz", 6)
 	wide.PMFRequired = true
 	wide.ChannelWidthMHz = 40
-	if !hasDef(det.Detect(tree("corp", wide)), wifianomaly.DefWideChannel24GHz) {
+	if !hasDef(det.Detect(tree("corp", wide), nil), wifianomaly.DefWideChannel24GHz) {
 		t.Error("40 MHz in 2.4 GHz should be flagged")
 	}
 
 	narrow := bss("00:00:00:00:00:02", "corp", "WPA3", "2.4 GHz", 6)
 	narrow.PMFRequired = true
 	narrow.ChannelWidthMHz = 20
-	if hasDef(det.Detect(tree("corp", narrow)), wifianomaly.DefWideChannel24GHz) {
+	if hasDef(det.Detect(tree("corp", narrow), nil), wifianomaly.DefWideChannel24GHz) {
 		t.Error("20 MHz in 2.4 GHz is fine")
 	}
 
@@ -55,7 +55,7 @@ func TestWideChannel24GHz(t *testing.T) {
 	fiveWide := bss("00:00:00:00:00:03", "corp", "WPA3", "5 GHz", 36)
 	fiveWide.PMFRequired = true
 	fiveWide.ChannelWidthMHz = 80
-	if hasDef(det.Detect(tree("corp", fiveWide)), wifianomaly.DefWideChannel24GHz) {
+	if hasDef(det.Detect(tree("corp", fiveWide), nil), wifianomaly.DefWideChannel24GHz) {
 		t.Error("wide channels in 5 GHz must not be flagged")
 	}
 }
@@ -69,7 +69,7 @@ func TestChannelWidthMismatch(t *testing.T) {
 	b80 := bss("00:00:00:00:00:02", "corp", "WPA3", "5 GHz", 40)
 	b80.PMFRequired = true
 	b80.ChannelWidthMHz = 80
-	if !hasDef(det.Detect(tree("corp", b20, b80)), wifianomaly.DefChannelWidthMismatch) {
+	if !hasDef(det.Detect(tree("corp", b20, b80), nil), wifianomaly.DefChannelWidthMismatch) {
 		t.Error("mixed channel widths under one SSID should be flagged")
 	}
 
@@ -80,7 +80,7 @@ func TestChannelWidthMismatch(t *testing.T) {
 	c2 := bss("00:00:00:00:00:04", "corp", "WPA3", "5 GHz", 149)
 	c2.PMFRequired = true
 	c2.ChannelWidthMHz = 80
-	if hasDef(det.Detect(tree("corp", c1, c2)), wifianomaly.DefChannelWidthMismatch) {
+	if hasDef(det.Detect(tree("corp", c1, c2), nil), wifianomaly.DefChannelWidthMismatch) {
 		t.Error("uniform channel width must not be flagged")
 	}
 }
@@ -93,7 +93,7 @@ func TestW4dMultipleSignalsOnOneBSS(t *testing.T) {
 	b.ChannelWidthMHz = 40
 	b.HasBSSLoad = true
 	b.ChannelUtil = 220
-	got := det.Detect(tree("corp", b))
+	got := det.Detect(tree("corp", b), nil)
 	if !hasDef(got, wifianomaly.DefWideChannel24GHz) || !hasDef(got, wifianomaly.DefBSSLoadSaturation) {
 		t.Errorf("expected both wide-channel and bss-load detections, got %v", defKeys(got))
 	}

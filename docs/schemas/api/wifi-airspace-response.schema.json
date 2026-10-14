@@ -236,6 +236,12 @@
             "$ref": "#/$defs/Rule"
           },
           "type": "array"
+        },
+        "needsWiredData": {
+          "items": {
+            "$ref": "#/$defs/Rule"
+          },
+          "type": "array"
         }
       },
       "additionalProperties": false,

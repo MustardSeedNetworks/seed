@@ -16,9 +16,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type CurrentUser, RoleProvider } from '../contexts/RoleContext';
 import i18n from '../i18n';
 import { must } from '../test/must';
-import type { PollingTarget } from '../types/polling';
+import type { PollingTargetResponse } from '../types/generated/polling-target-response';
 
-const healthy: PollingTarget = {
+const healthy: PollingTargetResponse = {
   id: 'healthy',
   clientId: 'c',
   name: 'core-01',
@@ -36,7 +36,7 @@ const healthy: PollingTarget = {
 };
 
 // Never polled and not enabled: the two states whose words are the point.
-const paused: PollingTarget = {
+const paused: PollingTargetResponse = {
   ...healthy,
   id: 'paused',
   name: 'acc-sw-12',
@@ -45,7 +45,7 @@ const paused: PollingTarget = {
   lastPolledAt: undefined,
 };
 
-const state = { targets: [healthy, paused] as PollingTarget[] };
+const state = { targets: [healthy, paused] as PollingTargetResponse[] };
 
 vi.mock('../hooks/usePollingTargets', () => ({
   usePollingTargets: () => ({
@@ -147,7 +147,7 @@ describe('PollingTargetsPage — real locale copy', () => {
     }
     expect(screen.queryByPlaceholderText('Filter 2 targets')).toBeNull();
     expect(screen.queryByRole('searchbox', { name: 'Filter polling targets' })).toBeNull();
-    for (const english of ['Edit', 'Delete']) {
+    for (const english of ['Edit', 'Delete', 'Test target']) {
       expect(screen.queryByRole('button', { name: english })).toBeNull();
     }
 
@@ -165,7 +165,10 @@ describe('PollingTargetsPage — real locale copy', () => {
     expect(screen.queryByText('Polling paused')).toBeNull();
     expect(screen.queryByText('No poll completed yet')).toBeNull();
     expect(screen.getByText('Sondeo pausado')).toBeVisible();
-    expect(screen.getByText('Nunca')).toBeVisible();
+    // Never polled, so never answered either: last poll and last success.
+    expect(screen.getAllByText('Nunca')).toHaveLength(2);
+    expect(screen.getByText('Último sondeo correcto')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Probar destino' })).toBeVisible();
   });
 
   it('leaves protocol names and collector ids alone under es', async () => {

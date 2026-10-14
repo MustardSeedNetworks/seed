@@ -51,7 +51,7 @@ func detectGatewayPlatform() (string, error) {
 		}
 	}
 
-	return "", nil
+	return "", ErrNoGateway
 }
 
 // detectGatewayNetsh uses netsh as fallback for gateway detection.
@@ -76,7 +76,7 @@ func detectGatewayNetsh(ctx context.Context) (string, error) {
 		}
 	}
 
-	return "", nil
+	return "", ErrNoGateway
 }
 
 // detectGatewayIPv6Platform detects the default IPv6 gateway on Windows.
@@ -103,7 +103,7 @@ func detectGatewayIPv6Platform() (string, error) {
 		}
 	}
 
-	return "", nil
+	return "", ErrNoGateway
 }
 
 // findIPv6GatewayInLine scans a route-print line's whitespace-separated
@@ -150,7 +150,7 @@ func detectGatewayIPv6Netsh(ctx context.Context) (string, error) {
 		}
 	}
 
-	return "", nil
+	return "", ErrNoGateway
 }
 
 // GetAllRoutes returns all routes using route print (for debugging/display).
@@ -173,44 +173,6 @@ func GetAllRoutes() ([]RouteInfo, error) {
 	}
 
 	return routes, nil
-}
-
-// GetDefaultGatewayInterface returns the interface used for the default route.
-func GetDefaultGatewayInterface() (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), netshTimeoutSeconds*time.Second)
-	defer cancel()
-
-	output, err := exec.CommandContext(ctx, "route", "print", "-4", "0.0.0.0").Output()
-	if err != nil {
-		return "", fmt.Errorf("route print failed: %w", err)
-	}
-
-	// Parse for interface
-	lines := strings.SplitSeq(string(output), "\n")
-	for line := range lines {
-		line = strings.TrimSpace(line)
-		if !strings.HasPrefix(line, "0.0.0.0") {
-			continue
-		}
-		fields := strings.Fields(line)
-		// Format: Network Destination    Netmask         Gateway         Interface   Metric
-		if len(fields) > v4FieldInterface {
-			return interfaceNameForIP(fields[v4FieldInterface]), nil
-		}
-	}
-
-	return "", nil
-}
-
-// interfaceNameForIP returns the name of the local interface bound to ifaceIP,
-// or ifaceIP itself as a fallback when no interface matches (or the
-// interface list can't be read) -- the IP is still a usable, if less
-// friendly, answer to what the outbound interface is.
-func interfaceNameForIP(ifaceIP string) string {
-	if name := (systemInterfaceNamer{}).nameByAddress(ifaceIP); name != "" {
-		return name
-	}
-	return ifaceIP
 }
 
 // systemInterfaceNamer resolves route print's interface columns against the

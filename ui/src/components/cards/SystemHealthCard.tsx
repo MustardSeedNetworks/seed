@@ -23,7 +23,7 @@
  * ```
  *
  * Dependencies: BaseCard, Card UI components, useSettings hook, auth hooks, Icons, theme utilities
- * State: Manages system health data, fetches from /api/status/system endpoint, updates periodically
+ * State: Manages system health data, fetches from /api/v1/telemetry/system/health, updates periodically
  */
 
 import { Server } from 'lucide-react';
@@ -32,38 +32,14 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../lib/format';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
+import type {
+  Health,
+  ProcessInfo,
+  SystemHealthResponse,
+} from '../../types/generated/system-health-response';
 import { CardDivider, CardRow } from '../ui/Card';
 import type { Status } from '../ui/StatusBadge';
 import { BaseCard } from './BaseCard';
-
-interface ProcessInfo {
-  name: string;
-  pid: number;
-  cpuPercent: number;
-  memoryMb: number;
-}
-
-interface SystemHealth {
-  cpuPercent?: number;
-  memoryPercent?: number;
-  memoryUsed?: number;
-  memoryTotal?: number;
-  diskPercent?: number;
-  diskUsed?: number;
-  diskTotal?: number;
-  uptime?: number;
-  loadAvg1?: number;
-  loadAvg5?: number;
-  loadAvg15?: number;
-  goroutines?: number;
-  processMemory: number;
-  hostname: string;
-  os: string;
-  arch: string;
-  numCpu: number;
-  topCpuProcesses?: ProcessInfo[];
-  topMemoryProcesses?: ProcessInfo[];
-}
 
 function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / 86400);
@@ -77,12 +53,6 @@ function formatUptime(seconds: number): string {
     return `${hours}h ${minutes}m`;
   }
   return `${minutes}m`;
-}
-
-// A module function, not an inline ternary: the React Compiler cannot lower a
-// ternary whose test holds `??`, and would skip the whole component.
-function loadStatus(health: SystemHealth): Status | undefined {
-  return (health.loadAvg1 ?? 0) > (health.numCpu ?? 1) ? 'warning' : undefined;
 }
 
 function getResourceStatus(percent: number): Status {
@@ -180,7 +150,7 @@ function ResourceBar({
 }
 
 /** The host's resource usage, or null on a 401 (left to the session refresh). */
-async function fetchSystemHealth(): Promise<SystemHealth | null> {
+async function fetchSystemHealth(): Promise<Health | null> {
   const response = await fetch('/api/v1/telemetry/system/health', {
     credentials: 'include',
   });
@@ -192,7 +162,7 @@ async function fetchSystemHealth(): Promise<SystemHealth | null> {
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
   }
-  const result = await response.json();
+  const result: SystemHealthResponse = await response.json();
   return result.system;
 }
 
@@ -200,8 +170,8 @@ async function fetchSystemHealth(): Promise<SystemHealth | null> {
  * Displays system resource usage with CPU, memory, and disk metrics.
  */
 export function SystemHealthCard(): React.ReactElement {
-  const { t } = useTranslation(['cards', 'common']);
-  const [data, setData] = useState<SystemHealth | null>(null);
+  const { t } = useTranslation('cards');
+  const [data, setData] = useState<Health | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -228,12 +198,8 @@ export function SystemHealthCard(): React.ReactElement {
     return (): void => clearInterval(interval);
   }, [fetchHealth]);
 
-  const getStatus = (health: SystemHealth): Status => {
-    const maxPercent = Math.max(
-      health.cpuPercent ?? 0,
-      health.memoryPercent ?? 0,
-      health.diskPercent ?? 0,
-    );
+  const getStatus = (health: Health): Status => {
+    const maxPercent = Math.max(health.cpuPercent, health.memoryPercent, health.diskPercent);
     return getResourceStatus(maxPercent);
   };
 
@@ -247,11 +213,11 @@ export function SystemHealthCard(): React.ReactElement {
       error={error}
       getStatus={getStatus}
     >
-      {(health: SystemHealth): React.ReactElement => (
+      {(health: Health): React.ReactElement => (
         <div className="stack">
           <ResourceBar
             label={t('system.cpu')}
-            percent={health.cpuPercent ?? 0}
+            percent={health.cpuPercent}
             used={0}
             total={0}
             topProcesses={health.topCpuProcesses}
@@ -259,47 +225,43 @@ export function SystemHealthCard(): React.ReactElement {
           />
           <ResourceBar
             label={t('system.memory')}
-            percent={health.memoryPercent ?? 0}
-            used={health.memoryUsed ?? 0}
-            total={health.memoryTotal ?? 0}
+            percent={health.memoryPercent}
+            used={health.memoryUsed}
+            total={health.memoryTotal}
             topProcesses={health.topMemoryProcesses}
             type="memory"
           />
           <ResourceBar
             label={t('system.disk')}
-            percent={health.diskPercent ?? 0}
-            used={health.diskUsed ?? 0}
-            total={health.diskTotal ?? 0}
+            percent={health.diskPercent}
+            used={health.diskUsed}
+            total={health.diskTotal}
             type="disk"
           />
 
           <CardDivider />
 
           <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
-            <CardRow
-              label={t('system.uptime')}
-              value={formatUptime(health.uptime ?? 0)}
-              align="left"
-            />
+            <CardRow label={t('system.uptime')} value={formatUptime(health.uptime)} align="left" />
             <CardRow
               label={t('system.load1m')}
-              value={(health.loadAvg1 ?? 0).toFixed(2)}
+              value={health.loadAvg1.toFixed(2)}
               align="left"
-              status={loadStatus(health)}
+              status={health.loadAvg1 > health.numCpu ? 'warning' : undefined}
             />
-            <CardRow label={t('system.goroutines')} value={health.goroutines ?? 0} align="left" />
+            <CardRow label={t('system.goroutines')} value={health.goroutines} align="left" />
             <CardRow
               label={t('system.processMem')}
-              value={formatBytes(health.processMemory ?? 0)}
+              value={formatBytes(health.processMemory)}
               align="left"
             />
           </div>
 
           <div className={cn('caption text-center', spacing.padding.top.tight)}>
             {t('system.platform', {
-              os: health.os ?? t('common:status.unknown'),
-              arch: health.arch ?? t('common:status.unknown'),
-              cpus: health.numCpu ?? 0,
+              os: health.os,
+              arch: health.arch,
+              cpus: health.numCpu,
             })}
           </div>
         </div>

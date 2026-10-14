@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/profiles/catalog"
 )
 
@@ -151,5 +153,84 @@ func TestProfileOptimisticConcurrencyHTTP(t *testing.T) {
 	}
 	if cur, _ := db.Profiles().Get(ctx, "p1"); cur.Name != "renamed" {
 		t.Fatalf("update should have persisted, got name=%q", cur.Name)
+	}
+}
+
+// routedProfilesServer is newProfilesTestServer with the route table built and
+// an admin user for Mux's session, so requests reach the handlers through the
+// same patterns the daemon serves.
+func routedProfilesServer(t *testing.T) *Server {
+	t.Helper()
+	s, db := newProfilesTestServer(t)
+	if _, err := db.CreateUser(t.Context(), "admin", "$2a$10$x", roles.Admin); err != nil {
+		t.Fatalf("seed admin: %v", err)
+	}
+	s.withRouteDeps(t)
+	s.setupRoutes()
+	return s
+}
+
+// The UI duplicates a profile by posting to /profiles/{id}/duplicate. The
+// handler trimmed a stale "/api/profiles/" prefix from the versioned path, so
+// the store was asked for "/api/v1/profiles/<id>" and every duplicate on a
+// licensed install answered 404.
+func TestDuplicateProfileThroughTheRouter(t *testing.T) {
+	t.Parallel()
+	s := routedProfilesServer(t)
+
+	list, err := s.profiles.List(t.Context())
+	if err != nil || len(list) != 1 {
+		t.Fatalf("list seeded profiles: %+v, %v", list, err)
+	}
+	source := list[0]
+
+	rec := httptest.NewRecorder()
+	s.Mux().ServeHTTP(rec, httptest.NewRequest(http.MethodPost,
+		APIVersionPrefix+"/profiles/"+source.ID+"/duplicate", strings.NewReader(`{"name":"site-b"}`)))
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("duplicate = %d, want 201: %s", rec.Code, rec.Body.String())
+	}
+	var got ProfileResponse
+	if decodeErr := json.Unmarshal(rec.Body.Bytes(), &got); decodeErr != nil {
+		t.Fatalf("decode: %v", decodeErr)
+	}
+	if got.ID == source.ID || got.Name != "site-b" {
+		t.Errorf("duplicate = %+v, want a new profile named site-b", got)
+	}
+}
+
+// Each by-id operation reaches its handler through its own pattern, and a path
+// with more segments than any of them is not a profile id.
+func TestProfileByIDRoutes(t *testing.T) {
+	t.Parallel()
+	s := routedProfilesServer(t)
+
+	created, err := s.profiles.Create(t.Context(), catalog.NewProfile{Name: "field-site", ConfigJSON: `{}`})
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	base := APIVersionPrefix + "/profiles/" + created.ID
+
+	for _, tc := range []struct {
+		name   string
+		method string
+		path   string
+		body   string
+		want   int
+	}{
+		{"get", http.MethodGet, base, "", http.StatusOK},
+		{"update", http.MethodPut, base, `{"name":"renamed","config":{}}`, http.StatusOK},
+		{"patch settings", http.MethodPatch, base + "/settings", `{"theme":"dark"}`, http.StatusOK},
+		{"settings is patch only", http.MethodPut, base + "/settings", `{}`, http.StatusMethodNotAllowed},
+		{"duplicate is post only", http.MethodGet, base + "/duplicate", "", http.StatusMethodNotAllowed},
+		{"nested path", http.MethodGet, base + "/settings/extra", "", http.StatusNotFound},
+		{"delete", http.MethodDelete, base, "", http.StatusOK},
+		{"gone", http.MethodGet, base, "", http.StatusNotFound},
+	} {
+		rec := httptest.NewRecorder()
+		s.Mux().ServeHTTP(rec, httptest.NewRequest(tc.method, tc.path, strings.NewReader(tc.body)))
+		if rec.Code != tc.want {
+			t.Errorf("%s: %s %s = %d, want %d: %s", tc.name, tc.method, tc.path, rec.Code, tc.want, rec.Body.String())
+		}
 	}
 }

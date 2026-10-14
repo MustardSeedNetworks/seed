@@ -121,6 +121,8 @@ func (a wifiHardware) IsWireless() bool {
 	return m != nil && m.IsWireless()
 }
 
+func (wifiHardware) IsWirelessInterface(name string) bool { return wifi.IsWirelessInterface(name) }
+
 func (a wifiHardware) SetInterface(name string) {
 	if m := a.mgr(); m != nil {
 		m.SetInterface(name)
@@ -130,7 +132,9 @@ func (a wifiHardware) SetInterface(name string) {
 	}
 }
 
-func (a wifiHardware) Scan() ([]*wifi.ScannedNetwork, error) { return a.scanner().Scan() }
+func (a wifiHardware) Scan(iface string) ([]*wifi.ScannedNetwork, error) {
+	return a.scanner().ScanInterface(iface)
+}
 
 func (a wifiHardware) Connect(ssid, password string) (*wifi.ConnectionResult, error) {
 	return a.mgr().Connect(ssid, password)

@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"golang.org/x/net/dns/dnsmessage"
+
+	"github.com/MustardSeedNetworks/seed/internal/discovery/mdnswire"
 )
 
 // packResponse builds a real mDNS response so the parsers are exercised against
@@ -25,6 +27,13 @@ func packResponse(t *testing.T, answers, additionals []dnsmessage.Resource) []by
 		t.Fatalf("pack response: %v", err)
 	}
 	return data
+}
+
+// announce delivers resources to the listener as one response packet from
+// the given sender, the way the listen loop would.
+func announce(t *testing.T, l *MDNSListener, from string, answers ...dnsmessage.Resource) {
+	t.Helper()
+	l.processPacket(packResponse(t, answers, nil), &net.UDPAddr{IP: net.ParseIP(from), Port: 5353})
 }
 
 func ptrResource(t *testing.T, owner, target string) dnsmessage.Resource {
@@ -63,13 +72,13 @@ func TestBuildMDNSQuery(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
 		query   string
-		qtype   dnsmessage.Type
+		qtype   mdnswire.Type
 		wantErr bool
 	}{
-		{"reverse lookup", "1.0.168.192.in-addr.arpa.", dnsmessage.TypePTR, false},
-		{"forward lookup", "printer.local.", dnsmessage.TypeA, false},
-		{"unterminated name is rejected", "printer.local", dnsmessage.TypeA, true},
-		{"empty name is rejected", "", dnsmessage.TypeA, true},
+		{"reverse lookup", "1.0.168.192.in-addr.arpa.", mdnswire.TypePTR, false},
+		{"forward lookup", "printer.local.", mdnswire.TypeA, false},
+		{"empty name is rejected", "", mdnswire.TypeA, true},
+		{"empty label is rejected", "printer..local.", mdnswire.TypeA, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			data, err := buildMDNSQuery(tc.query, tc.qtype)
@@ -83,7 +92,7 @@ func TestBuildMDNSQuery(t *testing.T) {
 				t.Fatalf("buildMDNSQuery(%q): %v", tc.query, err)
 			}
 
-			assertQueryRoundTrips(t, data, tc.query, tc.qtype)
+			assertQueryRoundTrips(t, data, tc.query, dnsmessage.Type(tc.qtype))
 		})
 	}
 }
@@ -262,8 +271,7 @@ func TestMDNSResolverCache(t *testing.T) {
 func TestMDNSListenerProcessesAnswers(t *testing.T) {
 	t.Run("an A record names the address it carries", func(t *testing.T) {
 		l := NewMDNSListener("en0")
-		answer := aResource(t, "camera.local.", [4]byte{192, 168, 0, 5})
-		l.processAnswer(&answer, "192.168.0.99")
+		announce(t, l, "192.168.0.99", aResource(t, "camera.local.", [4]byte{192, 168, 0, 5}))
 
 		got, ok := l.GetName("192.168.0.5")
 		if !ok {
@@ -279,8 +287,7 @@ func TestMDNSListenerProcessesAnswers(t *testing.T) {
 
 	t.Run("a PTR record names the sender", func(t *testing.T) {
 		l := NewMDNSListener("en0")
-		answer := ptrResource(t, "5.0.168.192.in-addr.arpa.", "printer.local.")
-		l.processAnswer(&answer, "192.168.0.5")
+		announce(t, l, "192.168.0.5", ptrResource(t, "5.0.168.192.in-addr.arpa.", "printer.local."))
 
 		got, ok := l.GetName("192.168.0.5")
 		if !ok {
@@ -293,8 +300,7 @@ func TestMDNSListenerProcessesAnswers(t *testing.T) {
 
 	t.Run("names outside .local are ignored", func(t *testing.T) {
 		l := NewMDNSListener("en0")
-		answer := aResource(t, "evil.example.com.", [4]byte{192, 168, 0, 7})
-		l.processAnswer(&answer, "192.168.0.7")
+		announce(t, l, "192.168.0.7", aResource(t, "evil.example.com.", [4]byte{192, 168, 0, 7}))
 
 		if got, ok := l.GetName("192.168.0.7"); ok {
 			t.Errorf("stored %q; mDNS should only accept the .local namespace", got)
@@ -304,20 +310,17 @@ func TestMDNSListenerProcessesAnswers(t *testing.T) {
 	t.Run("an A record overwrites, a PTR does not", func(t *testing.T) {
 		l := NewMDNSListener("en0")
 
-		first := aResource(t, "first.local.", [4]byte{192, 168, 0, 8})
-		l.processAnswer(&first, "192.168.0.8")
+		announce(t, l, "192.168.0.8", aResource(t, "first.local.", [4]byte{192, 168, 0, 8}))
 
 		// A PTR must not displace a name an A record established.
-		ptr := ptrResource(t, "8.0.168.192.in-addr.arpa.", "second.local.")
-		l.processAnswer(&ptr, "192.168.0.8")
+		announce(t, l, "192.168.0.8", ptrResource(t, "8.0.168.192.in-addr.arpa.", "second.local."))
 		if got, _ := l.GetName("192.168.0.8"); got != "first.local" {
 			t.Errorf("after the PTR the name is %q, want %q — PTR should only "+
 				"fill a gap", got, "first.local")
 		}
 
 		// A second A record is authoritative for its own address and replaces.
-		second := aResource(t, "third.local.", [4]byte{192, 168, 0, 8})
-		l.processAnswer(&second, "192.168.0.8")
+		announce(t, l, "192.168.0.8", aResource(t, "third.local.", [4]byte{192, 168, 0, 8}))
 		if got, _ := l.GetName("192.168.0.8"); got != "third.local" {
 			t.Errorf("after the second A record the name is %q, want %q", got, "third.local")
 		}
@@ -325,8 +328,7 @@ func TestMDNSListenerProcessesAnswers(t *testing.T) {
 
 	t.Run("GetNames hands out a copy", func(t *testing.T) {
 		l := NewMDNSListener("en0")
-		answer := aResource(t, "copy.local.", [4]byte{192, 168, 0, 9})
-		l.processAnswer(&answer, "192.168.0.9")
+		announce(t, l, "192.168.0.9", aResource(t, "copy.local.", [4]byte{192, 168, 0, 9}))
 
 		names := l.GetNames()
 		names["192.168.0.9"] = "caller-mutated"
@@ -335,4 +337,26 @@ func TestMDNSListenerProcessesAnswers(t *testing.T) {
 				"can corrupt state the listen loop is writing")
 		}
 	})
+}
+
+// TestMDNSListenerReadsAHostNameContainingADot pins #2626: "Studio 3.5" is one
+// label on the wire, and dnsmessage refused the whole announcement for it, so
+// the host was never named. It is hand-assembled because dnsmessage cannot
+// build it either.
+func TestMDNSListenerReadsAHostNameContainingADot(t *testing.T) {
+	raw := []byte{0x00, 0x00, 0x84, 0x00, 0, 0, 0, 1, 0, 0, 0, 0}
+	for _, label := range []string{"Studio 3.5", "local"} {
+		raw = append(raw, byte(len(label)))
+		raw = append(raw, label...)
+	}
+	// A, cache-flush IN, TTL 120, 192.168.0.35.
+	raw = append(raw, 0, 0x00, 0x01, 0x80, 0x01, 0, 0, 0, 120, 0, 4, 192, 168, 0, 35)
+
+	l := NewMDNSListener("en0")
+	l.processPacket(raw, &net.UDPAddr{IP: net.ParseIP("192.168.0.35"), Port: 5353})
+
+	got, ok := l.GetName("192.168.0.35")
+	if want := `Studio 3\.5.local`; !ok || got != want {
+		t.Errorf("name = %q (stored %v), want %q", got, ok, want)
+	}
 }

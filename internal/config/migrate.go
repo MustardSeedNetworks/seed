@@ -158,8 +158,25 @@ func removedKeys() []removedKey {
 			key:         "udpPorts",
 			replacement: "discovery scans TCP only; nothing replaces the UDP list",
 		},
+		// Database tuning the daemon never read (#2570): it always opened with
+		// WAL, a 5 s busy timeout and its own pool sizes, the only combination
+		// it is tested against.
+		{
+			path:        []string{"database"},
+			key:         "enable_wal",
+			replacement: neverReadDatabaseSetting,
+		},
+		{
+			path:        []string{"database"},
+			key:         "max_connections",
+			replacement: neverReadDatabaseSetting,
+		},
 	}
 }
+
+// neverReadDatabaseSetting is the report for a database setting that was
+// accepted and saved but never applied.
+const neverReadDatabaseSetting = "the database never used this setting; it always runs in WAL mode"
 
 // neverReadDiscoveryTimer is the report for a discovery setting that was
 // accepted and saved but never used.

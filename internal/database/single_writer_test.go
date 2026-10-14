@@ -263,6 +263,7 @@ func TestPragmasApplyToEveryConnection(t *testing.T) {
 		{"synchronous", "1"}, // NORMAL
 		{"foreign_keys", "1"},
 		{"temp_store", "2"}, // MEMORY
+		{"busy_timeout", "5000"},
 	} {
 		var got string
 		require.NoError(t, db.QueryRow(context.Background(), "PRAGMA "+want.pragma).Scan(&got),

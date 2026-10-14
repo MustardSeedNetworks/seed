@@ -64,13 +64,11 @@ lint-backend-quiet: golangci-lint-pinned
 
 lint-frontend: ## Run frontend linter (Biome)
 	@printf "$(BOLD)🔍 Running frontend linter (Biome)...$(RESET)\n"
-	@cd ui && npx @biomejs/biome check src/
+	@cd ui && npm run --silent lint
 	@printf "$(GREEN)✓ Frontend lint complete$(RESET)\n"
 
 lint-frontend-quiet:
-	@FILE_COUNT=$$(find ui/src -name "*.ts" -o -name "*.tsx" 2>/dev/null | wc -l | tr -d ' '); \
-	printf "   Checking $$FILE_COUNT files...\n"
-	@OUT="$$(cd ui && npx @biomejs/biome check src/ 2>&1)"; STATUS=$$?; \
+	@OUT="$$(cd ui && npm run --silent lint 2>&1)"; STATUS=$$?; \
 	echo "$$OUT" | tail -5; \
 	exit $$STATUS
 
@@ -134,7 +132,7 @@ fmt: ## Format Go code with gofumpt
 	@echo "✅ Go code formatted"
 
 fmt-frontend: ## Format frontend code with Biome
-	@cd ui && npx @biomejs/biome format --write src/
+	@cd ui && npm run --silent format
 	@echo "✅ Frontend code formatted"
 
 fmt-md: ## Format markdown and JSON files with Biome
@@ -156,16 +154,12 @@ fmt-check: ## Check all formatting (Go + frontend + markdown) without fixing
 		echo "✅ Go formatting OK"; \
 	fi; \
 	echo "Checking frontend formatting (Biome)..."; \
-	TEMPDIR=$$(mktemp -d); \
-	cp -r ui/src "$$TEMPDIR/"; \
-	(cd ui && npx @biomejs/biome format --write "$$TEMPDIR/src/" 2>/dev/null > /dev/null); \
-	if diff -rq ui/src/ "$$TEMPDIR/src/" > /dev/null 2>&1; then \
+	if (cd ui && npx @biomejs/biome format src/ e2e/ > /dev/null 2>&1); then \
 		echo "✅ Frontend formatting OK"; \
 	else \
 		echo "❌ Frontend files need formatting"; \
 		FAILED=1; \
 	fi; \
-	rm -rf "$$TEMPDIR"; \
 	echo "Checking markdown/JSON formatting..."; \
 	TEMPDIR=$$(mktemp -d); \
 	for f in README.md CONTRIBUTING.md SECURITY.md; do \

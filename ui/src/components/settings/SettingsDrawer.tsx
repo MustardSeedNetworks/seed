@@ -40,17 +40,18 @@ import { useSubnetSettings } from '../../hooks/useSubnetSettings';
 import { useTheme } from '../../hooks/useTheme';
 import { useVulnerabilitySettings } from '../../hooks/useVulnerabilitySettings';
 import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
+import type { IperfSuggestion } from '../../types/generated/iperf-suggestion';
+import type { ThresholdSettings } from '../../types/generated/settings-response';
 import type {
   CableTestSettings as CableTestSettingsType,
-  IperfSuggestion,
   IpSettings,
   LinkSettings as LinkSettingsType,
   NetworkDiscoverySettings,
-  SettingsThresholds,
   SnmpSettings as SnmpSettingsType,
   TestsSettings,
   WiFiSettings as WiFiSettingsType,
 } from '../../types/settings';
+import { EMPTY_PROTOCOL_ENDPOINTS } from '../../types/settings';
 import { RequireAdmin } from '../ui/RequireRole';
 import { SettingsDrawerFooter } from './SettingsDrawerFooter';
 import { SettingsDrawerNetworkSection } from './SettingsDrawerNetworkSection';
@@ -140,7 +141,7 @@ export function SettingsDrawer({
     }
     prevIsOpenRef.current = isOpen;
   }, [isOpen]);
-  const [thresholds, setThresholds] = useState<SettingsThresholds>({
+  const [thresholds, setThresholds] = useState<ThresholdSettings>({
     dns: { good: 50, warning: 100 },
     gateway: { good: 20, warning: 50 },
     wifi: { good: -50, warning: -70 },
@@ -168,6 +169,7 @@ export function SettingsDrawer({
     tcpPorts: [],
     udpPorts: [],
     httpEndpoints: [],
+    ...EMPTY_PROTOCOL_ENDPOINTS,
     runPerformance: true,
     runSpeedtest: true,
     runIperf: true,

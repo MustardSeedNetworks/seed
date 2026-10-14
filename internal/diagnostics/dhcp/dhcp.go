@@ -158,7 +158,7 @@ func (t *Tester) GetLastResult() *TestResult {
 //
 // It used to grade the elapsed time against Thresholds, which measured the
 // wrong thing entirely: neither platform performs a DHCP exchange. macOS reads
-// the cached packet with `ipconfig getpacket` and Linux parses the lease file,
+// the lease configd holds in its dynamic store and Linux parses the lease file,
 // so the duration is how long it took to read local state — around 11ms on a
 // warm machine. A slow disk would have reported a DHCP warning, and a
 // genuinely slow DHCP server would have reported success.

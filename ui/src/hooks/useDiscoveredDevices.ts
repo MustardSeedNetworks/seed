@@ -20,29 +20,11 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
+import type { DeviceDiscoveryStatusResponse } from '../types/generated/device-discovery-status-response';
+import type { DevicesResponse } from '../types/generated/devices-response';
 import type { DiscoveredDevice } from '../types/generated/engine-discovery-response';
 
 export type { DiscoveredDevice };
-
-/** Device discovery status */
-export interface DiscoveryStatus {
-  scanning: boolean;
-  deviceCount: number;
-  lastScan: string;
-}
-
-/**
- * Response from GET /api/v1/security/devices.
- *
- * Named for the endpoint it reads: the generated `DiscoveryResponse` describes
- * /api/v1/discovery, which is the LLDP/CDP neighbour list and a different shape
- * entirely. The handler emits an untyped map, so there is no DTO to generate
- * this from (seed#2393).
- */
-interface SecurityDevicesResponse {
-  devices: DiscoveredDevice[];
-  status: DiscoveryStatus;
-}
 
 /** Grouped devices by type */
 export interface GroupedDevices {
@@ -171,13 +153,13 @@ export function getDeviceDisplayName(device: DiscoveredDevice): string {
 export function useDiscoveredDevices(autoRefresh: boolean = false): {
   devices: DiscoveredDevice[];
   groupedDevices: GroupedDevices;
-  status: DiscoveryStatus | null;
+  status: DeviceDiscoveryStatusResponse | null;
   isLoading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
 } {
   const [devices, setDevices] = useState<DiscoveredDevice[]>([]);
-  const [status, setStatus] = useState<DiscoveryStatus | null>(null);
+  const [status, setStatus] = useState<DeviceDiscoveryStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -186,12 +168,12 @@ export function useDiscoveredDevices(autoRefresh: boolean = false): {
    */
   const fetchDevices = async (): Promise<void> => {
     setError(null);
-    // Use /api/v1/devices endpoint which returns discovered network devices
+    // /api/v1/security/devices returns the discovered network devices
     // (not /api/v1/discovery which returns LLDP/CDP protocol neighbors)
     await api
-      .get<SecurityDevicesResponse>('/api/v1/security/devices')
+      .get<DevicesResponse>('/api/v1/security/devices')
       .then((data) => {
-        setDevices(data.devices || []);
+        setDevices(data.devices);
         setStatus(data.status);
       })
       .catch((err: unknown) => {

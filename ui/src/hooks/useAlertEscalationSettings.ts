@@ -14,7 +14,12 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
-import type { AlertsListResponse } from '../types/alerts';
+import type { AlertListResponse } from '../types/generated/alert-list-response';
+import type {
+  EscalationLadder,
+  EscalationStage,
+  SettingsResponse,
+} from '../types/generated/settings-response';
 import type { SaveStatus } from '../types/settings';
 
 export const ESCALATION_CHANNELS = ['webhook', 'email', 'syslog'] as const;
@@ -23,20 +28,6 @@ export type EscalationChannel = (typeof ESCALATION_CHANNELS)[number];
 
 /** Mirrors the server's escalation.MaxStages. */
 export const MAX_ESCALATION_STAGES = 5;
-
-/** One stage: fires afterSeconds after the alert was raised. */
-export interface EscalationStage {
-  afterSeconds: number;
-  channels: EscalationChannel[];
-}
-
-/** One rule's ladder, the wire shape of alerts.escalations[]. */
-export interface EscalationLadder {
-  rule: string;
-  stages: EscalationStage[];
-  /** Re-sends the last stage at this period; 0 sends it once. */
-  repeatSeconds: number;
-}
 
 /**
  * A ladder and its stages being edited. The ids are list keys only, so
@@ -52,11 +43,6 @@ export interface EscalationLadderDraft {
   rule: string;
   stages: EscalationStageDraft[];
   repeatSeconds: number;
-}
-
-/** The alerts slice of GET /api/v1/settings. */
-interface EscalationSettingsResponse {
-  alerts?: { escalations?: EscalationLadder[] };
 }
 
 let lastDraftId = 0;
@@ -103,13 +89,13 @@ export function useAlertEscalationSettings(): UseAlertEscalationSettingsResult {
   const load = async (): Promise<void> => {
     await Promise.all([
       api
-        .get<EscalationSettingsResponse>('/api/v1/settings')
-        .then((data) => setLadders((data.alerts?.escalations ?? []).map(toDraft)))
+        .get<SettingsResponse>('/api/v1/settings')
+        .then((data) => setLadders(data.alerts.escalations.map(toDraft)))
         .catch((err: unknown) => {
           logger.error(LogComponents.CONFIG, 'Failed to fetch alert escalation settings', err);
         }),
       api
-        .get<AlertsListResponse>('/api/v1/alerts?limit=1000')
+        .get<AlertListResponse>('/api/v1/alerts?limit=1000')
         .then((data) => {
           const rules = new Set<string>();
           for (const alert of data.alerts) {

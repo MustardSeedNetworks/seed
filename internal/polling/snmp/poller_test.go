@@ -31,6 +31,7 @@ type updateRecord struct {
 	id     string
 	status string
 	errMsg string
+	ctxErr error
 }
 
 func (f *fakeStorage) ListEnabled(_ context.Context) ([]*polling.Target, error) {
@@ -40,10 +41,10 @@ func (f *fakeStorage) ListEnabled(_ context.Context) ([]*polling.Target, error) 
 	return f.targets, nil
 }
 
-func (f *fakeStorage) UpdateLastPoll(_ context.Context, id, status, errMsg string) error {
+func (f *fakeStorage) UpdateLastPoll(ctx context.Context, id, status, errMsg string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.updates = append(f.updates, updateRecord{id: id, status: status, errMsg: errMsg})
+	f.updates = append(f.updates, updateRecord{id: id, status: status, errMsg: errMsg, ctxErr: ctx.Err()})
 	return f.updErr
 }
 
@@ -330,6 +331,116 @@ func TestPoller_RunChain_CollectorErrorCapturedInLastError(t *testing.T) {
 	}
 	if storage.updates[0].errMsg != "snmp timeout" {
 		t.Errorf("errMsg = %q, want %q", storage.updates[0].errMsg, "snmp timeout")
+	}
+}
+
+// PollNow is "Test target": one run of the chain on demand, for a target the
+// scheduler does not hold because it is disabled.
+func TestPoller_PollNow_RunsChainForDisabledTarget(t *testing.T) {
+	t.Parallel()
+	target := &polling.Target{
+		ID: "t-off", IPAddress: "10.0.0.9", Enabled: false,
+		PollIntervalSec: 60, CredentialsID: "cred-1",
+		CollectorChain: []string{"sys_info"},
+	}
+	storage := &fakeStorage{}
+	sched := newFakeScheduler()
+	p := snmp.NewPoller(storage, sched, silentLogger())
+	p.SetCredentialResolver(testResolver(t))
+	sys := &stubCollector{name: "sys_info"}
+	p.RegisterCollector(sys)
+	if err := p.Start(context.Background()); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+
+	if err := p.PollNow(context.Background(), target); err != nil {
+		t.Fatalf("PollNow: %v", err)
+	}
+
+	if sys.callCount() != 1 {
+		t.Errorf("sys_info called %d times, want 1", sys.callCount())
+	}
+	if sched.jobCount() != 0 {
+		t.Errorf("PollNow registered %d jobs; a test poll must not schedule the target", sched.jobCount())
+	}
+	if len(storage.updates) != 1 || storage.updates[0] != (updateRecord{id: "t-off", status: "ok"}) {
+		t.Errorf("updates = %+v, want one ok for t-off", storage.updates)
+	}
+}
+
+func TestPoller_PollNow_RefusesBeforeStart(t *testing.T) {
+	t.Parallel()
+	storage := &fakeStorage{}
+	p := snmp.NewPoller(storage, newFakeScheduler(), silentLogger())
+	sys := &stubCollector{name: "sys_info"}
+	p.RegisterCollector(sys)
+
+	err := p.PollNow(context.Background(), &polling.Target{ID: "t-1", CollectorChain: []string{"sys_info"}})
+
+	if !errors.Is(err, snmp.ErrNotRunning) {
+		t.Fatalf("PollNow before Start = %v, want ErrNotRunning", err)
+	}
+	if sys.callCount() != 0 || len(storage.updates) != 0 {
+		t.Errorf("a refused poll ran %d collectors and wrote %d outcomes", sys.callCount(), len(storage.updates))
+	}
+}
+
+// A poll whose deadline passed mid-chain still records why it failed: the
+// write must not inherit the expired context, or the operator sees the
+// previous outcome instead of this one.
+func TestPoller_PollNow_RecordsOutcomeAfterDeadline(t *testing.T) {
+	t.Parallel()
+	storage := &fakeStorage{}
+	p := snmp.NewPoller(storage, newFakeScheduler(), silentLogger())
+	p.SetCredentialResolver(testResolver(t))
+	p.RegisterCollector(&stubCollector{name: "sys_info", err: context.DeadlineExceeded})
+	if err := p.Start(context.Background()); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+	defer cancel()
+
+	if err := p.PollNow(ctx, &polling.Target{
+		ID: "t-1", CredentialsID: "cred-1", CollectorChain: []string{"sys_info"},
+	}); err != nil {
+		t.Fatalf("PollNow: %v", err)
+	}
+
+	if len(storage.updates) != 1 {
+		t.Fatalf("UpdateLastPoll called %d times, want 1", len(storage.updates))
+	}
+	if got := storage.updates[0]; got.status != "error" || got.ctxErr != nil {
+		t.Errorf("update = %+v, want status error written under a live context", got)
+	}
+}
+
+// A poll cancelled outright — Stop cancelling the scheduler, or the operator's
+// request going away — was abandoned and says nothing about the device. It
+// must not leave "context canceled" as the target's last error or the
+// engine's (seed#3204).
+func TestPoller_RunChain_CancelledChainRecordsNothing(t *testing.T) {
+	t.Parallel()
+	storage := &fakeStorage{}
+	p := snmp.NewPoller(storage, newFakeScheduler(), silentLogger())
+	p.SetCredentialResolver(testResolver(t))
+	p.RegisterCollector(&stubCollector{name: "sys_info", err: context.Canceled})
+	if err := p.Start(context.Background()); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	if err := p.PollNow(ctx, &polling.Target{
+		ID: "t-1", CredentialsID: "cred-1", CollectorChain: []string{"sys_info"},
+	}); err != nil {
+		t.Fatalf("PollNow: %v", err)
+	}
+
+	if len(storage.updates) != 0 {
+		t.Errorf("updates = %+v, want none for an abandoned poll", storage.updates)
+	}
+	if st := p.Status(); !st.LastTickAt.IsZero() || st.LastError != "" || st.Inflight != 0 {
+		t.Errorf("status = %+v, want no tick, no error, nothing in flight", st)
 	}
 }
 

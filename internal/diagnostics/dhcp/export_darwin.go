@@ -2,17 +2,17 @@
 
 package dhcp
 
-// ExportParseIPConfigOutput is exported for testing (darwin only).
-func ExportParseIPConfigOutput(output string, result *TestResult) {
-	parseIPConfigOutput(output, result)
-}
+import "time"
 
-// ExportParseLeaseTime is exported for testing (darwin only).
-func ExportParseLeaseTime(val string) (int, error) {
-	return parseLeaseTime(val)
-}
-
-// ExportParseDHCPLine is exported for testing (darwin only).
-func ExportParseDHCPLine(line string, result *TestResult) {
-	parseDHCPLine(line, result)
+// ExportStoreLease parses a dhcp_lease table into the result it reports, the
+// lease's start and its expiry (darwin only). The bool is false when the
+// table holds no lease.
+func ExportStoreLease(table string) (*TestResult, time.Time, time.Time, bool) {
+	lease := parseStoreLease(table)
+	if lease == nil {
+		return nil, time.Time{}, time.Time{}, false
+	}
+	result := &TestResult{}
+	lease.fill(result)
+	return result, lease.start, lease.expiry, true
 }

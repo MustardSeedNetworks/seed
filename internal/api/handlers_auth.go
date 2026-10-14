@@ -217,7 +217,12 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	cookieConfig := auth.DefaultCookieConfig()
 	auth.ClearAuthCookies(w, cookieConfig)
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "logged out"})
+	sendJSONResponse(w, logger, http.StatusOK, LogoutResponse{Status: "logged out"})
+}
+
+// LogoutResponse is the POST /api/v1/auth/logout body.
+type LogoutResponse struct {
+	Status string `json:"status"`
 }
 
 // handleRefreshToken handles token refresh using refresh token (fixes #478).
@@ -417,6 +422,11 @@ type SetupCompleteRequest struct {
 	SetupToken string `json:"setupToken" validate:"required"` // Security fix #724, #758
 }
 
+// SetupCompleteResponse acknowledges that the admin password is set.
+type SetupCompleteResponse struct {
+	Status string `json:"status" jsonschema:"enum=success"`
+}
+
 func ensurePostMethod(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -550,9 +560,8 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	// Hash the new password (Argon2id).
 	hash, err := auth.HashPassword(req.Password)
 	if err != nil {
-		sendJSONResponse(w, logger, http.StatusInternalServerError, map[string]string{
-			"error": localizer.T("errors.api.internalError"),
-		})
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal,
+			localizer.T("errors.api.internalError"), "")
 		return
 	}
 
@@ -577,9 +586,8 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	// Save config to disk
 	if saveErr := s.config.Save(s.configPath); saveErr != nil {
 		logger.ErrorContext(r.Context(), "Failed to save config after setup", "error", saveErr)
-		sendJSONResponse(w, logger, http.StatusInternalServerError, map[string]string{
-			"error": localizer.T("errors.config.failedToSave"),
-		})
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal,
+			localizer.T("errors.config.failedToSave"), "")
 		return
 	}
 
@@ -593,9 +601,7 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 		"previous_algorithm", previousAlg,
 		"setup", true)
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status": statusSuccess,
-	})
+	sendJSONResponse(w, logger, http.StatusOK, SetupCompleteResponse{Status: statusSuccess})
 }
 
 // respondPolicyRejection translates a PasswordPolicyResult into a

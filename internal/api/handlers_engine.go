@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/devices"
@@ -29,7 +28,7 @@ type EngineDiscoveryResponse struct {
 	Devices      []*discovery.DiscoveredDevice `json:"devices"`
 	Stats        *discovery.EngineStats        `json:"stats"`
 	ScanResult   *discovery.ScanResult         `json:"scanResult,omitempty"`
-	Capabilities map[string]bool               `json:"capabilities"`
+	Capabilities discovery.EngineCapabilities  `json:"capabilities"`
 }
 
 // EngineScanRequest contains options for an engine scan.
@@ -414,30 +413,13 @@ func (s *Server) handleEngineCapabilities(w http.ResponseWriter, r *http.Request
 func (s *Server) handleEngineDevice(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	// Engine availability is checked first so a nil engine returns 503 before any
-	// path validation (the order the engine handler tests pin).
 	if !s.discoveryDevices.Available() {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, "Discovery engine not available", "")
 		return
 	}
 
-	// Extract MAC from URL path: /api/v1/discovery/engine/device/{mac}
-	path := r.URL.Path
-	prefix := APIVersionPrefix + "/discovery/engine/device/"
-	if !strings.HasPrefix(path, prefix) {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, "Invalid request path", "")
-		return
-	}
-	mac := strings.TrimPrefix(path, prefix)
-	if mac == "" {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, "MAC address required", "")
-		return
-	}
-
-	device, err := s.discoveryDevices.Device(mac)
+	device, err := s.discoveryDevices.Device(r.PathValue("mac"))
 	if err != nil {
 		writeEngineError(w, logger, err)
 		return
@@ -445,16 +427,11 @@ func (s *Server) handleEngineDevice(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, device)
 }
 
-// handleEngineEvents subscribes to engine events via SSE.
+// handleEngineEvents streams discovery engine events via SSE.
 //
-// GET /api/v1/discovery/engine/events opens an SSE stream for real-time updates.
-//
-// Event types:
-// - device.discovered: New device found
-// - device.updated: Device information changed
-// - device.lost: Device went offline
-// - scan.started: Scan began
-// - scan.completed: Scan finished
+// GET /api/v1/discovery/engine/events sends one frame per event, named by the
+// event's type (device.discovered, scan.completed, …) with the discovery.Event
+// as its JSON data.
 //
 // Authentication: Required
 // Rate limiting: None (streaming endpoint).
@@ -477,22 +454,19 @@ func (s *Server) handleEngineEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set SSE headers
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("X-Accel-Buffering", "no")
-
-	// Subscribe to all events
+	// The bus calls the subscriber on a fresh goroutine per event, so it only
+	// queues the frame; pumpSSE is the one writer (it never blocks the bus: a
+	// full backlog drops, re-syncable with GET /discovery/engine).
+	ch := make(chan []byte, sseFrameBuffer)
 	id, err := s.discoveryDevices.Subscribe(func(event *discovery.Event) {
 		data, marshalErr := json.Marshal(event)
 		if marshalErr != nil {
 			return
 		}
-		// Write SSE format
-		_, _ = w.Write([]byte("event: " + string(event.Type) + "\n"))
-		_, _ = w.Write([]byte("data: " + string(data) + "\n\n"))
-		flusher.Flush()
+		select {
+		case ch <- sseFrame(string(event.Type), data):
+		default:
+		}
 	})
 	if err != nil {
 		writeEngineError(w, logger, err)
@@ -500,6 +474,14 @@ func (s *Server) handleEngineEvents(w http.ResponseWriter, r *http.Request) {
 	}
 	defer s.discoveryDevices.Unsubscribe(id)
 
-	// Keep connection open until client disconnects
-	<-r.Context().Done()
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+	if _, err = w.Write([]byte(": ready\n\n")); err != nil {
+		return
+	}
+	flusher.Flush()
+
+	pumpSSE(r.Context(), w, flusher, ch, logger)
 }

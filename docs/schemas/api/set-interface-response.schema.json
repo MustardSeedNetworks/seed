@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/set-interface-response.schema.json",
+  "$ref": "#/$defs/SetInterfaceResponse",
+  "$defs": {
+    "SetInterfaceResponse": {
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok"
+          ]
+        },
+        "interface": {
+          "type": "string"
+        },
+        "isWireless": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string"
+        },
+        "warning": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "status",
+        "interface",
+        "isWireless",
+        "type"
+      ]
+    }
+  },
+  "title": "SetInterfaceResponse",
+  "description": "SetInterfaceResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

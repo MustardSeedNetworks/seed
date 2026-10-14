@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/alert-resolve-response.schema.json",
+  "$ref": "#/$defs/AlertResolveResponse",
+  "$defs": {
+    "AlertResolveResponse": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "resolved": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "resolved"
+      ]
+    }
+  },
+  "title": "AlertResolveResponse",
+  "description": "AlertResolveResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

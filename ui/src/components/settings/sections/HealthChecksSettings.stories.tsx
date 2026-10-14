@@ -17,7 +17,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { fn } from 'storybook/test';
 import type { SaveStatus, TestsSettings } from '../../../types/settings';
-import { DEFAULT_CARD_SETTINGS } from '../../../types/settings';
+import { DEFAULT_CARD_SETTINGS, EMPTY_PROTOCOL_ENDPOINTS } from '../../../types/settings';
 import { HealthChecksSettings } from './HealthChecksSettings';
 import { expandSections } from './storyPlay';
 
@@ -28,6 +28,7 @@ const emptySettings: TestsSettings = {
   tcpPorts: [],
   udpPorts: [],
   httpEndpoints: [],
+  ...EMPTY_PROTOCOL_ENDPOINTS,
   runPerformance: true,
   runSpeedtest: true,
   runIperf: true,
@@ -112,21 +113,18 @@ export const OnlyPingTargets: Story = {
           name: 'Gateway',
           host: '192.168.1.1',
           enabled: true,
-          count: 3,
         },
         {
           id: '2',
           name: 'DNS',
           host: '8.8.8.8',
           enabled: true,
-          count: 3,
         },
         {
           id: '3',
           name: 'Cloudflare',
           host: '1.1.1.1',
           enabled: true,
-          count: 3,
         },
       ],
     },
@@ -232,9 +230,8 @@ export const AllTestTypes: Story = {
           name: 'Gateway',
           host: '192.168.1.1',
           enabled: true,
-          count: 3,
         },
-        { id: '2', name: 'DNS', host: '8.8.8.8', enabled: true, count: 3 },
+        { id: '2', name: 'DNS', host: '8.8.8.8', enabled: true },
       ],
       tcpPorts: [
         {
@@ -280,21 +277,18 @@ export const ProductionMonitoring: Story = {
           name: 'Core Router',
           host: '10.0.0.1',
           enabled: true,
-          count: 5,
         },
         {
           id: '2',
           name: 'Primary DNS',
           host: '10.0.1.10',
           enabled: true,
-          count: 3,
         },
         {
           id: '3',
           name: 'Secondary DNS',
           host: '10.0.1.11',
           enabled: true,
-          count: 3,
         },
       ],
       tcpPorts: [
@@ -370,7 +364,6 @@ export const Saving: Story = {
           name: 'Gateway',
           host: '192.168.1.1',
           enabled: true,
-          count: 3,
         },
       ],
     },
@@ -391,7 +384,6 @@ export const Interactive: Story = {
           name: 'Gateway',
           host: '192.168.1.1',
           enabled: true,
-          count: 3,
         },
       ],
       tcpPorts: [

@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/platform/procrun"
 )
 
 // Command timeout constants for macOS system utilities.
@@ -54,7 +56,7 @@ func configureStaticIPPlatform(iface string, cfg *StaticIPConfig) error {
 		args = append(args, cfg.Gateway)
 	}
 
-	if runErr := exec.CommandContext(ctx, "networksetup", args...).Run(); runErr != nil {
+	if runErr := procrun.Run(exec.CommandContext(ctx, "networksetup", args...)); runErr != nil {
 		return fmt.Errorf("failed to set static IP: %w", runErr)
 	}
 
@@ -62,7 +64,7 @@ func configureStaticIPPlatform(iface string, cfg *StaticIPConfig) error {
 	if len(cfg.DNS) > 0 {
 		dnsArgs := append([]string{"-setdnsservers", service}, cfg.DNS...)
 
-		if dnsErr := exec.CommandContext(ctx, "networksetup", dnsArgs...).Run(); dnsErr != nil {
+		if dnsErr := procrun.Run(exec.CommandContext(ctx, "networksetup", dnsArgs...)); dnsErr != nil {
 			return fmt.Errorf("failed to configure DNS: %w", dnsErr)
 		}
 	}
@@ -79,7 +81,7 @@ func configureDHCPPlatform(iface string) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), networksetupTimeoutSeconds*time.Second)
 	defer cancel()
-	return exec.CommandContext(ctx, "networksetup", "-setdhcp", service).Run()
+	return procrun.Run(exec.CommandContext(ctx, "networksetup", "-setdhcp", service))
 }
 
 // getNetworkServiceName gets the macOS network service name for an interface.
@@ -92,7 +94,7 @@ func getNetworkServiceName(iface string) (string, error) {
 	// Look up the live service order
 	ctx, cancel := context.WithTimeout(context.Background(), ifconfigTimeoutSeconds*time.Second)
 	defer cancel()
-	output, err := exec.CommandContext(ctx, "networksetup", "-listnetworkserviceorder").Output()
+	output, err := procrun.Output(exec.CommandContext(ctx, "networksetup", "-listnetworkserviceorder"))
 	if err != nil {
 		return "", fmt.Errorf("failed to list network services: %w", err)
 	}
@@ -124,7 +126,7 @@ func setMTUPlatform(iface string, mtu int) error {
 	// Use ifconfig to set MTU
 	ctx, cancel := context.WithTimeout(context.Background(), ifconfigTimeoutSeconds*time.Second)
 	defer cancel()
-	if runErr := exec.CommandContext(ctx, "ifconfig", iface, "mtu", strconv.Itoa(mtu)).Run(); runErr != nil {
+	if runErr := procrun.Run(exec.CommandContext(ctx, "ifconfig", iface, "mtu", strconv.Itoa(mtu))); runErr != nil {
 		return fmt.Errorf("failed to set MTU: %w", runErr)
 	}
 

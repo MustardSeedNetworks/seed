@@ -24,17 +24,8 @@ func TestGetReturnsSettingsAndETag(t *testing.T) {
 	if etag == "" {
 		t.Error("Get should return a non-empty ETag")
 	}
-	for _, key := range []string{
-		"interface", "vlan", "ip", "thresholds",
-		"healthChecks", "speedtest", "iperf", "displayOptions",
-	} {
-		if _, ok := settings[key]; !ok {
-			t.Errorf("settings map missing key %q", key)
-		}
-	}
-	hc, ok := settings["healthChecks"].(map[string]any)
-	if !ok || hc["runSpeedtest"] != true {
-		t.Errorf("healthChecks read model did not reflect config: %+v", settings["healthChecks"])
+	if !settings.HealthChecks.RunSpeedtest {
+		t.Errorf("healthChecks read model did not reflect config: %+v", settings.HealthChecks)
 	}
 }
 

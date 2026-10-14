@@ -437,21 +437,13 @@
         },
         "retention_days": {
           "type": "integer"
-        },
-        "enable_wal": {
-          "type": "boolean"
-        },
-        "max_connections": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
         "path",
-        "retention_days",
-        "enable_wal",
-        "max_connections"
+        "retention_days"
       ]
     },
     "DiscoveryConfig": {

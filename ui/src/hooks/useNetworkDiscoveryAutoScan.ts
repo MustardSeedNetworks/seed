@@ -22,14 +22,15 @@ import type {
   DiscoveredDevice,
   DiscoverySettingsForAutoScan,
   NetworkDiscoveryData,
-  PortScanApiResponse,
   PortScanResult,
-  ServiceInfo,
 } from '../components/cards/networkDiscoveryCardTypes';
 import { submitJob } from '../lib/jobsClient';
 import { LogComponents, logger } from '../lib/logger';
-import type { OptionsResponse } from '../types/generated/options-response';
+import type { DiscoveryOptionsResponse } from '../types/generated/discovery-options-response';
+import type { PortScanRequest } from '../types/generated/port-scan-request';
+import type { PortScanResponse, ServiceInfo } from '../types/generated/port-scan-response';
 import type { VulnScanRequest } from '../types/generated/vuln-scan-request';
+import type { VulnerabilitySettings } from '../types/generated/vulnerability-settings';
 
 interface UseNetworkDiscoveryAutoScanResult {
   handleDeepScan: (ip: string) => Promise<void>;
@@ -55,7 +56,7 @@ export function useNetworkDiscoveryAutoScan(
           credentials: 'include',
         });
         if (discoveryResponse.ok) {
-          const discoveryData = (await discoveryResponse.json()) as { options: OptionsResponse };
+          const discoveryData = (await discoveryResponse.json()) as DiscoveryOptionsResponse;
           const portScanEnabled = discoveryData.options.portScan.enabled;
 
           const vulnResponse = await fetch(`${apiBase}/api/v1/security/vulnerabilities/settings`, {
@@ -64,13 +65,9 @@ export function useNetworkDiscoveryAutoScan(
           let vulnEnabled = false;
           let vulnAutoScan = false;
           if (vulnResponse.ok) {
-            // config.VulnerabilityScanConfig marshals snake_case keys (seed#2971).
-            const vulnData = (await vulnResponse.json()) as {
-              enabled: boolean;
-              auto_scan: boolean;
-            };
+            const vulnData = (await vulnResponse.json()) as VulnerabilitySettings;
             vulnEnabled = vulnData.enabled;
-            vulnAutoScan = vulnData.auto_scan;
+            vulnAutoScan = vulnData.autoScan;
           }
 
           setAutoScanSettings({
@@ -162,13 +159,10 @@ export function useNetworkDiscoveryAutoScan(
     const device = data?.devices.find((d) => d.ip === ip);
 
     try {
-      const apiResponse = await api.post<PortScanApiResponse>(
+      const request: PortScanRequest = { target: ip, ports: COMMON_PORTS };
+      const apiResponse = await api.post<PortScanResponse>(
         '/api/v1/security/discovery/portscan',
-        {
-          target: ip,
-          ports: COMMON_PORTS,
-          timeout: 2000,
-        },
+        request,
       );
 
       // Transform backend response to frontend format

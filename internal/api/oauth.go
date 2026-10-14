@@ -22,6 +22,11 @@ const (
 	// oauthStateCookie is the name of the cookie used to store CSRF state.
 	oauthStateCookie = "oauth_state"
 
+	// oauthCookiePath scopes the handshake cookies to the routes that read
+	// them. A browser sends a cookie only to paths under its Path, so this
+	// must be the prefix /sso/login and /sso/callback are served under.
+	oauthCookiePath = APIVersionPrefix + "/sso"
+
 	// oauthStateCookieExpiry is the expiration time for the OAuth state cookie.
 	oauthStateCookieExpiry = 10 * time.Minute
 
@@ -144,7 +149,7 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     oauthStateCookie,
 		Value:    state,
-		Path:     "/api/sso",
+		Path:     oauthCookiePath,
 		MaxAge:   int(oauthStateCookieExpiry.Seconds()),
 		HttpOnly: true,
 		Secure:   true, // HTTPS required at daemon level
@@ -155,7 +160,7 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "oauth_provider",
 		Value:    providerName,
-		Path:     "/api/sso",
+		Path:     oauthCookiePath,
 		MaxAge:   int(oauthStateCookieExpiry.Seconds()),
 		HttpOnly: true,
 		Secure:   true,
@@ -432,7 +437,7 @@ func (s *Server) clearOAuthCookies(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     oauthStateCookie,
 		Value:    "",
-		Path:     "/api/sso",
+		Path:     oauthCookiePath,
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   true,
@@ -441,7 +446,7 @@ func (s *Server) clearOAuthCookies(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "oauth_provider",
 		Value:    "",
-		Path:     "/api/sso",
+		Path:     oauthCookiePath,
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   true,
@@ -459,10 +464,24 @@ func GetSSOProviderConfig(cfg *config.Config, name string) *config.SSOProviderCo
 	return nil
 }
 
-// SSOProviderInfo provides public info about an SSO provider.
+// SSOProviderInfo is one provider's stored settings as the settings page
+// edits them. The secret itself never leaves the server; HasClientSecret
+// tells the page whether one is stored, and an update that leaves the secret
+// empty keeps it.
 type SSOProviderInfo struct {
-	Name    string `json:"name"`
-	Enabled bool   `json:"enabled"`
+	Name            string   `json:"name"`
+	Enabled         bool     `json:"enabled"`
+	ClientID        string   `json:"clientId,omitempty"`
+	HasClientSecret bool     `json:"hasClientSecret,omitempty"`
+	RedirectURL     string   `json:"redirectUrl,omitempty"`
+	TenantID        string   `json:"tenantId,omitempty"`
+	Scopes          []string `json:"scopes,omitempty"`
+}
+
+// SSOSettingsResponse lists each configured SSO provider and whether it can
+// be used, for the settings UI.
+type SSOSettingsResponse struct {
+	Providers []SSOProviderInfo `json:"providers"`
 }
 
 // handleSSOSettings returns SSO configuration status for the settings UI.
@@ -477,18 +496,21 @@ func (s *Server) handleSSOSettings(w http.ResponseWriter, r *http.Request) {
 	providers := make([]SSOProviderInfo, 0, len(s.config.Auth.SSO.Providers))
 	for _, p := range s.config.Auth.SSO.Providers {
 		providers = append(providers, SSOProviderInfo{
-			Name:    p.Name,
-			Enabled: p.Enabled && p.ClientID != "",
+			Name:            p.Name,
+			Enabled:         p.Enabled && p.ClientID != "",
+			ClientID:        p.ClientID,
+			HasClientSecret: p.ClientSecret != "",
+			RedirectURL:     p.RedirectURL,
+			TenantID:        p.TenantID,
+			Scopes:          p.Scopes,
 		})
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"providers": providers,
-	})
+	sendJSONResponse(w, logger, http.StatusOK, SSOSettingsResponse{Providers: providers})
 }
 
-// ssoUpdateRequest represents the SSO provider update request.
-type ssoUpdateRequest struct {
+// SSOUpdateRequest represents the SSO provider update request.
+type SSOUpdateRequest struct {
 	Provider     string   `json:"provider"`
 	Enabled      bool     `json:"enabled"`
 	ClientID     string   `json:"clientId"`
@@ -499,15 +521,19 @@ type ssoUpdateRequest struct {
 }
 
 // updateProviderConfig updates the provider configuration in the config.
+// An empty ClientSecret keeps the stored one: the settings page is never sent
+// the secret, so it cannot send it back (#3280).
 // Returns true if the provider was found and updated.
-func (s *Server) updateProviderConfig(req *ssoUpdateRequest) bool {
+func (s *Server) updateProviderConfig(req *SSOUpdateRequest) bool {
 	for i := range s.config.Auth.SSO.Providers {
 		if !strings.EqualFold(s.config.Auth.SSO.Providers[i].Name, req.Provider) {
 			continue
 		}
 		s.config.Auth.SSO.Providers[i].Enabled = req.Enabled
 		s.config.Auth.SSO.Providers[i].ClientID = req.ClientID
-		s.config.Auth.SSO.Providers[i].ClientSecret = req.ClientSecret
+		if req.ClientSecret != "" {
+			s.config.Auth.SSO.Providers[i].ClientSecret = req.ClientSecret
+		}
 		s.config.Auth.SSO.Providers[i].RedirectURL = req.RedirectURL
 		s.config.Auth.SSO.Providers[i].TenantID = req.TenantID
 		s.config.Auth.SSO.Providers[i].Scopes = req.Scopes
@@ -526,7 +552,7 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
 	// Existing handler was English-only — use the non-localized helper.
-	var req ssoUpdateRequest
+	var req SSOUpdateRequest
 	if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
 		return
 	}
@@ -571,5 +597,5 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 		"event",
 		"config.sso.updated",
 	)
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
+	sendJSONResponse(w, logger, http.StatusOK, StatusUpdatedResponse{Status: "updated"})
 }

@@ -343,6 +343,52 @@ func TestLearnIsIdempotentAndNeverUndoesTheOperator(t *testing.T) {
 	}
 }
 
+// Each learned network's name says where it came from. A host route with no
+// gateway is on-link, so naming it by its router left "via " dangling with
+// nothing after it (seed#2827).
+func TestLearnNamesTheSource(t *testing.T) {
+	tests := []struct {
+		name      string
+		candidate learn.Candidate
+		want      string
+	}{
+		{
+			name:      "routing table",
+			candidate: learn.Candidate{CIDR: "10.44.10.0/24", Source: learn.SourceRouteTable, Router: "10.44.40.1"},
+			want:      "Learned from 10.44.40.1 (routing table)",
+		},
+		{
+			name:      "address table",
+			candidate: learn.Candidate{CIDR: "10.44.20.0/24", Source: learn.SourceAddressTable, Router: "10.44.40.2"},
+			want:      "Learned from 10.44.40.2 (interface addresses)",
+		},
+		{
+			name:      "routed host route",
+			candidate: learn.Candidate{CIDR: "10.51.0.0/16", Source: learn.SourceHostRoute, Router: "10.254.200.1"},
+			want:      "Learned from this host's route via 10.254.200.1",
+		},
+		{
+			name:      "on-link host route",
+			candidate: learn.Candidate{CIDR: "192.168.1.0/24", Source: learn.SourceHostRoute},
+			want:      "Learned from this host's on-link route",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, st, _ := newService(config.NetworkDiscoveryConfig{})
+			if _, err := svc.Learn([]learn.Candidate{tt.candidate}); err != nil {
+				t.Fatalf("Learn() error = %v", err)
+			}
+			if len(st.cfg.TargetNetworks) != 1 {
+				t.Fatalf("TargetNetworks = %+v, want 1 entry", st.cfg.TargetNetworks)
+			}
+			if got := st.cfg.TargetNetworks[0].Name; got != tt.want {
+				t.Errorf("Name = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 // A malformed candidate is dropped rather than persisted: everything downstream
 // of TargetNetworks parses the CIDR.
 func TestLearnRejectsAMalformedCandidate(t *testing.T) {

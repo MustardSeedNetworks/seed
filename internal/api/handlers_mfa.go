@@ -88,12 +88,10 @@ const (
 	mfaStatusDisabled = "disabled"
 )
 
-// totpToggleResponse is the JSON body returned by the TOTP
-// setup/verify/disable endpoints. Using a struct rather than an
-// inline map[string]any keeps the "status"/"enabled" field name
-// strings out of goconst's eye (#85).
-type totpToggleResponse struct {
-	Status  string `json:"status"`
+// MFAToggleResponse is the JSON body returned when a second factor is turned
+// on or off: TOTP verify/disable and WebAuthn register/finish.
+type MFAToggleResponse struct {
+	Status  string `json:"status"  jsonschema:"enum=enabled,enum=disabled,enum=registered"`
 	Enabled bool   `json:"enabled"`
 }
 
@@ -205,10 +203,10 @@ func recordMFAAuditEvent(
 // TOTP enrolment
 // ----------------------------------------------------------------------
 
-// totpSetupResponse is returned by POST /api/v1/auth/totp/setup.
+// TOTPSetupResponse is returned by POST /api/v1/auth/totp/setup.
 // QRCodePNGBase64 is base64-encoded so the client can render it via
 // <img src="data:image/png;base64,..." />.
-type totpSetupResponse struct {
+type TOTPSetupResponse struct {
 	Secret          string `json:"secret"`
 	ProvisioningURI string `json:"provisioningUri"`
 	QRCodePNGBase64 string `json:"qrCodePngBase64"`
@@ -251,15 +249,15 @@ func (s *Server) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
 	logger.InfoContext(r.Context(), "TOTP setup initiated",
 		"event", "mfa_setup", "username", username, "result", "pending")
 
-	sendJSONResponse(w, logger, http.StatusOK, totpSetupResponse{
+	sendJSONResponse(w, logger, http.StatusOK, TOTPSetupResponse{
 		Secret:          setup.Secret,
 		ProvisioningURI: setup.ProvisioningURI,
 		QRCodePNGBase64: base64.StdEncoding.EncodeToString(setup.QRCodePNG),
 	})
 }
 
-// totpVerifyRequest is the body for POST /api/v1/auth/totp/verify.
-type totpVerifyRequest struct {
+// TOTPVerifyRequest is the body for POST /api/v1/auth/totp/verify.
+type TOTPVerifyRequest struct {
 	Code string `json:"code" validate:"required,numeric,len=6"`
 }
 
@@ -287,7 +285,7 @@ func (s *Server) handleTOTPVerify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req totpVerifyRequest
+	var req TOTPVerifyRequest
 	if !decodeJSONStrictLocalizedWith(w, r, &req, mfaBodyLimit,
 		logger, localizer, "username", username, "factor", mfaFactorTOTP) {
 		return
@@ -320,15 +318,15 @@ func (s *Server) handleTOTPVerify(w http.ResponseWriter, r *http.Request) {
 	logger.InfoContext(r.Context(), "TOTP enabled",
 		"event", "mfa_setup", "username", username, "result", mfaStatusEnabled)
 
-	sendJSONResponse(w, logger, http.StatusOK, totpToggleResponse{
+	sendJSONResponse(w, logger, http.StatusOK, MFAToggleResponse{
 		Status:  mfaStatusEnabled,
 		Enabled: true,
 	})
 }
 
-// totpDisableRequest is the body for POST /api/v1/auth/totp/disable.
+// TOTPDisableRequest is the body for POST /api/v1/auth/totp/disable.
 // Both factors are required to disable.
-type totpDisableRequest struct {
+type TOTPDisableRequest struct {
 	Password string `json:"password"`
 	Code     string `json:"code"`
 }
@@ -357,7 +355,7 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req totpDisableRequest
+	var req TOTPDisableRequest
 	if !decodeJSONStrictLocalizedWith(w, r, &req, mfaBodyLimit,
 		logger, localizer, "username", username, "factor", mfaFactorTOTP) {
 		return
@@ -393,7 +391,7 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 	recordMFAAuditEvent(r, username, mfaFactorTOTP, mfaStatusDisabled)
 	logger.InfoContext(r.Context(), "TOTP disabled",
 		"event", "mfa_disable", "username", username, "result", mfaStatusDisabled)
-	sendJSONResponse(w, logger, http.StatusOK, totpToggleResponse{
+	sendJSONResponse(w, logger, http.StatusOK, MFAToggleResponse{
 		Status:  mfaStatusDisabled,
 		Enabled: false,
 	})
@@ -403,8 +401,8 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 // TOTP login (second factor)
 // ----------------------------------------------------------------------
 
-// totpLoginRequest is the body for POST /api/v1/auth/login/totp.
-type totpLoginRequest struct {
+// TOTPLoginRequest is the body for POST /api/v1/auth/login/totp.
+type TOTPLoginRequest struct {
 	MFAToken string `json:"mfaToken" validate:"required"`
 	Code     string `json:"code"     validate:"required,numeric,len=6"`
 }
@@ -423,7 +421,7 @@ func (s *Server) handleLoginTOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req totpLoginRequest
+	var req TOTPLoginRequest
 	if !decodeJSONStrictLocalizedWith(w, r, &req, mfaBodyLimit,
 		logger, localizer, "factor", mfaFactorTOTP) {
 		return
@@ -622,7 +620,7 @@ func (s *Server) handleWebAuthnRegisterBegin(w http.ResponseWriter, r *http.Requ
 	webAuthnSessions.Put(username, "register", *sess)
 	logger.InfoContext(r.Context(), "WebAuthn registration started",
 		"event", "webauthn_register", "username", username, "result", "begin")
-	sendJSONResponse(w, logger, http.StatusOK, opts)
+	sendJSONResponse(w, logger, http.StatusOK, newWebAuthnCreationOptions(opts, user.ID))
 }
 
 // handleWebAuthnRegisterFinish completes the registration ceremony and
@@ -676,7 +674,7 @@ func (s *Server) handleWebAuthnRegisterFinish(w http.ResponseWriter, r *http.Req
 	}
 	logger.InfoContext(r.Context(), "WebAuthn credential registered",
 		"event", "webauthn_register", "username", username, "result", "registered")
-	sendJSONResponse(w, logger, http.StatusOK, totpToggleResponse{
+	sendJSONResponse(w, logger, http.StatusOK, MFAToggleResponse{
 		Status:  "registered",
 		Enabled: true,
 	})
@@ -685,13 +683,6 @@ func (s *Server) handleWebAuthnRegisterFinish(w http.ResponseWriter, r *http.Req
 // ----------------------------------------------------------------------
 // WebAuthn login
 // ----------------------------------------------------------------------
-
-// webAuthnLoginBeginRequest is the body for /webauthn/login/begin.
-// We accept the username here because (unlike registration) the user
-// hasn't authenticated yet.
-type webAuthnLoginBeginRequest struct {
-	Username string `json:"username" validate:"required"`
-}
 
 // handleWebAuthnLoginBegin starts the assertion ceremony for the given
 // username and returns the credential assertion options.
@@ -707,7 +698,7 @@ func (s *Server) handleWebAuthnLoginBegin(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	var req webAuthnLoginBeginRequest
+	var req WebAuthnLoginBeginRequest
 	if !decodeJSONStrictLocalized(w, r, &req, mfaBodyLimit, logger, localizer) {
 		return
 	}
@@ -733,7 +724,7 @@ func (s *Server) handleWebAuthnLoginBegin(w http.ResponseWriter, r *http.Request
 	webAuthnSessions.Put(req.Username, "login", *sess)
 	logger.InfoContext(r.Context(), "WebAuthn login started",
 		"event", "webauthn_login", "username", req.Username, "result", "begin")
-	sendJSONResponse(w, logger, http.StatusOK, opts)
+	sendJSONResponse(w, logger, http.StatusOK, newWebAuthnRequestOptions(opts))
 }
 
 // handleWebAuthnLoginFinish finishes the assertion ceremony, updates
@@ -822,8 +813,8 @@ func (s *Server) completeWebAuthnLogin(
 // MFA status (UI helper)
 // ----------------------------------------------------------------------
 
-// mfaStatusResponse is returned by GET /api/v1/auth/mfa/status.
-type mfaStatusResponse struct {
+// MFAStatusResponse is returned by GET /api/v1/auth/mfa/status.
+type MFAStatusResponse struct {
 	TOTPEnabled       bool `json:"totpEnabled"`
 	WebAuthnEnabled   bool `json:"webauthnEnabled"`
 	WebAuthnCredCount int  `json:"webauthnCredentialCount"`
@@ -849,7 +840,7 @@ func (s *Server) handleMFAStatus(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, mfaStatusResponse{
+	sendJSONResponse(w, logger, http.StatusOK, MFAStatusResponse{
 		TOTPEnabled:       totpEnabled,
 		WebAuthnEnabled:   credCount > 0,
 		WebAuthnCredCount: credCount,

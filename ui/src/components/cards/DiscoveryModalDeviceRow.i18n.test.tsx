@@ -107,6 +107,7 @@ describe('device detail — Spanish, with no English left behind', () => {
     render(
       <WifiChannelGraph
         data={{
+          interface: 'wlan0',
           available: true,
           data: {
             networks24Ghz: [
@@ -114,9 +115,9 @@ describe('device detail — Spanish, with no English left behind', () => {
                 ssid: 'lab-ap',
                 bssid: '74:ac:b9:3b:af:40',
                 channel: 6,
-                centerFreq: 2437,
-                channelWidth: 20,
-                signal: -52,
+                centerFreqMhz: 2437,
+                channelWidthMhz: 20,
+                signalDbm: -52,
                 band: '2.4GHz',
                 isConnected: false,
               },

@@ -271,7 +271,7 @@ func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
 		result = tracer.TraceTCP(ctx, req.Target, port)
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, result)
+	sendJSONResponse(w, logger, http.StatusOK, toTracerouteResult(result, nil))
 }
 
 func validateTracerouteTarget(target string) string {
@@ -326,6 +326,27 @@ type PortScanRequest struct {
 	Ports   []int  `json:"ports,omitempty"`   // Specific ports (optional, defaults to common ports)
 	Profile string `json:"profile,omitempty"` // "quick", "web", "full" (default: quick)
 	Workers int    `json:"workers,omitempty"` // Concurrent workers (default: 20)
+}
+
+// PortScanResponse is one host's port scan: the open ports found and how long
+// the scan took. Error is set when the target did not resolve or the scan was
+// cut short.
+type PortScanResponse struct {
+	IP         string                  `json:"ip"`
+	Hostname   string                  `json:"hostname,omitempty"`
+	Services   []discovery.ServiceInfo `json:"services"`
+	ScanTimeMs int64                   `json:"scanTimeMs"`
+	Error      string                  `json:"error,omitempty"`
+}
+
+func newPortScanResponse(result *discovery.PortScanResult) PortScanResponse {
+	return PortScanResponse{
+		IP:         result.IP,
+		Hostname:   result.Hostname,
+		Services:   result.Services,
+		ScanTimeMs: result.ScanTime.Milliseconds(),
+		Error:      result.Error,
+	}
 }
 
 // defaultPortScanWorkers is the concurrency used when a caller does not ask
@@ -417,17 +438,22 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, result)
+	sendJSONResponse(w, logger, http.StatusOK, newPortScanResponse(result))
 }
 
-// POST /api/discovery/fingerprint with JSON body: {"ip": "192.168.1.1"}.
+// FingerprintRequest is POST /security/discovery/fingerprint: the host to
+// probe for its OS, service versions and TLS certificates.
+type FingerprintRequest struct {
+	IP string `json:"ip"`
+}
+
+// handleAdvancedFingerprint answers the discovery.AdvancedProbeResult of one
+// host.
 func (s *Server) handleAdvancedFingerprint(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	var req struct {
-		IP string `json:"ip"`
-	}
+	var req FingerprintRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}

@@ -95,8 +95,8 @@ type IperfClientStatusResponse struct {
 
 // IperfServerRequest is the request body for starting/stopping the iperf3 server.
 type IperfServerRequest struct {
-	Action string `json:"action"` // "start" or "stop"
-	Port   int    `json:"port"`
+	Action string `json:"action" jsonschema:"enum=start,enum=stop"`
+	Port   int    `json:"port"` // 0 means 5201 on start; ignored on stop
 }
 
 // IperfSuggestion represents a discovered host that responds on the iperf port.
@@ -218,8 +218,9 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 		}
 	}(r.Context(), logger)
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"message": "iperf3 test started. Poll /api/iperf/client/status for results.",
+	sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+		Status:  statusSuccess,
+		Message: "iperf3 test started. Poll " + APIVersionPrefix + "/telemetry/iperf/client/status for results.",
 	})
 }
 
@@ -266,7 +267,8 @@ func toIperfResultResponse(r *iperf.Result) IperfResultResponse {
 	}
 }
 
-// handleIperfServer starts or stops the iperf3 server.
+// handleIperfServer starts or stops the iperf3 server and answers its
+// resulting state, the same body /telemetry/iperf/server/status serves.
 func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -306,10 +308,6 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 			)
 			return
 		}
-		sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-			"message": fmt.Sprintf("iperf3 server started on port %d", port),
-			"port":    port,
-		})
 	case "stop":
 		if err := s.iperfManager().StopServer(); err != nil {
 			logger.ErrorContext(r.Context(), "Failed to stop iPerf server", "error", err)
@@ -323,9 +321,6 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 			)
 			return
 		}
-		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-			"message": "iperf3 server stopped",
-		})
 	default:
 		sendErrorResponseWithDetails(
 			w,
@@ -335,7 +330,10 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 			localizer.T("errors.api.invalidAction"),
 			"",
 		)
+		return
 	}
+
+	sendJSONResponse(w, logger, http.StatusOK, s.iperfManager().GetServerStatus())
 }
 
 // handleIperfServerStatus returns the iperf3 server status.

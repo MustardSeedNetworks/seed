@@ -26,24 +26,20 @@ import (
 	"errors"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
 	"github.com/MustardSeedNetworks/seed/internal/polling/credentials"
 )
 
-const (
-	deviceCredentialsPath       = APIVersionPrefix + "/device-credentials"
-	deviceCredentialsPathPrefix = deviceCredentialsPath + "/"
-)
+const deviceCredentialsPath = APIVersionPrefix + "/device-credentials"
 
-// deviceCredentialInput is the request body for POST and PUT.
+// DeviceCredentialRequest is the request body for POST and PUT.
 //
 // The secret fields are the only place plaintext appears in this package. They
 // are write-only: there is no response type that carries them, and the domain
 // type cannot serialise them.
-type deviceCredentialInput struct {
+type DeviceCredentialRequest struct {
 	Name         string `json:"name"`
 	Community    string `json:"community,omitempty"`
 	V3User       string `json:"snmpV3User,omitempty"`
@@ -51,6 +47,12 @@ type deviceCredentialInput struct {
 	V3PrivSecret string `json:"snmpV3PrivSecret,omitempty"`
 	V3AuthProto  string `json:"snmpV3AuthProto,omitempty"`
 	V3PrivProto  string `json:"snmpV3PrivProto,omitempty"`
+}
+
+// DeviceCredentialListResponse is the GET /device-credentials envelope.
+type DeviceCredentialListResponse struct {
+	Count       int                    `json:"count"`
+	Credentials []*polling.Credentials `json:"credentials"`
 }
 
 // credentialIDPattern is the shape the repository generates: "cred-" and
@@ -80,9 +82,10 @@ func (s *Server) handleDeviceCredentials(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// handleDeviceCredentialByID routes the resource endpoint (GET / PUT / DELETE).
+// handleDeviceCredentialByID routes the resource endpoint (GET / PUT / DELETE)
+// on /device-credentials/{credentialId}.
 func (s *Server) handleDeviceCredentialByID(w http.ResponseWriter, r *http.Request) {
-	id := strings.TrimPrefix(r.URL.Path, deviceCredentialsPathPrefix)
+	id := r.PathValue("credentialId")
 	if !validCredentialID(id) {
 		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Missing or invalid credential id")
 		return
@@ -115,9 +118,12 @@ func (s *Server) listDeviceCredentials(w http.ResponseWriter, r *http.Request) {
 		writeCredentialError(w, r, err)
 		return
 	}
-	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, map[string]any{
-		jsonKeyCount:  len(list),
-		"credentials": list,
+	if list == nil {
+		list = []*polling.Credentials{}
+	}
+	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, DeviceCredentialListResponse{
+		Count:       len(list),
+		Credentials: list,
 	})
 }
 
@@ -149,7 +155,7 @@ func (s *Server) saveDeviceCredential(w http.ResponseWriter, r *http.Request, id
 		return
 	}
 
-	var in deviceCredentialInput
+	var in DeviceCredentialRequest
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Invalid JSON body")
 		return

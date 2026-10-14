@@ -153,6 +153,7 @@ export function RecordRow({
       type="button"
       onClick={onSelect}
       aria-current={selected ? 'true' : undefined}
+      data-state={state}
       data-testid={testId}
       className={cn(
         'flex w-full items-center gap-default px-cell py-2 text-left',

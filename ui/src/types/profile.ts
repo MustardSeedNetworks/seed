@@ -410,30 +410,6 @@ export interface ProfileInterfaceSelection {
 }
 
 /**
- * Helper to get the active ethernet interface from a ProfileInterfaceConfigs.
- */
-export function getActiveEthernetInterface(
-  configs?: ProfileInterfaceConfigs,
-): ProfileInterfaceSelection | undefined {
-  if (!(configs?.activeEthernet && configs.ethernet)) {
-    return;
-  }
-  return configs.ethernet.find((i) => i.name === configs.activeEthernet);
-}
-
-/**
- * Helper to get the active WiFi interface from a ProfileInterfaceConfigs.
- */
-export function getActiveWiFiInterface(
-  configs?: ProfileInterfaceConfigs,
-): ProfileInterfaceSelection | undefined {
-  if (!(configs?.activeWifi && configs.wifi)) {
-    return;
-  }
-  return configs.wifi.find((i) => i.name === configs.activeWifi);
-}
-
-/**
  * ProfileInterfaceThresholds for per-interface latency/signal thresholds.
  */
 export interface ProfileInterfaceThresholds {
@@ -536,30 +512,4 @@ export interface ProfileExportResponse {
   version: string;
   exportedAt: string;
   profiles: Profile[];
-}
-
-/**
- * ActiveProfileRequest is used to set the active profile.
- */
-export interface ActiveProfileRequest {
-  profileId: string;
-}
-
-/**
- * ActiveProfileResponse is returned after setting the active profile.
- */
-export interface ActiveProfileResponse {
-  message: string;
-  profile: Profile;
-}
-
-/**
- * ProfileChangedEvent is broadcast via WebSocket when the active profile changes.
- */
-export interface ProfileChangedEvent {
-  type: 'profileChanged';
-  payload: {
-    profileId: string;
-    profileName: string;
-  };
 }

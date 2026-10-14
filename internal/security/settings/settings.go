@@ -95,16 +95,18 @@ func (s *Service) UpdateSNMP(in SNMPUpdate) error {
 // Vulnerability scanning
 // ---------------------------------------------------------------------------
 
-// VulnUpdate is the vulnerability-scanner settings write model. It carries the
-// six operator-settable fields; AutoScan is left untouched (it is not exposed by
-// the settings endpoint — the original contract).
+// VulnUpdate is the vulnerability-scanner settings write model: every
+// operator-settable field, written as a whole, except the NVD API key. An
+// empty NVDAPIKey keeps the stored key; ClearNVDAPIKey removes it.
 type VulnUpdate struct {
 	Enabled           bool
 	CVEDatabase       string
 	NVDAPIKey         string
+	ClearNVDAPIKey    bool
 	UpdateInterval    int
 	SeverityThreshold string
 	MaxConcurrent     int
+	AutoScan          bool
 }
 
 // Vuln returns the current vulnerability-scanner configuration.
@@ -122,17 +124,22 @@ func (s *Service) VulnSeverity() string {
 	return out
 }
 
-// UpdateVuln applies the six operator-settable fields and persists, leaving
-// AutoScan untouched.
+// UpdateVuln applies the operator-settable fields and persists.
 func (s *Service) UpdateVuln(in VulnUpdate) error {
 	return s.store.Write(func(c *config.Config) error {
 		v := &c.Security.VulnerabilityScanning
 		v.Enabled = in.Enabled
 		v.CVEDatabase = in.CVEDatabase
-		v.NVDAPIKey = in.NVDAPIKey
+		switch {
+		case in.ClearNVDAPIKey:
+			v.NVDAPIKey = ""
+		case in.NVDAPIKey != "":
+			v.NVDAPIKey = in.NVDAPIKey
+		}
 		v.UpdateInterval = in.UpdateInterval
 		v.SeverityThreshold = in.SeverityThreshold
 		v.MaxConcurrent = in.MaxConcurrent
+		v.AutoScan = in.AutoScan
 		return nil
 	})
 }

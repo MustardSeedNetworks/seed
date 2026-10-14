@@ -16,6 +16,10 @@
  * the Go type itself, so it cannot drift into a shape the backend never sends.
  */
 import { HttpResponse, http } from 'msw';
+import { SETTINGS_RESPONSE } from '../../src/test/settingsResponse';
+import type { DeviceCredentialListResponse } from '../../src/types/generated/device-credential-list-response';
+import type { DiscoveryOptionsResponse } from '../../src/types/generated/discovery-options-response';
+import type { VulnerabilitySettings } from '../../src/types/generated/vulnerability-settings';
 import settingsDefaults from './settings-defaults.json';
 
 /** Matches internal/api/handlers_profiles.go ProfileResponse. */
@@ -55,14 +59,30 @@ export const handlers = [
   // real default: providers only appear once one is configured and enabled.
   http.get('*/api/v1/sso/providers', () => HttpResponse.json({ providers: [] })),
 
-  // The discovery/vulnerability pair useNetworkDiscoveryAutoScan reads. Both
-  // are capitalised on the wire; the hook documents that inline and reads
-  // `options.PortScan.Enabled` and `Enabled` / `AutoScan`.
+  // The discovery/vulnerability pair useNetworkDiscoveryAutoScan reads, both
+  // with every scan off.
   http.get('*/api/v1/security/discovery/options', () =>
-    HttpResponse.json({ options: { PortScan: { Enabled: false } } }),
+    HttpResponse.json<DiscoveryOptionsResponse>({
+      options: {
+        passiveProtocols: { lldp: false, cdp: false, edp: false, ndp: false },
+        arpScan: false,
+        icmpScan: false,
+        portScan: { enabled: false, preset: 'common', tcpPorts: '' },
+        traceroute: false,
+        snmpQuery: false,
+      },
+    }),
   ),
   http.get('*/api/v1/security/vulnerabilities/settings', () =>
-    HttpResponse.json({ Enabled: false, AutoScan: false }),
+    HttpResponse.json<VulnerabilitySettings>({
+      enabled: false,
+      cveDatabase: 'nvd',
+      nvdApiKey: '',
+      updateInterval: 86400,
+      severityThreshold: 'medium',
+      maxConcurrent: 5,
+      autoScan: false,
+    }),
   ),
 
   // DeviceVulnerabilities — src/types/vulnerabilities.ts. An empty list is a
@@ -142,11 +162,9 @@ export const handlers = [
     }),
   ),
 
-  // GET /api/v1/settings returns the live settings object. The settings-drawer
-  // loaders read slices of it -- thresholds, tests, snmp, ipconfig -- and the
-  // defaults document carries exactly those keys, so it stands in without
-  // inventing a second shape that could drift from the first.
-  http.get('*/api/v1/settings', () => HttpResponse.json(settingsDefaults)),
+  // GET /api/v1/settings answers its own typed shape (SettingsResponse), not
+  // the defaults document; the fixture is checked against the generated type.
+  http.get('*/api/v1/settings', () => HttpResponse.json(SETTINGS_RESPONSE)),
 
   // The Wi-Fi settings path really does double the segment; the route is
   // registered as /wifi/wifi/settings in internal/api/server_routes.go, so the
@@ -244,6 +262,35 @@ export const handlers = [
   http.get('*/api/v1/reporting/logs', () => HttpResponse.json({ logs: [], total: 0 })),
   // AlertEscalationSettings lists recent alerts to offer their rule names.
   http.get('*/api/v1/alerts', () => HttpResponse.json({ count: 0, alerts: [] })),
+
+  // The polling-target form's credential picker lists the vault.
+  http.get('*/api/v1/device-credentials', () =>
+    HttpResponse.json<DeviceCredentialListResponse>({
+      count: 2,
+      credentials: [
+        {
+          id: 'cred-core',
+          clientId: 'default',
+          name: 'core-switches',
+          kind: 'v2c',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+        {
+          id: 'cred-noc',
+          clientId: 'default',
+          name: 'noc-v3',
+          kind: 'v3',
+          securityLevel: 'authPriv',
+          snmpV3User: 'noc',
+          snmpV3AuthProto: 'SHA256',
+          snmpV3PrivProto: 'AES',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ],
+    }),
+  ),
 
   // useSubnetSettings expects a bare array (it checks Array.isArray and falls
   // back to [] otherwise), not an envelope.

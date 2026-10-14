@@ -1,6 +1,7 @@
 package enumerate_test
 
 import (
+	"context"
 	"errors"
 	"net"
 	"testing"
@@ -167,5 +168,19 @@ func TestCompletePendingPingRemovesExactlyOnce(t *testing.T) {
 	}
 	if got := a.PendingCount(); got != 1 {
 		t.Errorf("pending after spurious completions = %d, want 1", got)
+	}
+}
+
+func TestPingRefusesAnAddressOfTheOtherFamily(t *testing.T) {
+	t.Parallel()
+
+	a := enumerate.NewICMPPingerWithoutSocket(1)
+	res := a.Pinger.Ping(context.Background(), "fe80::1%eth0")
+
+	if _, ok := errors.AsType[*net.AddrError](res.Error); !ok {
+		t.Fatalf("Ping(fe80::1%%eth0) on an ICMPv4 pinger: error %v, want a *net.AddrError", res.Error)
+	}
+	if res.Reachable {
+		t.Error("an address the socket cannot send to was reported reachable")
 	}
 }

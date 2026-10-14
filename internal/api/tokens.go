@@ -183,11 +183,6 @@ func (s *Server) handleAPITokens(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleAPITokenByID routes /api/v1/tokens/<id> (DELETE = revoke).
-func (s *Server) handleAPITokenByID(w http.ResponseWriter, r *http.Request) {
-	s.handleAPITokenRevoke(w, r)
-}
-
 func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 	username := usernameFromContext(r)
 	if username == "" {
@@ -313,14 +308,7 @@ func (s *Server) handleAPITokenRevoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := strings.TrimPrefix(r.URL.Path, APIVersionPrefix+"/tokens/")
-	if id == "" || strings.ContainsRune(id, '/') {
-		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest,
-			"Token ID is required in path")
-		return
-	}
-
-	if err := s.identityTokens.Revoke(r.Context(), id, username); err != nil {
+	if err := s.identityTokens.Revoke(r.Context(), r.PathValue("tokenId"), username); err != nil {
 		switch {
 		case errors.Is(err, tokens.ErrUnavailable):
 			writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail,

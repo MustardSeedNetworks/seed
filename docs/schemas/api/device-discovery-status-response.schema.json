@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/device-discovery-status-response.schema.json",
+  "$ref": "#/$defs/DeviceDiscoveryStatusResponse",
+  "$defs": {
+    "DeviceDiscoveryStatusResponse": {
+      "properties": {
+        "scanning": {
+          "type": "boolean"
+        },
+        "deviceCount": {
+          "type": "integer"
+        },
+        "lastScan": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "subnet": {
+          "type": "string"
+        },
+        "localIP": {
+          "type": "string"
+        },
+        "interface": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "scanning",
+        "deviceCount",
+        "lastScan",
+        "subnet",
+        "localIP",
+        "interface"
+      ]
+    }
+  },
+  "title": "DeviceDiscoveryStatusResponse",
+  "description": "DeviceDiscoveryStatusResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

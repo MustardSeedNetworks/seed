@@ -19,7 +19,7 @@ import { useState } from 'react';
 import { fn } from 'storybook/test';
 import { cn, spacing } from '../../../styles/theme';
 import type { SaveStatus, TestsSettings } from '../../../types/settings';
-import { DEFAULT_CARD_SETTINGS } from '../../../types/settings';
+import { DEFAULT_CARD_SETTINGS, EMPTY_PROTOCOL_ENDPOINTS } from '../../../types/settings';
 import { DnsSettings } from './DnsSettings';
 import { expandSections } from './storyPlay';
 
@@ -28,6 +28,7 @@ const baseSettings: Omit<TestsSettings, 'dnsHostname' | 'dnsServers'> = {
   tcpPorts: [],
   udpPorts: [],
   httpEndpoints: [],
+  ...EMPTY_PROTOCOL_ENDPOINTS,
   runPerformance: true,
   runSpeedtest: true,
   runIperf: true,

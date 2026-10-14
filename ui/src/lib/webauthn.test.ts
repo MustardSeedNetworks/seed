@@ -15,6 +15,8 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { WebAuthnCreationOptionsResponse } from '../types/generated/webauthn-creation-options-response';
+import type { WebAuthnRequestOptionsResponse } from '../types/generated/webauthn-request-options-response';
 import {
   base64UrlToBuffer,
   bufferToBase64Url,
@@ -27,6 +29,27 @@ const mockPost = vi.fn<(path: string, body?: unknown) => Promise<unknown>>();
 vi.mock('../api', () => ({
   api: { post: (path: string, body?: unknown): Promise<unknown> => mockPost(path, body) },
 }));
+
+// The options as register/begin and login/begin send them, one passkey enrolled.
+const CREATION_OPTIONS: WebAuthnCreationOptionsResponse = {
+  publicKey: {
+    rp: { name: 'Seed', id: 'localhost' },
+    user: { id: 'AAAAAAAAAAE', name: 'admin', displayName: 'admin' },
+    challenge: 'AAAAAAAAAAE',
+    pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+    timeout: 300000,
+    excludeCredentials: [{ type: 'public-key', id: 'Y3JlZGlk', transports: ['usb'] }],
+  },
+};
+
+const REQUEST_OPTIONS: WebAuthnRequestOptionsResponse = {
+  publicKey: {
+    challenge: 'AAAAAAAAAAE',
+    timeout: 300000,
+    rpId: 'localhost',
+    allowCredentials: [{ type: 'public-key', id: 'Y3JlZGlk' }],
+  },
+};
 
 function buf(...values: number[]): ArrayBuffer {
   return new Uint8Array(values).buffer;
@@ -77,12 +100,7 @@ describe('registerPasskey', () => {
   it('runs the ceremony and finishes it with base64url fields', async () => {
     mockPost.mockImplementation((endpoint: string) => {
       if (endpoint.endsWith('/register/begin')) {
-        return Promise.resolve({
-          publicKey: {
-            challenge: 'AAAAAAAAAAE',
-            user: { id: 'AAAAAAAAAAE', name: 'admin', displayName: 'admin' },
-          },
-        });
+        return Promise.resolve(CREATION_OPTIONS);
       }
 
       return Promise.resolve({});
@@ -105,6 +123,8 @@ describe('registerPasskey', () => {
     };
     expect(passed.publicKey.challenge).toBeInstanceOf(ArrayBuffer);
     expect(passed.publicKey.user.id).toBeInstanceOf(ArrayBuffer);
+    // The enrolled passkey is excluded, so the browser will not enrol it twice.
+    expect(passed.publicKey.excludeCredentials?.at(0)?.id).toEqual(base64UrlToBuffer('Y3JlZGlk'));
 
     const [path, body] = mockPost.mock.calls.at(-1) as [string, Record<string, unknown>];
     expect(path).toBe('/api/v1/auth/webauthn/register/finish');
@@ -115,9 +135,7 @@ describe('registerPasskey', () => {
   });
 
   it('reports a cancelled ceremony instead of claiming success', async () => {
-    mockPost.mockResolvedValue({
-      publicKey: { challenge: 'AAAA', user: { id: 'AAAA', name: 'a', displayName: 'a' } },
-    });
+    mockPost.mockResolvedValue(CREATION_OPTIONS);
     vi.stubGlobal('navigator', {
       credentials: { create: vi.fn(() => Promise.resolve(null)), get: vi.fn() },
     });
@@ -137,7 +155,7 @@ describe('loginWithPasskey', () => {
   it('sends the username as a query parameter, which is where finish reads it', async () => {
     mockPost.mockImplementation((endpoint: string) => {
       if (endpoint.endsWith('/login/begin')) {
-        return Promise.resolve({ publicKey: { challenge: 'AAAAAAAAAAE' } });
+        return Promise.resolve(REQUEST_OPTIONS);
       }
 
       return Promise.resolve({ token: 'access-token' });

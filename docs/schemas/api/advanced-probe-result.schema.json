@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/advanced-probe-result.schema.json",
+  "$ref": "#/$defs/AdvancedProbeResult",
+  "$defs": {
+    "AdvancedProbeResult": {
+      "properties": {
+        "ip": {
+          "type": "string"
+        },
+        "probedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "osFingerprint": {
+          "$ref": "#/$defs/OSFingerprint"
+        },
+        "serviceVersions": {
+          "items": {
+            "$ref": "#/$defs/ServiceVersion"
+          },
+          "type": "array"
+        },
+        "tlsInfo": {
+          "items": {
+            "$ref": "#/$defs/TLSInfo"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ip",
+        "probedAt"
+      ]
+    },
+    "OSFingerprint": {
+      "properties": {
+        "osFamily": {
+          "type": "string"
+        },
+        "osVersion": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "integer"
+        },
+        "methods": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "ttlObserved": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "confidence"
+      ]
+    },
+    "ServiceVersion": {
+      "properties": {
+        "port": {
+          "type": "integer"
+        },
+        "service": {
+          "type": "string"
+        },
+        "product": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "extraInfo": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "port",
+        "service",
+        "confidence"
+      ]
+    },
+    "TLSInfo": {
+      "properties": {
+        "port": {
+          "type": "integer"
+        },
+        "version": {
+          "type": "string"
+        },
+        "cipherSuite": {
+          "type": "string"
+        },
+        "commonName": {
+          "type": "string"
+        },
+        "issuer": {
+          "type": "string"
+        },
+        "validFrom": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "validTo": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "daysUntilExpiry": {
+          "type": "integer"
+        },
+        "selfSigned": {
+          "type": "boolean"
+        },
+        "subjectAltNames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "certErrors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "port",
+        "version",
+        "cipherSuite",
+        "commonName",
+        "issuer",
+        "validFrom",
+        "validTo",
+        "daysUntilExpiry",
+        "selfSigned",
+        "subjectAltNames",
+        "certErrors"
+      ]
+    }
+  },
+  "title": "AdvancedProbeResult",
+  "description": "AdvancedProbeResult — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

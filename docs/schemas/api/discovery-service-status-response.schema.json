@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/discovery-service-status-response.schema.json",
+  "$ref": "#/$defs/DiscoveryServiceStatusResponse",
+  "$defs": {
+    "DegradationStatus": {
+      "properties": {
+        "overallHealth": {
+          "type": "string",
+          "enum": [
+            "healthy",
+            "degraded",
+            "critical"
+          ]
+        },
+        "healthyMethods": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "failedMethods": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "recommendations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "overallHealth",
+        "healthyMethods",
+        "failedMethods",
+        "warnings",
+        "recommendations"
+      ]
+    },
+    "DiscoveryServiceStatusResponse": {
+      "properties": {
+        "running": {
+          "type": "boolean"
+        },
+        "scanning": {
+          "type": "boolean"
+        },
+        "deviceCount": {
+          "type": "integer"
+        },
+        "lastScan": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "subnet": {
+          "type": "string"
+        },
+        "subnets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "localIP": {
+          "type": "string"
+        },
+        "interface": {
+          "type": "string"
+        },
+        "activeMethods": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "snmpProbe": {
+          "$ref": "#/$defs/SNMPProbeReport"
+        },
+        "sweepCoverage": {
+          "items": {
+            "$ref": "#/$defs/SweepCoverage"
+          },
+          "type": "array"
+        },
+        "rescanIntervalMs": {
+          "type": "integer"
+        },
+        "profilingStatus": {
+          "$ref": "#/$defs/ProfilingStatus"
+        },
+        "degradationStatus": {
+          "$ref": "#/$defs/DegradationStatus"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "running",
+        "scanning",
+        "deviceCount",
+        "lastScan",
+        "subnet",
+        "subnets",
+        "localIP",
+        "interface",
+        "activeMethods",
+        "snmpProbe",
+        "sweepCoverage",
+        "rescanIntervalMs"
+      ]
+    },
+    "ProfilingStatus": {
+      "properties": {
+        "totalProfiled": {
+          "type": "integer"
+        },
+        "inProgress": {
+          "type": "integer"
+        },
+        "queueLength": {
+          "type": "integer"
+        },
+        "profilingIps": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "maxConcurrent": {
+          "type": "integer"
+        },
+        "portsToScan": {
+          "type": "integer"
+        },
+        "scanIntensity": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "totalProfiled",
+        "inProgress",
+        "queueLength",
+        "profilingIps",
+        "enabled",
+        "maxConcurrent",
+        "portsToScan",
+        "scanIntensity"
+      ]
+    },
+    "SNMPProbeReport": {
+      "properties": {
+        "silent": {
+          "type": "integer"
+        },
+        "tried": {
+          "type": "integer"
+        },
+        "answered": {
+          "type": "integer"
+        },
+        "skipped": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "silent",
+        "tried",
+        "answered"
+      ]
+    },
+    "SweepCoverage": {
+      "properties": {
+        "subnet": {
+          "type": "string"
+        },
+        "swept": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "subnet",
+        "swept",
+        "total"
+      ]
+    }
+  },
+  "title": "DiscoveryServiceStatusResponse",
+  "description": "DiscoveryServiceStatusResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

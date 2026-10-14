@@ -20,6 +20,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/platform/procrun"
 )
 
 // Darwin scanning constants.
@@ -58,8 +60,7 @@ func (s *BluetoothScanner) scanPlatform(
 
 // scanSystemProfiler uses system_profiler to get Bluetooth device info.
 func (s *BluetoothScanner) scanSystemProfiler(ctx context.Context) ([]BluetoothDevice, error) {
-	cmd := exec.CommandContext(ctx, systemProfilerPath, "SPBluetoothDataType", "-json")
-	output, err := cmd.Output()
+	output, err := procrun.Output(exec.CommandContext(ctx, systemProfilerPath, "SPBluetoothDataType", "-json"))
 	if err != nil {
 		return nil, fmt.Errorf("system_profiler failed: %w", err)
 	}
@@ -236,15 +237,12 @@ func parseSystemProfilerText(output string) ([]BluetoothDevice, error) {
 
 // scanBlueutil uses blueutil (homebrew) for additional device info.
 func (s *BluetoothScanner) scanBlueutil(ctx context.Context) ([]BluetoothDevice, error) {
-	// Check if blueutil is available
-	cmd := exec.CommandContext(ctx, "which", "blueutil")
-	if err := cmd.Run(); err != nil {
+	path, err := exec.LookPath("blueutil")
+	if err != nil {
 		return nil, errors.New("blueutil not installed")
 	}
 
-	// Get paired devices
-	cmd = exec.CommandContext(ctx, "blueutil", "--paired")
-	output, err := cmd.Output()
+	output, err := procrun.Output(exec.CommandContext(ctx, path, "--paired"))
 	if err != nil {
 		return nil, fmt.Errorf("blueutil --paired failed: %w", err)
 	}

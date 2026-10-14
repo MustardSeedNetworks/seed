@@ -7,7 +7,6 @@
  * Key Types:
  * - Vulnerability: Individual CVE with severity, score, description, references
  * - DeviceVulnerabilities: Vulnerabilities for a single device with device metadata
- * - VulnerabilityScannerStatus: Scanner operational status and statistics
  * - VulnerabilityScanRequest: Request payload for triggering vulnerability scans
  *
  * Usage:
@@ -31,30 +30,3 @@ import type { DeviceVulnerabilities, Vulnerability } from './generated/engine-di
 // attaches to every finding — `activelyExploited`, `ransomwareRelated`,
 // `requiredAction`, `dueDate` — so no view could name them (seed#2393).
 export type { DeviceVulnerabilities, Vulnerability };
-
-export interface VulnerabilityScannerStatus {
-  enabled: boolean;
-  scanning: boolean;
-  stats: {
-    enabled: boolean;
-    running: boolean;
-    devicesScanned: number;
-    totalVulns: number;
-    criticalCount: number;
-    highCount: number;
-    mediumCount: number;
-    lowCount: number;
-    lastUpdate: string;
-    cveDatabase: string;
-  };
-  severityFilter: string;
-}
-
-export interface VulnerabilityScannerConfig {
-  enabled: boolean;
-  cveDatabase: string;
-  nvdApiKey: string;
-  updateInterval: number;
-  severityThreshold: string;
-  maxConcurrent: number;
-}

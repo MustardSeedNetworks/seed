@@ -8,35 +8,16 @@
  * is client-only by design — see `useTheme.ts` for the rationale.
  */
 
+import type { ThresholdSettings } from './generated/settings-response';
+import type { TestsSettingsResponse } from './generated/tests-settings-response';
+import type { VulnerabilitySettings } from './generated/vulnerability-settings';
+import type { VulnerabilitySettingsUpdate } from './generated/vulnerability-settings-update';
+
 // ============================================================================
 // Save Status
 // ============================================================================
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
-
-// ============================================================================
-// Threshold Types
-// ============================================================================
-
-export interface ThresholdPair {
-  good: number;
-  warning: number;
-}
-
-export interface SettingsThresholds {
-  dns: ThresholdPair;
-  gateway: ThresholdPair;
-  wifi: ThresholdPair;
-  customPing: ThresholdPair;
-  customTcp: ThresholdPair;
-  customHttp: ThresholdPair;
-  httpTimings: {
-    dns: ThresholdPair;
-    tcp: ThresholdPair;
-    tls: ThresholdPair;
-    ttfb: ThresholdPair;
-  };
-}
 
 // ============================================================================
 // Per-Card Settings
@@ -94,181 +75,36 @@ export interface DisplayOptions {
 // Test Configuration Types
 // ============================================================================
 
-export interface PingTarget {
-  id?: string; // Stable unique ID for React key
-  name: string;
-  host: string;
-  enabled: boolean;
-  count?: number;
-}
+/** A list row as the editors hold it: the wire row plus a client-only React key. */
+type Keyed<Row> = Row & { id?: string };
 
-export interface DnsServer {
-  id?: string; // Stable unique ID for React key
-  address: string;
-  enabled: boolean;
-}
+/**
+ * The probe settings the drawer edits: the PUT /telemetry/probes/settings body
+ * with a React key on every list row. The keys are stripped before saving
+ * (`normalizeTestsSettingsForSave`); the server decodes the body strictly.
+ */
+export type TestsSettings = {
+  [K in keyof TestsSettingsResponse]: TestsSettingsResponse[K] extends ReadonlyArray<infer Row>
+    ? Array<Keyed<Row>>
+    : TestsSettingsResponse[K];
+};
 
-export interface TcpPort {
-  id?: string; // Stable unique ID for React key
-  name: string;
-  host: string;
-  port: number;
-  enabled: boolean;
-}
+export type DnsServer = TestsSettings['dnsServers'][number];
+export type SqlEndpoint = TestsSettings['sqlEndpoints'][number];
 
-export interface UdpPort {
-  id?: string; // Stable unique ID for React key
-  name: string;
-  host: string;
-  port: number;
-  enabled: boolean;
-}
-
-export interface HttpEndpoint {
-  id?: string; // Stable unique ID for React key
-  name: string;
-  url: string;
-  expectedStatus: number;
-  enabled: boolean;
-}
-
-// ============================================================================
-// Extended Health Check Endpoint Types
-// ============================================================================
-
-/** RTSP video stream endpoint (surveillance/video systems) */
-export interface RtspEndpoint {
-  id?: string;
-  name: string;
-  url: string; // rtsp://host:554/path
-  enabled: boolean;
-}
-
-/** DICOM medical imaging endpoint */
-export interface DicomEndpoint {
-  id?: string;
-  name: string;
-  host: string;
-  port: number; // Default: 104
-  aeTitle: string; // Application Entity Title
-  enabled: boolean;
-}
-
-/** SQL database endpoint */
-export interface SqlEndpoint {
-  id?: string;
-  name: string;
-  driver: 'postgres' | 'mysql' | 'mssql' | 'oracle';
-  host: string;
-  port: number;
-  database: string;
-  username: string;
-  enabled: boolean;
-}
-
-/** File share endpoint (SMB/NFS) */
-export interface FileShareEndpoint {
-  id?: string;
-  name: string;
-  protocol: 'smb' | 'nfs';
-  host: string;
-  sharePath: string;
-  enabled: boolean;
-}
-
-/** LDAP/Active Directory endpoint */
-export interface LdapEndpoint {
-  id?: string;
-  name: string;
-  host: string;
-  port: number; // Default: 389, LDAPS: 636
-  useTls: boolean;
-  baseDn: string;
-  enabled: boolean;
-}
-
-/** HL7 MLLP medical messaging endpoint */
-export interface Hl7Endpoint {
-  id?: string;
-  name: string;
-  host: string;
-  port: number; // Default: 2575
-  sendingApp: string;
-  sendingFacility: string;
-  receivingApp: string;
-  receivingFacility: string;
-  enabled: boolean;
-}
-
-/** FHIR R4 healthcare API endpoint */
-export interface FhirEndpoint {
-  id?: string;
-  name: string;
-  baseUrl: string;
-  authType: 'none' | 'basic' | 'oauth2';
-  enabled: boolean;
-}
-
-/** LTI/LMS education endpoint */
-export interface LtiEndpoint {
-  id?: string;
-  name: string;
-  launchUrl: string;
-  consumerKey: string;
-  enabled: boolean;
-}
-
-/** OPC-UA industrial endpoint */
-export interface OpcuaEndpoint {
-  id?: string;
-  name: string;
-  endpointUrl: string; // opc.tcp://host:4840
-  securityMode: 'None' | 'Sign' | 'SignAndEncrypt';
-  enabled: boolean;
-}
-
-/** Modbus TCP industrial endpoint */
-export interface ModbusEndpoint {
-  id?: string;
-  name: string;
-  host: string;
-  port: number; // Default: 502
-  unitId: number;
-  testRegister: number;
-  enabled: boolean;
-}
-
-export interface TestsSettings {
-  dnsHostname: string;
-  dnsServers: DnsServer[];
-  pingTargets: PingTarget[];
-  tcpPorts: TcpPort[];
-  udpPorts: UdpPort[];
-  httpEndpoints: HttpEndpoint[];
-  // Extended health check endpoints
-  rtspEndpoints?: RtspEndpoint[];
-  dicomEndpoints?: DicomEndpoint[];
-  sqlEndpoints?: SqlEndpoint[];
-  fileShareEndpoints?: FileShareEndpoint[];
-  ldapEndpoints?: LdapEndpoint[];
-  hl7Endpoints?: Hl7Endpoint[];
-  fhirEndpoints?: FhirEndpoint[];
-  ltiEndpoints?: LtiEndpoint[];
-  opcuaEndpoints?: OpcuaEndpoint[];
-  modbusEndpoints?: ModbusEndpoint[];
-  // Performance test flags
-  runPerformance: boolean;
-  runSpeedtest: boolean;
-  runIperf: boolean;
-  runDiscovery: boolean;
-  speedtest: {
-    serverId: string;
-    autoRunOnLink: boolean;
-  };
-  iperf: {
-    autoRunOnLink: boolean;
-  };
-}
+/** The ten protocol endpoint lists, empty: the editors start from these. */
+export const EMPTY_PROTOCOL_ENDPOINTS = {
+  rtspEndpoints: [],
+  dicomEndpoints: [],
+  hl7Endpoints: [],
+  fhirEndpoints: [],
+  sqlEndpoints: [],
+  fileShareEndpoints: [],
+  ldapEndpoints: [],
+  ltiEndpoints: [],
+  opcuaEndpoints: [],
+  modbusEndpoints: [],
+} satisfies Partial<TestsSettings>;
 
 // ============================================================================
 // iPerf Settings
@@ -282,13 +118,6 @@ export interface IperfSettings {
   duration: number;
   serverPort: number;
   enableServer: boolean;
-}
-
-export interface IperfSuggestion {
-  host: string;
-  hostname?: string;
-  latencyMs?: number;
-  source?: string;
 }
 
 // ============================================================================
@@ -333,18 +162,6 @@ export interface FingerprintingConfig {
   enabled: boolean;
   osDetection: boolean;
   serviceProbes: boolean;
-}
-
-export interface DiscoveryServiceStatus {
-  running: boolean;
-  scanning: boolean;
-  deviceCount: number;
-  lastScan: string;
-  subnet: string;
-  localIP: string;
-  interface: string;
-  activeMethods: string[];
-  rescanInterval: number; // Backend sends time.Duration (nanoseconds)
 }
 
 /** Full network discovery settings - matches API response */
@@ -400,15 +217,6 @@ export interface SnmpSettings {
 }
 
 // ============================================================================
-// Logs
-// ============================================================================
-
-export interface LogsResponse {
-  path: string;
-  lines: string[];
-}
-
-// ============================================================================
 // Default Values
 // ============================================================================
 //
@@ -445,7 +253,7 @@ export const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
 };
 
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
-export const DEFAULT_THRESHOLDS: SettingsThresholds = {
+export const DEFAULT_THRESHOLDS: ThresholdSettings = {
   dns: { good: 50, warning: 100 },
   gateway: { good: 20, warning: 50 },
   wifi: { good: -50, warning: -70 },
@@ -484,14 +292,12 @@ export const DEFAULT_TESTS_SETTINGS: TestsSettings = {
       name: 'Google DNS',
       host: '8.8.8.8',
       enabled: true,
-      count: 3,
     },
     {
       id: 'default-cloudflare-dns',
       name: 'Cloudflare',
       host: '1.1.1.1',
       enabled: true,
-      count: 3,
     },
   ],
   tcpPorts: [],
@@ -505,6 +311,7 @@ export const DEFAULT_TESTS_SETTINGS: TestsSettings = {
       enabled: true,
     },
   ],
+  ...EMPTY_PROTOCOL_ENDPOINTS,
   runPerformance: false,
   runSpeedtest: false,
   runIperf: false,
@@ -611,37 +418,21 @@ export const DEFAULT_CABLE_TEST_SETTINGS: CableTestSettings = {
 // Vulnerability Scanning Settings
 // ============================================================================
 
-export type CveDatabase = 'nvd' | 'local';
-export type SeverityLevel = 'low' | 'medium' | 'high' | 'critical';
-
-export interface VulnerabilityScanSettings {
-  enabled: boolean;
-  cveDatabase: CveDatabase;
-  nvdApiKey: string;
-  updateInterval: number; // seconds between database updates
-  severityThreshold: SeverityLevel;
-  maxConcurrent: number; // max concurrent vulnerability checks
-  autoScan: boolean; // auto-scan after device discovery
-}
-
-export interface VulnerabilityScanStatus {
-  enabled: boolean;
-  scanning: boolean;
-  stats: {
-    totalDevices: number;
-    scannedDevices: number;
-    totalVulnerabilities: number;
-    bySeverity: Record<string, number>;
-    lastScanTime: string;
-  };
-  severityFilter: string;
-}
+// What the settings drawer edits: the stored settings (seed#2971), whose NVD
+// API key never leaves the server (seed#3407), plus a key typed but not yet
+// saved and a pending removal of the stored one.
+export type VulnerabilityScanSettings = VulnerabilitySettings &
+  Required<Pick<VulnerabilitySettingsUpdate, 'nvdApiKey' | 'clearNvdApiKey'>>;
+export type CveDatabase = VulnerabilitySettings['cveDatabase'];
+export type SeverityLevel = VulnerabilitySettings['severityThreshold'];
 
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityScanSettings = {
   enabled: true, // Enable by default for security visibility
   cveDatabase: 'nvd', // NVD works without API key (rate limited)
+  hasNvdApiKey: false,
   nvdApiKey: '',
+  clearNvdApiKey: false,
   updateInterval: 86400, // 24 hours
   severityThreshold: 'medium',
   maxConcurrent: 5,

@@ -37,7 +37,7 @@ type AppSignaturesRequest struct {
 // "builtin" for the table Seed ships with and "custom" once an operator has
 // replaced it.
 type AppSignaturesResponse struct {
-	Source     string            `json:"source"`
+	Source     string            `json:"source"     jsonschema:"enum=builtin,enum=custom"`
 	Signatures []appid.Signature `json:"signatures"`
 }
 

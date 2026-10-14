@@ -150,6 +150,20 @@ class RouteConsumerGateTest(unittest.TestCase):
         code, out = t.run()
         self.assertEqual(code, 0, out)
 
+    def test_call_inside_an_interpolation_is_one_segment(self) -> None:
+        t = Tree()
+        (t.root / "internal" / "api" / "captures.go").write_text(
+            '{Path: APIVersionPrefix + "/captures/{captureId}", Handler: s.handleCaptureDownload}')
+        t.run(update=True)
+        (t.root / "ui" / "src" / "card.tsx").write_text(
+            "<a href={`/api/v1/captures/${encodeURIComponent(result.id)}`} />")
+        consumers = gate.load_consumers(t.root)
+        self.assertIn("/api/v1/captures/*", consumers)
+        code, out = t.run()
+        self.assertEqual(code, 1)
+        self.assertIn("/api/v1/captures/{captureId}", out)
+        self.assertNotIn("404", out)
+
     def test_stale_baseline_entry_fails(self) -> None:
         t = Tree()
         t.run(update=True)

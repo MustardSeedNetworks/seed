@@ -1,9 +1,16 @@
 package app
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/fdb"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/sink"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
@@ -64,4 +71,75 @@ func scanBSSView(n *wifi.ScannedNetwork) airspace.BSSView {
 		LastSeen:           n.LastSeen,
 		Stations:           []airspace.StationView{},
 	}
+}
+
+// WiFiWiredSource feeds the rogue-AP-on-LAN rule the MAC addresses known on the
+// wired side: every device in discovery's wired registry (the probe's own
+// ARP/NDP view) plus the newest ARP table and forwarding database each polled
+// SNMP target reported. A nil database contributes no polled MACs.
+func WiFiWiredSource(
+	devices func() []*discovery.DiscoveredDevice,
+	db func() *database.DB,
+) visibility.WiredSource {
+	return func(ctx context.Context) ([]string, error) {
+		var macs []string
+		for _, d := range devices() {
+			if d.MAC != "" {
+				macs = append(macs, d.MAC)
+			}
+		}
+		conn := db()
+		if conn == nil {
+			return macs, nil
+		}
+		for _, kind := range []string{sink.KindARP, sink.KindFDB} {
+			polled, err := latestPolledMACs(ctx, conn.SNMPObservations(), kind)
+			if err != nil {
+				return nil, err
+			}
+			macs = append(macs, polled...)
+		}
+		return macs, nil
+	}
+}
+
+// polledObservationPage is the largest page the observation repository returns.
+// Rows come newest first, so every target that polled recently is in it.
+const polledObservationPage = 1000
+
+// polledTable is the part of an ARP or FDB observation payload the wired set
+// reads; ARP rows carry no status.
+type polledTable struct {
+	Entries []struct {
+		MACAddress string
+		Status     int
+	}
+}
+
+// latestPolledMACs returns the MACs in the newest observation of kind from each
+// polled target. Older observations are what the target used to hold.
+func latestPolledMACs(ctx context.Context, repo *database.SNMPObservationsRepository, kind string) ([]string, error) {
+	rows, err := repo.List(ctx, observation.ListOptions{Kind: kind, Limit: polledObservationPage})
+	if err != nil {
+		return nil, fmt.Errorf("list %s observations: %w", kind, err)
+	}
+	seen := make(map[string]struct{})
+	var macs []string
+	for _, row := range rows {
+		target := row.ClientID + "/" + row.TargetID
+		if _, ok := seen[target]; ok {
+			continue
+		}
+		seen[target] = struct{}{}
+		var table polledTable
+		if decodeErr := json.Unmarshal([]byte(row.PayloadJSON), &table); decodeErr != nil {
+			return nil, fmt.Errorf("decode %s observation %d: %w", kind, row.ID, decodeErr)
+		}
+		for _, e := range table.Entries {
+			if e.MACAddress != "" && e.Status != fdb.StatusInvalid {
+				macs = append(macs, e.MACAddress)
+			}
+		}
+	}
+	return macs, nil
 }

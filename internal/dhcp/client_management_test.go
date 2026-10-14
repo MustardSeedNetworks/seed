@@ -244,42 +244,6 @@ func TestRogueDetectorUpdateKnownServersComprehensive(t *testing.T) {
 	})
 }
 
-// TestRogueDetectorClearDetectedServersComprehensive tests ClearDetectedServers.
-func TestRogueDetectorClearDetectedServersComprehensive(t *testing.T) {
-	rd := dhcp.NewRogueDetector(nil)
-
-	// Add multiple servers
-	for i := range 10 {
-		ip := "192.168.1." + string(rune('0'+i))
-		rd.RecordDetectedServer(ip, "aa:bb:cc:dd:ee:ff")
-	}
-
-	// Verify servers exist
-	if rd.DetectedServersCount() == 0 {
-		t.Fatal("expected servers to be present")
-	}
-
-	// Clear
-	rd.ClearDetectedServers()
-
-	// Verify cleared
-	if rd.DetectedServersCount() != 0 {
-		t.Errorf("expected 0 servers after clear, got %d", rd.DetectedServersCount())
-	}
-
-	// Verify GetDetectedServers returns empty
-	servers := rd.GetDetectedServers()
-	if len(servers) != 0 {
-		t.Errorf("expected empty slice, got %d servers", len(servers))
-	}
-
-	// Verify GetRogueServers returns empty
-	rogues := rd.GetRogueServers()
-	if len(rogues) != 0 {
-		t.Errorf("expected empty rogues, got %d", len(rogues))
-	}
-}
-
 // TestRogueDetectorGetRogueServersComprehensive tests GetRogueServers filtering.
 func TestRogueDetectorGetRogueServersComprehensive(t *testing.T) {
 	config := &dhcp.RogueDetectorConfig{

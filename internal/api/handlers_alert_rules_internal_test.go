@@ -145,7 +145,7 @@ func TestHandleAlertRuleByID_GET(t *testing.T) {
 	url := APIVersionPrefix + "/alert-rules/" + strconv.FormatInt(rule.ID, 10)
 	req := httptest.NewRequest(http.MethodGet, url, http.NoBody)
 	w := httptest.NewRecorder()
-	s.handleAlertRuleByID(w, req)
+	routed(alertRulePath, s.handleAlertRuleByID)(w, req)
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d", w.Code)
 	}
@@ -160,7 +160,7 @@ func TestHandleAlertRuleByID_GETUnknownReturns404(t *testing.T) {
 	s := newAlertRulesTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alert-rules/9999", http.NoBody)
 	w := httptest.NewRecorder()
-	s.handleAlertRuleByID(w, req)
+	routed(alertRulePath, s.handleAlertRuleByID)(w, req)
 	if w.Code != http.StatusNotFound {
 		t.Errorf("status = %d, want 404", w.Code)
 	}
@@ -183,7 +183,7 @@ func TestHandleAlertRuleByID_PUTUpdates(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPut, url, buf)
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
-	s.handleAlertRuleByID(w, req)
+	routed(alertRulePath, s.handleAlertRuleByID)(w, req)
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d, body=%s", w.Code, w.Body.String())
 	}
@@ -201,7 +201,7 @@ func TestHandleAlertRuleByID_DELETERemoves(t *testing.T) {
 	url := APIVersionPrefix + "/alert-rules/" + strconv.FormatInt(rule.ID, 10)
 	req := httptest.NewRequest(http.MethodDelete, url, http.NoBody)
 	w := httptest.NewRecorder()
-	s.handleAlertRuleByID(w, req)
+	routed(alertRulePath, s.handleAlertRuleByID)(w, req)
 	if w.Code != http.StatusNoContent {
 		t.Errorf("status = %d, want 204", w.Code)
 	}
@@ -214,7 +214,7 @@ func TestHandleAlertRuleByID_NonIntIDReturns400(t *testing.T) {
 	s := newAlertRulesTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alert-rules/abc", http.NoBody)
 	w := httptest.NewRecorder()
-	s.handleAlertRuleByID(w, req)
+	routed(alertRulePath, s.handleAlertRuleByID)(w, req)
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("status = %d, want 400", w.Code)
 	}

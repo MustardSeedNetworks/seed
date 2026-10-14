@@ -22,10 +22,10 @@ import {
   radius,
   spacing,
 } from '../../../styles/theme';
+import type { IperfSuggestion } from '../../../types/generated/iperf-suggestion';
 import type {
   CardSettings,
   IperfSettings,
-  IperfSuggestion,
   SaveStatus,
   TestsSettings,
 } from '../../../types/settings';

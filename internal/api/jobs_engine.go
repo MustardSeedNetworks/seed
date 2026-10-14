@@ -27,7 +27,7 @@ type engineScanner interface {
 	Scan(ctx context.Context, opts *discovery.ScanOptions) (*discovery.ScanResult, error)
 	GetDevices() []*discovery.DiscoveredDevice
 	GetStats() *discovery.EngineStats
-	GetCapabilities() map[string]bool
+	GetCapabilities() discovery.EngineCapabilities
 }
 
 // newEngineScanHandler returns the job Handler for the "engine-scan" kind. It

@@ -18,6 +18,12 @@
 
 import { api } from '../api';
 import type { LoginResponse } from '../types/generated/login-response';
+import type {
+  WebAuthnCreationOptionsResponse,
+  WebAuthnCredentialDescriptor,
+} from '../types/generated/webauthn-creation-options-response';
+import type { WebAuthnLoginBeginRequest } from '../types/generated/webauthn-login-begin-request';
+import type { WebAuthnRequestOptionsResponse } from '../types/generated/webauthn-request-options-response';
 
 /** base64UrlToBuffer decodes the padless base64url the server sends. */
 export function base64UrlToBuffer(value: string): ArrayBuffer {
@@ -52,30 +58,10 @@ export function isPasskeySupported(): boolean {
   );
 }
 
-/** The server's options, before the binary fields are decoded. */
-interface WireCreationOptions {
-  publicKey: {
-    challenge: string;
-    user: { id: string; name: string; displayName: string };
-    excludeCredentials?: { id: string; type: string; transports?: string[] }[];
-    [key: string]: unknown;
-  };
-}
-
-interface WireRequestOptions {
-  publicKey: {
-    challenge: string;
-    allowCredentials?: { id: string; type: string; transports?: string[] }[];
-    [key: string]: unknown;
-  };
-}
-
-function decodeDescriptors(
-  list: { id: string; type: string; transports?: string[] }[] | undefined,
-): PublicKeyCredentialDescriptor[] | undefined {
-  return list?.map((descriptor) => ({
+function decodeDescriptors(list: WebAuthnCredentialDescriptor[]): PublicKeyCredentialDescriptor[] {
+  return list.map((descriptor) => ({
     id: base64UrlToBuffer(descriptor.id),
-    type: 'public-key' as const,
+    type: descriptor.type,
     transports: descriptor.transports as AuthenticatorTransport[] | undefined,
   }));
 }
@@ -91,7 +77,10 @@ export async function registerPasskey(): Promise<void> {
     throw new Error('This browser cannot create a passkey.');
   }
 
-  const options = await api.post<WireCreationOptions>('/api/v1/auth/webauthn/register/begin', {});
+  const options = await api.post<WebAuthnCreationOptionsResponse>(
+    '/api/v1/auth/webauthn/register/begin',
+    {},
+  );
   const credential = (await navigator.credentials.create({
     publicKey: {
       ...options.publicKey,
@@ -101,7 +90,7 @@ export async function registerPasskey(): Promise<void> {
         id: base64UrlToBuffer(options.publicKey.user.id),
       },
       excludeCredentials: decodeDescriptors(options.publicKey.excludeCredentials),
-    } as PublicKeyCredentialCreationOptions,
+    },
   })) as PublicKeyCredential | null;
 
   if (!credential) {
@@ -131,15 +120,17 @@ export async function loginWithPasskey(username: string): Promise<LoginResponse>
     throw new Error('This browser cannot use a passkey.');
   }
 
-  const options = await api.post<WireRequestOptions>('/api/v1/auth/webauthn/login/begin', {
-    username,
-  });
+  const request: WebAuthnLoginBeginRequest = { username };
+  const options = await api.post<WebAuthnRequestOptionsResponse>(
+    '/api/v1/auth/webauthn/login/begin',
+    request,
+  );
   const assertion = (await navigator.credentials.get({
     publicKey: {
       ...options.publicKey,
       challenge: base64UrlToBuffer(options.publicKey.challenge),
       allowCredentials: decodeDescriptors(options.publicKey.allowCredentials),
-    } as PublicKeyCredentialRequestOptions,
+    },
   })) as PublicKeyCredential | null;
 
   if (!assertion) {

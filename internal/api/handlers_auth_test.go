@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -246,15 +248,52 @@ func TestHandleSetupComplete(t *testing.T) {
 			}
 
 			if !tt.expectError && w.Code == http.StatusOK {
-				var resp map[string]string
-				if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+				var resp api.SetupCompleteResponse
+				dec := json.NewDecoder(w.Body)
+				dec.DisallowUnknownFields()
+				if err := dec.Decode(&resp); err != nil {
 					t.Fatalf("Failed to decode response: %v", err)
 				}
-				if resp["status"] != "success" {
-					t.Errorf("Expected status 'success', got '%s'", resp["status"])
+				if resp.Status != "success" {
+					t.Errorf("Expected status 'success', got '%s'", resp.Status)
 				}
 			}
 		})
+	}
+}
+
+// A setup whose config cannot be saved answers the standard error body, which
+// is what the setup wizard reads its message and the code from.
+func TestHandleSetupCompleteSaveFailure(t *testing.T) {
+	defaults := testutil.GetTestDefaults()
+	cfg := testutil.NewConfigBuilder().
+		WithAuth(defaults.Auth.Username, auth.SetupModePlaceholder).
+		Build()
+	server := api.NewTestServerWithConfig(cfg)
+	notADir := filepath.Join(t.TempDir(), "file")
+	if err := os.WriteFile(notADir, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	server.SetConfigPath(filepath.Join(notADir, "config.yaml"))
+
+	setupToken, _ := server.SetupTokenManager().GenerateToken()
+	body, _ := json.Marshal(api.SetupCompleteRequest{Password: "MySecure123!Pass", SetupToken: setupToken})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/setup/complete", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	server.HandleSetupComplete(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want 500 (body %s)", w.Code, w.Body.String())
+	}
+	var resp api.ErrorResponse
+	dec := json.NewDecoder(w.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Code != api.ErrCodeInternal || resp.Error == "" {
+		t.Errorf("error body = %+v, want code %s and a message", resp, api.ErrCodeInternal)
 	}
 }
 

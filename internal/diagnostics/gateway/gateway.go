@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"sync"
 	"time"
 
@@ -39,6 +40,13 @@ const (
 	// when the kernel installed no default route over the interface.
 	SourceLease Source = "lease"
 )
+
+// ErrNoGateway reports that detection found no gateway: the host has no
+// default route of the family asked for or, for a selected interface, neither
+// a default route over it nor a DHCP lease naming a router. It is an answer,
+// not a failed read, and every detector returns it in place of an empty
+// address.
+var ErrNoGateway = errors.New("no gateway")
 
 // Route families as RouteInfo.Family spells them.
 const (
@@ -141,8 +149,11 @@ type Tester struct {
 	// stop. Without this, StopContinuous could return while the goroutine was
 	// still mid-callback, racing any state the callback touches (observed as
 	// an intermittent `go test -race` failure in TestStartContinuousCallback).
-	wg     sync.WaitGroup
-	pinger *enumerate.ICMPPinger // Raw ICMP pinger (nil if unavailable)
+	wg sync.WaitGroup
+	// pinger and pinger6 are the ICMPv4 and ICMPv6 pingers, each nil when its
+	// socket could not be opened. The gateway's family picks one.
+	pinger  *enumerate.ICMPPinger
+	pinger6 *enumerate.ICMPPinger
 	// iface is the interface the operator selected. Detection is scoped to it
 	// so the tester cannot report another link's gateway (#2690); empty means
 	// no selection, and detection stays system-wide.
@@ -161,11 +172,13 @@ func NewTester(thresholds Thresholds) *Tester {
 		routing:     systemRouting(),
 	}
 
-	// Try to create ICMP pinger. Raw needs CAP_NET_RAW or root; the constructor
+	// Try to create the ICMP pingers. Raw needs CAP_NET_RAW or root; each constructor
 	// falls back to the unprivileged datagram socket where it can (seed#2629).
-	pinger, err := enumerate.NewICMPPinger(t.pingTimeout)
-	if err == nil {
+	if pinger, err := enumerate.NewICMPPinger(t.pingTimeout); err == nil {
 		t.pinger = pinger
+	}
+	if pinger6, err := enumerate.NewICMPv6Pinger(t.pingTimeout); err == nil {
+		t.pinger6 = pinger6
 	}
 
 	return t
@@ -248,8 +261,8 @@ func (t *Tester) GetStats() *PingStats {
 	return &statsCopy
 }
 
-// DetectGateway attempts to detect the default gateway.
-// Uses netlink on Linux, exec commands on macOS.
+// DetectGateway returns the next hop of the host's IPv4 default route, or
+// ErrNoGateway when there is none.
 func DetectGateway() (string, error) {
 	return detectGatewayPlatform()
 }
@@ -281,7 +294,7 @@ func systemRouting() routingReader {
 // through. Without one, the router option of iface's DHCP lease is the next
 // best answer — a lease can name a router the kernel installed no default
 // route for — and it is labelled as such. Neither means iface has no gateway
-// of its own, which is reported as an empty address rather than borrowing the
+// of its own, which is reported as ErrNoGateway rather than borrowing the
 // system default, the answer that showed a Wi-Fi gateway at 100 % loss for a
 // probe pinned to a virtual link (#2690, #2759). An empty iface means no
 // selection and keeps the system answer.
@@ -303,6 +316,9 @@ func (r routingReader) gatewayForInterface(iface string) (string, Source, error)
 	if err != nil {
 		return "", "", fmt.Errorf("DHCP lease on %s: %w", iface, err)
 	}
+	if gw == "" {
+		return "", "", ErrNoGateway
+	}
 	return gw, SourceLease, nil
 }
 
@@ -318,7 +334,10 @@ func (r routingReader) ipv6GatewayForInterface(iface string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("routing table: %w", err)
 	}
-	return defaultGatewayOn(routes, iface, familyIPv6), nil
+	if gw := defaultGatewayOn(routes, iface, familyIPv6); gw != "" {
+		return gw, nil
+	}
+	return "", ErrNoGateway
 }
 
 // defaultGatewayOn returns the next hop of a default route of family over
@@ -341,10 +360,23 @@ func defaultGatewayOn(routes []RouteInfo, iface, family string) string {
 			return route.Gateway
 		}
 		if linkLocal == "" {
-			linkLocal = route.Gateway
+			linkLocal = withZone(route.Gateway, iface)
 		}
 	}
 	return linkLocal
+}
+
+// withZone qualifies a link-local IPv6 gateway with the interface its route
+// leaves by ("fe80::1%eth0"). Every link has its own fe80::/10, so the bare
+// address names no particular router: an echo sent to it never reaches the
+// one the default route points at (seed#3251). Any other address is returned
+// as it is.
+func withZone(gateway, iface string) string {
+	addr, err := netip.ParseAddr(gateway)
+	if err != nil || !addr.Is6() || !addr.IsLinkLocalUnicast() || addr.Zone() != "" || iface == "" {
+		return gateway
+	}
+	return addr.WithZone(iface).String()
 }
 
 // leaseRouter returns the router option of iface's current DHCP lease.
@@ -372,13 +404,13 @@ func routerOfLease(lease *dhcp.LeaseInfo, err error, now time.Time) (string, err
 }
 
 // DetectGatewayIPv6ForInterface returns the IPv6 gateway reachable over iface,
-// or the system default when iface is empty.
+// or the system default when iface is empty; ErrNoGateway when there is none.
 func DetectGatewayIPv6ForInterface(iface string) (string, error) {
 	return systemRouting().ipv6GatewayForInterface(iface)
 }
 
-// DetectGatewayIPv6 attempts to detect the default IPv6 gateway.
-// Uses netlink on Linux, exec commands on macOS.
+// DetectGatewayIPv6 returns the next hop of the host's IPv6 default route, or
+// ErrNoGateway when there is none.
 func DetectGatewayIPv6() (string, error) {
 	return detectGatewayIPv6Platform()
 }
@@ -388,7 +420,7 @@ func (t *Tester) Ping() *PingResult {
 	t.mu.RLock()
 	gateway := t.gateway
 	timeout := t.pingTimeout
-	pinger := t.pinger
+	pinger, pinger6 := t.pinger, t.pinger6
 	t.mu.RUnlock()
 
 	if gateway == "" {
@@ -402,10 +434,14 @@ func (t *Tester) Ping() *PingResult {
 		Sequence: 1,
 	}
 
-	if net.ParseIP(gateway) == nil {
+	addr, err := netip.ParseAddr(gateway)
+	if err != nil {
 		result.Success = false
 		result.Error = "invalid gateway address"
 		return result
+	}
+	if addr.Unmap().Is6() {
+		pinger = pinger6
 	}
 
 	// Fallback: pinger unavailable (no CAP_NET_RAW)
@@ -463,7 +499,7 @@ func (t *Tester) Test() *PingStats {
 	if gateway == "" {
 		// Try to detect gateway
 		detected, detectedSource, err := routing.gatewayForInterface(iface)
-		if err == nil && detected != "" {
+		if err == nil {
 			t.setGateway(detected, detectedSource)
 			gateway = detected
 			stats.Gateway = gateway
@@ -625,9 +661,11 @@ func (t *Tester) Close() {
 	t.StopContinuous()
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if t.pinger != nil {
-		_ = t.pinger.Close()
-		t.pinger = nil
+	for _, pinger := range []**enumerate.ICMPPinger{&t.pinger, &t.pinger6} {
+		if *pinger != nil {
+			_ = (*pinger).Close()
+			*pinger = nil
+		}
 	}
 }
 

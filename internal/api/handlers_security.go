@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -175,41 +176,26 @@ func (s *Server) handleRogueDHCPStop(
 	sendJSONResponse(w, logger, http.StatusOK, *resp)
 }
 
-// handleRogueDHCPServers returns detected DHCP servers (GET) or clears the list (DELETE).
+// handleRogueDHCPServers returns the detected DHCP servers.
 func (s *Server) handleRogueDHCPServers(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	switch r.Method {
-	case http.MethodGet:
-		// Get all detected servers
-		servers := s.rogueDetector().GetDetectedServers()
-		rogues := s.rogueDetector().GetRogueServers()
-
-		resp := RogueServersResponse{
-			Servers:         toRogueServers(servers),
-			RogueCount:      len(rogues),
-			AuthorizedCount: len(servers) - len(rogues),
-		}
-		sendJSONResponse(w, logger, http.StatusOK, resp)
-
-	case http.MethodDelete:
-		// Clear detected servers list
-		s.rogueDetector().ClearDetectedServers()
-		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-			"message": "Detected servers list cleared",
-		})
-
-	default:
+	if r.Method != http.MethodGet {
 		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
+			w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"), "",
+		)
+		return
 	}
+
+	servers := s.rogueDetector().GetDetectedServers()
+	rogues := s.rogueDetector().GetRogueServers()
+	sendJSONResponse(w, logger, http.StatusOK, RogueServersResponse{
+		Servers:         toRogueServers(servers),
+		RogueCount:      len(rogues),
+		AuthorizedCount: len(servers) - len(rogues),
+	})
 }
 
 // handleRogueDHCPConfig gets (GET) or updates (PUT) the rogue DHCP detector
@@ -344,7 +330,10 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 	// The IPv6 half of the card answers for the same interface as the IPv4
 	// half; a system-wide read named another link's router (#2759).
 	ipv6Gateway, err := gateway.DetectGatewayIPv6ForInterface(s.gatewayTester().GetInterface())
-	if err == nil && ipv6Gateway != "" {
+	if err != nil && !errors.Is(err, gateway.ErrNoGateway) {
+		logger.WarnContext(r.Context(), "IPv6 gateway detection failed", "error", err)
+	}
+	if err == nil {
 		// Create a temporary tester for IPv6
 		ipv6Tester := gateway.NewTester(gateway.DefaultThresholds())
 		defer ipv6Tester.Close()
@@ -425,8 +414,8 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.config.failedToSave"), "")
 	default:
-		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-			"status": statusSuccess, "message": "SNMP settings updated",
+		sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+			Status: statusSuccess, Message: "SNMP settings updated",
 		})
 	}
 }

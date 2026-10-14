@@ -9,6 +9,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifstats"
+	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
 
 // InterfaceStats lists every interface a polling target of clientID has
@@ -80,6 +81,61 @@ func (r *MetricsRepository) InterfaceStats(ctx context.Context, clientID string)
 	}
 	if rowsErr := rows.Err(); rowsErr != nil {
 		return nil, fmt.Errorf("interface stats rows: %w", rowsErr)
+	}
+	return out, nil
+}
+
+// PortUtilization lists every interface of every node a polling target of
+// clientID resolves to, with the larger direction of the utilization stored
+// for its most recent rated poll; nil when that poll could not rate the
+// octets or there is none yet. The latest poll is found as InterfaceStats
+// finds it.
+func (r *MetricsRepository) PortUtilization(ctx context.Context, clientID string) ([]topology.PortUtilization, error) {
+	rows, err := r.db.Query(ctx, `
+		WITH ports AS (
+			SELECT ttn.node_id, ti.if_index,
+			       COALESCE(ti.if_name, '') AS if_name, COALESCE(ti.if_descr, '') AS if_descr,
+			       pt.id || '/' || ti.if_index AS rate_key
+			FROM polling_targets pt
+			JOIN topology_target_nodes ttn ON ttn.client_id = pt.client_id AND ttn.target_id = pt.id
+			JOIN topology_interfaces ti ON ti.node_id = ttn.node_id
+			WHERE pt.client_id = ?
+		), latest AS (
+			SELECT ports.node_id, ports.if_index, ports.if_name, ports.if_descr, ports.rate_key, (
+				SELECT MAX(m.timestamp) FROM metrics m
+				WHERE m.interface_name = ports.rate_key AND m.metric_type = ?
+				  AND m.client_id = ? AND m.target_kind = ?
+			) AS sampled_at
+			FROM ports
+		)
+		SELECT l.node_id, l.if_index, l.if_name, l.if_descr, MAX(m.value)
+		FROM latest l
+		LEFT JOIN metrics m ON m.interface_name = l.rate_key AND m.timestamp = l.sampled_at
+		  AND m.client_id = ? AND m.target_kind = ? AND m.metric_type IN (?, ?)
+		GROUP BY l.rate_key, l.node_id, l.if_index, l.if_name, l.if_descr
+	`, clientID, ifrate.MetricInErrors, clientID, ifrate.TargetKind,
+		clientID, ifrate.TargetKind, ifrate.MetricInUtilization, ifrate.MetricOutUtilization)
+	if err != nil {
+		return nil, fmt.Errorf("query port utilization: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []topology.PortUtilization
+	for rows.Next() {
+		var (
+			port topology.PortUtilization
+			pct  sql.NullFloat64
+		)
+		if scanErr := rows.Scan(&port.NodeID, &port.IfIndex, &port.IfName, &port.IfDescr, &pct); scanErr != nil {
+			return nil, fmt.Errorf("scan port utilization: %w", scanErr)
+		}
+		if pct.Valid {
+			port.Pct = &pct.Float64
+		}
+		out = append(out, port)
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("port utilization rows: %w", rowsErr)
 	}
 	return out, nil
 }

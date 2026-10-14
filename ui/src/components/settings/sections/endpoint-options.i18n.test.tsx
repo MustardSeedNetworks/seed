@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import i18n from '../../../i18n';
 import type { TestsSettings } from '../../../types/settings';
+import { EMPTY_PROTOCOL_ENDPOINTS } from '../../../types/settings';
 import { DiscoveryServiceStatus } from './discovery/DiscoveryServiceStatus';
 import { ClinicalEndpoints } from './specialty/ClinicalEndpoints';
 import { IndustrialEndpoints } from './specialty/IndustrialEndpoints';
@@ -24,6 +25,7 @@ const settings: TestsSettings = {
   tcpPorts: [],
   udpPorts: [],
   httpEndpoints: [],
+  ...EMPTY_PROTOCOL_ENDPOINTS,
   fhirEndpoints: [
     { id: 'f1', name: 'ehr', baseUrl: 'https://ehr.example', authType: 'none', enabled: true },
   ],
@@ -79,10 +81,13 @@ describe('endpoint options — Spanish, with no English left behind', () => {
           deviceCount: 3,
           lastScan: '',
           subnet: '10.44.10.0/24',
+          subnets: ['10.44.10.0/24'],
           localIP: '10.44.10.2',
           interface: '',
           activeMethods: [],
-          rescanInterval: 0,
+          rescanIntervalMs: 0,
+          snmpProbe: { silent: 0, tried: 0, answered: 0 },
+          sweepCoverage: [],
         }}
         loading={false}
         onRefresh={() => {}}

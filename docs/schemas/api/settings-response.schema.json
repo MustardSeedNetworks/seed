@@ -1,0 +1,418 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/settings-response.schema.json",
+  "$ref": "#/$defs/SettingsResponse",
+  "$defs": {
+    "AlertSettings": {
+      "properties": {
+        "webhook": {
+          "$ref": "#/$defs/WebhookSettings"
+        },
+        "email": {
+          "$ref": "#/$defs/EmailSettings"
+        },
+        "escalations": {
+          "items": {
+            "$ref": "#/$defs/EscalationLadder"
+          },
+          "type": "array"
+        },
+        "syslog": {
+          "$ref": "#/$defs/SyslogSettings"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "webhook",
+        "email",
+        "escalations",
+        "syslog"
+      ]
+    },
+    "DisplaySettings": {
+      "properties": {
+        "showPublicIP": {
+          "type": "boolean"
+        },
+        "unitSystem": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "showPublicIP",
+        "unitSystem"
+      ]
+    },
+    "EmailSettings": {
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "tls": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "passwordSet": {
+          "type": "boolean"
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "host",
+        "port",
+        "tls",
+        "username",
+        "passwordSet",
+        "from",
+        "to"
+      ]
+    },
+    "EscalationLadder": {
+      "properties": {
+        "rule": {
+          "type": "string"
+        },
+        "stages": {
+          "items": {
+            "$ref": "#/$defs/EscalationStage"
+          },
+          "type": "array"
+        },
+        "repeatSeconds": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "rule",
+        "stages",
+        "repeatSeconds"
+      ]
+    },
+    "EscalationStage": {
+      "properties": {
+        "afterSeconds": {
+          "type": "integer"
+        },
+        "channels": {
+          "items": {
+            "type": "string",
+            "enum": [
+              "webhook",
+              "email",
+              "syslog"
+            ]
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "afterSeconds",
+        "channels"
+      ]
+    },
+    "HTTPTimingSettings": {
+      "properties": {
+        "dns": {
+          "$ref": "#/$defs/ThresholdPair"
+        },
+        "tcp": {
+          "$ref": "#/$defs/ThresholdPair"
+        },
+        "tls": {
+          "$ref": "#/$defs/ThresholdPair"
+        },
+        "ttfb": {
+          "$ref": "#/$defs/ThresholdPair"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "dns",
+        "tcp",
+        "tls",
+        "ttfb"
+      ]
+    },
+    "HealthCheckSettings": {
+      "properties": {
+        "runPerformance": {
+          "type": "boolean"
+        },
+        "runSpeedtest": {
+          "type": "boolean"
+        },
+        "runIperf": {
+          "type": "boolean"
+        },
+        "runDiscovery": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "runPerformance",
+        "runSpeedtest",
+        "runIperf",
+        "runDiscovery"
+      ]
+    },
+    "IPSetting": {
+      "properties": {
+        "mode": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "mode"
+      ]
+    },
+    "IdentitySettings": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "location"
+      ]
+    },
+    "IperfTestSettings": {
+      "properties": {
+        "autoRunOnLink": {
+          "type": "boolean"
+        },
+        "server": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "integer"
+        },
+        "serverPort": {
+          "type": "integer"
+        },
+        "enableServer": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "autoRunOnLink",
+        "server",
+        "port",
+        "protocol",
+        "direction",
+        "duration",
+        "serverPort",
+        "enableServer"
+      ]
+    },
+    "SettingsResponse": {
+      "properties": {
+        "vlan": {
+          "$ref": "#/$defs/VLANSetting"
+        },
+        "ip": {
+          "$ref": "#/$defs/IPSetting"
+        },
+        "thresholds": {
+          "$ref": "#/$defs/ThresholdSettings"
+        },
+        "healthChecks": {
+          "$ref": "#/$defs/HealthCheckSettings"
+        },
+        "speedtest": {
+          "$ref": "#/$defs/SpeedtestSettings"
+        },
+        "iperf": {
+          "$ref": "#/$defs/IperfTestSettings"
+        },
+        "alerts": {
+          "$ref": "#/$defs/AlertSettings"
+        },
+        "displayOptions": {
+          "$ref": "#/$defs/DisplaySettings"
+        },
+        "identity": {
+          "$ref": "#/$defs/IdentitySettings"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "vlan",
+        "ip",
+        "thresholds",
+        "healthChecks",
+        "speedtest",
+        "iperf",
+        "alerts",
+        "displayOptions",
+        "identity"
+      ]
+    },
+    "SpeedtestSettings": {
+      "properties": {
+        "serverId": {
+          "type": "string"
+        },
+        "autoRunOnLink": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "serverId",
+        "autoRunOnLink"
+      ]
+    },
+    "SyslogSettings": {
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "transport": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "host",
+        "port",
+        "transport"
+      ]
+    },
+    "ThresholdPair": {
+      "properties": {
+        "good": {
+          "type": "integer"
+        },
+        "warning": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "good",
+        "warning"
+      ]
+    },
+    "ThresholdSettings": {
+      "properties": {
+        "dns": {
+          "$ref": "#/$defs/ThresholdPair"
+        },
+        "gateway": {
+          "$ref": "#/$defs/ThresholdPair"
+        },
+        "wifi": {
+          "$ref": "#/$defs/ThresholdPair"
+        },
+        "customPing": {
+          "$ref": "#/$defs/ThresholdPair"
+        },
+        "customTcp": {
+          "$ref": "#/$defs/ThresholdPair"
+        },
+        "customHttp": {
+          "$ref": "#/$defs/ThresholdPair"
+        },
+        "httpTimings": {
+          "$ref": "#/$defs/HTTPTimingSettings"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "dns",
+        "gateway",
+        "wifi",
+        "customPing",
+        "customTcp",
+        "customHttp",
+        "httpTimings"
+      ]
+    },
+    "VLANSetting": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "id": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "id"
+      ]
+    },
+    "WebhookSettings": {
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "secretSet": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "url",
+        "secretSet"
+      ]
+    }
+  },
+  "title": "SettingsResponse",
+  "description": "SettingsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

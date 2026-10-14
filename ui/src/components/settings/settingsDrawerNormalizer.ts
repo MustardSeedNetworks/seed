@@ -5,6 +5,7 @@
  * shape before its component definition.
  */
 
+import type { TestsSettingsResponse } from '../../types/generated/tests-settings-response';
 import type {
   CableTestSettings as CableTestSettingsType,
   LinkSettings as LinkSettingsType,
@@ -25,34 +26,26 @@ export const INLINE_DEFAULT_CABLE_TEST_SETTINGS: CableTestSettingsType = {
 export const INLINE_DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityScanSettings = {
   enabled: true,
   cveDatabase: 'nvd',
+  hasNvdApiKey: false,
   nvdApiKey: '',
+  clearNvdApiKey: false,
   updateInterval: 86400,
   severityThreshold: 'medium',
   maxConcurrent: 5,
   autoScan: true,
 };
 
-// Utility: ensure every item in an array has a stable id for React keying/updating.
-export const withIds = <T extends { id?: string }>(items: T[] = []): Array<T & { id: string }> =>
-  items.map((item) => ({ ...item, id: item.id ?? generateId() }));
+// Give every loaded wire row a stable id for React keying/updating.
+export const withIds = <Row extends object>(items: Row[] = []): Array<Row & { id: string }> =>
+  items.map((item) => ({ ...item, id: generateId() }));
 
-// Normalize tests/DNS settings payload before sending to the API.
-export interface NormalizedTestsSettings {
-  dnsHostname: string;
-  dnsServers: Array<{ address: string; enabled: boolean }>;
-  pingTargets: Array<{ name: string; host: string; enabled: boolean }>;
-  tcpPorts: Array<{ name: string; host: string; port: number; enabled: boolean }>;
-  udpPorts: Array<{ name: string; host: string; port: number; enabled: boolean }>;
-  httpEndpoints: Array<{ name: string; url: string; expectedStatus: number; enabled: boolean }>;
-  runPerformance: boolean;
-  runSpeedtest: boolean;
-  runIperf: boolean;
-  runDiscovery: boolean;
-  speedtest: { serverId: string; autoRunOnLink: boolean };
-  iperf: { autoRunOnLink: boolean | undefined };
-}
+// Drop the client-only React key; the server decodes the body strictly.
+const withoutId = <Row extends { id?: string }>({ id: _id, ...row }: Row): Omit<Row, 'id'> => row;
 
-export const normalizeTestsSettingsForSave = (settings: TestsSettings): NormalizedTestsSettings => {
+// Normalize the probe settings before PUT /telemetry/probes/settings. Every
+// list is sent: the server replaces each one with what it receives, so a list
+// left out is a list deleted.
+export const normalizeTestsSettingsForSave = (settings: TestsSettings): TestsSettingsResponse => {
   const dnsHostname = settings.dnsHostname?.trim() || 'google.com';
 
   const dnsServers = (settings.dnsServers || [])
@@ -90,6 +83,7 @@ export const normalizeTestsSettingsForSave = (settings: TestsSettings): Normaliz
 
   const httpEndpoints = (settings.httpEndpoints || [])
     .map((endpoint) => ({
+      ...withoutId(endpoint),
       name: endpoint.name?.trim() || endpoint.url.trim(),
       url: endpoint.url.trim(),
       expectedStatus:
@@ -107,6 +101,16 @@ export const normalizeTestsSettingsForSave = (settings: TestsSettings): Normaliz
     tcpPorts,
     udpPorts,
     httpEndpoints,
+    rtspEndpoints: settings.rtspEndpoints.map(withoutId),
+    dicomEndpoints: settings.dicomEndpoints.map(withoutId),
+    hl7Endpoints: settings.hl7Endpoints.map(withoutId),
+    fhirEndpoints: settings.fhirEndpoints.map(withoutId),
+    sqlEndpoints: settings.sqlEndpoints.map(withoutId),
+    fileShareEndpoints: settings.fileShareEndpoints.map(withoutId),
+    ldapEndpoints: settings.ldapEndpoints.map(withoutId),
+    ltiEndpoints: settings.ltiEndpoints.map(withoutId),
+    opcuaEndpoints: settings.opcuaEndpoints.map(withoutId),
+    modbusEndpoints: settings.modbusEndpoints.map(withoutId),
     runPerformance: settings.runPerformance !== false,
     runSpeedtest: settings.runSpeedtest !== false,
     runIperf: settings.runIperf !== false,

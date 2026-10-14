@@ -2,6 +2,7 @@ package troubleshooting_test
 
 import (
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
@@ -13,7 +14,9 @@ type fakeHardware struct {
 	managerAvail bool
 	scannerAvail bool
 	wireless     bool
+	radios       []string
 	setIface     string
+	scannedIface string
 	scanNets     []*wifi.ScannedNetwork
 	scanErr      error
 	connectRes   *wifi.ConnectionResult
@@ -25,11 +28,19 @@ type fakeHardware struct {
 func (f *fakeHardware) ManagerAvailable() bool { return f.managerAvail }
 func (f *fakeHardware) ScannerAvailable() bool { return f.scannerAvail }
 func (f *fakeHardware) IsWireless() bool       { return f.wireless }
+func (f *fakeHardware) IsWirelessInterface(name string) bool {
+	return slices.Contains(f.radios, name)
+}
+
 func (f *fakeHardware) SetInterface(name string) {
 	f.setIface = name
 }
 
-func (f *fakeHardware) Scan() ([]*wifi.ScannedNetwork, error) { return f.scanNets, f.scanErr }
+func (f *fakeHardware) Scan(iface string) ([]*wifi.ScannedNetwork, error) {
+	f.scannedIface = iface
+	return f.scanNets, f.scanErr
+}
+
 func (f *fakeHardware) Connect(_, _ string) (*wifi.ConnectionResult, error) {
 	return f.connectRes, f.connectErr
 }
@@ -119,20 +130,53 @@ func TestUpdateInterfaceEmptySkipsRadio(t *testing.T) {
 
 func TestScanResolvesAndSucceeds(t *testing.T) {
 	nets := []*wifi.ScannedNetwork{{SSID: "office"}}
-	m := troubleshooting.NewManagement(
-		&fakeHardware{managerAvail: true, scannerAvail: true, wireless: true, scanNets: nets},
-		fakeLister{},
-		&fakeStore{resolved: "wlan0"},
-	)
+	hw := &fakeHardware{scannerAvail: true, radios: []string{"wlan0"}, scanNets: nets}
+	m := troubleshooting.NewManagement(hw, fakeLister{}, &fakeStore{resolved: "wlan0"})
 	got := m.Scan("")
-	if got.Interface != "wlan0" {
-		t.Errorf("interface = %q, want resolved wlan0", got.Interface)
+	if got.Interface != "wlan0" || hw.scannedIface != "wlan0" {
+		t.Errorf("reported %q, scanned %q, want resolved wlan0 for both", got.Interface, hw.scannedIface)
 	}
 	if !got.Available || got.Error != "" {
 		t.Errorf("available=%v error=%q, want available no error", got.Available, got.Error)
 	}
 	if len(got.Networks) != 1 {
 		t.Errorf("networks = %v, want 1", got.Networks)
+	}
+}
+
+// A requested radio is the one scanned and reported, not the configured one,
+// and a request naming a wired interface is refused without a scan (#2881).
+func TestScanRequestedInterface(t *testing.T) {
+	tests := []struct {
+		name        string
+		requested   string
+		wantScanned string
+		wantAvail   bool
+		wantErr     string
+	}{
+		{name: "second radio", requested: "wlan1", wantScanned: "wlan1", wantAvail: true},
+		{name: "configured radio", requested: "wlan0", wantScanned: "wlan0", wantAvail: true},
+		{
+			name:      "wired interface",
+			requested: "eth0",
+			wantErr:   "eth0 is not a Wi-Fi adapter. Choose a Wi-Fi adapter to scan.",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			hw := &fakeHardware{scannerAvail: true, radios: []string{"wlan0", "wlan1"}}
+			m := troubleshooting.NewManagement(hw, fakeLister{}, &fakeStore{resolved: "wlan0"})
+			got := m.Scan(tc.requested)
+			if got.Interface != tc.requested {
+				t.Errorf("interface = %q, want requested %q", got.Interface, tc.requested)
+			}
+			if hw.scannedIface != tc.wantScanned {
+				t.Errorf("scanned %q, want %q", hw.scannedIface, tc.wantScanned)
+			}
+			if got.Available != tc.wantAvail || got.Error != tc.wantErr {
+				t.Errorf("available=%v error=%q, want %v %q", got.Available, got.Error, tc.wantAvail, tc.wantErr)
+			}
+		})
 	}
 }
 
@@ -149,16 +193,15 @@ func TestScanDegrades(t *testing.T) {
 			wantErr: "WiFi scanner not initialized",
 		},
 		{
-			name:    "no wireless adapter",
-			hw:      &fakeHardware{scannerAvail: true, managerAvail: true, wireless: false},
+			name:    "configured interface is not wireless",
+			hw:      &fakeHardware{scannerAvail: true},
 			wantErr: "No wireless adapter available. Connect a WiFi adapter to scan networks.",
 		},
 		{
 			name: "scan failure",
 			hw: &fakeHardware{
 				scannerAvail: true,
-				managerAvail: true,
-				wireless:     true,
+				radios:       []string{"wlan0"},
 				scanErr:      errors.New("boom"),
 			},
 			wantAvail: true,
@@ -168,9 +211,9 @@ func TestScanDegrades(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			m := troubleshooting.NewManagement(tc.hw, fakeLister{}, &fakeStore{resolved: "wlan0"})
-			got := m.Scan("wlan9")
-			if got.Interface != "wlan9" {
-				t.Errorf("interface = %q, want requested wlan9", got.Interface)
+			got := m.Scan("")
+			if got.Interface != "wlan0" {
+				t.Errorf("interface = %q, want resolved wlan0", got.Interface)
 			}
 			if got.Available != tc.wantAvail {
 				t.Errorf("available = %v, want %v", got.Available, tc.wantAvail)

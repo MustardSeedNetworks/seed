@@ -80,6 +80,15 @@ rows are `::1` (no link gateway), 14 of the host's own addresses
 (`RTF_LOCAL`, printed `permanent`, which the reader now drops as Linux never
 reports them) and 8 neighbours that match row for row.
 
+**macOS DHCP lease.** `dhcp_darwin.go` is native as of #2530: it reads the
+per-service `DHCP` entity configd keeps in the dynamic store (each option of
+the ACK as `Option_<code>`, plus the lease's start and expiry) and the address
+from the same service's `IPv4` entity, instead of forking `ipconfig getpacket`
+on every gateway poll. Reconciled on Darwin 27.2 on 2026-10-11 against
+`ipconfig getpacket en0`: address, server identifier, mask, router, both
+resolvers, domain and the 86,400 s lease match. The server is now the server
+identifier (option 54), not the BOOTP `siaddr` the parser preferred.
+
 **Windows.** `x/sys/windows` binds `GetIpForwardTable`, `GetIpInterfaceTable`
 and `GetUnicastIpAddressTable`, but not `GetIpNetTable2`. Using it means a
 hand-rolled `LazyDLL` binding — which existed once, had no callers, and carried

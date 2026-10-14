@@ -1,6 +1,5 @@
 ---
-# clang-format configuration for C23 (NOT C++)
-# This project uses pure C with C23 standard features.
+# clang-format configuration for the cgo bridge headers (internal/**/*_darwin.h).
 # Reference: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
 #
 # Language must be Cpp, not C. clang-format only gained a distinct "C" language

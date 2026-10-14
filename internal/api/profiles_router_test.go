@@ -12,10 +12,11 @@ package api_test
 // itself and can hand it whatever path it likes; only the mux exposes the
 // mismatch between where a route is mounted and what its handler expects.
 //
-// The route-consumer gate cannot catch this either, by its own admission: the
-// UI's paths all match the registered "/profiles/" prefix route, so the gate
-// sees a served path. What is inside a prefix route is only observable by
-// making the request.
+// The route-consumer gate could not catch this either: the UI's paths all
+// matched the "/profiles/" prefix route the API was then mounted on, so the gate
+// saw a served path. Each by-id shape now has its own pattern, but whether a
+// handler serves what its pattern promises is still only observable by making
+// the request.
 
 import (
 	"bytes"

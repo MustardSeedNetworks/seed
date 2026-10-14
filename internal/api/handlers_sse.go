@@ -8,7 +8,7 @@ package api
 // approach for server-to-client streaming.
 //
 // SSE Protocol:
-//   - Endpoint: /api/events
+//   - Endpoint: /api/v1/events
 //   - Content-Type: text/event-stream
 //   - Message format: "data: {json}\n\n"
 //   - Automatic reconnection built into browser EventSource API

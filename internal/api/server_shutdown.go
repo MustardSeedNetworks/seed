@@ -306,7 +306,9 @@ func (s *Server) startMaintenance(retentionDays int) {
 			}
 			totalDeleted := result.MetricsDeleted + result.AlertsDeleted +
 				result.SpeedTestsDeleted + result.AuditLogsDeleted +
-				result.DevicesDeleted + result.AnomaliesResolvedDeleted
+				result.DevicesDeleted + result.AnomaliesResolvedDeleted +
+				result.MicroburstsDeleted + result.VoIPStreamsDeleted +
+				result.SNMPObservationsDeleted + result.ListenerEventsDeleted
 			if totalDeleted > 0 {
 				logging.GetLogger().Info("Data retention cleanup completed",
 					"metrics_deleted", result.MetricsDeleted,
@@ -315,6 +317,10 @@ func (s *Server) startMaintenance(retentionDays int) {
 					"speedtests_deleted", result.SpeedTestsDeleted,
 					"audit_deleted", result.AuditLogsDeleted,
 					"anomalies_resolved_deleted", result.AnomaliesResolvedDeleted,
+					"microbursts_deleted", result.MicroburstsDeleted,
+					"voip_streams_deleted", result.VoIPStreamsDeleted,
+					"snmp_observations_deleted", result.SNMPObservationsDeleted,
+					"listener_events_deleted", result.ListenerEventsDeleted,
 					"duration", result.Duration)
 			}
 		}

@@ -18,7 +18,7 @@ func (s *Server) setupTelemetryRoutes() {
 	post := []string{http.MethodPost}
 	getPost := []string{http.MethodGet, http.MethodPost}
 	getPut := []string{http.MethodGet, http.MethodPut}
-	getPostPut := []string{http.MethodGet, http.MethodPost, http.MethodPut}
+	postDelete := []string{http.MethodPost, http.MethodDelete}
 	s.routes.RegisterAll([]route.Route{
 		{Path: APIVersionPrefix + "/telemetry/link", Handler: s.handleLink, Methods: get, Auth: true},
 		{Path: APIVersionPrefix + "/telemetry/cable", Handler: s.handleCable, Methods: get, Auth: true},
@@ -30,7 +30,9 @@ func (s *Server) setupTelemetryRoutes() {
 			Methods: get,
 			Auth:    true,
 		},
-		{Path: APIVersionPrefix + "/telemetry/dns", Handler: s.handleDNS, Methods: getPost, Auth: true, CSRF: true},
+		// GET only, the one method handleDNS serves; POST was declared as well and
+		// passed auth and CSRF only to be refused with a 405 (#3261).
+		{Path: APIVersionPrefix + "/telemetry/dns", Handler: s.handleDNS, Methods: get, Auth: true},
 		{Path: APIVersionPrefix + "/telemetry/gateway", Handler: s.handleGateway, Methods: get, Auth: true},
 		// Reads the lease this host already holds — no DISCOVER is sent and no
 		// target is supplied, so it is a read of local state rather than an
@@ -64,11 +66,12 @@ func (s *Server) setupTelemetryRoutes() {
 			CSRF:    true,
 		},
 		{
+			// GET only, the one method handleRogueDHCPServers serves; POST was
+			// declared as well and reached the handler only to be refused (#3261).
 			Path:    APIVersionPrefix + "/telemetry/dhcp/rogue/servers",
 			Handler: s.handleRogueDHCPServers,
-			Methods: getPost,
+			Methods: get,
 			Auth:    true,
-			CSRF:    true,
 		},
 		{
 			Path:    APIVersionPrefix + "/telemetry/dhcp/rogue/config",
@@ -80,10 +83,13 @@ func (s *Server) setupTelemetryRoutes() {
 		},
 		{Path: APIVersionPrefix + "/telemetry/vlan", Handler: s.handleVLAN, Methods: get, Auth: true},
 		{
+			// POST and DELETE, the two methods handleVLANInterface serves. This
+			// declared GET/POST/PUT, so the method gate refused every DELETE and
+			// a sub-interface could be created but never removed (#3261).
 			Path:    APIVersionPrefix + "/telemetry/vlan/interface",
 			Handler: s.handleVLANInterface,
-			Methods: getPostPut,
-			Scope:   op, // POST creates a live kernel VLAN sub-interface (writeGated: operator+)
+			Methods: postDelete,
+			Scope:   op, // POST/DELETE change live kernel VLAN sub-interfaces (writeGated: operator+)
 			Auth:    true,
 			CSRF:    true,
 		},
@@ -154,12 +160,13 @@ func (s *Server) setupTelemetryRoutes() {
 			CSRF:    true,
 		},
 		{
+			// GET only, the one method handleHealthChecks serves; POST was
+			// declared as well and reached the handler only to be refused (#3261).
 			Path:    APIVersionPrefix + "/telemetry/probes/run",
 			Handler: s.handleHealthChecks,
-			Methods: getPost,
+			Methods: get,
 			Limiter: limitEndpoint,
 			Auth:    true,
-			CSRF:    true,
 		},
 		// Anomaly detection is Pro (LICENSE_STRATEGY §2). It reads the unified
 		// anomaly store's source=probe slice (ADR-0021/0025); the legacy
@@ -177,11 +184,7 @@ func (s *Server) setupTelemetryRoutes() {
 		// from the retention horizons rather than gated as a feature, so a
 		// Free deployment gets its 7 days rather than a 402.
 		{
-			// Spelled as a literal, not the historyProbesPathPrefix const the
-			// handler trims with: scripts/check-route-consumers.py matches on
-			// the string in this table, so a const here hides the route from
-			// the ratchet entirely.
-			Path:    APIVersionPrefix + "/history/probes/",
+			Path:    APIVersionPrefix + "/history/probes/{probeId}",
 			Handler: s.handleProbeHistory,
 			Methods: get,
 			Auth:    true,
@@ -216,9 +219,11 @@ func (s *Server) setupTelemetryRoutes() {
 			CSRF:    true,
 		},
 		{
+			// GET reads the cached answer, POST forces a refresh; PUT was declared
+			// as well and reached the handler only to be refused (#3261).
 			Path:    APIVersionPrefix + "/telemetry/publicip",
 			Handler: s.handlePublicIP,
-			Methods: getPostPut,
+			Methods: getPost,
 			Auth:    true,
 			CSRF:    true,
 		},

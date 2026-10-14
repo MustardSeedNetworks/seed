@@ -29,10 +29,6 @@ import (
 // to [time.Now]; the indirection unlocks future test fixtures.
 func timeNow() time.Time { return time.Now() }
 
-// usersPathPrefix is the trailing-slash form of /api/v1/users used by
-// the path router to extract the {username} suffix.
-const usersPathPrefix = APIVersionPrefix + "/users/"
-
 // usernameMinLen / usernameMaxLen mirror the DB CHECK constraint
 // added by the hardening migration.
 const (
@@ -88,12 +84,7 @@ func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) {
 
 // handleUserByName routes /api/v1/users/{username} (GET, PATCH, DELETE).
 func (s *Server) handleUserByName(w http.ResponseWriter, r *http.Request) {
-	username := strings.TrimPrefix(r.URL.Path, usersPathPrefix)
-	if username == "" || strings.ContainsRune(username, '/') {
-		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Username is required in path")
-		return
-	}
-
+	username := r.PathValue("username")
 	switch r.Method {
 	case http.MethodGet:
 		s.handleUserGet(w, r, username)

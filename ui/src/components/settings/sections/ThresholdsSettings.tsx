@@ -9,7 +9,8 @@ import {
   radius,
   spacing,
 } from '../../../styles/theme';
-import type { SaveStatus, SettingsThresholds } from '../../../types/settings';
+import type { ThresholdSettings } from '../../../types/generated/settings-response';
+import type { SaveStatus } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Info, SlidersHorizontal } from '../../ui/Icons';
 import { Tooltip } from '../../ui/Tooltip';
@@ -17,8 +18,8 @@ import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { ThresholdsHttpSection } from './ThresholdsHttpSection';
 
 interface ThresholdsSettingsProps {
-  thresholds: SettingsThresholds;
-  setThresholds: React.Dispatch<React.SetStateAction<SettingsThresholds>>;
+  thresholds: ThresholdSettings;
+  setThresholds: React.Dispatch<React.SetStateAction<ThresholdSettings>>;
   thresholdsStatus: SaveStatus;
 }
 
@@ -36,8 +37,8 @@ export function ThresholdsSettings({
 
   // Type-safe threshold category getter
   function getThresholdCategory(
-    prev: SettingsThresholds,
-    category: keyof Omit<SettingsThresholds, 'httpTimings'>,
+    prev: ThresholdSettings,
+    category: keyof Omit<ThresholdSettings, 'httpTimings'>,
   ): { good: number; warning: number } {
     switch (category) {
       case 'dns':
@@ -58,7 +59,7 @@ export function ThresholdsSettings({
   }
 
   const updateThreshold = (
-    category: keyof Omit<SettingsThresholds, 'httpTimings'>,
+    category: keyof Omit<ThresholdSettings, 'httpTimings'>,
     level: 'good' | 'warning',
     value: number,
   ): void => {

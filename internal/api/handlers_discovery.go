@@ -2,8 +2,11 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -111,6 +114,11 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
+// DiscoveryOptionsResponse is GET /security/discovery/options.
+type DiscoveryOptionsResponse struct {
+	Options config.DiscoveryOptions `json:"options"`
+}
+
 // handleDiscoveryOptions handles GET/PUT for the discovery options.
 func (s *Server) handleDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
@@ -135,10 +143,7 @@ func (s *Server) handleDiscoveryOptions(w http.ResponseWriter, r *http.Request) 
 
 func (s *Server) getDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	opts := s.discoveryService().GetOptions()
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"options": opts,
-	})
+	sendJSONResponse(w, logger, http.StatusOK, DiscoveryOptionsResponse{Options: s.discoveryService().GetOptions()})
 }
 
 func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
@@ -166,10 +171,31 @@ func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  statusSuccess,
-		"message": "Discovery options updated",
+	sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+		Status:  statusSuccess,
+		Message: "Discovery options updated",
 	})
+}
+
+// DiscoveryServiceStatusResponse is GET /security/discovery/service/status.
+// The sweep counters and the last sweep's device lists stay off it: devices
+// are listed by /security/devices, and the counters reach the dashboard over
+// the discovery broadcast.
+type DiscoveryServiceStatusResponse struct {
+	Running           bool                         `json:"running"`
+	Scanning          bool                         `json:"scanning"`
+	DeviceCount       int                          `json:"deviceCount"`
+	LastScan          time.Time                    `json:"lastScan"`
+	Subnet            string                       `json:"subnet"`
+	Subnets           []string                     `json:"subnets"`
+	LocalIP           string                       `json:"localIP"`
+	Interface         string                       `json:"interface"`
+	ActiveMethods     []string                     `json:"activeMethods"`
+	SNMPProbe         enumerate.SNMPProbeReport    `json:"snmpProbe"`
+	SweepCoverage     []enumerate.SweepCoverage    `json:"sweepCoverage"`
+	RescanIntervalMs  int64                        `json:"rescanIntervalMs"`
+	ProfilingStatus   *discovery.ProfilingStatus   `json:"profilingStatus,omitempty"`
+	DegradationStatus *discovery.DegradationStatus `json:"degradationStatus,omitempty"`
 }
 
 // handleDiscoveryServiceStatus returns the current status of the discovery service.
@@ -177,5 +203,20 @@ func (s *Server) handleDiscoveryServiceStatus(w http.ResponseWriter, r *http.Req
 	logger := logging.FromContext(r.Context())
 
 	status := s.discoveryService().GetStatus()
-	sendJSONResponse(w, logger, http.StatusOK, status)
+	sendJSONResponse(w, logger, http.StatusOK, DiscoveryServiceStatusResponse{
+		Running:           status.Running,
+		Scanning:          status.Scanning,
+		DeviceCount:       status.DeviceCount,
+		LastScan:          status.LastScan,
+		Subnet:            status.Subnet,
+		Subnets:           status.Subnets,
+		LocalIP:           status.LocalIP,
+		Interface:         status.Interface,
+		ActiveMethods:     status.ActiveMethods,
+		SNMPProbe:         status.SNMPProbe,
+		SweepCoverage:     status.SweepCoverage,
+		RescanIntervalMs:  status.RescanInterval.Milliseconds(),
+		ProfilingStatus:   status.ProfilingStatus,
+		DegradationStatus: status.DegradationStatus,
+	})
 }

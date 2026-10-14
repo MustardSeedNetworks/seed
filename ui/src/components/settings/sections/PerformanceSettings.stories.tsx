@@ -19,13 +19,9 @@ import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 import { useState } from 'react';
 import { fn } from 'storybook/test';
-import type {
-  IperfSettings,
-  IperfSuggestion,
-  SaveStatus,
-  TestsSettings,
-} from '../../../types/settings';
-import { DEFAULT_CARD_SETTINGS } from '../../../types/settings';
+import type { IperfSuggestion } from '../../../types/generated/iperf-suggestion';
+import type { IperfSettings, SaveStatus, TestsSettings } from '../../../types/settings';
+import { DEFAULT_CARD_SETTINGS, EMPTY_PROTOCOL_ENDPOINTS } from '../../../types/settings';
 import { PerformanceSettings } from './PerformanceSettings';
 import { expandSections } from './storyPlay';
 
@@ -36,6 +32,7 @@ const baseTestsSettings: TestsSettings = {
   tcpPorts: [],
   udpPorts: [],
   httpEndpoints: [],
+  ...EMPTY_PROTOCOL_ENDPOINTS,
   runPerformance: true,
   runSpeedtest: true,
   runIperf: true,

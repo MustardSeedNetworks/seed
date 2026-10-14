@@ -10,10 +10,12 @@ import (
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	discoverysettings "github.com/MustardSeedNetworks/seed/internal/discovery/settings"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/pipeline/publicip"
 )
 
 // Device discovery timing constants.
@@ -28,6 +30,13 @@ const (
 // ============================================================================
 // Device Discovery Handlers (fixes #544 - split from handlers_discovery.go)
 // ============================================================================
+
+// DevicesResponse is GET /security/devices: every device in the registry
+// and the registry's status.
+type DevicesResponse struct {
+	Devices []*discovery.DiscoveredDevice `json:"devices"`
+	Status  DeviceDiscoveryStatusResponse `json:"status"`
+}
 
 // handleDevices returns discovered devices and status (fixes #702 - uses r.Context()).
 func (s *Server) handleDevices(w http.ResponseWriter, r *http.Request) {
@@ -56,15 +65,17 @@ func (s *Server) handleDevices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	devices := s.deviceDiscovery().GetDevices()
-	status := s.deviceDiscovery().GetStatus()
+	sendJSONResponse(w, logger, http.StatusOK, DevicesResponse{
+		Devices: s.deviceDiscovery().GetDevices(),
+		Status:  DeviceDiscoveryStatusResponse(*s.deviceDiscovery().GetStatus()),
+	})
+}
 
-	resp := map[string]any{
-		"devices": devices,
-		"status":  status,
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, resp)
+// DeviceScanResponse is POST /security/devices/scan: the scan runs in the
+// background, so the answer only says whether this call started it.
+type DeviceScanResponse struct {
+	Message  string `json:"message"`
+	Scanning bool   `json:"scanning"`
 }
 
 // handleDevicesScan triggers a network device scan (fixes #702 - uses r.Context()).
@@ -84,10 +95,12 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 
 	// Check if scan is already in progress
 	if s.deviceDiscovery().IsScanning() {
-		sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-			"message":  "Scan already in progress",
-			"scanning": true,
-		})
+		sendJSONResponse(
+			w,
+			logger,
+			http.StatusOK,
+			DeviceScanResponse{Message: "Scan already in progress", Scanning: true},
+		)
 		return
 	}
 
@@ -129,10 +142,7 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 		})
 	}(r.Context())
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"message":  "Scan started",
-		"scanning": true,
-	})
+	sendJSONResponse(w, logger, http.StatusOK, DeviceScanResponse{Message: "Scan started", Scanning: true})
 }
 
 // postScanVulnerabilityCheck runs vulnerability scans after device discovery if auto-scan is enabled.
@@ -168,6 +178,10 @@ func (s *Server) postScanVulnerabilityCheck(logger *slog.Logger) {
 	logger.Info("Auto-scan: completed vulnerability scan", "vulnerable_devices", len(results))
 }
 
+// DeviceDiscoveryStatusResponse is GET /security/devices/status: the device
+// registry's status served as it is, named for the API.
+type DeviceDiscoveryStatusResponse discovery.Status
+
 // handleDevicesStatus returns the current device discovery status (fixes #702 - uses r.Context()).
 func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
@@ -183,8 +197,7 @@ func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	status := s.deviceDiscovery().GetStatus()
-	sendJSONResponse(w, logger, http.StatusOK, status)
+	sendJSONResponse(w, logger, http.StatusOK, DeviceDiscoveryStatusResponse(*s.deviceDiscovery().GetStatus()))
 }
 
 // NetworkDiscoverySettingsResponse represents network discovery settings.
@@ -208,8 +221,8 @@ type PassiveProtocolResponse struct {
 	NDP  bool `json:"ndp"`
 }
 
-// PortScanResponse represents port scanning settings.
-type PortScanResponse struct {
+// PortScanSettingsResponse represents port scanning settings.
+type PortScanSettingsResponse struct {
 	Enabled  bool   `json:"enabled"`
 	Preset   string `json:"preset"`
 	TCPPorts string `json:"tcpPorts"`
@@ -217,12 +230,12 @@ type PortScanResponse struct {
 
 // OptionsResponse represents discovery options.
 type OptionsResponse struct {
-	PassiveProtocols PassiveProtocolResponse `json:"passiveProtocols"`
-	ARPScan          bool                    `json:"arpScan"`
-	ICMPScan         bool                    `json:"icmpScan"`
-	PortScan         PortScanResponse        `json:"portScan"`
-	Traceroute       bool                    `json:"traceroute"`
-	SNMPQuery        bool                    `json:"snmpQuery"`
+	PassiveProtocols PassiveProtocolResponse  `json:"passiveProtocols"`
+	ARPScan          bool                     `json:"arpScan"`
+	ICMPScan         bool                     `json:"icmpScan"`
+	PortScan         PortScanSettingsResponse `json:"portScan"`
+	Traceroute       bool                     `json:"traceroute"`
+	SNMPQuery        bool                     `json:"snmpQuery"`
 }
 
 // TimingResponse represents discovery timing settings.
@@ -293,9 +306,9 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  statusSuccess,
-		"message": "Network discovery settings updated",
+	sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+		Status:  statusSuccess,
+		Message: "Network discovery settings updated",
 	})
 }
 
@@ -316,7 +329,7 @@ func discoveryConfigToResponse(cfg config.NetworkDiscoveryConfig) NetworkDiscove
 			},
 			ARPScan:  cfg.Options.ARPScan,
 			ICMPScan: cfg.Options.ICMPScan,
-			PortScan: PortScanResponse{
+			PortScan: PortScanSettingsResponse{
 				Enabled:  cfg.Options.PortScan.Enabled,
 				Preset:   string(cfg.Options.PortScan.Preset),
 				TCPPorts: cfg.Options.PortScan.TCPPorts,
@@ -553,11 +566,15 @@ func (s *Server) writeSubnetResult(
 			w, logger, http.StatusInternalServerError, ErrCodeInternal,
 			i18n.FromRequest(r).T("errors.settings.saveFailed"), "")
 	default:
-		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-			"status": statusSuccess, "message": successMsg,
+		sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+			Status: statusSuccess, Message: successMsg,
 		})
 	}
 }
+
+// PublicIPResponse is GET and POST /telemetry/publicip: the checker's
+// result served as it is, named for the API.
+type PublicIPResponse publicip.Result
 
 // handlePublicIP returns the public IPv4 and IPv6 addresses (fixes #702 - uses r.Context() for service calls).
 func (s *Server) handlePublicIP(w http.ResponseWriter, r *http.Request) {
@@ -578,12 +595,12 @@ func (s *Server) handlePublicIP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		// Return cached result or fetch if cache expired (fixes #702 - passes context)
 		result := s.publicipChecker().GetPublicIP(r.Context())
-		sendJSONResponse(w, logger, http.StatusOK, result)
+		sendJSONResponse(w, logger, http.StatusOK, (*PublicIPResponse)(result))
 
 	case http.MethodPost:
 		// Force refresh (fixes #702 - passes context)
 		result := s.publicipChecker().Refresh(r.Context())
-		sendJSONResponse(w, logger, http.StatusOK, result)
+		sendJSONResponse(w, logger, http.StatusOK, (*PublicIPResponse)(result))
 
 	default:
 		sendErrorResponseWithDetails(

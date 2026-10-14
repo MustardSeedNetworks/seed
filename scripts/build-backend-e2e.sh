@@ -3,11 +3,17 @@
 # Build the seed binary the E2E jobs run.
 #
 # Why this exists rather than `make build-backend-quiet`: the E2E jobs run
-# inside mcr.microsoft.com/playwright:v1.63.0-noble, and that image ships no
+# inside mcr.microsoft.com/playwright:v1.64.0-noble, and that image ships no
 # `make` — and no gcc, and no libpcap. It also cannot apt-install them: the
 # image's sources point at azure.archive.ubuntu.com, which is unreachable from
 # the container network (every index fails with a connection timeout). So the
-# E2E binary is built CGO_ENABLED=0.
+# E2E binary is built CGO_ENABLED=0 on Linux.
+#
+# On macOS it is built with cgo. CoreWLAN (foundation/pkg/corewlan), the Wi-Fi
+# helper's peer check and the scoped DNS and DHCP readers are cgo-only on
+# darwin, with no fallback, so a CGO_ENABLED=0 darwin build does not compile
+# (#2518). A Mac always has the toolchain and the SDK's libpcap, so nothing is
+# lost by using them.
 #
 # What that costs: live packet capture is unavailable, and internal/api's
 # `!cgo` build tag selects the null capture adapter, whose OpenLive returns
@@ -39,9 +45,14 @@ if [ "$UI_BUILD_HASH" = "unknown" ]; then
   exit 1
 fi
 
-echo "building e2e backend: version=${VERSION} commit=${COMMIT} uiBuildHash=${UI_BUILD_HASH}"
+CGO=0
+if [ "$(go env GOOS)" = darwin ]; then
+  CGO=1
+fi
 
-CGO_ENABLED=0 go build -trimpath -buildvcs=false \
+echo "building e2e backend: version=${VERSION} commit=${COMMIT} uiBuildHash=${UI_BUILD_HASH} cgo=${CGO}"
+
+CGO_ENABLED=${CGO} go build -trimpath -buildvcs=false \
   -ldflags="-s -w \
     -X ${VERSION_PKG}.Version=${VERSION} \
     -X ${VERSION_PKG}.Commit=${COMMIT} \

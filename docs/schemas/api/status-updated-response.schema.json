@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/status-updated-response.schema.json",
+  "$ref": "#/$defs/StatusUpdatedResponse",
+  "$defs": {
+    "StatusUpdatedResponse": {
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "updated"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "status"
+      ]
+    }
+  },
+  "title": "StatusUpdatedResponse",
+  "description": "StatusUpdatedResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

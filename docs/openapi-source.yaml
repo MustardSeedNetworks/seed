@@ -4,10 +4,13 @@
 # `paths` block comes from the route registry (internal/api Server.routes), so
 # every registered route is documented with the policy it actually carries
 # (auth, CSRF, operator scope, rate limit, body cap) and no route can be
-# missing. The error schema comes from the Go type api.ErrorResponse.
+# missing. The error schema comes from the Go type api.ErrorResponse, and
+# components.schemas holds every DTO of internal/api/apischema, reflected from
+# the Go types the handlers decode and send.
 #
-# What the registry cannot know (prose, path parameter names, bodies) lives
-# here:
+# What the registry cannot know (prose, path parameter names, which DTO an
+# operation takes and returns) lives here. A body is a $ref to one of those
+# components; a $ref naming none fails the generator.
 #
 #   preamble   verbatim top-level keys: info, servers, tags, components…
 #   operations keyed "<METHOD> <path>", merged onto the generated operation.
@@ -18,7 +21,7 @@
 # the generator, so this file cannot outlive the routes it describes.
 
 preamble:
-  openapi: 3.0.3
+  openapi: 3.1.0
   info:
     title: The Seed API
     description: |
@@ -79,9 +82,2262 @@ preamble:
 operations:
   GET /__version:
     summary: Build metadata (version, commit, build time, UI build hash)
+    responses:
+      "200":
+        description: The running binary's build metadata and TLS certificate fingerprint.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildVersionResponse'
   GET /__capabilities:
     summary: Route-policy manifest of every registered route
+    responses:
+      "200":
+        description: Every registered route's policy, in registration order.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Policy'
   POST /api/v1/auth/login:
     summary: Sign in and receive a session
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoginRequest'
+    responses:
+      "200":
+        description: Signed in; the session token, or an MFA challenge.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginResponse'
   GET /api/v1/auth/csrf:
     summary: Mint a CSRF token for the current session
+    responses:
+      "200":
+        description: A CSRF token bound to the session.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CSRFTokenResponse'
+  POST /api/v1/auth/login/totp:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TOTPLoginRequest'
+    responses:
+      "200":
+        description: Second factor accepted; the session token.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginResponse'
+  POST /api/v1/auth/refresh:
+    responses:
+      "200":
+        description: A fresh session token.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginResponse'
+  POST /api/v1/auth/logout:
+    responses:
+      "200":
+        description: Signed out; the session's tokens are revoked and its cookies cleared.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutResponse'
+  GET /api/v1/auth/mfa/status:
+    responses:
+      "200":
+        description: The caller's second-factor enrolment.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MFAStatusResponse'
+  POST /api/v1/auth/totp/setup:
+    responses:
+      "200":
+        description: A new, not yet enabled TOTP secret, its provisioning URI and QR code.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TOTPSetupResponse'
+  POST /api/v1/auth/totp/verify:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TOTPVerifyRequest'
+    responses:
+      "200":
+        description: The code matched; TOTP is now required at sign-in.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MFAToggleResponse'
+  POST /api/v1/auth/totp/disable:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TOTPDisableRequest'
+    responses:
+      "200":
+        description: Password and code matched; TOTP is no longer required.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MFAToggleResponse'
+  POST /api/v1/auth/webauthn/register/begin:
+    responses:
+      "200":
+        description: Creation options for navigator.credentials.create(); enrolled passkeys are excluded.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebAuthnCreationOptionsResponse'
+  POST /api/v1/auth/webauthn/register/finish:
+    responses:
+      "200":
+        description: The attestation verified and the passkey is enrolled.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MFAToggleResponse'
+  POST /api/v1/auth/webauthn/login/begin:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WebAuthnLoginBeginRequest'
+    responses:
+      "200":
+        description: Request options for navigator.credentials.get(), naming the account's passkeys.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebAuthnRequestOptionsResponse'
+  POST /api/v1/auth/webauthn/login/finish:
+    responses:
+      "200":
+        description: The assertion verified; the session token.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginResponse'
+  POST /api/v1/config/backup:
+    responses:
+      "201":
+        description: The backup that was written.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BackupInfo'
+  DELETE /api/v1/config/backup/delete:
+    responses:
+      "200":
+        description: The backup named by the name query parameter was deleted.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigBackupResponse'
+  GET /api/v1/config/backups:
+    responses:
+      "200":
+        description: The stored configuration backups.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BackupListResponse'
+  POST /api/v1/config/restore:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RestoreRequest'
+    responses:
+      "200":
+        description: The configuration was restored from the named backup.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigBackupResponse'
+  GET /api/v1/config/version:
+    responses:
+      "200":
+        description: The configuration schema version.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigVersionResponse'
+  GET /api/v1/device-credentials:
+    responses:
+      "200":
+        description: The caller's client's SNMP credentials. Secrets are write-only and never returned.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceCredentialListResponse'
+  POST /api/v1/device-credentials:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeviceCredentialRequest'
+    responses:
+      "200":
+        description: The stored credential, without its secrets. Devices found without SNMP are asked again.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+  GET /api/v1/device-credentials/{credentialId}:
+    responses:
+      "200":
+        description: The credential, without its secrets.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+  PUT /api/v1/device-credentials/{credentialId}:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeviceCredentialRequest'
+    responses:
+      "200":
+        description: The replaced credential, without its secrets.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+  DELETE /api/v1/device-credentials/{credentialId}:
+    responses:
+      "204":
+        description: The credential was deleted. A credential a polling target still references is a 409.
+  GET /api/v1/discovery/bonjour:
+    responses:
+      "200":
+        description: The Bonjour services observed during the browse window.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrowseResult'
+  GET /api/v1/discovery/engine:
+    responses:
+      "200":
+        description: The engine's devices and statistics from its last scan.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineDiscoveryResponse'
+  GET /api/v1/discovery/engine/capabilities:
+    responses:
+      "200":
+        description: Which discovery capabilities the engine can use.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineCapabilities'
+  GET /api/v1/discovery/engine/device/{mac}:
+    responses:
+      "200":
+        description: The discovered device with that MAC address.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveredDevice'
+  GET /api/v1/discovery/engine/events:
+    responses:
+      "200":
+        description: >
+          A server-sent event stream that stays open until the client
+          disconnects. It opens with a `: ready` comment and sends a
+          `: heartbeat` comment every 30 s. Each discovery event is one frame
+          named by the event's type (`device.discovered`, `device.updated`,
+          `device.lost`, `scan.started`, `scan.completed`, …) whose `data` is
+          the event as JSON (`type`, `source`, `timestamp`, and `deviceMac`,
+          `device`, `changes`, `payload` or `error` where they apply). A client
+          that falls 64 frames behind loses frames; re-sync with
+          `GET /api/v1/discovery/engine`. 503 when the engine is not running.
+        content:
+          text/event-stream:
+            schema:
+              type: string
+  POST /api/v1/discovery/engine/full:
+    responses:
+      "200":
+        description: The completed full scan.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineDiscoveryResponse'
+  POST /api/v1/discovery/engine/quick:
+    responses:
+      "200":
+        description: The completed quick scan.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineDiscoveryResponse'
+  POST /api/v1/discovery/engine/scan:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EngineScanRequest'
+    responses:
+      "200":
+        description: The completed scan.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineDiscoveryResponse'
+  GET /api/v1/discovery/engine/stats:
+    responses:
+      "200":
+        description: Discovery engine counters.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineStats'
+  GET /api/v1/engines:
+    responses:
+      "200":
+        description: Every running background engine and its state.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnginesResponse'
+  GET /api/v1/events:
+    responses:
+      "200":
+        description: >
+          The live telemetry stream (Pro), open until the client disconnects.
+          Frames are unnamed; each `data` is a JSON message `{type, payload}`.
+          The first is `initial_state` (interface, whether it is wireless, and
+          the current card data); then `card_update`, `linkState`, `traceHop`,
+          `pathMonitor`, `deviceScanComplete` and `profileChanged` as they
+          happen. A `: heartbeat` comment is sent every 30 s.
+        content:
+          text/event-stream:
+            schema:
+              type: string
+  GET /api/v1/flows/application-signatures:
+    responses:
+      "200":
+        description: The signature table the collector names flows with. source is builtin for the shipped table and custom once an operator has replaced it.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppSignaturesResponse'
+  PUT /api/v1/flows/application-signatures:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AppSignaturesRequest'
+    responses:
+      "200":
+        description: The table in effect after the replacement. Flows stored after it are named by it; stored flows keep their names. An empty table, a bad port, or a port claimed by two signatures is a 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppSignaturesResponse'
+  DELETE /api/v1/flows/application-signatures:
+    responses:
+      "200":
+        description: The builtin table, now back in effect.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppSignaturesResponse'
+  GET /api/v1/flows/threat-indicators:
+    responses:
+      "200":
+        description: The operator-supplied addresses and prefixes each collected flow is checked against. Seed ships no list and never fetches one.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowIndicatorsResponse'
+  PUT /api/v1/flows/threat-indicators:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FlowIndicatorsRequest'
+    responses:
+      "200":
+        description: The list in effect after the replacement, each entry in canonical form. An empty list turns matching off. Flows collected after the change are checked against it; stored flows are not re-checked.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowIndicatorsResponse'
+  GET /api/v1/flows/top-applications:
+    responses:
+      "200":
+        description: Top applications over the window.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowApplicationsResponse'
+  GET /api/v1/flows/top-conversations:
+    responses:
+      "200":
+        description: Top conversations over the window.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowConversationsResponse'
+  GET /api/v1/flows/top-talkers:
+    responses:
+      "200":
+        description: Top talkers over the window.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowTalkersResponse'
+  GET /api/v1/health:
+    responses:
+      "200":
+        description: The daemon is up; uptime in seconds.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthResponse'
+  GET /api/v1/history/anomalies:
+    responses:
+      "200":
+        description: Recorded anomalies over the window.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnomalyHistoryResponse'
+  GET /api/v1/history/probes/{probeId}:
+    responses:
+      "200":
+        description: The probe's trend over the resolved window.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProbeHistoryResponse'
+  GET /api/v1/interface:
+    responses:
+      "200":
+        description: The selected interface, and an alternative when it is no longer available.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterfaceSelectionResponse'
+  PUT /api/v1/interface:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SetInterfaceRequest'
+    responses:
+      "200":
+        description: The interface is selected; a warning says when it is down. An unknown interface answers 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetInterfaceResponse'
+  GET /api/v1/interfaces:
+    responses:
+      "200":
+        description: The usable interfaces split into the Ethernet and Wi-Fi lists, with the recommended interface of each.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategorizedInterfacesResponse'
+  POST /api/v1/jobs:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateJobRequest'
+    responses:
+      "201":
+        description: The job was started.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobResponse'
+      "200":
+        description: The job an earlier request with the same Idempotency-Key started.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobResponse'
+  GET /api/v1/jobs/events:
+    responses:
+      "200":
+        description: >
+          A server-sent event stream of every job's state changes, open until
+          the client disconnects. It opens with a `: ready` comment and sends
+          a `: heartbeat` comment every 30 s. Each change is one `job` frame
+          whose `data` is a `JobResponse`; clients filter by `id`. A client
+          that falls 64 frames behind loses frames; re-sync with
+          `GET /api/v1/jobs/{jobId}`.
+        content:
+          text/event-stream:
+            schema:
+              type: string
+  GET /api/v1/jobs/{jobId}:
+    responses:
+      "200":
+        description: The job's current state.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobResponse'
+  DELETE /api/v1/jobs/{jobId}:
+    responses:
+      "202":
+        description: Cancellation requested; the job's state at that moment.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobResponse'
+  GET /api/v1/captures/{captureId}:
+    responses:
+      "200":
+        description: >
+          The pcap file a finished capture job wrote, sent as the
+          seed-capture-<captureId>.pcap attachment. Range requests are honoured.
+          Operator role required; an unknown capture is 404, one still being
+          written 409.
+        content:
+          application/vnd.tcpdump.pcap:
+            schema:
+              type: string
+              contentMediaType: application/vnd.tcpdump.pcap
+  GET /api/v1/license:
+    responses:
+      "200":
+        description: The active licence.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseStatusResponse'
+  POST /api/v1/network/mtu:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SetMTURequest'
+    responses:
+      "200":
+        description: The MTU is set on the named interface, or on the current one when the request names none.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetMTUResponse'
+  GET /api/v1/network/neighbours:
+    responses:
+      "200":
+        description: The host's ARP and NDP neighbour cache.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NeighbourCacheResponse'
+  POST /api/v1/path/path:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PathRequest'
+    responses:
+      "200":
+        description: The discovered L2 and L3 path.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PathResponse'
+  POST /api/v1/path/traceroute:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TracerouteRequest'
+    responses:
+      "200":
+        description: The traceroute result. Hop rtt is in nanoseconds; hops carry no route here.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TracerouteResult'
+  GET /api/v1/alerts:
+    responses:
+      "200":
+        description: The alert inbox, newest first. Filters are query parameters - type, severity, device_id, unacknowledged_only, unresolved_only, since (RFC3339), limit (at most 1000, default 100) and offset.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertListResponse'
+  POST /api/v1/alerts/{alertId}/acknowledge:
+    responses:
+      "200":
+        description: The alert is acknowledged by the caller.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertAcknowledgeResponse'
+  POST /api/v1/alerts/{alertId}/resolve:
+    responses:
+      "200":
+        description: The alert is resolved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertResolveResponse'
+  GET /api/v1/alert-rules:
+    responses:
+      "200":
+        description: Operator-defined alert rules, applied on top of the built-in rule set. enabled_only=true lists only the enabled ones.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRuleListResponse'
+  POST /api/v1/alert-rules:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AlertRuleRequest'
+    responses:
+      "200":
+        description: The created rule; Location names it. name, alertType, alertSeverity and alertTitle are required, and unknown fields are a 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRuleResponse'
+  GET /api/v1/alert-rules/{ruleId}:
+    responses:
+      "200":
+        description: The alert rule.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRuleResponse'
+  PUT /api/v1/alert-rules/{ruleId}:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AlertRuleRequest'
+    responses:
+      "200":
+        description: The replaced rule, read back after the write.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRuleResponse'
+  DELETE /api/v1/alert-rules/{ruleId}:
+    responses:
+      "204":
+        description: The rule was deleted.
+  GET /api/v1/polling-targets:
+    responses:
+      "200":
+        description: The caller's client's SNMP polling targets.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PollingTargetListResponse'
+  POST /api/v1/polling-targets:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PollingTargetRequest'
+    responses:
+      "200":
+        description: The created target; Location names it. A target past the licence's limit, or a Pro collector below Pro, is a 402.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PollingTargetResponse'
+  GET /api/v1/polling-targets/{targetId}:
+    responses:
+      "200":
+        description: The polling target.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PollingTargetResponse'
+  PUT /api/v1/polling-targets/{targetId}:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PollingTargetRequest'
+    responses:
+      "200":
+        description: The replaced target.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PollingTargetResponse'
+  DELETE /api/v1/polling-targets/{targetId}:
+    responses:
+      "204":
+        description: The target was deleted.
+  POST /api/v1/polling-targets/{targetId}/poll:
+    responses:
+      "200":
+        description: The target after one poll run now, enabled or not; lastStatus and lastError carry the outcome. 503 when the SNMP poller is not running (below Starter, or no credential keyring).
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PollingTargetResponse'
+  GET /api/v1/profiles:
+    responses:
+      "200":
+        description: Every profile.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileListResponse'
+  POST /api/v1/profiles:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfileRequest'
+    responses:
+      "201":
+        description: The created profile.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileResponse'
+  GET /api/v1/profiles/active:
+    responses:
+      "200":
+        description: The active profile.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileResponse'
+  GET /api/v1/profiles/export:
+    responses:
+      "200":
+        description: Every profile, in the import format.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileExportResponse'
+  POST /api/v1/profiles/import:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfileImportRequest'
+    responses:
+      "200":
+        description: What was imported and what was skipped.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileImportResponse'
+  POST /api/v1/profiles/switch:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfileSwitchRequest'
+    responses:
+      "200":
+        description: The profile that is now active; its saved settings are applied to the running configuration.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileSwitchResponse'
+  GET /api/v1/profiles/{profileId}:
+    responses:
+      "200":
+        description: The profile. The ETag header carries its version for a later If-Match.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileResponse'
+  PUT /api/v1/profiles/{profileId}:
+    description: Replaces the profile. An If-Match header naming a stale ETag answers 412 and leaves it unchanged.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfileRequest'
+    responses:
+      "200":
+        description: The updated profile, with its new ETag.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileResponse'
+  DELETE /api/v1/profiles/{profileId}:
+    description: The default profile and the active profile cannot be deleted (400).
+    responses:
+      "200":
+        description: The profile was deleted.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  POST /api/v1/profiles/{profileId}/duplicate:
+    description: A second profile needs the multi-client licence feature (402).
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfileDuplicateRequest'
+    responses:
+      "201":
+        description: The copy. Without a name in the body the store names it.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileResponse'
+  PATCH /api/v1/profiles/{profileId}/settings:
+    description: Replaces the settings block of the profile's config with the JSON object in the body, leaving its name, description, default flag and the rest of its config unchanged.
+    responses:
+      "200":
+        description: The updated profile.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileResponse'
+  POST /api/v1/recovery/complete:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RecoveryCompleteRequest'
+    responses:
+      "200":
+        description: The password was reset.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoveryCompleteResponse'
+  GET /api/v1/recovery/instructions:
+    responses:
+      "200":
+        description: How to recover access on this install.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoveryInstructionsResponse'
+  GET /api/v1/recovery/status:
+    responses:
+      "200":
+        description: Whether password recovery is available.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoveryStatusResponse'
+  GET /api/v1/reporting/export:
+    responses:
+      "200":
+        description: >
+          The diagnostic export document, sent as the seed-export.json
+          attachment. A card whose source is unavailable or has nothing to
+          report is left out; ?interface= exports another interface.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportResponse'
+  GET /api/v1/reporting/logs:
+    responses:
+      "200":
+        description: The last lines of the daemon log file, 200 by default; ?lines= asks for more, up to the server cap.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogFileResponse'
+  POST /api/v1/reporting/logs/client:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ClientLogRequest'
+    responses:
+      "200":
+        description: The batch was accepted; received counts its entries.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientLogResponse'
+  GET /api/v1/reporting/logs/query:
+    responses:
+      "200":
+        description: The matching log entries.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogQueryResponse'
+  GET /api/v1/reporting/logs/recent:
+    responses:
+      "200":
+        description: The most recent log entries, 100 by default; ?limit= asks for 1 to 1000.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogsRecentResponse'
+  GET /api/v1/reporting/logs/stats:
+    responses:
+      "200":
+        description: Log volume by level.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogStatsResponse'
+  GET /api/v1/report-schedules:
+    responses:
+      "200":
+        description: The report schedules.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportSchedulesResponse'
+  POST /api/v1/report-schedules:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReportScheduleRequest'
+    responses:
+      "201":
+        description: The schedule was created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportScheduleInfo'
+  GET /api/v1/report-schedules/{scheduleId}:
+    responses:
+      "200":
+        description: The schedule.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportScheduleInfo'
+  PUT /api/v1/report-schedules/{scheduleId}:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReportScheduleRequest'
+    responses:
+      "200":
+        description: The updated schedule.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportScheduleInfo'
+  DELETE /api/v1/report-schedules/{scheduleId}:
+    responses:
+      "204":
+        description: The schedule was deleted.
+  GET /api/v1/reports:
+    responses:
+      "200":
+        description: The generated reports.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportsResponse'
+  POST /api/v1/reports/generate:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GenerateReportRequest'
+    responses:
+      "202":
+        description: The report that was generated.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportInfo'
+  GET /api/v1/reports/{reportId}:
+    responses:
+      "200":
+        description: The report record; its file is at /download once status is complete.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportInfo'
+  DELETE /api/v1/reports/{reportId}:
+    responses:
+      "204":
+        description: The report and its file were deleted.
+  GET /api/v1/reports/{reportId}/download:
+    responses:
+      "200":
+        description: >
+          The generated file, sent as the <reportId>.<format> attachment with
+          the format's media type (PDF, HTML, CSV, JSON, XLSX or Markdown).
+          An unknown report is 404, one still being generated 409.
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              contentMediaType: application/octet-stream
+  GET /api/v1/security/devices:
+    responses:
+      "200":
+        description: Every device in the discovery registry and the registry's scan state.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicesResponse'
+  POST /api/v1/security/devices/scan:
+    responses:
+      "200":
+        description: A background device scan was started, or one was already running.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceScanResponse'
+  GET /api/v1/security/devices/status:
+    responses:
+      "200":
+        description: The device registry's scan state, device count and scanned subnet.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceDiscoveryStatusResponse'
+  GET /api/v1/security/devices/settings:
+    responses:
+      "200":
+        description: The network discovery settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NetworkDiscoverySettingsResponse'
+  PUT /api/v1/security/devices/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NetworkDiscoverySettingsResponse'
+    responses:
+      "200":
+        description: The network discovery settings were saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  GET /api/v1/security/devices/subnets:
+    responses:
+      "200":
+        description: The configured discovery subnets.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/SubnetResponse'
+  POST /api/v1/security/devices/subnets:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SubnetRequest'
+    responses:
+      "200":
+        description: The subnet was added.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  PUT /api/v1/security/devices/subnets:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SubnetRequest'
+    responses:
+      "200":
+        description: The subnet was updated.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  DELETE /api/v1/security/devices/subnets:
+    responses:
+      "200":
+        description: The subnet named by the cidr query parameter was removed.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  GET /api/v1/security/devices/subnets/pending:
+    responses:
+      "200":
+        description: Learned subnets waiting for the operator's decision.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/SubnetResponse'
+  POST /api/v1/security/devices/subnets/pending:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SubnetDecisionRequest'
+    responses:
+      "200":
+        description: The decision was recorded.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  GET /api/v1/security/discovery:
+    responses:
+      "200":
+        description: The discovered devices.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveryResponse'
+  POST /api/v1/security/discovery/fingerprint:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FingerprintRequest'
+    responses:
+      "200":
+        description: The host's detected OS, service versions and TLS certificates.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvancedProbeResult'
+  GET /api/v1/security/discovery/options:
+    responses:
+      "200":
+        description: The discovery options in force.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveryOptionsResponse'
+  PUT /api/v1/security/discovery/options:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DiscoveryOptions'
+    responses:
+      "200":
+        description: The discovery options were saved and applied.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  POST /api/v1/security/discovery/portscan:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PortScanRequest'
+    responses:
+      "200":
+        description: The open ports found on the host and how long the scan took.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortScanResponse'
+  POST /api/v1/security/discovery/probe:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TCPProbeRequest'
+    responses:
+      "200":
+        description: The probe result per port.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TCPProbeResponse'
+  GET /api/v1/security/discovery/service/status:
+    responses:
+      "200":
+        description: Whether the discovery service runs and is sweeping, what it sweeps, and the health of its discovery methods.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveryServiceStatusResponse'
+  GET /api/v1/security/guest-audit/settings:
+    responses:
+      "200":
+        description: The guest network audit settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuestNetworkAuditConfig'
+  POST /api/v1/security/guest-audit/run:
+    responses:
+      "200":
+        description: The audit report, one result per configured target. isolationFailed is true when any target answered a ping or a probed TCP port.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuestAuditReport'
+  PUT /api/v1/security/guest-audit/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GuestNetworkAuditConfig'
+    responses:
+      "200":
+        description: The guest network audit settings were saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdatedResponse'
+  GET /api/v1/security/problems:
+    responses:
+      "200":
+        description: The detected network problems.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NetworkProblemsResponse'
+  POST /api/v1/security/problems/scan:
+    responses:
+      "200":
+        description: The problems the scan found.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProblemScanResponse'
+  GET /api/v1/security/problems/thresholds:
+    responses:
+      "200":
+        description: The thresholds the problem detector applies.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProblemThresholds'
+  PUT /api/v1/security/problems/thresholds:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemThresholds'
+    responses:
+      "200":
+        description: The thresholds were saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  GET /api/v1/security/vulnerabilities/device:
+    responses:
+      "200":
+        description: The vulnerabilities found on the device named by the ip query parameter.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceVulnerabilities'
+  GET /api/v1/security/vulnerabilities/findings:
+    responses:
+      "200":
+        description: One page of tracked findings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VulnFindingsResponse'
+  POST /api/v1/security/vulnerabilities/findings/{findingId}/status:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/VulnFindingStatusRequest'
+    responses:
+      "200":
+        description: The finding moved to the requested status. status is acknowledged, ignored (with a reason) or new; an operator cannot resolve a finding, the scanner does, and an unknown field is a 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VulnFindingStatusResponse'
+  GET /api/v1/security/vulnerabilities/findings/{findingId}/history:
+    responses:
+      "200":
+        description: The finding's status changes, oldest first. A change with no actor is the scanner's.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VulnFindingHistoryResponse'
+  GET /api/v1/security/vulnerabilities/results:
+    responses:
+      "200":
+        description: Every scanned device's vulnerabilities, optionally filtered by severity.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VulnerabilityResultsResponse'
+  GET /api/v1/security/vulnerabilities/settings:
+    responses:
+      "200":
+        description: The vulnerability scan settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VulnerabilitySettings'
+  PUT /api/v1/security/vulnerabilities/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/VulnerabilitySettingsUpdate'
+    responses:
+      "200":
+        description: The vulnerability scan settings were saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdatedResponse'
+  GET /api/v1/security/vulnerabilities/status:
+    responses:
+      "200":
+        description: The scanner's state, its result counts by severity and the configured severity threshold. Answers 503 with only enabled false when the scanner is off.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VulnerabilityStatusResponse'
+  POST /api/v1/security/vulnerabilities/validate-api-key:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NVDAPIKeyValidateRequest'
+    responses:
+      "200":
+        description: Whether the NVD accepted the key.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NVDAPIKeyValidateResponse'
+  GET /api/v1/security/wifi/discovery/aps:
+    responses:
+      "200":
+        description: The access points seen.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiDiscoveryAPsResponse'
+  GET /api/v1/security/wifi/discovery/networks:
+    responses:
+      "200":
+        description: The networks seen.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiDiscoveryNetworksResponse'
+  POST /api/v1/security/wifi/discovery/scan:
+    responses:
+      "200":
+        description: The scan's networks, access points and statistics.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiDiscoveryScanResponse'
+  GET /api/v1/security/wifi/discovery/stats:
+    responses:
+      "200":
+        description: Wi-Fi discovery counters.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiDiscoveryStatsResponse'
+  GET /api/v1/settings:
+    responses:
+      "200":
+        description: >-
+          The stored settings the settings drawer edits; the ETag header
+          carries the version a later PUT sends back as If-Match.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsResponse'
+  PUT /api/v1/settings:
+    summary: Update settings (partial; If-Match refuses a stale write)
+    responses:
+      "200":
+        description: The settings were saved; the ETag header carries the new version.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdatedResponse'
+  POST /api/v1/settings/alerts/test:
+    summary: Send a test alert through a saved receiver
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AlertTestSendRequest'
+    responses:
+      "200":
+        description: The receiver accepted the test alert.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertTestSendResponse'
+  GET /api/v1/settings/cable:
+    responses:
+      "200":
+        description: The cable test settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CableTestConfig'
+  PUT /api/v1/settings/cable:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CableTestConfig'
+    responses:
+      "200":
+        description: The cable test settings were saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdatedResponse'
+  GET /api/v1/settings/defaults:
+    responses:
+      "200":
+        description: >-
+          The built-in default of every profile setting. A profile value
+          that is not set falls back to this.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefaultSettings'
+  GET /api/v1/settings/link:
+    responses:
+      "200":
+        description: The link settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkConfig'
+  PUT /api/v1/settings/link:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LinkConfig'
+    responses:
+      "200":
+        description: The link settings were saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdatedResponse'
+  POST /api/v1/setup/complete:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SetupCompleteRequest'
+    responses:
+      "200":
+        description: The admin password is set and first-run setup is complete.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetupCompleteResponse'
+  GET /api/v1/setup/status:
+    responses:
+      "200":
+        description: Whether first-run setup is still required.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetupStatusResponse'
+  GET /api/v1/sso/login:
+    summary: Start a single sign-on handshake with a provider
+    description: >
+      A browser navigation, not an API call. Sets the oauth_state and
+      oauth_provider cookies, scoped to /api/v1/sso, and redirects to the
+      provider's sign-in page.
+    parameters:
+      - name: provider
+        in: query
+        required: true
+        description: A configured, enabled provider (google, microsoft or github).
+        schema:
+          type: string
+    responses:
+      "307":
+        description: Redirect to the provider's authorization URL, carrying the state the callback checks.
+        headers:
+          Location:
+            description: The provider's authorization URL.
+            schema:
+              type: string
+              format: uri
+      "400":
+        description: The provider parameter is missing, or names no enabled provider.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+  GET /api/v1/sso/callback:
+    summary: Finish a single sign-on handshake
+    description: >
+      The provider redirects the browser here. The state must match the
+      oauth_state cookie /sso/login set. On success the session cookies are
+      set and the browser is sent to the UI; every failure is a redirect too,
+      naming the reason in sso_error.
+    parameters:
+      - name: code
+        in: query
+        description: The authorization code to exchange.
+        schema:
+          type: string
+      - name: state
+        in: query
+        description: The state /sso/login issued.
+        schema:
+          type: string
+      - name: error
+        in: query
+        description: Set by the provider when the user or provider refused.
+        schema:
+          type: string
+      - name: error_description
+        in: query
+        description: The provider's reason for error.
+        schema:
+          type: string
+    responses:
+      "307":
+        description: >
+          Redirect to / when signed in, with the seed_access and seed_refresh
+          cookies set, or to /?sso_error=<reason> when the handshake failed.
+        headers:
+          Location:
+            description: / or /?sso_error=<reason>.
+            schema:
+              type: string
+  GET /api/v1/sso/providers:
+    responses:
+      "200":
+        description: The configured single sign-on providers.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SSOProvidersResponse'
+  GET /api/v1/sso/settings:
+    responses:
+      "200":
+        description: Each configured SSO provider and whether it can be used.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SSOSettingsResponse'
+  PUT /api/v1/sso/update:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SSOUpdateRequest'
+    responses:
+      "200":
+        description: The provider was saved and the sign-on providers reloaded.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdatedResponse'
+  GET /api/v1/status:
+    responses:
+      "200":
+        description: Daemon status.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusResponse'
+  GET /api/v1/telemetry/cable:
+    responses:
+      "200":
+        description: The cable test result.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CableResponse'
+  GET /api/v1/telemetry/dhcp/lease:
+    responses:
+      "200":
+        description: The DHCP lease the currently selected interface holds, read from local state; no DISCOVER is sent. An unknown interface answers 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DHCPLeaseResponse'
+  POST /api/v1/telemetry/dhcp/lease:
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DHCPLeaseRequest'
+    responses:
+      "200":
+        description: The DHCP lease the named interface holds, or the selected interface when the body is empty. An unknown interface answers 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DHCPLeaseResponse'
+  POST /api/v1/telemetry/dhcp/renew:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RenewDHCPLeaseRequest'
+    responses:
+      "200":
+        description: The DHCP client renewed the lease on the named interface.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenewDHCPLeaseResponse'
+  GET /api/v1/telemetry/dhcp/rogue:
+    responses:
+      "200":
+        description: Rogue DHCP detection state.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RogueDHCPResponse'
+  POST /api/v1/telemetry/dhcp/rogue:
+    responses:
+      "200":
+        description: The detector's state after the start or stop action.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RogueDHCPResponse'
+  GET /api/v1/telemetry/dhcp/rogue/config:
+    responses:
+      "200":
+        description: The rogue DHCP detector configuration.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RogueDHCPConfigResponse'
+  PUT /api/v1/telemetry/dhcp/rogue/config:
+    responses:
+      "200":
+        description: The configuration after the update.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RogueDHCPConfigResponse'
+  GET /api/v1/telemetry/dhcp/rogue/servers:
+    responses:
+      "200":
+        description: The DHCP servers seen.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RogueServersResponse'
+  GET /api/v1/telemetry/dns:
+    responses:
+      "200":
+        description: Resolution results for each configured server.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DNSResponse'
+  GET /api/v1/telemetry/gateway:
+    responses:
+      "200":
+        description: Gateway reachability.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewayResponse'
+  GET /api/v1/telemetry/interface/driver-stats:
+    responses:
+      "200":
+        description: Driver counters for the interface.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverStatsResponse'
+  GET /api/v1/telemetry/ipconfig:
+    responses:
+      "200":
+        description: The interface IP configuration.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IPConfigResponse'
+  GET /api/v1/telemetry/ipconfig/settings:
+    responses:
+      "200":
+        description: The interface's IP configuration settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IPSettingsResponse'
+  PUT /api/v1/telemetry/ipconfig/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IPSettingsRequest'
+    responses:
+      "200":
+        description: The IP configuration was applied.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  POST /api/v1/telemetry/iperf/client:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IperfClientRequest'
+    responses:
+      "200":
+        description: The test started in the background; poll /api/v1/telemetry/iperf/client/status for progress and the result.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  GET /api/v1/telemetry/iperf/client/status:
+    responses:
+      "200":
+        description: The running or last iperf client test.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IperfClientStatusResponse'
+  GET /api/v1/telemetry/iperf/info:
+    responses:
+      "200":
+        description: The local iperf3 installation.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IperfInfoResponse'
+  POST /api/v1/telemetry/iperf/server:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IperfServerRequest'
+    responses:
+      "200":
+        description: The listener state after the start or stop, the same body /api/v1/telemetry/iperf/server/status serves.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServerStatus'
+  GET /api/v1/telemetry/iperf/server/status:
+    responses:
+      "200":
+        description: Whether the local iperf3 server is running, and on which port.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServerStatus'
+  GET /api/v1/telemetry/iperf/suggestions:
+    responses:
+      "200":
+        description: Discovered hosts that accept a TCP connection on the iperf3 port, with the connect latency.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/IperfSuggestion'
+  GET /api/v1/telemetry/link:
+    responses:
+      "200":
+        description: Link state of the interface.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkResponse'
+  GET /api/v1/telemetry/probes/anomalies:
+    responses:
+      "200":
+        description: The probe engine's active anomalies, filtered to one probe target by the endpoint query parameter when given; activeCount is the unfiltered total. Answers 503 when the anomaly store is not wired.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProbeAnomaliesResponse'
+  GET /api/v1/telemetry/probes/run:
+    responses:
+      "200":
+        description: Runs every configured health check now and returns the results grouped by kind; hasTests is false when none is configured.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthCheckRunResponse'
+  GET /api/v1/telemetry/probes/settings:
+    responses:
+      "200":
+        description: The probe settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestsSettingsResponse'
+  PUT /api/v1/telemetry/probes/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TestsSettingsResponse'
+    responses:
+      "200":
+        description: The probe settings were saved. Each endpoint list replaces the stored list, so a list sent empty is cleared.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  GET /api/v1/telemetry/publicip:
+    responses:
+      "200":
+        description: The public IPv4 and IPv6 addresses with their geolocation, cached between lookups.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicIPResponse'
+  POST /api/v1/telemetry/publicip:
+    responses:
+      "200":
+        description: A fresh lookup of the public addresses, bypassing the cache.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicIPResponse'
+  GET /api/v1/telemetry/system/health:
+    responses:
+      "200":
+        description: The host's CPU, memory and disk usage with the top consumers above 75%, the daemon's version and uptime, and which background services are running.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SystemHealthResponse'
+  GET /api/v1/telemetry/snmp/settings:
+    responses:
+      "200":
+        description: The SNMP transport settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SNMPSettingsResponse'
+  PUT /api/v1/telemetry/snmp/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SNMPSettingsResponse'
+    responses:
+      "200":
+        description: The SNMP transport settings were saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  POST /api/v1/telemetry/speedtest:
+    responses:
+      "200":
+        description: A background speed test was started.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpeedtestStartResponse'
+  GET /api/v1/telemetry/speedtest/status:
+    responses:
+      "200":
+        description: The running or last speed test.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpeedtestStatusResponse'
+  GET /api/v1/telemetry/vlan:
+    responses:
+      "200":
+        description: VLANs seen on the interface.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VLANResponse'
+  DELETE /api/v1/telemetry/vlan/interface:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/VLANInterfaceRequest'
+    responses:
+      "200":
+        description: The 802.1Q sub-interface was removed. An empty interface means the current one.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VLANInterfaceResponse'
+  POST /api/v1/telemetry/vlan/interface:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/VLANInterfaceRequest'
+    responses:
+      "200":
+        description: The 802.1Q sub-interface was created. An empty interface means the current one.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VLANInterfaceResponse'
+  GET /api/v1/topology/arp:
+    responses:
+      "200":
+        description: IP-to-MAC bindings harvested from node ARP tables, newest first. Filter by node_id, since (RFC 3339) and limit (default 200, capped at 1000).
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyARPListResponse'
+  GET /api/v1/topology/links:
+    responses:
+      "200":
+        description: Every link of the topology graph, or only those incident to node_id.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyLinkListResponse'
+  GET /api/v1/topology/nodes:
+    responses:
+      "200":
+        description: Topology nodes. Filter by device_type, since (RFC 3339) and limit (default 200, capped at 1000).
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyNodeListResponse'
+  GET /api/v1/topology/nodes/{nodeId}:
+    responses:
+      "200":
+        description: The node with its interfaces and the links incident to it.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyNodeDetailResponse'
+  POST /api/v1/tokens:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MintTokenRequest'
+    responses:
+      "201":
+        description: The minted token; its secret is shown only here.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MintTokenResponse'
+  GET /api/v1/tokens:
+    responses:
+      "200":
+        description: The caller's personal access tokens, without their secrets.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/TokenListItem'
+  DELETE /api/v1/tokens/{tokenId}:
+    responses:
+      "204":
+        description: The token was revoked.
+  GET /api/v1/topology/interfaces:
+    responses:
+      "200":
+        description: Polled interface counters.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterfaceStatsListResponse'
+  GET /api/v1/topology/interfaces/history:
+    responses:
+      "200":
+        description: Counter history for one interface.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterfaceHistoryResponse'
+  GET /api/v1/users:
+    responses:
+      "200":
+        description: Every user.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserResponse'
+  POST /api/v1/users:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateUserRequest'
+    responses:
+      "201":
+        description: The created user.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserResponse'
+  GET /api/v1/users/{username}:
+    responses:
+      "200":
+        description: The user.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserResponse'
+  PATCH /api/v1/users/{username}:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateUserRequest'
+    responses:
+      "200":
+        description: The user after the update.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserResponse'
+  DELETE /api/v1/users/{username}:
+    responses:
+      "204":
+        description: The user was deleted.
+  GET /api/v1/users/me:
+    responses:
+      "200":
+        description: The signed-in user.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserResponse'
+  GET /api/v1/users/me/dashboard:
+    responses:
+      "200":
+        description: The caller's dashboard layout.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardLayout'
+  PUT /api/v1/users/me/dashboard:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DashboardLayoutRequest'
+    responses:
+      "200":
+        description: The saved layout.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardLayout'
+  GET /api/v1/wifi/airspace:
+    responses:
+      "200":
+        description: SSIDs heard in the airspace.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiAirspaceResponse'
+  GET /api/v1/wifi/anomalies:
+    responses:
+      "200":
+        description: Wi-Fi anomalies detected.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiAnomaliesResponse'
+  GET /api/v1/wifi/wifi:
+    responses:
+      "200":
+        description: The interface's association state.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiResponse'
+  GET /api/v1/wifi/wifi/channel-graph:
+    responses:
+      "200":
+        description: The last neighbor scan grouped by band for the channel overlap graph, or the reason the scan could not run.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiChannelGraphResponse'
+      "400":
+        description: The interface parameter is not a valid interface name.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+  POST /api/v1/wifi/wifi/connect:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WiFiConnectRequest'
+    responses:
+      "200":
+        description: Whether the radio joined the network, and why not when it did not.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectionResult'
+  POST /api/v1/wifi/wifi/disconnect:
+    responses:
+      "200":
+        description: Whether the radio left its network.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectionResult'
+  DELETE /api/v1/wifi/wifi/forget:
+    responses:
+      "200":
+        description: The saved network named by the ssid query parameter was removed.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  GET /api/v1/wifi/wifi/saved:
+    responses:
+      "200":
+        description: Networks the host has saved credentials for.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiSavedNetworksResponse'
+  GET /api/v1/wifi/wifi/scan:
+    responses:
+      "200":
+        description: Access points heard by a neighbor scan, or the reason the scan could not run.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiScanResponse'
+      "400":
+        description: The interface parameter is not a valid interface name.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+  GET /api/v1/wifi/wifi/settings:
+    responses:
+      "200":
+        description: The Wi-Fi interface settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiSettingsResponse'
+  PUT /api/v1/wifi/wifi/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WiFiSettingsRequest'
+    responses:
+      "200":
+        description: The interface selection was saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  GET /api/v1/wifi/wifi/status:
+    responses:
+      "200":
+        description: The wireless adapter state, read without a scan.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiStatusResponse'

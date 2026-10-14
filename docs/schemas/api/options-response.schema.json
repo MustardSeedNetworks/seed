@@ -15,7 +15,7 @@
           "type": "boolean"
         },
         "portScan": {
-          "$ref": "#/$defs/PortScanResponse"
+          "$ref": "#/$defs/PortScanSettingsResponse"
         },
         "traceroute": {
           "type": "boolean"
@@ -59,7 +59,7 @@
         "ndp"
       ]
     },
-    "PortScanResponse": {
+    "PortScanSettingsResponse": {
       "properties": {
         "enabled": {
           "type": "boolean"

@@ -413,7 +413,6 @@ func requestEndpointTargets(req *TestsSettingsResponse) config.HealthChecksConfi
 	return hc
 }
 
-// applyPerformanceSettings applies performance test configuration from request.
 // updateHealthChecksSettings persists the health-checks settings. Thin transport
 // (ADR-0020): decode, map the wire DTO to the domain model, and delegate the
 // probe-table + config persistence + tester sync to the service.
@@ -453,16 +452,10 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, statusResponse{
+	sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
 		Status:  statusSuccess,
 		Message: "Health checks settings updated",
 	})
-}
-
-// statusResponse is the JSON body returned by simple ack-style endpoints.
-type statusResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
 }
 
 // Common JSON field-name keys reused across many SSE / response payloads.

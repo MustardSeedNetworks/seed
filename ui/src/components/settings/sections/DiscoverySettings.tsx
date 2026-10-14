@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { logger } from '../../../lib/logger';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
+import type { DiscoveryServiceStatusResponse } from '../../../types/generated/discovery-service-status-response';
 import type {
   CardSettings,
-  DiscoveryServiceStatus as DiscoveryServiceStatusType,
   NetworkDiscoverySettings as NetworkDiscoverySettingsType,
   SaveStatus,
   SnmpSettings as SnmpSettingsType,
@@ -80,7 +80,7 @@ export function DiscoverySettings({
   // also reaches the child components without editing them.
   const { canWrite } = useRole();
   const readOnlyReason = canWrite ? undefined : t('common.readOnly');
-  const [serviceStatus, setServiceStatus] = useState<DiscoveryServiceStatusType | null>(null);
+  const [serviceStatus, setServiceStatus] = useState<DiscoveryServiceStatusResponse | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
 
   // Fetch service status
@@ -90,7 +90,7 @@ export function DiscoverySettings({
     try {
       const response = await fetch('/api/v1/security/discovery/service/status');
       if (response.ok) {
-        const data = (await response.json()) as DiscoveryServiceStatusType;
+        const data = (await response.json()) as DiscoveryServiceStatusResponse;
         setServiceStatus(data);
       } else {
         // Log non-OK responses for debugging
