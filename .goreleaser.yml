@@ -48,8 +48,15 @@ builds:
     main: ./cmd/seed
     mod_timestamp: "{{ .CommitTimestamp }}"
     binary: seed
+    # libpcap is linked statically, from the archives release.yml builds just
+    # before this runs. One binary is packaged as both .deb and .rpm, and this
+    # container is Debian-family: linked dynamically it carried Debian's
+    # `libpcap.so.0.8` SONAME, which no Fedora libpcap provides, so every rpm
+    # install crash-looped on first start (#2978).
     env:
       - CGO_ENABLED=1
+      - CGO_CFLAGS=-I/opt/libpcap-static/amd64/include
+      - CGO_LDFLAGS=/opt/libpcap-static/amd64/lib/libpcap.a
     goos: [linux]
     goarch: [amd64, arm64]
     flags:
@@ -70,6 +77,8 @@ builds:
         env:
           - CC=aarch64-linux-gnu-gcc
           - PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
+          - CGO_CFLAGS=-I/opt/libpcap-static/arm64/include
+          - CGO_LDFLAGS=/opt/libpcap-static/arm64/lib/libpcap.a
 
   - id: seed-darwin
     main: ./cmd/seed
@@ -181,14 +190,15 @@ nfpms:
     dependencies:
       - systemd
     overrides:
+      # No libpcap on either family: it is linked into the binary (see the
+      # seed-linux build), so declaring it would only add a package the binary
+      # never loads. postinstall's setcap still needs libcap's tooling.
       deb:
         dependencies:
-          - libpcap0.8 | libpcap0.8t64
           - systemd
           - libcap2-bin
       rpm:
         dependencies:
-          - libpcap
           - systemd
           - libcap
     contents:
