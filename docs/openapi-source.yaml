@@ -1438,8 +1438,14 @@ operations:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VulnerabilityScanConfig'
+              $ref: '#/components/schemas/VulnerabilitySettings'
   PUT /api/v1/security/vulnerabilities/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/VulnerabilitySettings'
     responses:
       "200":
         description: The vulnerability scan settings were saved.

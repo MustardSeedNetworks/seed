@@ -218,6 +218,20 @@ func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Requ
 	sendJSONResponse(w, logger, http.StatusOK, result)
 }
 
+// VulnerabilitySettings is the body of both GET and PUT
+// /security/vulnerabilities/settings. The config file keeps its snake_case
+// keys; the wire is camelCase like every other route (ADR-0010, seed#2971).
+type VulnerabilitySettings struct {
+	Enabled           bool   `json:"enabled"`
+	CVEDatabase       string `json:"cveDatabase"       jsonschema:"enum=nvd,enum=local"`
+	NVDAPIKey         string `json:"nvdApiKey"`
+	UpdateInterval    int    `json:"updateInterval"`
+	SeverityThreshold string `json:"severityThreshold" jsonschema:"enum=low,enum=medium,enum=high,enum=critical"`
+	MaxConcurrent     int    `json:"maxConcurrent"`
+	// AutoScan runs a vulnerability scan on each newly discovered device.
+	AutoScan bool `json:"autoScan"`
+}
+
 // handleVulnerabilitySettings returns or updates vulnerability scanner settings
 // GET/PUT /api/vulnerabilities/settings (fixes #703).
 func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Request) {
@@ -226,23 +240,25 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 
 	switch r.Method {
 	case http.MethodGet:
-		sendJSONResponse(w, logger, http.StatusOK, s.securitySettings.Vuln())
+		v := s.securitySettings.Vuln()
+		sendJSONResponse(w, logger, http.StatusOK, VulnerabilitySettings{
+			Enabled:           v.Enabled,
+			CVEDatabase:       v.CVEDatabase,
+			NVDAPIKey:         v.NVDAPIKey,
+			UpdateInterval:    v.UpdateInterval,
+			SeverityThreshold: v.SeverityThreshold,
+			MaxConcurrent:     v.MaxConcurrent,
+			AutoScan:          v.AutoScan,
+		})
 
 	case http.MethodPut:
-		var settings vuln.VulnerabilityScannerConfig
+		var settings VulnerabilitySettings
 		if !decodeJSONStrictLocalized(w, r, &settings, MaxBodySizeJSON,
 			logger, localizer) {
 			return
 		}
 
-		err := s.securitySettings.UpdateVuln(securitysettings.VulnUpdate{
-			Enabled:           settings.Enabled,
-			CVEDatabase:       settings.CVEDatabase,
-			NVDAPIKey:         settings.NVDAPIKey,
-			UpdateInterval:    settings.UpdateInterval,
-			SeverityThreshold: settings.SeverityThreshold,
-			MaxConcurrent:     settings.MaxConcurrent,
-		})
+		err := s.securitySettings.UpdateVuln(securitysettings.VulnUpdate(settings))
 		if err != nil {
 			logger.ErrorContext(r.Context(), "Failed to save vulnerability config", "error", err)
 			sendErrorResponseWithDetails(

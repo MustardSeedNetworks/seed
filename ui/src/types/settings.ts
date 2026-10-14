@@ -10,6 +10,7 @@
 
 import type { ThresholdSettings } from './generated/settings-response';
 import type { TestsSettingsResponse } from './generated/tests-settings-response';
+import type { VulnerabilitySettings } from './generated/vulnerability-settings';
 
 // ============================================================================
 // Save Status
@@ -416,18 +417,10 @@ export const DEFAULT_CABLE_TEST_SETTINGS: CableTestSettings = {
 // Vulnerability Scanning Settings
 // ============================================================================
 
-export type CveDatabase = 'nvd' | 'local';
-export type SeverityLevel = 'low' | 'medium' | 'high' | 'critical';
-
-export interface VulnerabilityScanSettings {
-  enabled: boolean;
-  cveDatabase: CveDatabase;
-  nvdApiKey: string;
-  updateInterval: number; // seconds between database updates
-  severityThreshold: SeverityLevel;
-  maxConcurrent: number; // max concurrent vulnerability checks
-  autoScan: boolean; // auto-scan after device discovery
-}
+// The wire body of /security/vulnerabilities/settings (seed#2971).
+export type VulnerabilityScanSettings = VulnerabilitySettings;
+export type CveDatabase = VulnerabilitySettings['cveDatabase'];
+export type SeverityLevel = VulnerabilitySettings['severityThreshold'];
 
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityScanSettings = {

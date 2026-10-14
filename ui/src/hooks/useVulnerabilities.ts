@@ -7,7 +7,6 @@
  * - Trigger vulnerability scans for all devices or specific IPs
  * - Fetch scan status and progress
  * - Retrieve vulnerability results with optional severity filtering
- * - Configure scanner settings (API keys, database cache)
  *
  * The scanner:
  * - Fingerprints devices from network discovery
@@ -41,7 +40,7 @@ import { LogComponents, logger } from '../lib/logger';
 import type { JobResponse } from '../types/generated/job-response';
 import type { VulnScanRequest } from '../types/generated/vuln-scan-request';
 import type { VulnerabilityStatusResponse } from '../types/generated/vulnerability-status-response';
-import type { DeviceVulnerabilities, VulnerabilityScannerConfig } from '../types/vulnerabilities';
+import type { DeviceVulnerabilities } from '../types/vulnerabilities';
 import { useJobEvents } from './useJobEvents';
 
 type SeverityFilter = 'critical' | 'high' | 'medium' | 'low';
@@ -188,30 +187,6 @@ async function fetchDeviceVulnerabilities(ip: string): Promise<DeviceVulnerabili
   }
 }
 
-async function fetchSettings(): Promise<VulnerabilityScannerConfig | null> {
-  try {
-    return await api.get<VulnerabilityScannerConfig>('/api/v1/security/vulnerabilities/settings');
-  } catch (error) {
-    logger.error(LogComponents.VULN, 'Failed to fetch vulnerability settings', error, {
-      endpoint: '/api/v1/security/vulnerabilities/settings',
-    });
-    return null;
-  }
-}
-
-async function updateSettings(settings: Partial<VulnerabilityScannerConfig>): Promise<boolean> {
-  try {
-    await api.put<{ status: string }>('/api/v1/security/vulnerabilities/settings', settings);
-    return true;
-  } catch (error) {
-    logger.error(LogComponents.VULN, 'Failed to update vulnerability settings', error, {
-      endpoint: '/api/v1/security/vulnerabilities/settings',
-      updates: settings,
-    });
-    return false;
-  }
-}
-
 /**
  * Custom hook for managing vulnerability scanning operations.
  *
@@ -291,8 +266,6 @@ export function useVulnerabilities() {
     fetchStatus,
     fetchResults,
     fetchDeviceVulnerabilities,
-    fetchSettings,
-    updateSettings,
     isScanning,
     scanError,
   };

@@ -10260,6 +10260,40 @@ components:
                 - max_concurrent
                 - auto_scan
             type: object
+        VulnerabilitySettings:
+            additionalProperties: false
+            properties:
+                autoScan:
+                    type: boolean
+                cveDatabase:
+                    enum:
+                        - nvd
+                        - local
+                    type: string
+                enabled:
+                    type: boolean
+                maxConcurrent:
+                    type: integer
+                nvdApiKey:
+                    type: string
+                severityThreshold:
+                    enum:
+                        - low
+                        - medium
+                        - high
+                        - critical
+                    type: string
+                updateInterval:
+                    type: integer
+            required:
+                - enabled
+                - cveDatabase
+                - nvdApiKey
+                - updateInterval
+                - severityThreshold
+                - maxConcurrent
+                - autoScan
+            type: object
         VulnerabilityStatusResponse:
             additionalProperties: false
             properties:
@@ -16055,7 +16089,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/VulnerabilityScanConfig'
+                                $ref: '#/components/schemas/VulnerabilitySettings'
                     description: The vulnerability scan settings.
                 "401":
                     content:
@@ -16078,6 +16112,12 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1SecurityVulnerabilitiesSettings
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/VulnerabilitySettings'
+                required: true
             responses:
                 "200":
                     content:
