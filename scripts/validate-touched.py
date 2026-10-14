@@ -78,7 +78,7 @@ def _py_pair(gate: str) -> tuple[Step, ...]:
 
 
 # The gates ci.yml runs on every PR, as ci.yml runs them. Gates that need a
-# built UI (initial-bundle, webkit-libsoup), the network (release-changelog
+# built UI (initial-bundle), the network (release-changelog
 # --pending) or a daemon are left to CI.
 GATES: tuple[Gate, ...] = (
     Gate("banned-vocabulary", _py_pair("banned-vocabulary"), ("*",)),
