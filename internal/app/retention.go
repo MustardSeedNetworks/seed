@@ -39,5 +39,7 @@ func RunDataRetention(
 		AnomalyRollupDailyDays: rollupDailyDays,
 		MicroburstDays:         retentionDays,
 		VoIPDays:               retentionDays,
+		SNMPObservationDays:    retentionDays,
+		ListenerEventDays:      retentionDays,
 	})
 }
