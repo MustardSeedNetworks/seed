@@ -114,5 +114,8 @@ restores to the saved path, so a mismatch would leave a job cold).
 - Cross-compilation already wires the C cross-toolchain (`CC=x86_64-linux-gnu-gcc`,
   `aarch64-linux-gnu-gcc`) in `mk/build.mk`; the canonical release path is
   goreleaser-cross.
-- libpcap is linked **dynamically** (default) — keep it that way; static linking
-  adds build time for no benefit here.
+- Local builds link libpcap **dynamically** (default). Release builds link a
+  source-built static libpcap (`release.yml`, `.goreleaser.yml`): one Linux
+  binary ships in both the `.deb` and the `.rpm`, and a dynamic link built in
+  the Debian-family release container needs `libpcap.so.0.8`, which Fedora
+  does not provide (#2978).
