@@ -70,7 +70,8 @@ type ARPListOptions struct {
 // identity-merged the same way nodes are — the link ID is derived
 // from (source_node, source_interface, target_node, target_interface)
 // so re-observations of the same physical cable upsert rather than
-// duplicate.
+// duplicate. UtilizationPct is not stored: the read use-case fills it
+// from the interface rates (see Queries.Links).
 type Link struct {
 	ID              string
 	SourceNodeID    string
@@ -80,7 +81,7 @@ type Link struct {
 	LinkType        string // "lldp", "cdp", "fdp", "fdb"
 	Status          string // "up", "down", "unknown"
 	SpeedMbps       uint32
-	UtilizationPct  float64
+	UtilizationPct  *float64
 	FirstSeen       time.Time
 	LastSeen        time.Time
 	EvidenceJSON    string

@@ -11,6 +11,8 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
 
@@ -73,6 +75,62 @@ func seedTopology(t *testing.T, db *database.DB) string {
 		t.Fatalf("seed link: %v", linkErr)
 	}
 	return node.ID
+}
+
+// A link reports the utilization of its source port's latest rated poll
+// (seed#3024); a link whose port has none omits the field rather than
+// claiming 0.
+func TestHandleTopologyLinks_ReportsPortUtilization(t *testing.T) {
+	s := newTopologyTestServer(t)
+	nodeID := seedTopology(t, s.db())
+	ctx := context.Background()
+	now := time.Now().UTC()
+
+	target := &polling.Target{
+		ClientID: database.DefaultClientID, Name: "router-1", IPAddress: "10.0.0.1",
+		SNMPVersion: "v2c", PollIntervalSec: 60, Enabled: true, CollectorChain: []string{"if_table"},
+	}
+	if err := s.db().PollingTargets().Create(ctx, target); err != nil {
+		t.Fatalf("create target: %v", err)
+	}
+	if err := s.db().Topology().UpsertTargetNode(ctx, database.DefaultClientID, target.ID, nodeID, now); err != nil {
+		t.Fatalf("map target: %v", err)
+	}
+	if err := s.db().Topology().UpsertLink(ctx, &topology.Link{
+		ID: "link-test-1", SourceNodeID: nodeID, TargetNodeID: "node-test-2",
+		SourceInterface: "Gi0/0", LinkType: "lldp", Status: "up", LastSeen: now,
+	}); err != nil {
+		t.Fatalf("name the link's port: %v", err)
+	}
+
+	links := func() []map[string]any {
+		t.Helper()
+		w := serve(t, s.handleTopologyLinks, APIVersionPrefix+"/topology/links")
+		var resp struct {
+			Links []map[string]any `json:"links"`
+		}
+		if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		if len(resp.Links) != 1 {
+			t.Fatalf("links = %+v, want one", resp.Links)
+		}
+		return resp.Links
+	}
+	if got, ok := links()[0]["utilizationPct"]; ok {
+		t.Errorf("utilizationPct = %v before any rated poll, want absent", got)
+	}
+
+	util := ifrate.Utilization{In: 12.5, Out: 30}
+	if err := s.db().Metrics().RecordInterfaceRates(ctx, []ifrate.Rate{{
+		ClientID: database.DefaultClientID, TargetID: target.ID, IfIndex: 1, At: now,
+		Octets: &ifrate.Octets{In: 1.5e6, Out: 3.75e6, Utilization: &util},
+	}}); err != nil {
+		t.Fatalf("RecordInterfaceRates: %v", err)
+	}
+	if got := links()[0]["utilizationPct"]; got != 30.0 {
+		t.Errorf("utilizationPct = %v, want 30 (the busier direction)", got)
+	}
 }
 
 func TestHandleTopologyNodes_ReturnsSeedededNodes(t *testing.T) {

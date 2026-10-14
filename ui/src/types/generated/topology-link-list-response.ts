@@ -18,7 +18,7 @@ export interface TopologyLink {
   linkType: string;
   status: string;
   speedMbps: number;
-  utilizationPct: number;
+  utilizationPct?: number;
   firstSeen: string;
   lastSeen: string;
   evidence: {

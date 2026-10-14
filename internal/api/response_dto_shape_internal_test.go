@@ -314,7 +314,7 @@ func TestTopologyResponseShapes(t *testing.T) {
 	}
 	linkKeys := []string{
 		"evidence", "firstSeen", "id", "lastSeen", "linkType", "sourceInterface",
-		"sourceNodeId", "speedMbps", "status", "targetInterface", "targetNodeId", "utilizationPct",
+		"sourceNodeId", "speedMbps", "status", "targetInterface", "targetNodeId",
 	}
 
 	nodes := serve(t, s.handleTopologyNodes, APIVersionPrefix+"/topology/nodes")

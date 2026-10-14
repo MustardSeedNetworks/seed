@@ -110,7 +110,6 @@
         "linkType",
         "status",
         "speedMbps",
-        "utilizationPct",
         "firstSeen",
         "lastSeen",
         "evidence"

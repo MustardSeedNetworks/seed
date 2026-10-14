@@ -40,16 +40,15 @@ func (r *TopologyRepository) UpsertLink(ctx context.Context, link *topology.Link
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO topology_links
 		  (id, source_node_id, target_node_id, source_interface, target_interface,
-		   link_type, status, speed_mbps, utilization_pct,
+		   link_type, status, speed_mbps,
 		   first_seen, last_seen, evidence_json)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			source_interface = excluded.source_interface,
 			target_interface = excluded.target_interface,
 			link_type = excluded.link_type,
 			status = excluded.status,
 			speed_mbps = excluded.speed_mbps,
-			utilization_pct = excluded.utilization_pct,
 			last_seen = excluded.last_seen,
 			evidence_json = excluded.evidence_json
 	`,
@@ -57,7 +56,6 @@ func (r *TopologyRepository) UpsertLink(ctx context.Context, link *topology.Link
 		toNullString(link.SourceInterface), toNullString(link.TargetInterface),
 		link.LinkType, link.Status,
 		nullableUint32(link.SpeedMbps),
-		nullableFloat(link.UtilizationPct),
 		link.FirstSeen.UTC().Format(time.RFC3339Nano),
 		link.LastSeen.UTC().Format(time.RFC3339Nano),
 		toNullString(link.EvidenceJSON),
@@ -75,7 +73,7 @@ func (r *TopologyRepository) UpsertLink(ctx context.Context, link *topology.Link
 func (r *TopologyRepository) ListLinks(ctx context.Context, nodeID string) ([]*topology.Link, error) {
 	const columns = `
 		SELECT id, source_node_id, target_node_id, source_interface, target_interface,
-		       link_type, status, speed_mbps, utilization_pct,
+		       link_type, status, speed_mbps,
 		       first_seen, last_seen, evidence_json
 		FROM topology_links`
 
@@ -110,7 +108,7 @@ func (r *TopologyRepository) ListLinks(ctx context.Context, nodeID string) ([]*t
 }
 
 // nullableUint32 returns [sql.NullInt32] with valid=false when v == 0.
-// SpeedMbps + UtilizationPct are nullable in the schema so the UI
+// SpeedMbps is nullable in the schema so the UI
 // can distinguish "no measurement yet" from "0 Mbps". Values above
 // [math.MaxInt32] clamp down — SQLite stores INTEGER as int64 in
 // the driver but the NullInt32 wrapper is signed, so clamping keeps
@@ -126,20 +124,12 @@ func nullableUint32(v uint32) sql.NullInt32 {
 	return sql.NullInt32{Int32: int32(v), Valid: true}
 }
 
-func nullableFloat(v float64) sql.NullFloat64 {
-	if v == 0 {
-		return sql.NullFloat64{}
-	}
-	return sql.NullFloat64{Float64: v, Valid: true}
-}
-
 func scanTopologyLink(scan func(...any) error) (*topology.Link, error) {
 	var (
 		link         topology.Link
 		srcIface     sql.NullString
 		tgtIface     sql.NullString
 		speedMbps    sql.NullInt32
-		utilization  sql.NullFloat64
 		evidenceJSON sql.NullString
 		firstSeenStr string
 		lastSeenStr  string
@@ -147,7 +137,7 @@ func scanTopologyLink(scan func(...any) error) (*topology.Link, error) {
 	err := scan(
 		&link.ID, &link.SourceNodeID, &link.TargetNodeID,
 		&srcIface, &tgtIface, &link.LinkType, &link.Status,
-		&speedMbps, &utilization,
+		&speedMbps,
 		&firstSeenStr, &lastSeenStr, &evidenceJSON,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -164,9 +154,6 @@ func scanTopologyLink(scan func(...any) error) (*topology.Link, error) {
 	}
 	if speedMbps.Valid && speedMbps.Int32 >= 0 {
 		link.SpeedMbps = uint32(speedMbps.Int32)
-	}
-	if utilization.Valid {
-		link.UtilizationPct = utilization.Float64
 	}
 	if evidenceJSON.Valid {
 		link.EvidenceJSON = evidenceJSON.String
