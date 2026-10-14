@@ -5,7 +5,7 @@
   "type": "module",
   "description": "The Seed WebUI - Network Diagnostics - Mustard Seed Networks",
   "engines": {
-    "node": "26.10.0",
+    "node": "26.11.1",
     "npm": "12.2.0"
   },
   "scripts": {
