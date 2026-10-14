@@ -30,12 +30,3 @@ import type { DeviceVulnerabilities, Vulnerability } from './generated/engine-di
 // attaches to every finding — `activelyExploited`, `ransomwareRelated`,
 // `requiredAction`, `dueDate` — so no view could name them (seed#2393).
 export type { DeviceVulnerabilities, Vulnerability };
-
-export interface VulnerabilityScannerConfig {
-  enabled: boolean;
-  cveDatabase: string;
-  nvdApiKey: string;
-  updateInterval: number;
-  severityThreshold: string;
-  maxConcurrent: number;
-}
