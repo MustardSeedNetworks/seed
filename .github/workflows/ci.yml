@@ -168,7 +168,7 @@ jobs:
           python3 scripts/check-initial-bundle.py
 
       - name: Upload built UI assets
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: frontend-dist
           path: internal/api/ui/
@@ -676,7 +676,7 @@ jobs:
       # and it is most wanted precisely when the gate has just failed.
       - name: Upload comparison
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: bench-comparison
           path: |
@@ -1715,7 +1715,7 @@ jobs:
         run: ./scripts/run-e2e.sh --project=${{ matrix.browser }} --grep-invert "@smoke" --shard=${{ matrix.shard }}/2
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: playwright-report-${{ matrix.browser }}-shard-${{ matrix.shard }}
@@ -1742,7 +1742,7 @@ jobs:
       # needed. #2178 could not be confirmed from CI for that reason: the
       # retry-pass threw away the only evidence explaining it.
       - name: Upload server logs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: server-logs-${{ matrix.browser }}-shard-${{ matrix.shard }}
@@ -1827,7 +1827,7 @@ jobs:
         run: ./scripts/run-e2e.sh --project=chromium --grep "@smoke"
 
       - name: Upload Playwright smoke report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: playwright-smoke-report
@@ -1851,7 +1851,7 @@ jobs:
 
       # always(), for the same reason as the sharded job above.
       - name: Upload smoke server logs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: smoke-server-logs
@@ -1973,7 +1973,7 @@ jobs:
         run: ./scripts/run-e2e.sh --project=webkit "$GREP_FLAG" "@smoke" --shard="$SHARD"
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: playwright-report-${{ matrix.artifact }}
@@ -1989,7 +1989,7 @@ jobs:
           budget: "0"
 
       - name: Upload server logs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: server-logs-${{ matrix.artifact }}
