@@ -5,6 +5,7 @@ import (
 	"errors"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -204,4 +205,42 @@ func (nopMetricsRepo) InterfaceUtilizationHistory(
 	context.Context, reporting.DateRange,
 ) ([]reporting.InterfaceUtilization, error) {
 	return nil, nil
+}
+
+// TestSchedulerSkipsDueReportsWithoutTheLicence: the route gate stops new
+// schedules once the licence drops below Pro, but a schedule saved before the
+// downgrade must stop firing too (#3050), and fire again once the feature is
+// back.
+func TestSchedulerSkipsDueReportsWithoutTheLicence(t *testing.T) {
+	cfg := testConfig()
+	templates := reporting.NewTemplateService(cfg)
+	require.NoError(t, templates.Load())
+
+	reports := &panicOnTypeReportRepo{}
+	gen := reporting.NewGeneratorService(cfg, reports, &nopExportRepo{}, templates,
+		reporting.NewAggregatorService(cfg, &nopMetricsRepo{}))
+
+	past := time.Now().Add(-time.Hour)
+	schedules := &memScheduleRepo{rows: []reporting.ScheduledReport{
+		{ID: "inv", Template: "inventory", Format: reporting.FormatHTML, Enabled: true, NextRun: &past},
+	}}
+
+	var licensed atomic.Bool
+	var checks atomic.Int32
+	ss := reporting.NewSchedulerService(cfg, schedules, gen,
+		reporting.WithTickInterval(5*time.Millisecond))
+	ss.SetEntitlement(func() bool {
+		checks.Add(1)
+		return licensed.Load()
+	})
+	require.NoError(t, ss.Load(context.Background()))
+	stop := runUntilCancelled(t, ss.Run)
+
+	// Several unlicensed ticks pass with the schedule due and nothing generated.
+	eventually(t, func() bool { return checks.Load() >= 5 })
+	require.Empty(t, reports.savedTypes())
+
+	licensed.Store(true)
+	eventually(t, func() bool { return len(reports.savedTypes()) > 0 })
+	stop()
 }

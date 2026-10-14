@@ -221,6 +221,15 @@ func (s *Server) initSSEAndLogging() {
 		)
 	}
 
+	// The cmd layer built the report scheduler before the server owned the
+	// licence manager; give it the check the schedule routes use (#3050). It
+	// reads the manager per tick, so a later activation or expiry applies.
+	if s.background != nil && s.background.Reporting != nil {
+		s.background.Reporting.Scheduler().SetEntitlement(func() bool {
+			return s.hasFeature("scheduled_reports")
+		})
+	}
+
 	// Wire up database persistence for logs if database is available
 	if db != nil {
 		s.logBroadcaster().SetDBWriter(app.NewLogWriter(db))
