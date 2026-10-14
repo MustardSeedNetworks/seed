@@ -22,7 +22,7 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 | `security`      | Security scans           | govulncheck (hard gate), gosec via golangci-lint (blocking gate; G103/G204/G304/G702 are SARIF-only via the standalone step), npm audit, gitleaks, Trivy |
 | `semgrep`       | SAST                     | Semgrep rules                                                                                                                                            |
 | `quality`       | Code quality gates       | banned vocabulary, file size ratchet, output escaping, sensitive files                                                                                   |
-| `c-lint`        | C lint (C23)             | clang-format, clang-tidy                                                                                                                                 |
+| `bridge-format` | Darwin bridge format     | clang-format on the cgo bridge headers (seed has no C)                                                                                                   |
 | `workflow-lint` | Workflow static analysis | actionlint; zizmor (blocks on High)                                                                                                                      |
 | `i18n`          | Internationalization     | Catalog completeness, no translated standard terms                                                                                                       |
 | `docs`          | Documentation            | Markdown lint (blocking, scoped to changed files)                                                                                                        |

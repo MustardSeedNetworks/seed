@@ -720,9 +720,8 @@ Commits + PRs are gated by automation, all configured in-repo:
   (conventional commits + per-project scope list). Husky runs it on
   every commit via `.husky/commit-msg`.
 - **Pre-commit checks** — `.pre-commit-config.yaml` runs on
-  `git commit`: secret detection (gitleaks), formatting (biome,
-  clang-format), shellcheck on `.sh` scripts, large-file checks,
-  schema validation.
+  `git commit`: secret detection (gitleaks), formatting (biome),
+  shellcheck on `.sh` scripts, large-file checks, schema validation.
 - **CI required checks** — `CI Complete`, `License Compliance Check`,
   and CodeQL (`Analyze (go)` + `Analyze (javascript-typescript)`)
   must pass before merge.
