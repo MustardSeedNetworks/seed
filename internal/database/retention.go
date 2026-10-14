@@ -36,6 +36,11 @@ const (
 	// defaultVoIPDays is the default retention period for VoIP stream
 	// windows (3 months, as metrics).
 	defaultVoIPDays = 90
+
+	// defaultRawIngestDays is the default retention period for raw SNMP
+	// observations and listener events (3 months, as the metrics derived
+	// from them).
+	defaultRawIngestDays = 90
 )
 
 // SQL query fragment constants.
@@ -87,6 +92,14 @@ type RetentionPolicy struct {
 
 	// VoIPDays is how many days to keep VoIP stream windows (0 = forever)
 	VoIPDays int
+
+	// SNMPObservationDays is how many days to keep raw SNMP observations
+	// (0 = forever)
+	SNMPObservationDays int
+
+	// ListenerEventDays is how many days to keep syslog, trap and other
+	// listener events (0 = forever)
+	ListenerEventDays int
 }
 
 // DefaultRetentionPolicy returns the default retention policy.
@@ -100,6 +113,8 @@ func DefaultRetentionPolicy() RetentionPolicy {
 		AnomalyResolvedDays: defaultAnomalyResolvedDays,
 		MicroburstDays:      defaultMicroburstDays,
 		VoIPDays:            defaultVoIPDays,
+		SNMPObservationDays: defaultRawIngestDays,
+		ListenerEventDays:   defaultRawIngestDays,
 	}
 }
 
@@ -115,6 +130,8 @@ type CleanupResult struct {
 	AnomalyRollupsDeleted    int64
 	MicroburstsDeleted       int64
 	VoIPStreamsDeleted       int64
+	SNMPObservationsDeleted  int64
+	ListenerEventsDeleted    int64
 	Duration                 time.Duration
 }
 
@@ -167,6 +184,8 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 		{policy.AnomalyResolvedDays, db.cleanupResolvedAnomalies, "resolved anomalies"},
 		{policy.MicroburstDays, db.Microbursts().DeleteOlderThan, "microbursts"},
 		{policy.VoIPDays, db.VoIPStreams().DeleteOlderThan, "voip streams"},
+		{policy.SNMPObservationDays, db.SNMPObservations().DeleteOlderThan, "snmp observations"},
+		{policy.ListenerEventDays, db.ListenerEvents().DeleteOlderThan, "listener events"},
 	}
 
 	results := make([]int64, len(tasks))
@@ -186,6 +205,8 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 	result.AnomaliesResolvedDeleted = results[5]
 	result.MicroburstsDeleted = results[6]
 	result.VoIPStreamsDeleted = results[7]
+	result.SNMPObservationsDeleted = results[8]
+	result.ListenerEventsDeleted = results[9]
 	result.Duration = time.Since(start)
 
 	return result, nil
