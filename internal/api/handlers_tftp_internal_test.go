@@ -56,15 +56,15 @@ func newTFTPTestServer(t *testing.T, trial bool) *Server {
 	_ = probe.Close()
 
 	dir := t.TempDir()
-	s.tftpAudit = app.NewTFTPAudit(s.db)
-	s.tftpSessions = tftp.NewManager(tftp.Config{
+	s.tftp.audit = app.NewTFTPAudit(s.db)
+	s.tftp.sessions = tftp.NewManager(tftp.Config{
 		Dir:        filepath.Join(dir, "tftp"),
 		UploadDir:  filepath.Join(dir, "tftp-incoming"),
 		Port:       port,
 		OnTransfer: s.auditTFTPTransfer,
 		OnStop:     s.auditTFTPStop,
 	})
-	t.Cleanup(s.tftpSessions.Close)
+	t.Cleanup(s.tftp.sessions.Close)
 	s.routes = s.newRegistrar()
 	s.routes.RegisterAll(s.tftpRoutes())
 	return s
@@ -137,7 +137,7 @@ func TestTFTPSessionGates(t *testing.T) {
 			t.Errorf("%s: %d, want %d (%s)", c.name, rec.Code, c.want, rec.Body.String())
 		}
 	}
-	if pro.tftpSessions.Status().Running {
+	if pro.tftp.sessions.Status().Running {
 		t.Fatal("a refused request started a session")
 	}
 

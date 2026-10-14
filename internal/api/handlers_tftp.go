@@ -72,8 +72,8 @@ type tftpStartInput struct {
 // received into <data dir>/tftp-incoming. It starts nothing.
 func (s *Server) initTFTP() {
 	dataDir := paths.Resolve(paths.ModeAuto).DataDir
-	s.tftpAudit = app.NewTFTPAudit(s.db)
-	s.tftpSessions = tftp.NewManager(tftp.Config{
+	s.tftp.audit = app.NewTFTPAudit(s.db)
+	s.tftp.sessions = tftp.NewManager(tftp.Config{
 		Dir:        filepath.Join(dataDir, "tftp"),
 		UploadDir:  filepath.Join(dataDir, "tftp-incoming"),
 		OnTransfer: s.auditTFTPTransfer,
@@ -83,7 +83,7 @@ func (s *Server) initTFTP() {
 }
 
 func (s *Server) handleTFTPSession(w http.ResponseWriter, r *http.Request) {
-	if s.tftpSessions == nil {
+	if s.tftp.sessions == nil {
 		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "TFTP is unavailable")
 		return
 	}
@@ -91,8 +91,8 @@ func (s *Server) handleTFTPSession(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		s.startTFTP(w, r)
 	case http.MethodDelete:
-		stopping := s.tftpSessions.Status()
-		if err := s.tftpSessions.Stop(); err != nil {
+		stopping := s.tftp.sessions.Status()
+		if err := s.tftp.sessions.Stop(); err != nil {
 			writeError(w, r, http.StatusConflict, ErrCodeConflict, err.Error())
 			return
 		}
@@ -104,9 +104,9 @@ func (s *Server) handleTFTPSession(w http.ResponseWriter, r *http.Request) {
 			UserAgent: r.UserAgent(),
 			Detail:    map[string]string{"reason": string(tftp.StopOperator)},
 		})
-		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, s.tftpSessions.Status())
+		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, s.tftp.sessions.Status())
 	default:
-		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, s.tftpSessions.Status())
+		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, s.tftp.sessions.Status())
 	}
 }
 
@@ -124,7 +124,7 @@ func (s *Server) startTFTP(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
 		return
 	}
-	status, err := s.tftpSessions.Start(tftp.Options{
+	status, err := s.tftp.sessions.Start(tftp.Options{
 		Interface:   in.Interface,
 		AllowUpload: in.AllowUpload,
 		AllowFrom:   allowFrom,
@@ -174,6 +174,13 @@ func parseTFTPAllowFrom(in []string) ([]netip.Prefix, error) {
 	return out, nil
 }
 
+// tftpService holds the admin-started TFTP session and its audit trail.
+type tftpService struct {
+	sessions *tftp.Manager
+	audit    func(context.Context, tftp.AuditEvent) error
+	failures tftpFailureGate // one audit row per failing device per window
+}
+
 // tftpFailureGate decides which failed or refused transfers reach the audit
 // log: in each window, the first from a device and at most
 // tftpMaxFailureRows in all. A refused request's source may be spoofed, so the
@@ -218,7 +225,7 @@ func (g *tftpFailureGate) reset() {
 func (s *Server) auditTFTPTransfer(t tftp.Transfer) {
 	detail := map[string]any{"bytes": t.Bytes}
 	if t.Err != nil {
-		audit, suppressed := s.tftpFailures.admit(t.Remote, time.Now())
+		audit, suppressed := s.tftp.failures.admit(t.Remote, time.Now())
 		if suppressed > 0 {
 			logging.GetLogger().Warn("tftp failures not audited", "event", "tftp.suppressed",
 				"count", suppressed, "window", tftpFailureWindow.String())
@@ -241,7 +248,7 @@ func (s *Server) auditTFTPTransfer(t tftp.Transfer) {
 // auditTFTPStop records the stops no admin asked for; the DELETE handler
 // records an operator's stop with their name.
 func (s *Server) auditTFTPStop(st tftp.Status, reason tftp.StopReason) {
-	s.tftpFailures.reset()
+	s.tftp.failures.reset()
 	if reason == tftp.StopOperator {
 		return
 	}
@@ -258,10 +265,10 @@ func (s *Server) auditTFTP(ctx context.Context, e tftp.AuditEvent) {
 	logger := logging.FromContext(ctx)
 	logger.InfoContext(ctx, "tftp audit", "event", "tftp."+e.Action, "resource", e.Resource,
 		"remote", e.Remote, "user", e.User)
-	if s.tftpAudit == nil {
+	if s.tftp.audit == nil {
 		return
 	}
-	if err := s.tftpAudit(ctx, e); err != nil {
+	if err := s.tftp.audit(ctx, e); err != nil {
 		logger.WarnContext(ctx, "tftp audit write failed", "error", err)
 	}
 }

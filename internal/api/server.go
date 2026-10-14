@@ -78,7 +78,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/settings/management"
 	"github.com/MustardSeedNetworks/seed/internal/settings/persistence"
 	"github.com/MustardSeedNetworks/seed/internal/system"
-	"github.com/MustardSeedNetworks/seed/internal/tftp"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/history"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifstats"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
@@ -237,9 +236,7 @@ type Server struct {
 	jobRunner    *jobs.Runner            // unified async job runner (ADR-0005)
 	jobIdemp     jobIdempotencyStore     // Idempotency-Key dedup for POST /jobs
 	captures     *packetcapture.Store    // packet-capture job files, downloaded by ID
-	tftpSessions *tftp.Manager           // admin-started TFTP session (P-D4)
-	tftpAudit    func(context.Context, tftp.AuditEvent) error
-	tftpFailures tftpFailureGate // one audit row per failing device per window
+	tftp         tftpService             // admin-started TFTP session (P-D4)
 
 	// --- Database ---
 	dbConn          *database.DB
