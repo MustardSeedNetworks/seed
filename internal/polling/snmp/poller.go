@@ -159,12 +159,15 @@ func (p *Poller) recordChainStart() {
 	p.inflightCount++
 }
 
-// recordChainEnd stamps the completion time + error and decrements
-// inflight.
-func (p *Poller) recordChainEnd(err error) {
+// recordChainEnd decrements inflight and, unless the chain was abandoned,
+// stamps its completion time + error.
+func (p *Poller) recordChainEnd(ctx context.Context, err error) {
 	p.statusMu.Lock()
 	defer p.statusMu.Unlock()
 	p.inflightCount--
+	if abandoned(ctx, err) {
+		return
+	}
 	p.lastChainAt = time.Now().UTC()
 	if err != nil {
 		p.lastChainErr = err.Error()
@@ -325,7 +328,7 @@ func (p *Poller) runChain(ctx context.Context, target *polling.Target) {
 
 	wt := wireTarget(target)
 	var firstErr error
-	defer func() { p.recordChainEnd(firstErr) }()
+	defer func() { p.recordChainEnd(ctx, firstErr) }()
 
 	// Resolve before running any collector. A target whose credentials cannot be
 	// decrypted is misconfigured, and polling it unauthenticated would either
@@ -368,6 +371,9 @@ func (p *Poller) runChain(ctx context.Context, target *polling.Target) {
 // normal chain exit and the credential-failure path, so an unpollable target
 // surfaces its reason to the operator instead of just going quiet.
 func (p *Poller) recordPollOutcome(ctx context.Context, target *polling.Target, pollErr error) {
+	if abandoned(ctx, pollErr) {
+		return
+	}
 	status := pollStatusOK
 	errMsg := ""
 	if pollErr != nil {
@@ -380,6 +386,14 @@ func (p *Poller) recordPollOutcome(ctx context.Context, target *polling.Target, 
 		p.logger.WarnContext(ctx, "snmp poller: update last_poll failed",
 			"target_id", target.ID, "error", updErr)
 	}
+}
+
+// abandoned reports whether a poll failed because its context was cancelled:
+// the poller stopping, or the operator's "Test target" request going away.
+// That failure says nothing about the device, so it is not the target's
+// outcome (seed#3204). A deadline is: the device was too slow to answer.
+func abandoned(ctx context.Context, pollErr error) bool {
+	return pollErr != nil && errors.Is(ctx.Err(), context.Canceled)
 }
 
 // credentialsForTarget resolves the decrypted credentials for a polling target.

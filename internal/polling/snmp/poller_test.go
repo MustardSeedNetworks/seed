@@ -397,8 +397,8 @@ func TestPoller_PollNow_RecordsOutcomeAfterDeadline(t *testing.T) {
 	if err := p.Start(context.Background()); err != nil {
 		t.Fatalf("Start: %v", err)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+	defer cancel()
 
 	if err := p.PollNow(ctx, &polling.Target{
 		ID: "t-1", CredentialsID: "cred-1", CollectorChain: []string{"sys_info"},
@@ -411,6 +411,36 @@ func TestPoller_PollNow_RecordsOutcomeAfterDeadline(t *testing.T) {
 	}
 	if got := storage.updates[0]; got.status != "error" || got.ctxErr != nil {
 		t.Errorf("update = %+v, want status error written under a live context", got)
+	}
+}
+
+// A poll cancelled outright — Stop cancelling the scheduler, or the operator's
+// request going away — was abandoned and says nothing about the device. It
+// must not leave "context canceled" as the target's last error or the
+// engine's (seed#3204).
+func TestPoller_RunChain_CancelledChainRecordsNothing(t *testing.T) {
+	t.Parallel()
+	storage := &fakeStorage{}
+	p := snmp.NewPoller(storage, newFakeScheduler(), silentLogger())
+	p.SetCredentialResolver(testResolver(t))
+	p.RegisterCollector(&stubCollector{name: "sys_info", err: context.Canceled})
+	if err := p.Start(context.Background()); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	if err := p.PollNow(ctx, &polling.Target{
+		ID: "t-1", CredentialsID: "cred-1", CollectorChain: []string{"sys_info"},
+	}); err != nil {
+		t.Fatalf("PollNow: %v", err)
+	}
+
+	if len(storage.updates) != 0 {
+		t.Errorf("updates = %+v, want none for an abandoned poll", storage.updates)
+	}
+	if st := p.Status(); !st.LastTickAt.IsZero() || st.LastError != "" || st.Inflight != 0 {
+		t.Errorf("status = %+v, want no tick, no error, nothing in flight", st)
 	}
 }
 
