@@ -7822,9 +7822,21 @@ components:
         SSOProviderInfo:
             additionalProperties: false
             properties:
+                clientId:
+                    type: string
                 enabled:
                     type: boolean
+                hasClientSecret:
+                    type: boolean
                 name:
+                    type: string
+                redirectUrl:
+                    type: string
+                scopes:
+                    items:
+                        type: string
+                    type: array
+                tenantId:
                     type: string
             required:
                 - name

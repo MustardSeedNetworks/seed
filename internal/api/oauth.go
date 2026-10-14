@@ -464,10 +464,18 @@ func GetSSOProviderConfig(cfg *config.Config, name string) *config.SSOProviderCo
 	return nil
 }
 
-// SSOProviderInfo provides public info about an SSO provider.
+// SSOProviderInfo is one provider's stored settings as the settings page
+// edits them. The secret itself never leaves the server; HasClientSecret
+// tells the page whether one is stored, and an update that leaves the secret
+// empty keeps it.
 type SSOProviderInfo struct {
-	Name    string `json:"name"`
-	Enabled bool   `json:"enabled"`
+	Name            string   `json:"name"`
+	Enabled         bool     `json:"enabled"`
+	ClientID        string   `json:"clientId,omitempty"`
+	HasClientSecret bool     `json:"hasClientSecret,omitempty"`
+	RedirectURL     string   `json:"redirectUrl,omitempty"`
+	TenantID        string   `json:"tenantId,omitempty"`
+	Scopes          []string `json:"scopes,omitempty"`
 }
 
 // SSOSettingsResponse lists each configured SSO provider and whether it can
@@ -488,8 +496,13 @@ func (s *Server) handleSSOSettings(w http.ResponseWriter, r *http.Request) {
 	providers := make([]SSOProviderInfo, 0, len(s.config.Auth.SSO.Providers))
 	for _, p := range s.config.Auth.SSO.Providers {
 		providers = append(providers, SSOProviderInfo{
-			Name:    p.Name,
-			Enabled: p.Enabled && p.ClientID != "",
+			Name:            p.Name,
+			Enabled:         p.Enabled && p.ClientID != "",
+			ClientID:        p.ClientID,
+			HasClientSecret: p.ClientSecret != "",
+			RedirectURL:     p.RedirectURL,
+			TenantID:        p.TenantID,
+			Scopes:          p.Scopes,
 		})
 	}
 
@@ -508,6 +521,8 @@ type SSOUpdateRequest struct {
 }
 
 // updateProviderConfig updates the provider configuration in the config.
+// An empty ClientSecret keeps the stored one: the settings page is never sent
+// the secret, so it cannot send it back (#3280).
 // Returns true if the provider was found and updated.
 func (s *Server) updateProviderConfig(req *SSOUpdateRequest) bool {
 	for i := range s.config.Auth.SSO.Providers {
@@ -516,7 +531,9 @@ func (s *Server) updateProviderConfig(req *SSOUpdateRequest) bool {
 		}
 		s.config.Auth.SSO.Providers[i].Enabled = req.Enabled
 		s.config.Auth.SSO.Providers[i].ClientID = req.ClientID
-		s.config.Auth.SSO.Providers[i].ClientSecret = req.ClientSecret
+		if req.ClientSecret != "" {
+			s.config.Auth.SSO.Providers[i].ClientSecret = req.ClientSecret
+		}
 		s.config.Auth.SSO.Providers[i].RedirectURL = req.RedirectURL
 		s.config.Auth.SSO.Providers[i].TenantID = req.TenantID
 		s.config.Auth.SSO.Providers[i].Scopes = req.Scopes

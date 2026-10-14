@@ -84,7 +84,8 @@ func TestSSOSettingsResponseShape(t *testing.T) {
 	w := serve(t, s.handleSSOSettings, "/api/v1/sso/settings")
 
 	require.JSONEq(t,
-		`{"providers":[{"name":"google","enabled":true},{"name":"github","enabled":false}]}`,
+		`{"providers":[{"name":"google","enabled":true,"clientId":"id","hasClientSecret":true},`+
+			`{"name":"github","enabled":false}]}`,
 		w.Body.String())
 }
 

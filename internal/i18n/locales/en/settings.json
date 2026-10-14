@@ -431,7 +431,7 @@
       "enabled": "Enabled",
       "clientId": "Client ID",
       "clientSecret": "Client secret",
-      "clientSecretMask": "(stored — leave blank to keep current)",
+      "clientSecretMask": "A secret is stored; type to replace it",
       "redirectUrl": "Redirect URL",
       "redirectUrlHint": "Paste this into your identity provider's allowed redirect URLs.",
       "tenantId": "Tenant ID",

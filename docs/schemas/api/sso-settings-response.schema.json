@@ -10,6 +10,24 @@
         },
         "enabled": {
           "type": "boolean"
+        },
+        "clientId": {
+          "type": "string"
+        },
+        "hasClientSecret": {
+          "type": "boolean"
+        },
+        "redirectUrl": {
+          "type": "string"
+        },
+        "tenantId": {
+          "type": "string"
+        },
+        "scopes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "additionalProperties": false,
