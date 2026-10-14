@@ -50,7 +50,7 @@ function vulnSettings(enabled: boolean): VulnerabilitySettings {
   return {
     enabled,
     cveDatabase: 'nvd',
-    nvdApiKey: '',
+    hasNvdApiKey: false,
     updateInterval: 86400,
     severityThreshold: 'medium',
     maxConcurrent: 5,

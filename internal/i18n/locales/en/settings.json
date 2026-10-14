@@ -388,7 +388,10 @@
   },
   "vulnerability": {
     "apiKey": "NVD API Key",
+    "apiKeyClear": "Remove key",
     "apiKeyPlaceholder": "Paste NVD API key",
+    "apiKeyStored": "An NVD API key is stored.",
+    "apiKeyStoredPlaceholder": "Type a new key to replace the stored one",
     "autoScan": "Auto-scan",
     "autoScanDesc": "Periodically scan discovered devices for known CVEs.",
     "concurrentDesc": "Number of devices to scan in parallel.",

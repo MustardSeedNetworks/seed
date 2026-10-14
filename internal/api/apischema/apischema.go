@@ -198,6 +198,7 @@ func Targets() []Target {
 		{&api.NVDAPIKeyValidateResponse{}, "nvd-api-key-validate-response.schema.json"},
 		{&api.VulnerabilityStatusResponse{}, "vulnerability-status-response.schema.json"},
 		{&api.VulnerabilitySettings{}, "vulnerability-settings.schema.json"},
+		{&api.VulnerabilitySettingsUpdate{}, "vulnerability-settings-update.schema.json"},
 		{&api.VulnerabilityResultsResponse{}, "vulnerability-results-response.schema.json"},
 		{&api.VulnFindingsResponse{}, "vuln-findings-response.schema.json"},
 		{&api.VulnFindingStatusRequest{}, "vuln-finding-status-request.schema.json"},

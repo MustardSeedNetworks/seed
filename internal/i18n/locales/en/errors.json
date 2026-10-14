@@ -206,6 +206,7 @@
   },
   "vulnerability": {
     "invalidApiKey": "Invalid API key",
+    "keyAndClear": "Send a new NVD API key or clear the stored one, not both",
     "validateFailed": "Failed to validate API key",
     "invalidIp": "Invalid IP address",
     "missingIpParam": "The ip query parameter is required",

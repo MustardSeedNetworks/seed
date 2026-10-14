@@ -96,11 +96,13 @@ func (s *Service) UpdateSNMP(in SNMPUpdate) error {
 // ---------------------------------------------------------------------------
 
 // VulnUpdate is the vulnerability-scanner settings write model: every
-// operator-settable field, written as a whole.
+// operator-settable field, written as a whole, except the NVD API key. An
+// empty NVDAPIKey keeps the stored key; ClearNVDAPIKey removes it.
 type VulnUpdate struct {
 	Enabled           bool
 	CVEDatabase       string
 	NVDAPIKey         string
+	ClearNVDAPIKey    bool
 	UpdateInterval    int
 	SeverityThreshold string
 	MaxConcurrent     int
@@ -128,7 +130,12 @@ func (s *Service) UpdateVuln(in VulnUpdate) error {
 		v := &c.Security.VulnerabilityScanning
 		v.Enabled = in.Enabled
 		v.CVEDatabase = in.CVEDatabase
-		v.NVDAPIKey = in.NVDAPIKey
+		switch {
+		case in.ClearNVDAPIKey:
+			v.NVDAPIKey = ""
+		case in.NVDAPIKey != "":
+			v.NVDAPIKey = in.NVDAPIKey
+		}
 		v.UpdateInterval = in.UpdateInterval
 		v.SeverityThreshold = in.SeverityThreshold
 		v.MaxConcurrent = in.MaxConcurrent

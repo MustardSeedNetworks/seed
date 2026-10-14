@@ -10272,6 +10272,42 @@ components:
                     type: string
                 enabled:
                     type: boolean
+                hasNvdApiKey:
+                    type: boolean
+                maxConcurrent:
+                    type: integer
+                severityThreshold:
+                    enum:
+                        - low
+                        - medium
+                        - high
+                        - critical
+                    type: string
+                updateInterval:
+                    type: integer
+            required:
+                - enabled
+                - cveDatabase
+                - hasNvdApiKey
+                - updateInterval
+                - severityThreshold
+                - maxConcurrent
+                - autoScan
+            type: object
+        VulnerabilitySettingsUpdate:
+            additionalProperties: false
+            properties:
+                autoScan:
+                    type: boolean
+                clearNvdApiKey:
+                    type: boolean
+                cveDatabase:
+                    enum:
+                        - nvd
+                        - local
+                    type: string
+                enabled:
+                    type: boolean
                 maxConcurrent:
                     type: integer
                 nvdApiKey:
@@ -10288,7 +10324,6 @@ components:
             required:
                 - enabled
                 - cveDatabase
-                - nvdApiKey
                 - updateInterval
                 - severityThreshold
                 - maxConcurrent
@@ -16116,7 +16151,7 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/VulnerabilitySettings'
+                            $ref: '#/components/schemas/VulnerabilitySettingsUpdate'
                 required: true
             responses:
                 "200":
