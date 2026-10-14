@@ -953,9 +953,9 @@ func TestTesterClose(t *testing.T) {
 	// Close should not panic.
 	tester.Close()
 
-	// Verify pinger is nil after close.
-	if tester.TesterGetPinger() != nil {
-		t.Error("expected pinger to be nil after Close")
+	// Verify both pingers are nil after close.
+	if tester.TesterGetPinger() != nil || tester.TesterGetPinger6() != nil {
+		t.Error("expected both pingers to be nil after Close")
 	}
 
 	// Multiple closes should not panic.

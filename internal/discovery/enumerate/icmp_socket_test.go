@@ -74,3 +74,25 @@ func TestPingerReachesLoopbackInWhicheverModeItOpened(t *testing.T) {
 		t.Fatalf("loopback unreachable (privileged=%v): the echo was sent but the reply never matched", p.Privileged())
 	}
 }
+
+// seed#3251: the pinger opened only ICMPv4 sockets, so the IPv6 gateway card
+// read 100 % loss for every router. An ICMPv6 pinger must make the round trip
+// in whichever mode it opened, as the IPv4 one does above.
+func TestICMPv6PingerReachesLoopback(t *testing.T) {
+	p, err := enumerate.NewICMPv6Pinger(2 * time.Second)
+	if err != nil {
+		t.Skipf("this host allows no ICMPv6 socket to this process: %v", err)
+	}
+	defer func() { _ = p.Close() }()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	res := p.Ping(ctx, "::1")
+	if res.Error != nil {
+		t.Fatalf("Ping(::1): %v (privileged=%v)", res.Error, p.Privileged())
+	}
+	if !res.Reachable {
+		t.Fatalf("::1 unreachable (privileged=%v): the echo was sent but the reply never matched", p.Privileged())
+	}
+}

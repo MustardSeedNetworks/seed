@@ -175,7 +175,11 @@ func extractIPv6Gateway(rm *route.RouteMessage, skipLinkLocal bool) string {
 	if skipLinkLocal && ip.IsLinkLocalUnicast() {
 		return ""
 	}
-	return ip.String()
+	var iface string
+	if ifi, err := net.InterfaceByIndex(rm.Index); err == nil {
+		iface = ifi.Name
+	}
+	return withZone(ip.String(), iface)
 }
 
 // detectGatewayIPv6Platform is the platform-specific IPv6 gateway detection.

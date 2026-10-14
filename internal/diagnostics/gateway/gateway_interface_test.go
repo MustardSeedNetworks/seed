@@ -136,9 +136,9 @@ func TestIPv6GatewayForInterfaceScoping(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name:  "the selected interface gets its own router, not the system default",
+			name:  "the selected interface gets its own router, zoned to that link",
 			iface: "feth0",
-			want:  "fe80::2",
+			want:  "fe80::2%feth0",
 		},
 		{
 			name:    "an interface with no IPv6 default route has no gateway",

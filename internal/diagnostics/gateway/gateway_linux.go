@@ -37,19 +37,17 @@ func detectGatewayIPv6Netlink() (string, error) {
 
 	for i := range routes {
 		route := &routes[i]
-		// Default route has nil Dst (or ::/0).
-		if route.Dst == nil && route.Gw != nil {
-			// Ensure it's a valid IPv6 address (not IPv4-mapped).
-			if ip := route.Gw; ip != nil && ip.To4() == nil {
-				return ip.String(), nil
-			}
+		// Default route has nil Dst (or ::/0); the next hop must be a real
+		// IPv6 address, not IPv4-mapped.
+		isDefault := route.Dst == nil || route.Dst.String() == "::/0"
+		if !isDefault || route.Gw == nil || route.Gw.To4() != nil {
+			continue
 		}
-		// Also check for explicit ::/0 destination.
-		if route.Dst != nil && route.Dst.String() == "::/0" && route.Gw != nil {
-			if ip := route.Gw; ip != nil && ip.To4() == nil {
-				return ip.String(), nil
-			}
+		var iface string
+		if link, linkErr := netlink.LinkByIndex(route.LinkIndex); linkErr == nil {
+			iface = link.Attrs().Name
 		}
+		return withZone(route.Gw.String(), iface), nil
 	}
 
 	return "", ErrNoGateway
