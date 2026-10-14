@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.257.4](https://github.com/MustardSeedNetworks/seed/compare/v0.257.3...v0.257.4) (2026-10-14)
+
+
+### Bug Fixes
+
+* **gateway:** ping IPv6 gateways over ICMPv6, link-local ones with their zone ([#3400](https://github.com/MustardSeedNetworks/seed/issues/3400)) ([96d5afc](https://github.com/MustardSeedNetworks/seed/commit/96d5afc011e895137ef0d2f5ec21575a199164cd)), closes [#3251](https://github.com/MustardSeedNetworks/seed/issues/3251)
+* **snmp:** send each v3 credential at its own security level ([#3398](https://github.com/MustardSeedNetworks/seed/issues/3398)) ([b4b081b](https://github.com/MustardSeedNetworks/seed/commit/b4b081b03442c62e04d7b8a7b8629e240fd247db)), closes [#3053](https://github.com/MustardSeedNetworks/seed/issues/3053)
+* **sso:** keep the stored client secret when a provider is re-saved ([#3401](https://github.com/MustardSeedNetworks/seed/issues/3401)) ([642d0a6](https://github.com/MustardSeedNetworks/seed/commit/642d0a6d05dd0cf691e2d3c6e50fe339029fb38e)), closes [#3280](https://github.com/MustardSeedNetworks/seed/issues/3280)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3395](https://github.com/MustardSeedNetworks/seed/issues/3395)) ([76ba193](https://github.com/MustardSeedNetworks/seed/commit/76ba19339535d5291a092c005471970f84e149ea))
+* **deps:** lock file maintenance ([#3399](https://github.com/MustardSeedNetworks/seed/issues/3399)) ([7a99639](https://github.com/MustardSeedNetworks/seed/commit/7a996395b213bb2376702959445259bfd6a0284b))
+* **deps:** update node.js to v26.11.1 ([#3397](https://github.com/MustardSeedNetworks/seed/issues/3397)) ([167e73b](https://github.com/MustardSeedNetworks/seed/commit/167e73b973214070290a6809859a44b55665dd7c))
+
 ## [0.257.3](https://github.com/MustardSeedNetworks/seed/compare/v0.257.2...v0.257.3) (2026-10-13)
 
 
