@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -101,48 +102,50 @@ func (p *LocalProvider) loadDatabase() error {
 		}
 	}
 
-	// Index vulnerabilities by CPE
 	for i := range db.CVEs {
-		cve := &db.CVEs[i]
-		vuln := Vulnerability{
-			CVEID:       cve.ID,
-			Description: cve.Description,
-			Severity:    cve.Severity,
-			Score:       cve.CVSSScore,
-			References:  cve.References,
-		}
-
-		// Parse published date
-		if cve.Published != "" {
-			if t, parseErr := time.Parse(time.RFC3339, cve.Published); parseErr == nil {
-				vuln.Published = t
-			}
-		}
-
-		// Index by each CPE
-		for _, cpe := range cve.CPEs {
-			normalizedCPE := strings.ToLower(cpe)
-			p.vulnerabilities[normalizedCPE] = append(p.vulnerabilities[normalizedCPE], vuln)
-		}
-
-		// Also index by vendor:product:version for SearchByProduct
-		if cve.Vendor != "" && cve.Product != "" {
-			for _, ver := range cve.Versions {
-				key := fmt.Sprintf(
-					"%s:%s:%s",
-					strings.ToLower(cve.Vendor),
-					strings.ToLower(cve.Product),
-					strings.ToLower(ver),
-				)
-				p.vulnerabilities[key] = append(p.vulnerabilities[key], vuln)
-			}
-			// Also index without version for broader matches
-			key := fmt.Sprintf("%s:%s:*", strings.ToLower(cve.Vendor), strings.ToLower(cve.Product))
-			p.vulnerabilities[key] = append(p.vulnerabilities[key], vuln)
-		}
+		p.index(&db.CVEs[i])
 	}
 
 	return nil
+}
+
+// index adds one database entry under each of its CPEs and its
+// vendor:product:version keys. The caller holds p.mu.
+func (p *LocalProvider) index(cve *localCVEEntry) {
+	vuln := Vulnerability{
+		CVEID:       cve.ID,
+		Description: cve.Description,
+		Severity:    cve.Severity,
+		Score:       cve.CVSSScore,
+		References:  cve.References,
+	}
+
+	// Parse published date
+	if cve.Published != "" {
+		if t, parseErr := time.Parse(time.RFC3339, cve.Published); parseErr == nil {
+			vuln.Published = t
+		}
+	}
+
+	// Index by each CPE
+	for _, cpe := range cve.CPEs {
+		normalizedCPE := strings.ToLower(cpe)
+		p.vulnerabilities[normalizedCPE] = append(p.vulnerabilities[normalizedCPE], vuln)
+	}
+
+	// Index by vendor:product:version for SearchByProduct. An entry that
+	// lists no versions affects every version, so it goes under the
+	// wildcard key; one that lists versions affects only those.
+	if cve.Vendor != "" && cve.Product != "" {
+		versions := cve.Versions
+		if len(versions) == 0 {
+			versions = []string{"*"}
+		}
+		for _, ver := range versions {
+			key := productKey(cve.Vendor, cve.Product, ver)
+			p.vulnerabilities[key] = append(p.vulnerabilities[key], vuln)
+		}
+	}
 }
 
 // SearchByCPE searches for vulnerabilities affecting a CPE string.
@@ -189,28 +192,18 @@ func (p *LocalProvider) SearchByProduct(
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
-	// Try exact match first
-	key := fmt.Sprintf(
-		"%s:%s:%s",
-		strings.ToLower(vendor),
-		strings.ToLower(product),
-		strings.ToLower(version),
-	)
-	if vulns, ok := p.vulnerabilities[key]; ok {
-		result := make([]Vulnerability, len(vulns))
-		copy(result, vulns)
-		return result, nil
+	exact := p.vulnerabilities[productKey(vendor, product, version)]
+	every := p.vulnerabilities[productKey(vendor, product, "*")]
+	if len(exact)+len(every) == 0 {
+		return nil, nil
 	}
+	return slices.Concat(exact, every), nil
+}
 
-	// Try wildcard version match
-	wildcardKey := fmt.Sprintf("%s:%s:*", strings.ToLower(vendor), strings.ToLower(product))
-	if vulns, ok := p.vulnerabilities[wildcardKey]; ok {
-		result := make([]Vulnerability, len(vulns))
-		copy(result, vulns)
-		return result, nil
-	}
-
-	return nil, nil
+// productKey is the SearchByProduct index key; version "*" holds the entries
+// that list no versions.
+func productKey(vendor, product, version string) string {
+	return strings.ToLower(vendor) + ":" + strings.ToLower(product) + ":" + strings.ToLower(version)
 }
 
 // UpdateDatabase updates the local CVE database from a remote source.
