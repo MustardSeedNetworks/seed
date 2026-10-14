@@ -868,7 +868,9 @@ jobs:
       # gitleaks-action requires a paid licence for organization repos. Use the
       # MIT-licensed gitleaks CLI directly instead — same engine, same config,
       # and identical to the version pinned in .pre-commit-config.yaml. Scans
-      # full history (the security job checks out with fetch-depth: 0).
+      # the full history of HEAD only: fetch-depth: 0 also fetches every other
+      # branch, and gitleaks' default --all would fail this PR on another
+      # branch's finding (#2991).
       - name: Run gitleaks
         env:
           GITLEAKS_VERSION: "8.30.0"
@@ -881,7 +883,8 @@ jobs:
             "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
           echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum -c -
           tar -xzf gitleaks.tar.gz gitleaks
-          ./gitleaks git . --config .gitleaks.toml --redact --no-banner --exit-code 1
+          ./gitleaks git . --config .gitleaks.toml --redact --no-banner --exit-code 1 \
+            --log-opts="--full-history HEAD"
 
       - name: Run Trivy vulnerability scanner
         # exit-code is 0 here so the SARIF always gets written; we still
