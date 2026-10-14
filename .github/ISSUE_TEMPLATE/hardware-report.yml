@@ -184,7 +184,7 @@ body:
         - [x] Link status detection
         - [x] Cable diagnostics (TDR)
         - [x] Wi-Fi signal monitoring
-        - [ ] Wi-Fi site surveys
+        - [ ] Wi-Fi neighbor AP scan
         - [x] LLDP/CDP packet capture
         - [x] Network discovery (ARP/ICMP)
     validations:
