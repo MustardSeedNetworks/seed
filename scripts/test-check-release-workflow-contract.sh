@@ -31,6 +31,32 @@ PY
   fi
 }
 
+# assert_config_rejected mutates a release config the workflow depends on and
+# hands it to the checker through that config's path override ($2).
+assert_config_rejected() {
+  local name="$1"
+  local var="$2"
+  local source="$3"
+  local fixture="$fixture_dir/$name.${source##*.}"
+
+  OLD="$4" NEW="$5" python3 - "$source" "$fixture" <<'PY'
+import os
+import pathlib
+import sys
+
+source = pathlib.Path(sys.argv[1]).read_text()
+old = os.environ["OLD"]
+if source.count(old) != 1:
+    raise SystemExit(f"mutation source occurs {source.count(old)} times, want 1: {old!r}")
+pathlib.Path(sys.argv[2]).write_text(source.replace(old, os.environ["NEW"], 1))
+PY
+
+  if env "$var=$fixture" "$checker" >/dev/null 2>&1; then
+    echo "release workflow contract accepted mutation: $name" >&2
+    exit 1
+  fi
+}
+
 "$checker"
 assert_rejected \
   "iperf-wrong-file" \
@@ -140,6 +166,38 @@ assert_rejected \
   "dispatch-publish-refusal-removed" \
   "if: \${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run }}" \
   "if: false"
+
+# Immutable releases (#3157): the release must stay a draft until every asset
+# is on it. Each case drops one hand-off that reproduced the empty release.
+assert_rejected \
+  "draft-never-published" \
+  "run: gh release edit \"\$TARGET_TAG\" --draft=false --repo \"\${GITHUB_REPOSITORY}\"" \
+  'run: echo "release left as a draft"'
+assert_rejected \
+  "publish-before-provenance" \
+  "needs: [goreleaser, provenance]" \
+  "needs: [goreleaser]"
+assert_config_rejected \
+  "release-please-publishes" RELEASE_PLEASE_CONFIG_PATH \
+  .github/release-please-config.json \
+  '      "draft": true,' \
+  '      "draft": false,'
+# Without a forced tag, a draft release creates no tag and release.yml never runs.
+assert_config_rejected \
+  "release-please-no-tag" RELEASE_PLEASE_CONFIG_PATH \
+  .github/release-please-config.json \
+  $'      "force-tag-creation": true,\n' \
+  ''
+assert_config_rejected \
+  "goreleaser-ignores-draft" GORELEASER_CONFIG_PATH \
+  .goreleaser.yml \
+  '  use_existing_draft: true' \
+  '  use_existing_draft: false'
+assert_config_rejected \
+  "goreleaser-publishes" GORELEASER_CONFIG_PATH \
+  .goreleaser.yml \
+  $'\n  draft: true\n' \
+  $'\n  draft: false\n'
 
 assert_rejected \
   "new-mutable-action" \

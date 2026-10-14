@@ -287,9 +287,12 @@ release:
   # `replace_existing_artifacts: true` lets a re-run overwrite a partial
   # earlier failure cleanly.
   replace_existing_artifacts: true
-  # Real releases stay hidden until the frozen asset matrix and SLSA
-  # provenance both pass. release.yml publishes the draft only after those
-  # gates complete.
+  # Releases are immutable once published, so nothing can be uploaded to one
+  # afterwards (v0.234.0 through v0.257.4 shipped with no assets that way,
+  # #3157). release-please creates the release as a draft, goreleaser fills
+  # that draft, and release.yml publishes it only after the frozen asset matrix
+  # and SLSA provenance both pass.
+  use_existing_draft: true
   draft: true
   prerelease: auto
   mode: replace
