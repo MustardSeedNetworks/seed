@@ -89,7 +89,7 @@ export function GatedPreview({
       <p className="caption text-text-secondary">{t('license.gated.sampleLabel')}</p>
       {/* inert, not pointer-events alone: the sample must leave the tab order
           and the accessibility tree, or it reads as a page that does nothing. */}
-      <div inert={true} aria-hidden="true" className="pointer-events-none opacity-60">
+      <div inert={true} aria-hidden="true" className="pointer-events-none grayscale">
         {preview}
       </div>
     </div>

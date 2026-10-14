@@ -115,7 +115,7 @@ export function PerformanceIperfSection({
                     inputTokens.size.md,
                     'w-full',
                     spacing.margin.top.tight,
-                    'body-small disabled:opacity-60',
+                    'body-small disabled:control-disabled',
                   )}
                 />
               </fieldset>
@@ -126,7 +126,7 @@ export function PerformanceIperfSection({
               type="button"
               disabled={iperfSuggestionsStatus === 'loading'}
               onClick={fetchIperfSuggestions}
-              className="caption text-brand-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+              className="caption text-brand-primary hover:underline disabled:text-text-disabled disabled:cursor-not-allowed"
             >
               {iperfSuggestionsStatus === 'loading'
                 ? t('performance.scanning')
@@ -237,7 +237,7 @@ export function PerformanceIperfSection({
                     inputTokens.size.md,
                     'w-full',
                     spacing.margin.top.tight,
-                    'body-small disabled:opacity-60',
+                    'body-small disabled:control-disabled',
                   )}
                 />
               </div>
@@ -367,7 +367,7 @@ export function PerformanceIperfSection({
                     inputTokens.size.md,
                     'w-full',
                     spacing.margin.top.tight,
-                    'body-small disabled:opacity-60',
+                    'body-small disabled:control-disabled',
                   )}
                 />
               </div>
@@ -422,7 +422,7 @@ export function PerformanceIperfSection({
                       inputTokens.size.md,
                       'w-full',
                       spacing.margin.top.tight,
-                      'body-small disabled:opacity-60',
+                      'body-small disabled:control-disabled',
                     )}
                   />
                 </div>

@@ -100,7 +100,7 @@ export function VlanControl() {
             button.size.sm,
             'bg-brand-primary text-on-brand',
             radius.md,
-            'body-small font-medium hover:bg-brand-accent disabled:opacity-50',
+            'body-small font-medium hover:bg-brand-accent disabled:control-disabled',
           )}
         >
           {t('network.vlan.add')}
@@ -113,7 +113,7 @@ export function VlanControl() {
             button.size.sm,
             'bg-status-error text-text-inverse',
             radius.md,
-            'body-small font-medium hover:opacity-80 disabled:opacity-50',
+            'body-small font-medium hover:opacity-80 disabled:control-disabled',
           )}
         >
           {t('network.vlan.remove')}

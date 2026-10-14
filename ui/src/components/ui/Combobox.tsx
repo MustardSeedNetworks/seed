@@ -90,7 +90,7 @@ export function Combobox<T>({
         aria-label={ariaLabel}
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-compact rounded-lg border border-surface-border bg-bg-base/60 px-3 py-row text-sm text-text-primary transition-colors hover:border-surface-border focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full items-center justify-between gap-compact rounded-lg border border-surface-border bg-bg-base/60 px-3 py-row text-sm text-text-primary transition-colors hover:border-surface-border focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:control-disabled"
       >
         <span className={selectedLabel ? '' : 'text-text-muted'}>
           {selectedLabel || placeholder}

@@ -180,7 +180,7 @@ export function ConfigBackupsSection(): React.ReactElement {
                       className={cn(
                         spacing.chip.sm,
                         radius.md,
-                        'bg-status-warning text-text-inverse caption hover:opacity-90 disabled:opacity-50',
+                        'bg-status-warning text-text-inverse caption hover:opacity-90 disabled:control-disabled',
                       )}
                     >
                       {actionLoading === backup.name
@@ -194,7 +194,7 @@ export function ConfigBackupsSection(): React.ReactElement {
                       className={cn(
                         spacing.chip.sm,
                         radius.md,
-                        'border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50',
+                        'border border-surface-border caption text-text-muted hover:text-text-primary disabled:control-disabled',
                       )}
                     >
                       {t('configBackups.cancel')}
@@ -210,7 +210,7 @@ export function ConfigBackupsSection(): React.ReactElement {
                         className={cn(
                           spacing.chip.sm,
                           radius.md,
-                          'border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50',
+                          'border border-surface-border caption text-text-muted hover:text-text-primary disabled:control-disabled',
                         )}
                       >
                         {t('configBackups.restore')}
@@ -226,7 +226,7 @@ export function ConfigBackupsSection(): React.ReactElement {
                         className={cn(
                           spacing.chip.sm,
                           radius.md,
-                          'border border-status-error caption text-status-error hover:bg-status-error hover:text-text-inverse disabled:opacity-50',
+                          'border border-status-error caption text-status-error hover:bg-status-error hover:text-text-inverse disabled:control-disabled',
                         )}
                       >
                         {actionLoading === backup.name ? '...' : t('configBackups.delete')}
@@ -303,7 +303,7 @@ export function ConfigBackupsSection(): React.ReactElement {
             radius.md,
             'font-medium hover:bg-brand-accent transition-colors flex-center',
             spacing.gap.compact,
-            'touch-manipulation disabled:opacity-50',
+            'touch-manipulation disabled:control-disabled',
           )}
         >
           {actionLoading === 'create' ? (

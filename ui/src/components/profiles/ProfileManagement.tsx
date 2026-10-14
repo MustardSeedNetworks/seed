@@ -597,7 +597,7 @@ function DeleteConfirmModal({
               spacing.pad.sm,
               'px-4',
               radius.md,
-              'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary body-small font-medium disabled:opacity-50',
+              'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary body-small font-medium disabled:control-disabled',
             )}
           >
             {t('common.cancel')}
@@ -610,7 +610,7 @@ function DeleteConfirmModal({
               spacing.pad.sm,
               'px-4',
               radius.md,
-              'bg-status-error hover:bg-status-error/90 text-text-inverse body-small font-medium disabled:opacity-50',
+              'bg-status-error hover:bg-status-error/90 text-text-inverse body-small font-medium disabled:control-disabled',
             )}
           >
             {isLoading ? t('common.deleting') : t('common.delete')}

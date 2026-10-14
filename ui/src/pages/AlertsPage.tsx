@@ -184,7 +184,7 @@ export function AlertsPage(): JSX.Element {
                       }}
                       disabled={!canWrite}
                       data-testid="alert-acknowledge"
-                      className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:control-disabled"
                     >
                       <Check className="h-3.5 w-3.5" />
                       {t('alerts.acknowledge')}
@@ -200,7 +200,7 @@ export function AlertsPage(): JSX.Element {
                       }}
                       disabled={!canWrite}
                       data-testid="alert-resolve"
-                      className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:control-disabled"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       {t('alerts.resolve')}

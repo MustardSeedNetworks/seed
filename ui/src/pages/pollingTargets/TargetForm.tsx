@@ -220,7 +220,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
             type="submit"
             disabled={submitting}
             data-testid="target-save"
-            className="rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:opacity-60"
+            className="rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:control-disabled"
           >
             {submitting
               ? t('common:common.saving')
