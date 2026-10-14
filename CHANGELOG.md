@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.257.7](https://github.com/MustardSeedNetworks/seed/compare/v0.257.6...v0.257.7) (2026-10-14)
+
+
+### Bug Fixes
+
+* **guestaudit:** wait the full ping budget on macOS and Linux ([#3425](https://github.com/MustardSeedNetworks/seed/issues/3425)) ([425c803](https://github.com/MustardSeedNetworks/seed/commit/425c8031c452544d819bad524489a097622d8922)), closes [#3310](https://github.com/MustardSeedNetworks/seed/issues/3310)
+* **reporting:** stop scheduled reports when the licence lacks the feature ([#3427](https://github.com/MustardSeedNetworks/seed/issues/3427)) ([ca910dc](https://github.com/MustardSeedNetworks/seed/commit/ca910dcabdf6c9340559a0370d4f71bed685cb0e)), closes [#3050](https://github.com/MustardSeedNetworks/seed/issues/3050)
+
 ## [0.257.6](https://github.com/MustardSeedNetworks/seed/compare/v0.257.5...v0.257.6) (2026-10-14)
 
 
