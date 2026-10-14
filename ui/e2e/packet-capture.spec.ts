@@ -8,17 +8,15 @@ import { skipSetupWizard } from './helpers/auth';
  * The daemon runs on lo, so the capture records the browser's own traffic to
  * it and the summary has something real to tally.
  *
- * scripts/build-backend-e2e.sh builds the CI daemon CGO_ENABLED=0, whose
- * capture adapter refuses every interface. The capture test skips on exactly
- * that refusal and on nothing else, so a capture-capable daemon (a libpcap
- * build with CAP_NET_RAW) runs it in full and any other failure fails it.
+ * The daemon must be able to capture: a libpcap build with CAP_NET_RAW. CI's
+ * is (the e2e-backend job, #2986), so a daemon that cannot capture fails the
+ * capture test rather than skipping it.
  *
  * The card reads "running" from the job's acceptance, before the daemon has
- * opened the interface, so only a capture's end says whether this daemon can
- * capture. The test finds out with a one-second capture first.
+ * opened the interface, so only a capture's end says whether the interface
+ * opened. The test finds out with a one-second capture first.
  */
 
-const CGO_FREE_REFUSAL = 'built without CGO/libpcap';
 // pcapgo writes the classic microsecond header, little-endian.
 const PCAP_MAGIC = 'd4c3b2a1';
 
@@ -83,10 +81,6 @@ test.describe('Packet capture card', () => {
     await expect(card).toHaveAttribute('data-phase', /finished|failed/, { timeout: 15000 });
     if ((await card.getAttribute('data-phase')) === 'failed') {
       const detail = (await page.getByTestId('packet-capture-error-detail').textContent()) ?? '';
-      test.skip(
-        detail.includes(CGO_FREE_REFUSAL),
-        'this daemon is the CGO-free E2E build, which cannot capture',
-      );
       throw new Error(`capture on lo failed: ${detail}`);
     }
 

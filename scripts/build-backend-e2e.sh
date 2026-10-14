@@ -2,26 +2,23 @@
 #
 # Build the seed binary the E2E jobs run.
 #
-# Why this exists rather than `make build-backend-quiet`: the E2E jobs run
-# inside mcr.microsoft.com/playwright:v1.64.0-noble, and that image ships no
-# `make` — and no gcc, and no libpcap. It also cannot apt-install them: the
-# image's sources point at azure.archive.ubuntu.com, which is unreachable from
-# the container network (every index fails with a connection timeout). So the
-# E2E binary is built CGO_ENABLED=0 on Linux.
+# CI runs the daemon inside mcr.microsoft.com/playwright:v1.64.0-noble, which
+# ships no libpcap and cannot apt-install one (its sources point at
+# azure.archive.ubuntu.com, which the container network cannot reach). So the
+# e2e-backend job builds it on a host runner, with cgo against the static
+# libpcap from scripts/build-static-libpcap.sh, passed in through CGO_CFLAGS and
+# CGO_LDFLAGS. The binary then needs libc alone and captures in the image, so
+# the packet-capture spec runs its capture path in CI (#2986). Locally the
+# system libpcap serves: libpcap-dev on Linux, the SDK's on a Mac.
 #
-# On macOS it is built with cgo. CoreWLAN (foundation/pkg/corewlan), the Wi-Fi
-# helper's peer check and the scoped DNS and DHCP readers are cgo-only on
-# darwin, with no fallback, so a CGO_ENABLED=0 darwin build does not compile
-# (#2518). A Mac always has the toolchain and the SDK's libpcap, so nothing is
-# lost by using them.
+# The build is cgo unless the caller sets CGO_ENABLED=0. Only the phone-width
+# job does, because the fleet's reusable workflow has no libpcap; that daemon
+# selects the null capture adapter, whose OpenLive returns ErrUnavailable. A
+# CGO_ENABLED=0 darwin build does not compile: CoreWLAN, the Wi-Fi helper's
+# peer check and the scoped DNS and DHCP readers are cgo-only there (#2518).
 #
-# What that costs: live packet capture is unavailable, and internal/api's
-# `!cgo` build tag selects the null capture adapter, whose OpenLive returns
-# ErrUnavailable rather than panicking. Nothing in the E2E suite exercises
-# capture — no spec references pcap — and run-e2e.sh's generated config already
-# disables networkDiscovery and every passive protocol. The CGO_ENABLED=1 build
-# stays covered by the backend, race and build jobs, which run on the host
-# runner where libpcap is available.
+# The empty-UI guard below is why this is a script and not
+# `make build-backend-quiet`.
 #
 # The ldflags MUST mirror the Makefile's GO_LDFLAGS. Per the universal build
 # contract, a binary built without them reports "unknown" from /__version,
@@ -45,14 +42,12 @@ if [ "$UI_BUILD_HASH" = "unknown" ]; then
   exit 1
 fi
 
-CGO=0
-if [ "$(go env GOOS)" = darwin ]; then
-  CGO=1
-fi
+CGO_ENABLED=${CGO_ENABLED:-1}
+export CGO_ENABLED
 
-echo "building e2e backend: version=${VERSION} commit=${COMMIT} uiBuildHash=${UI_BUILD_HASH} cgo=${CGO}"
+echo "building e2e backend: version=${VERSION} commit=${COMMIT} uiBuildHash=${UI_BUILD_HASH} cgo=${CGO_ENABLED}"
 
-CGO_ENABLED=${CGO} go build -trimpath -buildvcs=false \
+go build -trimpath -buildvcs=false \
   -ldflags="-s -w \
     -X ${VERSION_PKG}.Version=${VERSION} \
     -X ${VERSION_PKG}.Commit=${COMMIT} \
