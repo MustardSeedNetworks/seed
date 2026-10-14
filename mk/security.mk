@@ -64,7 +64,7 @@ security-secrets: ## Scan for secrets in codebase (gitleaks)
 		go install github.com/zricethezav/gitleaks/v8@v8.30.1; \
 		GITLEAKS="$$(go env GOPATH)/bin/gitleaks"; \
 	fi; \
-	$$GITLEAKS detect --source . --config .gitleaks.toml --verbose
+	$$GITLEAKS detect --source . --config .gitleaks.toml --log-opts="--full-history HEAD" --verbose
 	@printf "$(GREEN)✓ Secret scan complete$(RESET)\n"
 
 security-secrets-quiet:
@@ -74,7 +74,7 @@ security-secrets-quiet:
 		GITLEAKS="$$(go env GOPATH)/bin/gitleaks"; \
 	fi; \
 	printf "   Scanning for secrets...\n"; \
-	OUT="$$($$GITLEAKS detect --source . --config .gitleaks.toml 2>&1)"; STATUS=$$?; \
+	OUT="$$($$GITLEAKS detect --source . --config .gitleaks.toml --log-opts="--full-history HEAD" 2>&1)"; STATUS=$$?; \
 	echo "$$OUT" | grep -E "(leaks found|no leaks)" || printf "   No secrets found\n"; \
 	if [ $$STATUS -ne 0 ]; then echo "$$OUT" | tail -40; fi; \
 	exit $$STATUS
