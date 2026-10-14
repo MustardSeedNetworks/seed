@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"net"
+	"net/netip"
 	"os"
 	"runtime"
 	"sync"
@@ -18,13 +19,15 @@ import (
 
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
+	"golang.org/x/net/ipv6"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 const (
 	// ICMP protocol numbers.
-	protocolICMP = 1
+	protocolICMP   = 1
+	protocolICMPv6 = 58
 
 	// Default values.
 	defaultTimeout = 1 * time.Second
@@ -84,6 +87,10 @@ type ICMPPinger struct {
 	// destination address type both depend on this.
 	privileged bool
 
+	// ipv6 marks an ICMPv6 pinger. One pinger speaks one family: the echo
+	// types, the reply parser and the hop-limit control message all differ.
+	ipv6 bool
+
 	// Pending pings tracked by sequence number
 	pending   map[int]*pendingPing
 	pendingMu sync.Mutex
@@ -123,10 +130,22 @@ func PoliteSweepConfig() *SweepConfig {
 	}
 }
 
-// NewICMPPinger creates a new ICMP pinger. It prefers a raw socket and falls
+// NewICMPPinger creates an ICMPv4 pinger. It prefers a raw socket and falls
 // back to the unprivileged datagram socket where raw is refused (seed#2629).
 // Requires root privileges or CAP_NET_RAW capability on Linux.
 func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
+	return newICMPPinger(timeout, false)
+}
+
+// NewICMPv6Pinger creates an ICMPv6 pinger, with the same raw-then-datagram
+// fallback: Linux's net.ipv4.ping_group_range governs the datagram socket of
+// both families. Targets may carry a zone ("fe80::1%eth0"), which a
+// link-local address needs to leave the host (seed#3251).
+func NewICMPv6Pinger(timeout time.Duration) (*ICMPPinger, error) {
+	return newICMPPinger(timeout, true)
+}
+
+func newICMPPinger(timeout time.Duration, ipv6Family bool) (*ICMPPinger, error) {
 	if timeout == 0 {
 		timeout = defaultTimeout
 	}
@@ -134,8 +153,14 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 	p := &ICMPPinger{
 		timeout: timeout,
 		id:      os.Getpid() & seqNumMask,
+		ipv6:    ipv6Family,
 		pending: make(map[int]*pendingPing),
 		stopCh:  make(chan struct{}),
+	}
+
+	rawNetwork, datagramNetwork, wildcard := "ip4:icmp", "udp4", "0.0.0.0"
+	if ipv6Family {
+		rawNetwork, datagramNetwork, wildcard = "ip6:ipv6-icmp", "udp6", "::"
 	}
 
 	// A raw socket needs root or CAP_NET_RAW. Where it is refused, fall back to
@@ -143,10 +168,10 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 	// host whose net.ipv4.ping_group_range admits this process (seed#2629).
 	// Without the fallback an unprivileged daemon sweeps nothing at all — and
 	// the target networks an operator configured are reached only by the sweep.
-	conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
+	conn, err := icmp.ListenPacket(rawNetwork, wildcard)
 	if err != nil {
 		rawErr := err
-		if conn, err = icmp.ListenPacket("udp4", "0.0.0.0"); err != nil {
+		if conn, err = icmp.ListenPacket(datagramNetwork, wildcard); err != nil {
 			return nil, fmt.Errorf("failed to open ICMP socket (raw: %w; datagram: %w)", rawErr, err)
 		}
 	} else {
@@ -154,8 +179,14 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 	}
 	p.conn = conn
 
-	// Enable TTL in control messages for OS fingerprinting
-	if ctrlErr := conn.IPv4PacketConn().SetControlMessage(ipv4.FlagTTL, true); ctrlErr != nil {
+	// Enable TTL (hop limit) in control messages for OS fingerprinting
+	var ctrlErr error
+	if ipv6Family {
+		ctrlErr = conn.IPv6PacketConn().SetControlMessage(ipv6.FlagHopLimit, true)
+	} else {
+		ctrlErr = conn.IPv4PacketConn().SetControlMessage(ipv4.FlagTTL, true)
+	}
+	if ctrlErr != nil {
 		// Non-fatal - TTL extraction may not work but ping will still function
 		logging.GetLogger().Warn("failed to enable TTL control message", "error", ctrlErr)
 	}
@@ -214,9 +245,10 @@ func (p *ICMPPinger) nextSeq() int {
 }
 
 // receiverReadResult represents the outcome of a single packet read attempt.
+// ttl is the reply's TTL or hop limit, -1 when the kernel did not report it.
 type receiverReadResult struct {
 	n          int
-	cm         *ipv4.ControlMessage
+	ttl        int
 	shouldExit bool
 }
 
@@ -229,12 +261,25 @@ func (p *ICMPPinger) readPacket(reply []byte) (receiverReadResult, bool) {
 		return receiverReadResult{}, true // continue loop
 	}
 
+	if p.ipv6 {
+		n, cm, _, err := p.conn.IPv6PacketConn().ReadFrom(reply)
+		if err != nil {
+			return p.handleReadError(err)
+		}
+		if cm == nil {
+			return receiverReadResult{n: n, ttl: -1}, true
+		}
+		return receiverReadResult{n: n, ttl: cm.HopLimit}, true
+	}
+
 	n, cm, _, err := p.conn.IPv4PacketConn().ReadFrom(reply)
 	if err != nil {
 		return p.handleReadError(err)
 	}
-
-	return receiverReadResult{n: n, cm: cm}, true
+	if cm == nil {
+		return receiverReadResult{n: n, ttl: -1}, true
+	}
+	return receiverReadResult{n: n, ttl: cm.TTL}, true
 }
 
 // handleReadError processes errors from packet reads.
@@ -252,12 +297,16 @@ func (p *ICMPPinger) handleReadError(err error) (receiverReadResult, bool) {
 // extractEchoReply parses an ICMP message and extracts the echo reply if valid.
 // Returns the echo body and whether it's a valid echo reply for this pinger.
 func (p *ICMPPinger) extractEchoReply(data []byte) (*icmp.Echo, bool) {
-	rm, err := icmp.ParseMessage(protocolICMP, data)
+	proto, echoReply := protocolICMP, icmp.Type(ipv4.ICMPTypeEchoReply)
+	if p.ipv6 {
+		proto, echoReply = protocolICMPv6, ipv6.ICMPTypeEchoReply
+	}
+	rm, err := icmp.ParseMessage(proto, data)
 	if err != nil {
 		return nil, false
 	}
 
-	if rm.Type != ipv4.ICMPTypeEchoReply {
+	if rm.Type != echoReply {
 		return nil, false
 	}
 
@@ -289,15 +338,12 @@ func (p *ICMPPinger) completePendingPing(seq int) (*pendingPing, bool) {
 }
 
 // sendPingResult constructs and sends the ping result to the waiting goroutine.
-func (p *ICMPPinger) sendPingResult(pp *pendingPing, cm *ipv4.ControlMessage) {
+func (p *ICMPPinger) sendPingResult(pp *pendingPing, ttl int) {
 	result := PingResult{
 		IP:        pp.ip,
 		Reachable: true,
 		RTT:       time.Since(pp.start),
-		TTL:       -1,
-	}
-	if cm != nil {
-		result.TTL = cm.TTL
+		TTL:       ttl,
 	}
 
 	select {
@@ -318,7 +364,7 @@ func (p *ICMPPinger) processReceivedPacket(reply []byte, readResult receiverRead
 		return
 	}
 
-	p.sendPingResult(pp, readResult.cm)
+	p.sendPingResult(pp, readResult.ttl)
 }
 
 // receiver runs in a goroutine and dispatches received ICMP replies.
@@ -346,11 +392,28 @@ func (p *ICMPPinger) receiver() {
 
 // destination returns the address type the pinger's socket accepts: a raw
 // socket writes to an IPAddr, a datagram socket to a UDPAddr (port unused).
-func (p *ICMPPinger) destination(ip net.IP) net.Addr {
+func (p *ICMPPinger) destination(addr netip.Addr) net.Addr {
+	ip, zone := net.IP(addr.AsSlice()), addr.Zone()
 	if p.privileged {
-		return &net.IPAddr{IP: ip}
+		return &net.IPAddr{IP: ip, Zone: zone}
 	}
-	return &net.UDPAddr{IP: ip}
+	return &net.UDPAddr{IP: ip, Zone: zone}
+}
+
+// target parses ipStr, zone included, and checks it belongs to the pinger's
+// family; an IPv4-mapped IPv6 address counts as IPv4, as [net.ParseIP] had it.
+func (p *ICMPPinger) target(ipStr string) (netip.Addr, error) {
+	addr, err := netip.ParseAddr(ipStr)
+	if err != nil {
+		return netip.Addr{}, &net.ParseError{Type: "IP address", Text: ipStr}
+	}
+	if addr.Is4In6() {
+		addr = addr.Unmap()
+	}
+	if addr.Is6() != p.ipv6 {
+		return netip.Addr{}, &net.AddrError{Err: "address family does not match the pinger", Addr: ipStr}
+	}
+	return addr, nil
 }
 
 // Ping sends an ICMP echo request to the specified IP and waits for a reply.
@@ -360,13 +423,13 @@ func (p *ICMPPinger) Ping(ctx context.Context, ipStr string) PingResult {
 		TTL: -1,
 	}
 
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		result.Error = &net.ParseError{Type: "IP address", Text: ipStr}
+	addr, err := p.target(ipStr)
+	if err != nil {
+		result.Error = err
 		return result
 	}
 
-	dst := p.destination(ip)
+	dst := p.destination(addr)
 	seq := p.nextSeq()
 
 	// Create result channel
@@ -391,9 +454,14 @@ func (p *ICMPPinger) Ping(ctx context.Context, ipStr string) PingResult {
 		p.pendingMu.Unlock()
 	}()
 
-	// Build ICMP echo request
+	// Build ICMP echo request. The kernel fills in the ICMPv6 checksum, which
+	// covers a pseudo-header only it knows the source address of.
+	echoRequest := icmp.Type(ipv4.ICMPTypeEcho)
+	if p.ipv6 {
+		echoRequest = ipv6.ICMPTypeEchoRequest
+	}
 	msg := icmp.Message{
-		Type: ipv4.ICMPTypeEcho,
+		Type: echoRequest,
 		Code: 0,
 		Body: &icmp.Echo{
 			ID:   p.id,
