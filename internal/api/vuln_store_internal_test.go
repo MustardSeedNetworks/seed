@@ -113,7 +113,7 @@ func TestVulnRescanResolvesAndReopens(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, openCount())
 
-	device.OSGuess = "Windows 10" // no fixture CVE matches this pass
+	device.OSGuess = "Linux 6.1" // patched past the fixture CVE's 5.4
 	_, err = scanner.ScanDevice(ctx, device)
 	require.NoError(t, err)
 	require.Equal(t, 0, openCount())
