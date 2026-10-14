@@ -431,7 +431,7 @@
       "enabled": "Habilitado",
       "clientId": "ID de cliente",
       "clientSecret": "Secreto de cliente",
-      "clientSecretMask": "(almacenado — déjelo en blanco para conservar el actual)",
+      "clientSecretMask": "Hay un secreto guardado; escriba para reemplazarlo",
       "redirectUrl": "URL de redirección",
       "redirectUrlHint": "Pegue esta URL en las URL de redirección permitidas de su proveedor de identidad.",
       "tenantId": "ID de tenant",

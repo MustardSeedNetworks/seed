@@ -9,7 +9,7 @@
  *                                requireFeature("sso"))
  *
  * Each provider is a card with: enabled toggle, client ID + client
- * secret (masked; blank = keep current), redirect URL display, tenant
+ * secret (never sent back; blank = keep the stored one), redirect URL, tenant
  * ID (Microsoft only), and Save. Free/Starter operators see the panel
  * read-only with the upgrade message.
  */
@@ -33,22 +33,38 @@ interface ProviderConfig {
   enabled: boolean;
   clientId: string;
   clientSecret: string;
+  hasClientSecret: boolean;
   redirectUrl: string;
   tenantId?: string;
   scopes?: string[];
 }
 
 const PROVIDER_DEFAULTS: Record<ProviderName, ProviderConfig> = {
-  google: { name: 'google', enabled: false, clientId: '', clientSecret: '', redirectUrl: '' },
+  google: {
+    name: 'google',
+    enabled: false,
+    clientId: '',
+    clientSecret: '',
+    hasClientSecret: false,
+    redirectUrl: '',
+  },
   microsoft: {
     name: 'microsoft',
     enabled: false,
     clientId: '',
     clientSecret: '',
+    hasClientSecret: false,
     redirectUrl: '',
     tenantId: 'common',
   },
-  github: { name: 'github', enabled: false, clientId: '', clientSecret: '', redirectUrl: '' },
+  github: {
+    name: 'github',
+    enabled: false,
+    clientId: '',
+    clientSecret: '',
+    hasClientSecret: false,
+    redirectUrl: '',
+  },
 };
 
 function defaultRedirectUrl(): string {
@@ -78,11 +94,25 @@ export function SsoSettings(): React.ReactElement {
     setError(null);
     try {
       const resp = await api.get<SSOSettingsResponse>('/api/v1/sso/settings');
-      const enabledByName = new Map(resp.providers.map((p) => [p.name.toLowerCase(), p.enabled]));
+      const stored = new Map(resp.providers.map((p) => [p.name.toLowerCase(), p]));
+      // The page sends every field back on save, so it starts from what the
+      // server holds; anything left at a default would overwrite it (#3280).
+      const merge = (prev: ProviderConfig): ProviderConfig => {
+        const p = stored.get(prev.name);
+        return {
+          ...prev,
+          enabled: p?.enabled ?? false,
+          clientId: p?.clientId ?? '',
+          hasClientSecret: p?.hasClientSecret ?? false,
+          redirectUrl: p?.redirectUrl || defaultRedirectUrl(),
+          tenantId: p?.tenantId || PROVIDER_DEFAULTS[prev.name].tenantId,
+          scopes: p?.scopes,
+        };
+      };
       setProviders((prev) => ({
-        google: { ...prev.google, enabled: enabledByName.get('google') ?? false },
-        microsoft: { ...prev.microsoft, enabled: enabledByName.get('microsoft') ?? false },
-        github: { ...prev.github, enabled: enabledByName.get('github') ?? false },
+        google: merge(prev.google),
+        microsoft: merge(prev.microsoft),
+        github: merge(prev.github),
       }));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errors:sso.loadFailed'));
@@ -263,7 +293,7 @@ function ProviderCard({
           type="password"
           value={cfg.clientSecret}
           onChange={(e) => onChange(name, 'clientSecret', e.target.value)}
-          placeholder={t('settings:sso.fields.clientSecretMask')}
+          placeholder={cfg.hasClientSecret ? t('settings:sso.fields.clientSecretMask') : ''}
           disabled={!canEdit || saving}
           data-testid={`sso-client-secret-${name}`}
         />
