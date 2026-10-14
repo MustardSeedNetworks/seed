@@ -28,7 +28,6 @@ ui/e2e/** | developer end-to-end test fixtures
 package-lock.json | generated dependency lockfile
 ui/package-lock.json | generated dependency lockfile
 .golangci.yml | developer linter rule identifiers
-.clang-tidy | developer linter rule identifiers
 .serena/** | developer agent tooling
 mk/test.mk | developer test package filters
 ui/vite.config.ts | developer-tool path rules
