@@ -161,7 +161,7 @@ export function DeviceRow({
                 className={cn(
                   'text-xs px-cell py-compact bg-brand-primary/15 text-brand-primary-strong',
                   radius.md,
-                  'hover:bg-brand-primary/30 transition-colors disabled:opacity-50',
+                  'hover:bg-brand-primary/30 transition-colors disabled:control-disabled',
                 )}
               >
                 {isScanning ? '...' : t('discovery.scan')}

@@ -377,7 +377,7 @@ export function DiscoveryModal({
                   button.variant.secondary,
                   button.size.sm,
                   'flex items-center gap-compact',
-                  'aria-disabled:opacity-50 aria-disabled:cursor-not-allowed',
+                  'aria-disabled:control-disabled aria-disabled:cursor-not-allowed',
                 )}
               >
                 <RefreshCw

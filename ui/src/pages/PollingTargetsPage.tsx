@@ -126,7 +126,7 @@ export function PollingTargetsPage(): JSX.Element {
             onClick={(): void => setShowCreate(true)}
             disabled={!canWrite}
             data-testid="target-add"
-            className="inline-flex items-center gap-compact rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-compact rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:cursor-not-allowed disabled:control-disabled"
           >
             <Plus className="h-4 w-4" />
             {t('pollingTargets.addTarget')}
@@ -200,7 +200,7 @@ export function PollingTargetsPage(): JSX.Element {
                     }}
                     disabled={!canWrite || testing}
                     data-testid="target-test"
-                    className="rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:control-disabled"
                   >
                     {testing
                       ? t('pollingTargets.testTargetRunning')
@@ -213,7 +213,7 @@ export function PollingTargetsPage(): JSX.Element {
                     onClick={(): void => setEditing(selected)}
                     disabled={!canWrite}
                     data-testid="target-edit"
-                    className="rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:control-disabled"
                   >
                     {t('common:buttons.edit')}
                   </button>
@@ -231,7 +231,7 @@ export function PollingTargetsPage(): JSX.Element {
                     }}
                     disabled={!canWrite}
                     data-testid="target-delete"
-                    className="rounded-md px-3 py-2 text-sm text-status-error-strong hover:bg-status-error/10 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-md px-3 py-2 text-sm text-status-error-strong hover:bg-status-error/10 disabled:cursor-not-allowed disabled:control-disabled"
                   >
                     {t('common:buttons.delete')}
                   </button>

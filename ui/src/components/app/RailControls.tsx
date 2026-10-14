@@ -368,7 +368,7 @@ export function RailControls({
           aria-label={t('accessibility.selectWifi')}
         >
           <Wifi
-            className={cn(iconTokens.size.md, !hasWifiInterface && 'opacity-60')}
+            className={cn(iconTokens.size.md, !hasWifiInterface && 'text-text-disabled')}
             aria-hidden="true"
           />
           {!hasWifiInterface && (

@@ -165,8 +165,7 @@ export function Slider({
             className={cn(
               'absolute inset-0 h-2 top-1/2 -translate-y-1/2',
               radius.full,
-              'bg-surface-hover',
-              disabled && 'opacity-50',
+              disabled ? 'bg-bg-disabled' : 'bg-surface-hover',
             )}
           />
 
@@ -175,8 +174,8 @@ export function Slider({
             className={cn(
               'absolute h-2 top-1/2 -translate-y-1/2',
               radius.full,
-              'bg-brand-primary transition-all',
-              disabled && 'opacity-50',
+              'transition-all',
+              disabled ? 'bg-text-disabled' : 'bg-brand-primary',
             )}
             style={{
               width: `${percentage}%`,

@@ -209,7 +209,7 @@ export function LoginForm({
               button.size.md,
               'bg-brand-primary text-on-brand',
               radius.md,
-              'font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50',
+              'font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:control-disabled',
             )}
           >
             {isLoading ? t('status.loggingIn') : t('login.secondFactor.verify')}
@@ -424,7 +424,7 @@ export function LoginForm({
               button.size.md,
               'bg-brand-primary text-on-brand',
               radius.md,
-              'font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50',
+              'font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:control-disabled',
             )}
           >
             {isLoading ? t('status.loggingIn') : t('buttons.login')}
@@ -444,7 +444,7 @@ export function LoginForm({
                     button.size.md,
                     'bg-status-info text-text-inverse',
                     radius.md,
-                    'font-medium hover:bg-status-info/85 focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50',
+                    'font-medium hover:bg-status-info/85 focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:control-disabled',
                   )}
                 >
                   {t('buttons.signInWithGoogle')}
@@ -461,7 +461,7 @@ export function LoginForm({
                     button.size.md,
                     'bg-surface-sunken text-text-primary',
                     radius.md,
-                    'font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50',
+                    'font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:control-disabled',
                   )}
                 >
                   {t('buttons.signInWithMicrosoft')}
@@ -478,7 +478,7 @@ export function LoginForm({
                     button.size.md,
                     'bg-surface-sunken text-text-primary',
                     radius.md,
-                    'font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50',
+                    'font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:control-disabled',
                   )}
                 >
                   {t('buttons.signInWithGitHub')}

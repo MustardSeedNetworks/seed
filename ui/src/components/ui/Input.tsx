@@ -8,7 +8,7 @@ import type { InputHTMLAttributes, ReactNode, Ref, TextareaHTMLAttributes } from
 import { useTranslation } from 'react-i18next';
 
 const inputBaseStyles =
-  'w-full rounded-lg border bg-bg-base/60 text-text-primary placeholder:text-text-muted transition-all focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed';
+  'w-full rounded-lg border bg-bg-base/60 text-text-primary placeholder:text-text-muted transition-all focus:outline-none disabled:control-disabled disabled:cursor-not-allowed';
 const inputFocusStyles = 'focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20';
 const inputBorderStyles = 'border-surface-border hover:border-surface-border';
 

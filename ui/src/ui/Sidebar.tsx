@@ -146,7 +146,7 @@ function NavItemButton({ item, active, collapsed, onNavigate }: NavItemButtonPro
             item.accent
               ? active
                 ? item.accent
-                : `${item.accent} opacity-60 group-hover:opacity-100`
+                : `${item.accent} stroke-current/60 group-hover:stroke-current`
               : active
                 ? 'text-brand-primary'
                 : 'text-text-muted group-hover:text-text-secondary'

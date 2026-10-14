@@ -223,7 +223,7 @@ export function SettingsDrawerNetworkSection({
             button.size.md,
             'bg-brand-primary text-on-brand',
             radius.md,
-            'font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors',
+            'font-medium hover:bg-brand-accent disabled:control-disabled transition-colors',
           )}
         >
           {savingIp ? t('network.applying') : t('network.applyIpSettings')}

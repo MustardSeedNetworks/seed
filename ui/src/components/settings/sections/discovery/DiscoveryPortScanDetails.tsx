@@ -109,7 +109,7 @@ export function DiscoveryPortScanDetails({
             spacing.margin.top.tight,
             inputTokens.base,
             (settings.options?.portScan?.preset ?? 'common') !== 'custom'
-              ? 'bg-surface-hover cursor-not-allowed opacity-60'
+              ? 'disabled:control-disabled cursor-not-allowed'
               : inputTokens.state.default,
             inputTokens.size.sm,
             'body-small',

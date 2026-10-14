@@ -230,7 +230,7 @@ export function NetworkDiscoveryCard({
               spacing.chip.sm,
               'bg-brand-primary text-on-brand',
               radius.md,
-              'hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center',
+              'hover:bg-brand-primary/90 transition-colors font-medium caption disabled:control-disabled disabled:cursor-not-allowed flex items-center',
               spacing.inline.sm,
             )}
             aria-label={

@@ -62,7 +62,12 @@
   --color-text-muted: var(--color-text-muted);
   --color-text-accent: var(--color-text-accent);
   --color-text-inverse: var(--color-text-inverse);
-  --color-text-disabled: var(--color-text-muted);
+  --color-text-disabled: var(--color-text-disabled);
+
+  /* Disabled controls — fill and edge beside text-disabled (product-seed.css).
+   * Applied together by the control-disabled utility below. */
+  --color-bg-disabled: var(--color-bg-disabled);
+  --color-border-disabled: var(--color-border-disabled);
 
   /* Status Colors - INDUSTRY STANDARD (do not change) */
   --color-status-success: var(--color-status-success);
@@ -172,6 +177,18 @@ body {
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* A disabled control: its own fill, edge and text, not a dimmed layer that
+   drags its label below contrast (#1944). A utility rather than a component
+   class so it takes variants: disabled:control-disabled,
+   aria-disabled:control-disabled. Text-only controls (links, ghost buttons)
+   take disabled:text-text-disabled instead, so they do not grow a fill. */
+@utility control-disabled {
+  background-color: var(--color-bg-disabled);
+  border-color: var(--color-border-disabled);
+  color: var(--color-text-disabled);
+  box-shadow: none;
 }
 
 /* ============================================================================
