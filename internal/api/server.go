@@ -239,6 +239,7 @@ type Server struct {
 	captures     *packetcapture.Store    // packet-capture job files, downloaded by ID
 	tftpSessions *tftp.Manager           // admin-started TFTP session (P-D4)
 	tftpAudit    func(context.Context, tftp.AuditEvent) error
+	tftpFailures tftpFailureGate // one audit row per failing device per window
 
 	// --- Database ---
 	dbConn          *database.DB

@@ -3,10 +3,13 @@
 //
 // TFTP has no authentication, so a session is kept as small as the protocol
 // allows: nothing listens until an admin starts it and nothing restarts it with
-// the daemon; it binds one interface's address, serves one directory through
-// an [os.Root], refuses writes unless the session allows uploads, never
-// overwrites a file, and stops itself once nothing has used it for the idle
-// timeout.
+// the daemon; it binds one interface's address and answers only the subnets on
+// that interface (or the prefixes the admin names); it serves one directory
+// through an [os.Root]; it refuses writes unless the session allows uploads,
+// and then writes only into a separate upload directory it never serves,
+// never overwriting a file; it caps concurrent transfers, uploads and upload
+// bytes; and it stops itself once no transfer has completed for the idle
+// timeout, or at the latest once it reaches its maximum lifetime.
 package tftp
 
 import (
@@ -16,7 +19,9 @@ import (
 	"io/fs"
 	"log/slog"
 	"net"
+	"net/netip"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -39,6 +44,21 @@ const (
 	// far above either and still keeps one transfer from filling the disk.
 	MaxUploadBytes = 256 << 20
 
+	// DefaultMaxTransfers bounds transfers in flight. The library opens a UDP
+	// socket and a goroutine for every request before the handler runs; this
+	// cap is what keeps a flood of requests from holding those open.
+	DefaultMaxTransfers = 8
+
+	// DefaultMaxLifetime ends a session however busy it is, so a device that
+	// keeps polling cannot hold the port open indefinitely.
+	DefaultMaxLifetime = time.Hour
+
+	// DefaultMaxUploads bounds upload attempts in one session.
+	DefaultMaxUploads = 32
+
+	// DefaultUploadQuota bounds the bytes all uploads in one session may write.
+	DefaultUploadQuota = 1 << 30
+
 	// transferTimeout is the per-block retransmit timeout: long enough for a
 	// slow management plane, short enough that Stop does not hang on a
 	// client that has gone away.
@@ -60,6 +80,10 @@ var (
 	ErrUploadsDisabled = errors.New("uploads are not enabled")
 	ErrExists          = errors.New("file already exists")
 	ErrTooLarge        = errors.New("file too large")
+	ErrBusy            = errors.New("server busy, try again later")
+	ErrAccessDenied    = errors.New("access denied")
+	ErrQuota           = errors.New("upload quota reached")
+	errWriteFailed     = errors.New("upload could not be saved")
 	errStopped         = errors.New("session stopped")
 )
 
@@ -79,6 +103,7 @@ type StopReason string
 const (
 	StopOperator StopReason = "operator"
 	StopIdle     StopReason = "idle"
+	StopExpired  StopReason = "expired"
 	StopShutdown StopReason = "shutdown"
 )
 
@@ -110,16 +135,33 @@ type AuditEvent struct {
 type Options struct {
 	Interface   string
 	AllowUpload bool
+	// AllowFrom lists the IPv4 prefixes a request may come from. Empty means
+	// the subnets configured on Interface; a device behind a router needs its
+	// prefix named here.
+	AllowFrom []netip.Prefix
+}
+
+// Limits bound what one session may consume. Zero fields take the Default
+// constants; only tests set others.
+type Limits struct {
+	MaxTransfers int64
+	MaxLifetime  time.Duration
+	MaxUploads   int64
+	UploadQuota  int64
 }
 
 // Config is fixed for the Manager's lifetime.
 type Config struct {
 	// Dir is the one directory every session serves; Start creates it.
 	Dir string
+	// UploadDir receives uploads. It must not be inside Dir: nothing a
+	// device writes is ever served back. Start creates it.
+	UploadDir string
 	// IdleTimeout defaults to DefaultIdleTimeout.
 	IdleTimeout time.Duration
 	// Port defaults to [Port]. Only tests, which cannot bind 69, set it.
-	Port int
+	Port   int
+	Limits Limits
 	// OnTransfer and OnStop are called once per transfer and per session.
 	// Either may be nil.
 	OnTransfer func(Transfer)
@@ -134,8 +176,11 @@ type Status struct {
 	Address            string     `json:"address,omitempty"`
 	Port               int        `json:"port,omitempty"`
 	Directory          string     `json:"directory,omitempty"`
+	UploadDirectory    string     `json:"uploadDirectory,omitempty"`
 	AllowUpload        bool       `json:"allowUpload"`
+	AllowFrom          []string   `json:"allowFrom,omitempty"`
 	StartedAt          *time.Time `json:"startedAt,omitempty"`
+	ExpiresAt          *time.Time `json:"expiresAt,omitempty"`
 	IdleTimeoutSeconds int        `json:"idleTimeoutSeconds,omitempty"`
 	ActiveTransfers    int64      `json:"activeTransfers"`
 }
@@ -158,21 +203,39 @@ func NewManager(cfg Config) *Manager {
 	if cfg.Logger == nil {
 		cfg.Logger = slog.Default()
 	}
+	l := &cfg.Limits
+	if l.MaxTransfers <= 0 {
+		l.MaxTransfers = DefaultMaxTransfers
+	}
+	if l.MaxLifetime <= 0 {
+		l.MaxLifetime = DefaultMaxLifetime
+	}
+	if l.MaxUploads <= 0 {
+		l.MaxUploads = DefaultMaxUploads
+	}
+	if l.UploadQuota <= 0 {
+		l.UploadQuota = DefaultUploadQuota
+	}
 	return &Manager{cfg: cfg}
 }
 
 type session struct {
 	opts      Options
+	allow     []netip.Prefix
+	limits    Limits
 	addr      net.IP
 	port      int
 	startedAt time.Time
 	root      *os.Root
+	inbox     *os.Root
 	srv       *pintftp.Server
 	served    chan struct{}
 	stopped   chan struct{}
 	stopping  bool
 	active    atomic.Int64
 	lastUsed  atomic.Int64
+	uploads   atomic.Int64
+	quota     atomic.Int64
 	onXfer    func(Transfer)
 }
 
@@ -183,35 +246,46 @@ func (m *Manager) Start(opts Options) (Status, error) {
 	if m.sess != nil {
 		return Status{}, ErrRunning
 	}
-	addr, err := interfaceIPv4(opts.Interface)
+	addr, subnets, err := interfaceIPv4(opts.Interface)
 	if err != nil {
 		return Status{}, err
 	}
-	if err = os.MkdirAll(m.cfg.Dir, dirMode); err != nil {
-		return Status{}, fmt.Errorf("create %s: %w", m.cfg.Dir, err)
+	allow := subnets
+	if len(opts.AllowFrom) > 0 {
+		allow = opts.AllowFrom
 	}
-	root, err := os.OpenRoot(m.cfg.Dir)
+	root, err := openDir(m.cfg.Dir)
 	if err != nil {
-		return Status{}, fmt.Errorf("open %s: %w", m.cfg.Dir, err)
+		return Status{}, err
+	}
+	inbox, err := openDir(m.cfg.UploadDir)
+	if err != nil {
+		_ = root.Close()
+		return Status{}, err
 	}
 	conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: addr, Port: m.cfg.Port})
 	if err != nil {
 		_ = root.Close()
+		_ = inbox.Close()
 		bind := net.JoinHostPort(addr.String(), strconv.Itoa(m.cfg.Port))
 		return Status{}, fmt.Errorf("%w %s: %w", ErrBind, bind, err)
 	}
 
 	s := &session{
 		opts:      opts,
+		allow:     allow,
+		limits:    m.cfg.Limits,
 		addr:      addr,
 		port:      m.cfg.Port,
 		startedAt: time.Now().UTC(),
 		root:      root,
+		inbox:     inbox,
 		served:    make(chan struct{}),
 		stopped:   make(chan struct{}),
 		onXfer:    m.cfg.OnTransfer,
 	}
 	s.lastUsed.Store(s.startedAt.UnixNano())
+	s.quota.Store(s.limits.UploadQuota)
 	s.srv = pintftp.NewServer(s.read, s.write)
 	s.srv.SetTimeout(transferTimeout)
 	m.sess = s
@@ -259,14 +333,22 @@ func (m *Manager) Status() Status {
 
 func (m *Manager) statusOf(s *session) Status {
 	started := s.startedAt
+	expires := started.Add(s.limits.MaxLifetime)
+	allow := make([]string, len(s.allow))
+	for i, p := range s.allow {
+		allow[i] = p.String()
+	}
 	return Status{
 		Running:            true,
 		Interface:          s.opts.Interface,
 		Address:            s.addr.String(),
 		Port:               s.port,
 		Directory:          m.cfg.Dir,
+		UploadDirectory:    m.cfg.UploadDir,
 		AllowUpload:        s.opts.AllowUpload,
+		AllowFrom:          allow,
 		StartedAt:          &started,
+		ExpiresAt:          &expires,
 		IdleTimeoutSeconds: int(m.cfg.IdleTimeout / time.Second),
 		ActiveTransfers:    s.active.Load(),
 	}
@@ -291,6 +373,7 @@ func (m *Manager) stop(s *session, reason StopReason) {
 	s.srv.Shutdown()
 	<-s.served
 	_ = s.root.Close()
+	_ = s.inbox.Close()
 	m.cfg.Logger.Info("tftp session stopped", "event", "tftp.stop", "reason", string(reason))
 	if m.cfg.OnStop != nil {
 		m.cfg.OnStop(status, reason)
@@ -301,10 +384,17 @@ func (m *Manager) stop(s *session, reason StopReason) {
 	m.mu.Unlock()
 }
 
-// watchIdle stops s once no transfer has run for the idle timeout. A transfer
-// in flight holds the session open however long it takes.
+// watchIdle stops s once no transfer has completed for the idle timeout, and
+// in any case once it reaches its maximum lifetime. A transfer in flight holds
+// the session open past the idle timeout, never past the lifetime.
 func (m *Manager) watchIdle(s *session) {
+	expires := s.startedAt.Add(s.limits.MaxLifetime)
 	for {
+		left := time.Until(expires)
+		if left <= 0 {
+			m.stop(s, StopExpired)
+			return
+		}
 		wait := m.cfg.IdleTimeout - time.Since(time.Unix(0, s.lastUsed.Load()))
 		if wait <= 0 {
 			if s.active.Load() == 0 {
@@ -313,6 +403,7 @@ func (m *Manager) watchIdle(s *session) {
 			}
 			wait = m.cfg.IdleTimeout
 		}
+		wait = min(wait, left)
 		select {
 		case <-time.After(wait):
 		case <-s.stopped:
@@ -321,20 +412,45 @@ func (m *Manager) watchIdle(s *session) {
 	}
 }
 
-// begin marks a transfer in flight; the returned func marks it done.
-func (s *session) begin() func() {
-	s.active.Add(1)
-	s.lastUsed.Store(time.Now().UnixNano())
-	return func() {
-		s.lastUsed.Store(time.Now().UnixNano())
-		s.active.Add(-1)
+// begin admits a request from remote and marks it in flight, or refuses it
+// at once so the library closes the socket it opened for the request. The
+// returned func marks the transfer done; only a transfer that completed counts
+// as use for the idle timeout, so refused and failed requests cannot keep a
+// session alive.
+func (s *session) begin(remote netip.Addr) (func(error), error) {
+	if !s.allowed(remote) {
+		return nil, ErrAccessDenied
 	}
+	if s.active.Add(1) > s.limits.MaxTransfers {
+		s.active.Add(-1)
+		return nil, ErrBusy
+	}
+	return func(err error) {
+		if err == nil {
+			s.lastUsed.Store(time.Now().UnixNano())
+		}
+		s.active.Add(-1)
+	}, nil
+}
+
+func (s *session) allowed(remote netip.Addr) bool {
+	for _, p := range s.allow {
+		if p.Contains(remote) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *session) read(name string, rf io.ReaderFrom) error {
-	defer s.begin()()
-	n, err := s.download(name, rf)
-	s.report(Transfer{Direction: Download, Filename: name, Remote: remoteOf(rf), Bytes: n, Err: err})
+	remote := remoteOf(rf)
+	var n int64
+	done, err := s.begin(remote)
+	if err == nil {
+		n, err = s.download(name, rf)
+		done(err)
+	}
+	s.report(Transfer{Direction: Download, Filename: name, Remote: addrString(remote), Bytes: n, Err: err})
 	return err
 }
 
@@ -357,15 +473,27 @@ func (s *session) download(name string, rf io.ReaderFrom) (int64, error) {
 }
 
 func (s *session) write(name string, wt io.WriterTo) error {
-	defer s.begin()()
-	n, err := s.upload(name, wt)
-	s.report(Transfer{Direction: Upload, Filename: name, Remote: remoteOf(wt), Bytes: n, Err: err})
+	remote := remoteOf(wt)
+	var n int64
+	done, err := s.begin(remote)
+	if err == nil {
+		n, err = s.upload(name, wt)
+		done(err)
+	}
+	s.report(Transfer{Direction: Upload, Filename: name, Remote: addrString(remote), Bytes: n, Err: err})
 	return err
 }
 
+// upload receives into a hidden partial file and publishes it under its name
+// only once complete, so no reader ever sees half a file. The hard link
+// publishes atomically and fails if the name exists, where a rename would
+// replace it.
 func (s *session) upload(name string, wt io.WriterTo) (int64, error) {
 	if !s.opts.AllowUpload {
 		return 0, ErrUploadsDisabled
+	}
+	if s.uploads.Add(1) > s.limits.MaxUploads {
+		return 0, ErrQuota
 	}
 	if it, ok := wt.(pintftp.IncomingTransfer); ok {
 		if size, known := it.Size(); known && size > MaxUploadBytes {
@@ -373,19 +501,37 @@ func (s *session) upload(name string, wt io.WriterTo) (int64, error) {
 		}
 	}
 	rel := relative(name)
-	f, err := s.root.OpenFile(rel, os.O_WRONLY|os.O_CREATE|os.O_EXCL, uploadMode)
+	if _, err := s.inbox.Lstat(rel); err == nil {
+		return 0, ErrExists
+	}
+	dir, base := path.Split(rel)
+	partial := dir + "." + base + ".partial"
+	f, err := s.inbox.OpenFile(partial, os.O_WRONLY|os.O_CREATE|os.O_EXCL, uploadMode)
 	if errors.Is(err, fs.ErrExist) {
 		return 0, ErrExists
 	}
 	if err != nil {
 		return 0, ErrNotFound
 	}
-	n, err := wt.WriteTo(&capWriter{w: f, stopped: s.stopped, left: MaxUploadBytes})
-	if closeErr := f.Close(); err == nil {
-		err = closeErr
+	defer func() { _ = s.inbox.Remove(partial) }()
+
+	n, err := wt.WriteTo(&capWriter{w: f, stopped: s.stopped, left: MaxUploadBytes, quota: &s.quota})
+	if closeErr := f.Close(); err == nil && closeErr != nil {
+		err = errWriteFailed
+	}
+	if err == nil {
+		err = s.inbox.Link(partial, rel)
+		switch {
+		case errors.Is(err, fs.ErrExist):
+			err = ErrExists
+		case err != nil:
+			err = errWriteFailed
+		}
 	}
 	if err != nil {
-		_ = s.root.Remove(rel)
+		// What failed is gone from disk, so it no longer counts against the
+		// session's quota.
+		s.quota.Add(n)
 	}
 	return n, err
 }
@@ -403,13 +549,33 @@ func relative(name string) string {
 	return strings.TrimLeft(name, "/")
 }
 
-func remoteOf(v any) string {
+func remoteOf(v any) netip.Addr {
 	type remote interface{ RemoteAddr() net.UDPAddr }
 	if r, ok := v.(remote); ok {
-		addr := r.RemoteAddr()
-		return addr.IP.String()
+		ua := r.RemoteAddr()
+		if a, valid := netip.AddrFromSlice(ua.IP); valid {
+			return a.Unmap()
+		}
 	}
-	return ""
+	return netip.Addr{}
+}
+
+func addrString(a netip.Addr) string {
+	if !a.IsValid() {
+		return ""
+	}
+	return a.String()
+}
+
+func openDir(dir string) (*os.Root, error) {
+	if err := os.MkdirAll(dir, dirMode); err != nil {
+		return nil, fmt.Errorf("create %s: %w", dir, err)
+	}
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return nil, fmt.Errorf("open %s: %w", dir, err)
+	}
+	return root, nil
 }
 
 // stopReader fails a download once its session stops.
@@ -427,11 +593,13 @@ func (g stopReader) Read(p []byte) (int, error) {
 	}
 }
 
-// capWriter fails an upload once its session stops or it passes its cap.
+// capWriter fails an upload once its session stops, it passes its own cap,
+// or the session's uploads together pass the quota it debits.
 type capWriter struct {
 	w       io.Writer
 	stopped <-chan struct{}
 	left    int64
+	quota   *atomic.Int64
 }
 
 func (g *capWriter) Write(p []byte) (int, error) {
@@ -440,29 +608,54 @@ func (g *capWriter) Write(p []byte) (int, error) {
 		return 0, errStopped
 	default:
 	}
-	if int64(len(p)) > g.left {
+	size := int64(len(p))
+	if size > g.left {
 		return 0, ErrTooLarge
+	}
+	if g.quota.Add(-size) < 0 {
+		g.quota.Add(size)
+		return 0, ErrQuota
 	}
 	n, err := g.w.Write(p)
 	g.left -= int64(n)
+	g.quota.Add(size - int64(n))
 	return n, err
 }
 
-func interfaceIPv4(name string) (net.IP, error) {
+// interfaceIPv4 returns the interface's first IPv4 address, to bind, and
+// every IPv4 subnet on it, to answer.
+func interfaceIPv4(name string) (net.IP, []netip.Prefix, error) {
 	iface, err := net.InterfaceByName(name)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s: %w", ErrNoInterface, name, err)
+		return nil, nil, fmt.Errorf("%w: %s: %w", ErrNoInterface, name, err)
 	}
 	addrs, err := iface.Addrs()
 	if err != nil {
-		return nil, fmt.Errorf("interface %q addresses: %w", name, err)
+		return nil, nil, fmt.Errorf("interface %q addresses: %w", name, err)
 	}
+	var first net.IP
+	var subnets []netip.Prefix
 	for _, a := range addrs {
-		if ipn, ok := a.(*net.IPNet); ok {
-			if ip4 := ipn.IP.To4(); ip4 != nil {
-				return ip4, nil
-			}
+		ipn, ok := a.(*net.IPNet)
+		if !ok {
+			continue
 		}
+		ip4 := ipn.IP.To4()
+		if ip4 == nil {
+			continue
+		}
+		if first == nil {
+			first = ip4
+		}
+		mask := ipn.Mask
+		if len(mask) == net.IPv6len {
+			mask = mask[net.IPv6len-net.IPv4len:]
+		}
+		ones, _ := mask.Size()
+		subnets = append(subnets, netip.PrefixFrom(netip.AddrFrom4([4]byte(ip4)), ones).Masked())
 	}
-	return nil, fmt.Errorf("%w: %s", ErrNoIPv4, name)
+	if first == nil {
+		return nil, nil, fmt.Errorf("%w: %s", ErrNoIPv4, name)
+	}
+	return first, subnets, nil
 }

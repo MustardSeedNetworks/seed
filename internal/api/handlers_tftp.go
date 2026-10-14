@@ -10,13 +10,18 @@ package api
 // on that segment may read, and with uploads ticked, write. So starting and
 // stopping are admin only, the route is Pro with configuration backup
 // (compliance_advanced), nothing starts with the daemon, and a session never
-// survives a restart. Starts, stops and every transfer go to the audit log.
+// survives a restart. Starts, stops and every completed transfer go to the
+// audit log; failed and refused requests are aggregated per device, so a host
+// hammering the port cannot flood the log.
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
+	"net/netip"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
@@ -36,6 +41,13 @@ const (
 	// tftpAuditTimeout bounds an audit write made from a transfer goroutine,
 	// which has no request context to inherit a deadline from.
 	tftpAuditTimeout = 5 * time.Second
+	// tftpFailureWindow is how often one device's failed or refused requests
+	// may write an audit row, and tftpMaxFailureRows how many such rows all
+	// devices together may write in it. The rest are counted and logged.
+	tftpFailureWindow  = time.Minute
+	tftpMaxFailureRows = 32
+	// tftpMaxAllowFrom bounds the prefixes an admin may list.
+	tftpMaxAllowFrom = 16
 )
 
 func (s *Server) tftpRoutes() []route.Route {
@@ -51,15 +63,19 @@ func (s *Server) tftpRoutes() []route.Route {
 }
 
 type tftpStartInput struct {
-	Interface   string `json:"interface"`
-	AllowUpload bool   `json:"allowUpload"`
+	Interface   string   `json:"interface"`
+	AllowUpload bool     `json:"allowUpload"`
+	AllowFrom   []string `json:"allowFrom"`
 }
 
-// initTFTP builds the session manager over <data dir>/tftp. It starts nothing.
+// initTFTP builds the session manager over <data dir>/tftp, with uploads
+// received into <data dir>/tftp-incoming. It starts nothing.
 func (s *Server) initTFTP() {
+	dataDir := paths.Resolve(paths.ModeAuto).DataDir
 	s.tftpAudit = app.NewTFTPAudit(s.db)
 	s.tftpSessions = tftp.NewManager(tftp.Config{
-		Dir:        filepath.Join(paths.Resolve(paths.ModeAuto).DataDir, "tftp"),
+		Dir:        filepath.Join(dataDir, "tftp"),
+		UploadDir:  filepath.Join(dataDir, "tftp-incoming"),
 		OnTransfer: s.auditTFTPTransfer,
 		OnStop:     s.auditTFTPStop,
 		Logger:     logging.GetLogger(),
@@ -103,7 +119,16 @@ func (s *Server) startTFTP(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
 		return
 	}
-	status, err := s.tftpSessions.Start(tftp.Options{Interface: in.Interface, AllowUpload: in.AllowUpload})
+	allowFrom, err := parseTFTPAllowFrom(in.AllowFrom)
+	if err != nil {
+		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
+		return
+	}
+	status, err := s.tftpSessions.Start(tftp.Options{
+		Interface:   in.Interface,
+		AllowUpload: in.AllowUpload,
+		AllowFrom:   allowFrom,
+	})
 	switch {
 	case errors.Is(err, tftp.ErrRunning):
 		writeError(w, r, http.StatusConflict, ErrCodeConflict, err.Error())
@@ -132,11 +157,75 @@ func (s *Server) startTFTP(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusCreated, status)
 }
 
+// parseTFTPAllowFrom reads the admin's source prefixes. TFTP is served on
+// IPv4 only, so an IPv6 prefix could never match and is refused.
+func parseTFTPAllowFrom(in []string) ([]netip.Prefix, error) {
+	if len(in) > tftpMaxAllowFrom {
+		return nil, fmt.Errorf("allowFrom lists %d prefixes, at most %d are allowed", len(in), tftpMaxAllowFrom)
+	}
+	out := make([]netip.Prefix, 0, len(in))
+	for _, raw := range in {
+		p, err := netip.ParsePrefix(raw)
+		if err != nil || !p.Addr().Is4() {
+			return nil, fmt.Errorf("allowFrom %q is not an IPv4 prefix such as 192.0.2.0/24", raw)
+		}
+		out = append(out, p.Masked())
+	}
+	return out, nil
+}
+
+// tftpFailureGate decides which failed or refused transfers reach the audit
+// log: in each window, the first from a device and at most
+// tftpMaxFailureRows in all. A refused request's source may be spoofed, so the
+// gate remembers only devices it wrote a row for, which bounds its memory by
+// that cap however many sources a flood cycles through.
+type tftpFailureGate struct {
+	mu         sync.Mutex
+	window     time.Time
+	logged     map[string]struct{}
+	suppressed int
+}
+
+// admit reports whether a failure from remote at now should be audited. When a
+// window closes with failures suppressed, it also returns their count, for the
+// caller to log.
+func (g *tftpFailureGate) admit(remote string, now time.Time) (bool, int) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	closedSuppressed := 0
+	if g.logged == nil || now.Sub(g.window) >= tftpFailureWindow {
+		closedSuppressed = g.suppressed
+		g.window, g.logged, g.suppressed = now, map[string]struct{}{}, 0
+	}
+	if _, seen := g.logged[remote]; seen || len(g.logged) >= tftpMaxFailureRows {
+		g.suppressed++
+		return false, closedSuppressed
+	}
+	g.logged[remote] = struct{}{}
+	return true, closedSuppressed
+}
+
+// reset forgets the window, so a new session starts with a clean count.
+func (g *tftpFailureGate) reset() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.logged, g.suppressed = nil, 0
+}
+
 // auditTFTPTransfer records one transfer. TFTP carries no identity, so the
-// device's address stands in for the user.
+// device's address stands in for the user. A completed transfer is always
+// recorded; failures go through the per-device gate.
 func (s *Server) auditTFTPTransfer(t tftp.Transfer) {
 	detail := map[string]any{"bytes": t.Bytes}
 	if t.Err != nil {
+		audit, suppressed := s.tftpFailures.admit(t.Remote, time.Now())
+		if suppressed > 0 {
+			logging.GetLogger().Warn("tftp failures not audited", "event", "tftp.suppressed",
+				"count", suppressed, "window", tftpFailureWindow.String())
+		}
+		if !audit {
+			return
+		}
 		detail["error"] = t.Err.Error()
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), tftpAuditTimeout)
@@ -152,6 +241,7 @@ func (s *Server) auditTFTPTransfer(t tftp.Transfer) {
 // auditTFTPStop records the stops no admin asked for; the DELETE handler
 // records an operator's stop with their name.
 func (s *Server) auditTFTPStop(st tftp.Status, reason tftp.StopReason) {
+	s.tftpFailures.reset()
 	if reason == tftp.StopOperator {
 		return
 	}

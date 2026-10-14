@@ -2,10 +2,14 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
+	"slices"
 	"testing"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
@@ -42,6 +46,7 @@ func newTFTPTestServer(t *testing.T, trial bool) *Server {
 		}
 	}
 	seedRoledUser(t, s, "operator1", roles.Operator)
+	seedRoledUser(t, s, "viewer1", roles.Viewer)
 
 	probe, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1)})
 	if err != nil {
@@ -50,9 +55,11 @@ func newTFTPTestServer(t *testing.T, trial bool) *Server {
 	port := probe.LocalAddr().(*net.UDPAddr).Port
 	_ = probe.Close()
 
+	dir := t.TempDir()
 	s.tftpAudit = app.NewTFTPAudit(s.db)
 	s.tftpSessions = tftp.NewManager(tftp.Config{
-		Dir:        t.TempDir(),
+		Dir:        filepath.Join(dir, "tftp"),
+		UploadDir:  filepath.Join(dir, "tftp-incoming"),
 		Port:       port,
 		OnTransfer: s.auditTFTPTransfer,
 		OnStop:     s.auditTFTPStop,
@@ -108,8 +115,128 @@ func TestTFTPSessionGates(t *testing.T) {
 			t.Errorf("%s by %s: %d, want %d (%s)", c.method, c.user, rec.Code, c.want, rec.Body.String())
 		}
 	}
+
+	// These carry real credentials through the route chain rather than the
+	// test mux, which mints a session for every request it serves.
+	path := APIVersionPrefix + "/tftp/session"
+	noCSRF := authedRequest(t, pro, http.MethodPost, path, "admin", start)
+	noCSRF.Header.Del("X-Csrf-Token")
+	chain := []struct {
+		name string
+		req  *http.Request
+		want int
+	}{
+		{"unauthenticated POST", httptest.NewRequest(http.MethodPost, path, nil), http.StatusUnauthorized},
+		{"admin POST without a CSRF token", noCSRF, http.StatusForbidden},
+		{"viewer POST", authedRequest(t, pro, http.MethodPost, path, "viewer1", start), http.StatusForbidden},
+	}
+	for _, c := range chain {
+		rec := httptest.NewRecorder()
+		pro.routes.Handler().ServeHTTP(rec, c.req)
+		if rec.Code != c.want {
+			t.Errorf("%s: %d, want %d (%s)", c.name, rec.Code, c.want, rec.Body.String())
+		}
+	}
 	if pro.tftpSessions.Status().Running {
 		t.Fatal("a refused request started a session")
+	}
+
+	// The same chain admits an admin with a CSRF token, so the refusals above
+	// are the gates and not a broken fixture.
+	rec := httptest.NewRecorder()
+	pro.routes.Handler().ServeHTTP(rec, authedRequest(t, pro, http.MethodPost, path, "admin", start))
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("admin POST with a CSRF token: %d, want 201 (%s)", rec.Code, rec.Body.String())
+	}
+}
+
+func TestParseTFTPAllowFrom(t *testing.T) {
+	t.Parallel()
+	tooMany := make([]string, tftpMaxAllowFrom+1)
+	for i := range tooMany {
+		tooMany[i] = "192.0.2.0/24"
+	}
+	cases := []struct {
+		name    string
+		in      []string
+		want    []string
+		wantErr bool
+	}{
+		{name: "none means the interface subnets", in: nil, want: []string{}},
+		{
+			name: "masked to the network",
+			in:   []string{"192.0.2.77/24", "198.51.100.1/32"},
+			want: []string{"192.0.2.0/24", "198.51.100.1/32"},
+		},
+		{name: "bare address", in: []string{"192.0.2.1"}, wantErr: true},
+		{name: "IPv6 is not served", in: []string{"2001:db8::/32"}, wantErr: true},
+		{name: "too many", in: tooMany, wantErr: true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := parseTFTPAllowFrom(c.in)
+			if (err != nil) != c.wantErr {
+				t.Fatalf("parse %v: error %v, want error %v", c.in, err, c.wantErr)
+			}
+			strs := make([]string, len(got))
+			for i, p := range got {
+				strs[i] = p.String()
+			}
+			if !c.wantErr && !slices.Equal(strs, c.want) {
+				t.Fatalf("parse %v = %v, want %v", c.in, strs, c.want)
+			}
+		})
+	}
+}
+
+// TestTFTPFailureAudit: a completed transfer is always audited, a failing
+// device at most once per window, and all devices together at most
+// tftpMaxFailureRows times, however many sources a flood spoofs.
+func TestTFTPFailureAudit(t *testing.T) {
+	t.Parallel()
+	s := newTFTPTestServer(t, true)
+	fail := errors.New("file not found")
+
+	for range 50 {
+		s.auditTFTPTransfer(tftp.Transfer{Direction: tftp.Download, Filename: "x", Remote: "192.0.2.1", Err: fail})
+	}
+	for i := range 2 * tftpMaxFailureRows {
+		remote := net.IPv4(198, 51, 100, byte(i)).String()
+		s.auditTFTPTransfer(tftp.Transfer{Direction: tftp.Download, Filename: "x", Remote: remote, Err: fail})
+	}
+	for range 3 {
+		s.auditTFTPTransfer(tftp.Transfer{Direction: tftp.Download, Filename: "ok", Remote: "192.0.2.1", Bytes: 5})
+	}
+
+	logs, err := s.dbConn.GetAuditLogs(t.Context(), database.AuditLogOptions{ResourceType: tftp.AuditResource})
+	if err != nil {
+		t.Fatalf("audit logs: %v", err)
+	}
+	var failures, completed int
+	for _, l := range logs {
+		if l.ResourceID == "ok" {
+			completed++
+		} else {
+			failures++
+		}
+	}
+	if completed != 3 || failures != tftpMaxFailureRows {
+		t.Errorf("audited %d completed and %d failed, want 3 and %d", completed, failures, tftpMaxFailureRows)
+	}
+
+	// A new window audits the device again.
+	var g tftpFailureGate
+	now := time.Now()
+	if ok, _ := g.admit("192.0.2.1", now); !ok {
+		t.Fatal("first failure not audited")
+	}
+	if ok, _ := g.admit("192.0.2.1", now.Add(time.Second)); ok {
+		t.Fatal("second failure in the window audited")
+	}
+	ok, suppressed := g.admit("192.0.2.1", now.Add(tftpFailureWindow))
+	if !ok || suppressed != 1 {
+		t.Fatalf("next window: audited %v, suppressed %d, want true and 1", ok, suppressed)
 	}
 }
 
