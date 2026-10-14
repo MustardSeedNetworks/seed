@@ -84,14 +84,16 @@ func TestSSOSettingsResponseShape(t *testing.T) {
 	w := serve(t, s.handleSSOSettings, "/api/v1/sso/settings")
 
 	require.JSONEq(t,
-		`{"providers":[{"name":"google","enabled":true},{"name":"github","enabled":false}]}`,
+		`{"providers":[{"name":"google","enabled":true,"clientId":"id","hasClientSecret":true},`+
+			`{"name":"github","enabled":false}]}`,
 		w.Body.String())
 }
 
 type statusRadio struct{ troubleshooting.Hardware }
 
-func (statusRadio) ManagerAvailable() bool { return true }
-func (statusRadio) IsWireless() bool       { return true }
+func (statusRadio) ManagerAvailable() bool          { return true }
+func (statusRadio) IsWireless() bool                { return true }
+func (statusRadio) IsWirelessInterface(string) bool { return true }
 
 type wirelessNames []string
 
@@ -312,7 +314,7 @@ func TestTopologyResponseShapes(t *testing.T) {
 	}
 	linkKeys := []string{
 		"evidence", "firstSeen", "id", "lastSeen", "linkType", "sourceInterface",
-		"sourceNodeId", "speedMbps", "status", "targetInterface", "targetNodeId", "utilizationPct",
+		"sourceNodeId", "speedMbps", "status", "targetInterface", "targetNodeId",
 	}
 
 	nodes := serve(t, s.handleTopologyNodes, APIVersionPrefix+"/topology/nodes")
@@ -483,7 +485,7 @@ type scanRadio struct{ statusRadio }
 
 func (scanRadio) ScannerAvailable() bool { return true }
 func (scanRadio) SetInterface(string)    {}
-func (scanRadio) Scan() ([]*wifi.ScannedNetwork, error) {
+func (scanRadio) Scan(string) ([]*wifi.ScannedNetwork, error) {
 	return []*wifi.ScannedNetwork{{
 		SSID: "lab", BSSID: "aa:bb:cc:dd:ee:ff", Signal: -51, Channel: 36,
 		Frequency: 5180, Security: "WPA2", ChannelWidth: 80, LastSeen: time.Unix(0, 0).UTC(),

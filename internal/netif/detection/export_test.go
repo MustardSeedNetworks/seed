@@ -111,9 +111,8 @@ func NewDetectorNoFork() *Detector {
 
 // NewChipsetDatabaseNoFork builds a chipset database whose platform lookup is
 // stubbed. IdentifyByInterface falls through to identifyByPlatformUncached when
-// neither OUI nor keyword matches, which forks system_profiler on darwin — the
-// last helper the suite was still starting. Same reasoning as
-// [NewDetectorNoFork].
+// neither OUI nor keyword matches, which forks PowerShell on Windows. Same
+// reasoning as [NewDetectorNoFork].
 func NewChipsetDatabaseNoFork() *ChipsetDatabase {
 	return newChipsetDatabase(func(_ context.Context, name string, _ ...string) ([]byte, error) {
 		return nil, fmt.Errorf("detection: %s is not run under go test", name)

@@ -18,6 +18,8 @@
 import { HttpResponse, http } from 'msw';
 import { SETTINGS_RESPONSE } from '../../src/test/settingsResponse';
 import type { DeviceCredentialListResponse } from '../../src/types/generated/device-credential-list-response';
+import type { DiscoveryOptionsResponse } from '../../src/types/generated/discovery-options-response';
+import type { VulnerabilitySettings } from '../../src/types/generated/vulnerability-settings';
 import settingsDefaults from './settings-defaults.json';
 
 /** Matches internal/api/handlers_profiles.go ProfileResponse. */
@@ -57,14 +59,30 @@ export const handlers = [
   // real default: providers only appear once one is configured and enabled.
   http.get('*/api/v1/sso/providers', () => HttpResponse.json({ providers: [] })),
 
-  // The discovery/vulnerability pair useNetworkDiscoveryAutoScan reads. Both
-  // are capitalised on the wire; the hook documents that inline and reads
-  // `options.PortScan.Enabled` and `Enabled` / `AutoScan`.
+  // The discovery/vulnerability pair useNetworkDiscoveryAutoScan reads, both
+  // with every scan off.
   http.get('*/api/v1/security/discovery/options', () =>
-    HttpResponse.json({ options: { PortScan: { Enabled: false } } }),
+    HttpResponse.json<DiscoveryOptionsResponse>({
+      options: {
+        passiveProtocols: { lldp: false, cdp: false, edp: false, ndp: false },
+        arpScan: false,
+        icmpScan: false,
+        portScan: { enabled: false, preset: 'common', tcpPorts: '' },
+        traceroute: false,
+        snmpQuery: false,
+      },
+    }),
   ),
   http.get('*/api/v1/security/vulnerabilities/settings', () =>
-    HttpResponse.json({ Enabled: false, AutoScan: false }),
+    HttpResponse.json<VulnerabilitySettings>({
+      enabled: false,
+      cveDatabase: 'nvd',
+      nvdApiKey: '',
+      updateInterval: 86400,
+      severityThreshold: 'medium',
+      maxConcurrent: 5,
+      autoScan: false,
+    }),
   ),
 
   // DeviceVulnerabilities — src/types/vulnerabilities.ts. An empty list is a

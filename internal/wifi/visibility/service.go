@@ -48,6 +48,10 @@ const (
 // fields stay empty.
 type ScanSource func() ([]airspace.BSSView, error)
 
+// WiredSource returns the MAC addresses currently known on the wired side of
+// the network, for the rules that cross-reference the airspace with the LAN.
+type WiredSource func(ctx context.Context) ([]string, error)
+
 // Status is the read-model summary of the visibility service: whether a capture
 // source is feeding it, and the current entity/anomaly counts. Pure data with
 // camelCase wire tags (ADR-0010) so the API layer can serialize it directly.
@@ -65,6 +69,9 @@ type Status struct {
 	// feeds frames, so their absence from the anomaly list reads as
 	// unavailable rather than clear.
 	NeedsCapture []wifianomaly.Rule `json:"needsCapture,omitempty"`
+	// NeedsWiredData lists the rules that cannot run while discovery knows no
+	// wired MAC address, for the same reason.
+	NeedsWiredData []wifianomaly.Rule `json:"needsWiredData,omitempty"`
 }
 
 // Service owns the live airspace, the Wi-Fi detector, and the evaluation loop. It
@@ -89,6 +96,10 @@ type Service struct {
 	source        string
 	lastEvaluated time.Time
 	scanSource    ScanSource
+	wiredSource   WiredSource
+	// wired is the most recent wired-side MAC set, kept until a later refresh
+	// succeeds.
+	wired []string
 	// scanned is the most recent scan's BSSes, merged under the captured
 	// airspace by Tree and dropped once it is older than the retention window.
 	scanned  []airspace.BSSView
@@ -211,6 +222,14 @@ func (s *Service) SetScanSource(src ScanSource) {
 	s.mu.Unlock()
 }
 
+// SetWiredSource injects the wired-side MAC feed. The server owns discovery, so
+// it wires this during init, like SetScanSource.
+func (s *Service) SetWiredSource(src WiredSource) {
+	s.mu.Lock()
+	s.wiredSource = src
+	s.mu.Unlock()
+}
+
 // IngestScan replaces the scan snapshot with the BSSes one scan saw at `at`.
 // A BSS the scan no longer reports disappears with it.
 func (s *Service) IngestScan(views []airspace.BSSView, at time.Time) {
@@ -255,7 +274,10 @@ func (s *Service) Evaluate(ctx context.Context, at time.Time) {
 // Coordinator. Store errors are logged, not fatal — the in-memory engine stays
 // authoritative and the next tick re-persists.
 func (s *Service) evaluatePersistent(ctx context.Context, coord *anomaly.Coordinator, at, cutoff time.Time) {
-	for _, d := range s.detector.Detect(s.Tree()) {
+	s.mu.Lock()
+	wired := s.wired
+	s.mu.Unlock()
+	for _, d := range s.detector.Detect(s.Tree(), wired) {
 		// Stamp the producer source at the hand-off (ADR-0029 §2); the Wi-Fi
 		// detector stays source-agnostic.
 		d.Source = anomaly.SourceWiFi
@@ -340,7 +362,7 @@ func (s *Service) Status() Status {
 	}
 
 	s.mu.Lock()
-	src, last, scanned, coord := s.source, s.lastEvaluated, s.lastScan, s.coordinator
+	src, last, scanned, coord, wired := s.source, s.lastEvaluated, s.lastScan, s.coordinator, len(s.wired)
 	s.mu.Unlock()
 
 	// Source-scoped count (ADR-0029 §4): the shared engine holds every producer's
@@ -364,10 +386,13 @@ func (s *Service) Status() Status {
 	if !st.CaptureActive {
 		st.NeedsCapture = wifianomaly.CaptureOnlyRules()
 	}
+	if wired == 0 {
+		st.NeedsWiredData = wifianomaly.WiredDataRules()
+	}
 	return st
 }
 
-// Run scans on the scan interval and evaluates the airspace on the eval
+// Run scans and refreshes the wired MAC set on the scan interval, and evaluates the airspace on the eval
 // interval until ctx is cancelled. It blocks: the loop is a supervised worker
 // (#2748), and the `go s.loop` it replaced ran outside the supervisor's recover.
 func (s *Service) Run(ctx context.Context) error {
@@ -379,6 +404,7 @@ func (s *Service) Run(ctx context.Context) error {
 	scanTicker := time.NewTicker(s.scanInterval)
 	defer scanTicker.Stop()
 	s.scan(ctx)
+	s.refreshWired(ctx)
 	for {
 		select {
 		case <-ctx.Done():
@@ -387,6 +413,7 @@ func (s *Service) Run(ctx context.Context) error {
 			s.Evaluate(ctx, time.Now())
 		case <-scanTicker.C:
 			s.scan(ctx)
+			s.refreshWired(ctx)
 		}
 	}
 }
@@ -409,4 +436,24 @@ func (s *Service) scan(ctx context.Context) {
 		return
 	}
 	s.IngestScan(views, time.Now())
+}
+
+// refreshWired replaces the wired MAC set from the wired source. A failed read
+// keeps the previous set, so one bad read does not resolve what the last good
+// one raised.
+func (s *Service) refreshWired(ctx context.Context) {
+	s.mu.Lock()
+	src := s.wiredSource
+	s.mu.Unlock()
+	if src == nil {
+		return
+	}
+	macs, err := src(ctx)
+	if err != nil {
+		s.logger.WarnContext(ctx, "wired MAC refresh failed", "error", err)
+		return
+	}
+	s.mu.Lock()
+	s.wired = macs
+	s.mu.Unlock()
 }

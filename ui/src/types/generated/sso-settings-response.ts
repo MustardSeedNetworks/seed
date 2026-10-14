@@ -11,4 +11,9 @@ export interface SSOSettingsResponse {
 export interface SSOProviderInfo {
   name: string;
   enabled: boolean;
+  clientId?: string;
+  hasClientSecret?: boolean;
+  redirectUrl?: string;
+  tenantId?: string;
+  scopes?: string[];
 }

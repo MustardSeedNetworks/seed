@@ -278,14 +278,16 @@ func seedHostResourcesTarget(t *testing.T, db *database.DB) {
 }
 
 // firstChainStatus starts poller, waits for its first chain to complete and
-// returns the status after stopping it.
+// returns the status after stopping it. The wait is generous because a chain
+// still running at the deadline is cancelled by Stop and records nothing: on
+// a loaded host the first chain has outlasted 5 s (seed#3204).
 func firstChainStatus(t *testing.T, poller *snmp.Poller) engine.Status {
 	t.Helper()
 	ctx := context.Background()
 	if err := poller.Start(ctx); err != nil {
 		t.Fatalf("Start: %v", err)
 	}
-	deadline := time.Now().Add(5 * time.Second)
+	deadline := time.Now().Add(30 * time.Second)
 	for poller.Status().LastTickAt.IsZero() && time.Now().Before(deadline) {
 		time.Sleep(time.Millisecond)
 	}

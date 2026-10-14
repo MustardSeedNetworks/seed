@@ -103,14 +103,14 @@ func TestVulnReadAndSeverity(t *testing.T) {
 	}
 }
 
-func TestUpdateVulnAppliesSixFieldsAndKeepsAutoScan(t *testing.T) {
+func TestUpdateVulnAppliesEveryField(t *testing.T) {
 	svc, cfg, _ := newService(t)
-	// AutoScan is not an operator-settable field; it must survive an update.
 	cfg.Security.VulnerabilityScanning.AutoScan = true
 
 	err := svc.UpdateVuln(settings.VulnUpdate{
 		Enabled: true, CVEDatabase: "nvd", NVDAPIKey: "k",
 		UpdateInterval: 3600, SeverityThreshold: "medium", MaxConcurrent: 4,
+		AutoScan: false,
 	})
 	if err != nil {
 		t.Fatalf("UpdateVuln: %v", err)
@@ -118,9 +118,9 @@ func TestUpdateVulnAppliesSixFieldsAndKeepsAutoScan(t *testing.T) {
 	v := cfg.Security.VulnerabilityScanning
 	if !v.Enabled || v.CVEDatabase != "nvd" || v.NVDAPIKey != "k" ||
 		v.UpdateInterval != 3600 || v.SeverityThreshold != "medium" || v.MaxConcurrent != 4 {
-		t.Errorf("UpdateVuln did not apply the six fields: %+v", v)
+		t.Errorf("UpdateVuln did not apply the fields: %+v", v)
 	}
-	if !v.AutoScan {
-		t.Error("UpdateVuln must not clobber AutoScan")
+	if v.AutoScan {
+		t.Error("UpdateVuln did not turn AutoScan off")
 	}
 }

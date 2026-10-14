@@ -30,6 +30,7 @@ import type { DiscoveryOptionsResponse } from '../types/generated/discovery-opti
 import type { PortScanRequest } from '../types/generated/port-scan-request';
 import type { PortScanResponse, ServiceInfo } from '../types/generated/port-scan-response';
 import type { VulnScanRequest } from '../types/generated/vuln-scan-request';
+import type { VulnerabilitySettings } from '../types/generated/vulnerability-settings';
 
 interface UseNetworkDiscoveryAutoScanResult {
   handleDeepScan: (ip: string) => Promise<void>;
@@ -64,13 +65,9 @@ export function useNetworkDiscoveryAutoScan(
           let vulnEnabled = false;
           let vulnAutoScan = false;
           if (vulnResponse.ok) {
-            // config.VulnerabilityScanConfig marshals snake_case keys (seed#2971).
-            const vulnData = (await vulnResponse.json()) as {
-              enabled: boolean;
-              auto_scan: boolean;
-            };
+            const vulnData = (await vulnResponse.json()) as VulnerabilitySettings;
             vulnEnabled = vulnData.enabled;
-            vulnAutoScan = vulnData.auto_scan;
+            vulnAutoScan = vulnData.autoScan;
           }
 
           setAutoScanSettings({

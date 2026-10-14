@@ -57,6 +57,20 @@ func CaptureOnlyRules() []Rule {
 	return out
 }
 
+// WiredDataRules returns the rules that cross-reference the airspace with the
+// MAC addresses known on the wired side. While discovery knows no wired MAC
+// they cannot fire, and a caller must report them as unavailable rather than as
+// clear (#2882).
+func WiredDataRules() []Rule {
+	var out []Rule
+	for _, d := range Defs() {
+		if d.ID == DefRogueAPOnLAN {
+			out = append(out, Rule{ID: d.ID, Title: d.Title})
+		}
+	}
+	return out
+}
+
 // Catalog builds and validates the Wi-Fi anomaly catalog. It fails fast if a
 // definition is malformed, so a typo in the data below cannot ship a blank card.
 func Catalog() (*anomaly.Catalog, error) {

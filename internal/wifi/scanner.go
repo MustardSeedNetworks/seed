@@ -60,13 +60,19 @@ func (s *Scanner) SetInterface(name string) {
 	s.interfaceName = name
 }
 
-// Scan performs a WiFi network scan.
+// Scan performs a WiFi network scan on the scanner's configured interface.
 // Returns all networks discovered, sorted by signal strength (strongest first).
 func (s *Scanner) Scan() ([]*ScannedNetwork, error) {
 	s.mu.Lock()
 	iface := s.interfaceName
 	s.mu.Unlock()
 
+	return s.ScanInterface(iface)
+}
+
+// ScanInterface performs a WiFi network scan on iface, which need not be the
+// configured interface, so a caller can scan a second radio.
+func (s *Scanner) ScanInterface(iface string) ([]*ScannedNetwork, error) {
 	// Perform platform-specific scan
 	networks, err := scanPlatform(iface, s.currentHelper())
 	if err != nil {

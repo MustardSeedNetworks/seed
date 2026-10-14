@@ -25,8 +25,8 @@ ui/src/hooks/useAuth.ts:459  # mutating but CSRF-exempt by design (the route dec
 ui/src/hooks/useCapabilities.ts:48  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useLogs.ts:199  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useLogs.ts:217  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkDiscoveryAutoScan.ts:54  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkDiscoveryAutoScan.ts:61  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkDiscoveryAutoScan.ts:55  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkDiscoveryAutoScan.ts:62  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkFetchers.ts:119  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkFetchers.ts:169  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkFetchers.ts:196  # read-only — bypasses the client 401 refresh/retry
@@ -52,7 +52,6 @@ ui/src/hooks/useSettingsDrawerLoaders.ts:262  # read-only — bypasses the clien
 ui/src/hooks/useSettingsDrawerLoaders.ts:286  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useSettingsDrawerLoaders.ts:303  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useSubnetSettings.ts:43  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useVulnerabilitySettings.ts:38  # read-only — bypasses the client 401 refresh/retry
 ui/src/lib/logger.ts:267  # mutating but CSRF-exempt by design (the route declares no CSRF) — correct as a raw fetch
 ui/src/app/LoginForm.tsx:101  # read-only — bypasses the client 401 refresh/retry
 ui/src/app/LoginForm.tsx:115  # read-only — bypasses the client 401 refresh/retry

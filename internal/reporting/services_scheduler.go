@@ -28,6 +28,10 @@ type SchedulerService struct {
 	tick      time.Duration
 	mu        sync.RWMutex
 	schedules map[string]*ScheduledReport
+	entitled  func() bool
+	// paused is touched only by the Run goroutine; it turns the per-tick
+	// entitlement check into one log line per transition.
+	paused bool
 }
 
 // SchedulerOption tunes a SchedulerService.
@@ -61,11 +65,22 @@ func NewSchedulerService(
 		generator: generator,
 		tick:      defaultSchedulerTick,
 		schedules: make(map[string]*ScheduledReport),
+		entitled:  func() bool { return true },
 	}
 	for _, opt := range opts {
 		opt(s)
 	}
 	return s
+}
+
+// SetEntitlement installs the licence check the scheduler asks before each
+// tick. The server owns the licence manager and builds it after the cmd layer
+// built this component, so it injects the check rather than the constructor
+// taking it. Until it is set every tick is entitled, as with no licence manager.
+func (s *SchedulerService) SetEntitlement(entitled func() bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.entitled = entitled
 }
 
 // Load reads the persisted schedules into memory. Called once, synchronously,
@@ -124,7 +139,27 @@ func (s *SchedulerService) loadSchedules(ctx context.Context) error {
 // restart count is absent — the ticker is the retry. A panic unwinds before
 // NextRun is stamped, so the schedule stays due and fires again next minute,
 // once a minute, visibly.
+//
+// The API gate stops new schedules once the licence lacks scheduled reports;
+// this check stops the ones already saved (#3050). A schedule due while paused
+// stays due and fires on the first entitled tick.
 func (s *SchedulerService) checkSchedules(ctx context.Context) {
+	s.mu.RLock()
+	entitled := s.entitled
+	s.mu.RUnlock()
+	if paused := !entitled(); paused != s.paused {
+		s.paused = paused
+		if paused {
+			logging.GetLogger().WarnContext(ctx,
+				"scheduled reports paused: the licence does not include scheduled reports")
+		} else {
+			logging.GetLogger().InfoContext(ctx, "scheduled reports resumed")
+		}
+	}
+	if s.paused {
+		return
+	}
+
 	for _, schedule := range s.dueSchedules(time.Now()) {
 		group := supervise.New(logging.GetLogger())
 		group.Add("scheduled-report:"+schedule.ID, supervise.Fatal,

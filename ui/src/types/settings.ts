@@ -10,6 +10,8 @@
 
 import type { ThresholdSettings } from './generated/settings-response';
 import type { TestsSettingsResponse } from './generated/tests-settings-response';
+import type { VulnerabilitySettings } from './generated/vulnerability-settings';
+import type { VulnerabilitySettingsUpdate } from './generated/vulnerability-settings-update';
 
 // ============================================================================
 // Save Status
@@ -416,24 +418,21 @@ export const DEFAULT_CABLE_TEST_SETTINGS: CableTestSettings = {
 // Vulnerability Scanning Settings
 // ============================================================================
 
-export type CveDatabase = 'nvd' | 'local';
-export type SeverityLevel = 'low' | 'medium' | 'high' | 'critical';
-
-export interface VulnerabilityScanSettings {
-  enabled: boolean;
-  cveDatabase: CveDatabase;
-  nvdApiKey: string;
-  updateInterval: number; // seconds between database updates
-  severityThreshold: SeverityLevel;
-  maxConcurrent: number; // max concurrent vulnerability checks
-  autoScan: boolean; // auto-scan after device discovery
-}
+// What the settings drawer edits: the stored settings (seed#2971), whose NVD
+// API key never leaves the server (seed#3407), plus a key typed but not yet
+// saved and a pending removal of the stored one.
+export type VulnerabilityScanSettings = VulnerabilitySettings &
+  Required<Pick<VulnerabilitySettingsUpdate, 'nvdApiKey' | 'clearNvdApiKey'>>;
+export type CveDatabase = VulnerabilitySettings['cveDatabase'];
+export type SeverityLevel = VulnerabilitySettings['severityThreshold'];
 
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityScanSettings = {
   enabled: true, // Enable by default for security visibility
   cveDatabase: 'nvd', // NVD works without API key (rate limited)
+  hasNvdApiKey: false,
   nvdApiKey: '',
+  clearNvdApiKey: false,
   updateInterval: 86400, // 24 hours
   severityThreshold: 'medium',
   maxConcurrent: 5,

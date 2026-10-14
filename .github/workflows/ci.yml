@@ -72,7 +72,7 @@ jobs:
       # suite runs. Path filtering stays in effect for pull_request/push.
       backend: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.backend }}
       frontend: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.frontend }}
-      c: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.c }}
+      darwin_bridge: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.darwin_bridge }}
       docs: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.docs }}
       ci_infra: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.ci_infra }}
     steps:
@@ -107,11 +107,8 @@ jobs:
             frontend:
               - 'ui/**'
               - 'internal/i18n/locales/**'
-            c:
-              - 'src/**'
-              - 'include/**'
-              - 'tests/c/**'
-              - '.clang-tidy'
+            darwin_bridge:
+              - 'internal/**/*_darwin.h'
               - '.clang-format'
             docs:
               - '**/*.md'
@@ -168,7 +165,7 @@ jobs:
           python3 scripts/check-initial-bundle.py
 
       - name: Upload built UI assets
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: frontend-dist
           path: internal/api/ui/
@@ -335,7 +332,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Download built UI assets
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: frontend-dist
           path: internal/api/ui/
@@ -560,7 +557,7 @@ jobs:
         timeout-minutes: 10
 
       - name: Download built UI assets
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: frontend-dist
           path: internal/api/ui/
@@ -676,7 +673,7 @@ jobs:
       # and it is most wanted precisely when the gate has just failed.
       - name: Upload comparison
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: bench-comparison
           path: |
@@ -868,7 +865,9 @@ jobs:
       # gitleaks-action requires a paid licence for organization repos. Use the
       # MIT-licensed gitleaks CLI directly instead — same engine, same config,
       # and identical to the version pinned in .pre-commit-config.yaml. Scans
-      # full history (the security job checks out with fetch-depth: 0).
+      # the full history of HEAD only: fetch-depth: 0 also fetches every other
+      # branch, and gitleaks' default --all would fail this PR on another
+      # branch's finding (#2991).
       - name: Run gitleaks
         env:
           GITLEAKS_VERSION: "8.30.0"
@@ -881,7 +880,8 @@ jobs:
             "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
           echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum -c -
           tar -xzf gitleaks.tar.gz gitleaks
-          ./gitleaks git . --config .gitleaks.toml --redact --no-banner --exit-code 1
+          ./gitleaks git . --config .gitleaks.toml --redact --no-banner --exit-code 1 \
+            --log-opts="--full-history HEAD"
 
       - name: Run Trivy vulnerability scanner
         # exit-code is 0 here so the SARIF always gets written; we still
@@ -1137,116 +1137,31 @@ jobs:
         run: python3 scripts/check-release-changelog.py --pending
 
   # ===========================================================================
-  # C Code Linting (if applicable)
+  # Darwin bridge format
   # ===========================================================================
-  # ===========================================================================
-  # C Lint (C23 Standard - NOT C++)
-  # ===========================================================================
-  c-lint:
-    name: C Lint (C23)
+  # seed has no C. Its only C-family sources are the cgo bridge headers next
+  # to the darwin collectors, and those are checked for formatting only:
+  # clang-tidy needs a compile command per file, which a Linux runner cannot
+  # produce for darwin-only cgo (seed#3055).
+  bridge-format:
+    name: Darwin bridge format
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.c == 'true' || needs.changes.outputs.ci_infra == 'true'
-    timeout-minutes: 16
+    if: needs.changes.outputs.darwin_bridge == 'true' || needs.changes.outputs.ci_infra == 'true'
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Check if C files exist
-        id: check-c
-        run: |
-          if find . -name '*.c' -o -name '*.h' 2>/dev/null | grep -v node_modules | grep -q .; then
-            echo "has_c=true" >> "$GITHUB_OUTPUT"
-            echo "Found C source files"
-          else
-            echo "has_c=false" >> "$GITHUB_OUTPUT"
-            echo "No C source files found - C23 linting ready for when C code is added"
-          fi
-
-
-      - name: Install C23 tools (clang-tidy, cppcheck, bear)
-        if: steps.check-c.outputs.has_c == 'true'
+      - name: Install clang-format
         uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
-        timeout-minutes: 10
-        # The hand-rolled wrapper this replaces could not reap the root-owned
-        # apt-get it started, so a killed attempt left it alive holding the
-        # dpkg lock and the retry blocked on it (#1950). It also swallowed
-        # total failure: the exit branch tested `attempt -eq 3` inside a
-        # `for attempt in 1 2` loop, so when both attempts failed the loop
-        # simply ended and the step went on to update-alternatives and
-        # reported success. The composite exits non-zero.
+        timeout-minutes: 5
         with:
-          packages: clang-18 clang-tidy-18 clang-format-18 cppcheck bear gcc-13
+          packages: clang-format-18
 
-      - name: Select clang-18 as the default toolchain
-        if: steps.check-c.outputs.has_c == 'true'
-        run: |
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100
-          sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-18 100
-          sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-18 100
-
-          clang --version
-          clang-tidy --version
-          gcc-13 --version
-
-      - name: Generate compile_commands.json
-        if: steps.check-c.outputs.has_c == 'true'
-        run: |
-          # Create basic compile_commands.json for clang-tidy
-          cat > compile_commands.json << 'EOF'
-          [
-            {
-              "directory": "${{ github.workspace }}",
-              "command": "gcc-13 -std=c23 -Wall -Wextra -Wpedantic -Iinclude -c placeholder.c",
-              "file": "placeholder.c"
-            }
-          ]
-          EOF
-          
-          # Use bear to generate proper compile_commands.json if Makefile exists
-          if [ -f "Makefile" ]; then
-            export CC=gcc-13
-            bear -- make || true
-          fi
-
-      - name: Run clang-format check (C23)
-        if: steps.check-c.outputs.has_c == 'true'
-        run: |
-          echo "Checking C code formatting (C23 standard)..."
-          find . -name '*.c' -o -name '*.h' 2>/dev/null | grep -v node_modules | \
-            xargs clang-format --dry-run --Werror --style=file
-
-      - name: Run clang-tidy (C23)
-        if: steps.check-c.outputs.has_c == 'true'
-        run: |
-          echo "Running clang-tidy with C23 checks..."
-          find . -name '*.c' -o -name '*.h' 2>/dev/null | grep -v node_modules | \
-            xargs clang-tidy \
-              --config-file=.clang-tidy \
-              --extra-arg=-std=c23 \
-              --extra-arg=-Iinclude \
-              --warnings-as-errors='*'
-
-      - name: Run cppcheck (C only, not C++)
-        if: steps.check-c.outputs.has_c == 'true'
-        run: |
-          echo "Running cppcheck for C code..."
-          cppcheck \
-            --std=c23 \
-            --language=c \
-            --enable=warning,style,performance,portability \
-            --suppress=missingIncludeSystem \
-            --suppress=unusedFunction \
-            --inline-suppr \
-            --error-exitcode=1 \
-            --template='{file}:{line}: {severity}: {message} [{id}]' \
-            -I include \
-            . 2>&1 | tee cppcheck.log
-          
-          if [ -s cppcheck.log ]; then
-            echo "::warning::cppcheck found issues"
-          fi
+      - name: Check bridge header formatting
+        run: git ls-files -z 'internal/**/*_darwin.h' | xargs -0 clang-format-18 --dry-run --Werror --style=file
 
   # ===========================================================================
   # Workflow Linting
@@ -1435,7 +1350,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Download frontend build
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: frontend-dist
           path: internal/api/ui/
@@ -1610,11 +1525,10 @@ jobs:
     #     scripts/build-backend-e2e.sh.
     # Pinned by tag AND digest, as release.yml pins goreleaser-cross.
     container:
-      image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
+      image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
       options: --ipc=host
     # Blocking tier — "CI Complete" gates on this job (see ci-complete.needs).
-    # 2 shards × 2 browsers = 4 jobs, the webkit two temporarily split out into
-    # e2e-webkit (see there). This was 4 × 2 = 8; per-shard wall-clock
+    # 2 shards × 2 browsers = 4 jobs. This was 4 × 2 = 8; per-shard wall-clock
     # was indeed ~3–5 min, but the 8 shards did not start together — measured
     # run 31840685070 launched them in waves at t+9, t+11 and t+12 min against
     # a 24-job run, so the last shard finished at t+15 and the sharding added
@@ -1638,8 +1552,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # webkit runs in e2e-webkit until Playwright 1.64 (UI-SEED-28, seed#2930).
-        browser: [chromium]
+        browser: [chromium, webkit]
         shard: [1, 2]
     # Skipped on draft PRs (slow); also skipped if no frontend/backend changed.
     # always() lets the if: evaluate when backend was skipped upstream.
@@ -1669,7 +1582,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Download frontend build
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: frontend-dist
           path: internal/api/ui/
@@ -1706,8 +1619,7 @@ jobs:
         # Smoke tier runs in the e2e-smoke job; full e2e skips it to
         # avoid duplicate runtime. See seed#1053.
         # Both chromium and webkit run per E2E_CONVENTIONS — the projects
-        # array in playwright.config.ts is exactly [chromium, webkit]; webkit
-        # runs in e2e-webkit for now.
+        # array in playwright.config.ts is exactly [chromium, webkit].
         # No --reporter here on purpose: passing one REPLACES the config's
         # reporter array, and the config is what writes the JSON report the
         # flake budget below reads. `--reporter=html` silently produced no
@@ -1715,7 +1627,7 @@ jobs:
         run: ./scripts/run-e2e.sh --project=${{ matrix.browser }} --grep-invert "@smoke" --shard=${{ matrix.shard }}/2
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: playwright-report-${{ matrix.browser }}-shard-${{ matrix.shard }}
@@ -1742,7 +1654,7 @@ jobs:
       # needed. #2178 could not be confirmed from CI for that reason: the
       # retry-pass threw away the only evidence explaining it.
       - name: Upload server logs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: server-logs-${{ matrix.browser }}-shard-${{ matrix.shard }}
@@ -1759,13 +1671,13 @@ jobs:
   # the user-visible E2E signal, distinct from the full e2e job which
   # is advisory. See seed#1053.
   e2e-smoke:
-    name: E2E Smoke (chromium)
+    name: E2E Smoke
     runs-on: ubuntu-latest
     needs: [changes, backend, frontend]
     timeout-minutes: 25
     # Same container as the e2e job — see the rationale there.
     container:
-      image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
+      image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
       options: --ipc=host
     if: |
       always() &&
@@ -1790,7 +1702,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Download frontend build
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: frontend-dist
           path: internal/api/ui/
@@ -1821,13 +1733,12 @@ jobs:
         env:
           E2E_SKIP_BUILD: "1"
           E2E_SERVER_LOG: server.log
-        # Smoke tier on both browsers per PR per E2E_CONVENTIONS; the webkit
-        # half runs in e2e-webkit for now.
+        # Smoke tier on both browsers per PR per E2E_CONVENTIONS.
         # No --reporter, for the same reason as the sharded job above.
-        run: ./scripts/run-e2e.sh --project=chromium --grep "@smoke"
+        run: ./scripts/run-e2e.sh --grep "@smoke"
 
       - name: Upload Playwright smoke report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: playwright-smoke-report
@@ -1851,148 +1762,10 @@ jobs:
 
       # always(), for the same reason as the sharded job above.
       - name: Upload smoke server logs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: smoke-server-logs
-          path: server.log
-          retention-days: 7
-
-  # ===========================================================================
-  # E2E WebKit (full shards + smoke) — TEMPORARY WORKAROUND
-  # ===========================================================================
-  # UI-SEED-28 / seed#2930. Playwright 1.63's WebKit, as installed in the
-  # Playwright image, bundles libsoup 3.6.5, which has a use-after-free
-  # (microsoft/playwright#42803). It surfaces as WebKit-only flakes: a page stuck
-  # on "Loading...", "WebKit encountered an internal error", then 401s because
-  # the session was lost. On Ubuntu 26.04 the same WebKit build bundles no
-  # libsoup and loads the OS's 3.6.6, and it has never reproduced there. So the
-  # WebKit half of e2e and e2e-smoke runs here, on a plain 26.04 image, while
-  # chromium stays on the Playwright image.
-  #
-  # REVERT with the Playwright 1.64 lockstep bump: delete this job and
-  # scripts/check-webkit-libsoup.sh, put webkit back in e2e's browser matrix,
-  # drop --project=chromium from e2e-smoke, and remove e2e-webkit from
-  # ci-complete.needs.
-  #
-  # Unlike the Playwright image, this one reaches its apt mirror, so the
-  # browser's OS dependencies come from `playwright install --with-deps`. The
-  # #1950 dpkg-lock flake was the host runner's unattended-upgrades; a fresh
-  # container has none. Pinned by tag AND digest.
-  e2e-webkit:
-    name: E2E Browser Tests (webkit ${{ matrix.suite }})
-    runs-on: ubuntu-latest
-    needs: [changes, backend, frontend]
-    timeout-minutes: 25
-    container:
-      image: ubuntu:26.04@sha256:f144425ff09be612d6d9ad965196e9cdc23dae1f42110a8a11a3e9a8198759f7
-      options: --ipc=host
-    env:
-      DEBIAN_FRONTEND: noninteractive
-    strategy:
-      fail-fast: false
-      matrix:
-        # --shard=1/1 runs everything the grep selects, so the smoke entry
-        # shares one command line with the full-suite shards.
-        include:
-          - suite: 1/2
-            grep: --grep-invert
-            shard: 1/2
-            artifact: webkit-shard-1
-          - suite: 2/2
-            grep: --grep-invert
-            shard: 2/2
-            artifact: webkit-shard-2
-          - suite: smoke
-            grep: --grep
-            shard: 1/1
-            artifact: webkit-smoke
-    if: |
-      always() &&
-      (github.event_name != 'pull_request' || github.event.pull_request.draft == false) &&
-      needs.frontend.result == 'success' &&
-      (needs.backend.result == 'success' || needs.backend.result == 'skipped')
-
-    steps:
-      # The base image has no git (checkout would fall back to a tarball and
-      # the ldflags' git calls to dev/unknown), no CA bundle, no zstd (the
-      # cache actions' archive format, else every restore misses), no
-      # libatomic, which the Node binaries link, and none of the curl,
-      # python3 and pgrep that scripts/run-e2e.sh calls.
-      - name: Install container prerequisites
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends ca-certificates curl git libatomic1 procps python3 zstd
-
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      # See the e2e job: without this the ldflags' git calls fall through to
-      # their defaults and /__version reports dev/unknown.
-      - name: Trust the workspace for git
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-
-      - name: Set up Go
-        uses: ./.github/actions/setup-go
-
-      - name: Set up Node.js
-        uses: ./.github/actions/setup-node
-
-      - name: Download frontend build
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: frontend-dist
-          path: internal/api/ui/
-
-      - name: Install frontend dependencies (for Playwright)
-        working-directory: ui
-        run: npm ci
-
-      # The repo's own playwright installs the WebKit build that matches
-      # @playwright/test, so there is no image version to keep in step here.
-      # e2e/global-setup.ts signs in once with chromium whatever the project,
-      # so its headless shell comes along.
-      - name: Install WebKit and its OS dependencies
-        working-directory: ui
-        run: npx playwright install --with-deps --only-shell webkit chromium
-
-      - name: Assert WebKit loads the OS libsoup, not the bundled 3.6.5
-        run: ./scripts/check-webkit-libsoup.sh
-
-      - name: Build backend
-        run: ./scripts/build-backend-e2e.sh
-
-      - name: Run Playwright E2E tests (webkit)
-        env:
-          E2E_SKIP_BUILD: "1"
-          E2E_SERVER_LOG: server.log
-          GREP_FLAG: ${{ matrix.grep }}
-          SHARD: ${{ matrix.shard }}
-        # No --reporter, for the same reason as the e2e job.
-        run: ./scripts/run-e2e.sh --project=webkit "$GREP_FLAG" "@smoke" --shard="$SHARD"
-
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
-        with:
-          name: playwright-report-${{ matrix.artifact }}
-          path: ui/playwright-report/
-          retention-days: 7
-
-      # See the e2e job for why the budget is 0 and runs after the upload.
-      - name: Enforce flake budget
-        if: always()
-        uses: MustardSeedNetworks/.github/.github/actions/flake-budget@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
-        with:
-          report: ui/playwright-report/results.json
-          budget: "0"
-
-      - name: Upload server logs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
-        with:
-          name: server-logs-${{ matrix.artifact }}
           path: server.log
           retention-days: 7
 
@@ -2164,13 +1937,12 @@ jobs:
       - ci-conformance
       - quality
       - release-notes
-      - c-lint
+      - bridge-format
       - i18n
       - docs
       - build
       - e2e
       - e2e-smoke
-      - e2e-webkit
       - phone-width
       - codeql-alert-gate
     if: always()

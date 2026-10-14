@@ -5,6 +5,132 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.257.8](https://github.com/MustardSeedNetworks/seed/compare/v0.257.7...v0.257.8) (2026-10-14)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3428](https://github.com/MustardSeedNetworks/seed/issues/3428)) ([3b610de](https://github.com/MustardSeedNetworks/seed/commit/3b610deaccf46f1c0f7acd4827f8aa14954a9d12))
+
+## [0.257.7](https://github.com/MustardSeedNetworks/seed/compare/v0.257.6...v0.257.7) (2026-10-14)
+
+
+### Bug Fixes
+
+* **guestaudit:** wait the full ping budget on macOS and Linux ([#3425](https://github.com/MustardSeedNetworks/seed/issues/3425)) ([425c803](https://github.com/MustardSeedNetworks/seed/commit/425c8031c452544d819bad524489a097622d8922)), closes [#3310](https://github.com/MustardSeedNetworks/seed/issues/3310)
+* **reporting:** stop scheduled reports when the licence lacks the feature ([#3427](https://github.com/MustardSeedNetworks/seed/issues/3427)) ([ca910dc](https://github.com/MustardSeedNetworks/seed/commit/ca910dcabdf6c9340559a0370d4f71bed685cb0e)), closes [#3050](https://github.com/MustardSeedNetworks/seed/issues/3050)
+
+## [0.257.6](https://github.com/MustardSeedNetworks/seed/compare/v0.257.5...v0.257.6) (2026-10-14)
+
+
+### Bug Fixes
+
+* **polling:** record nothing for a poll that Stop cancels ([#3421](https://github.com/MustardSeedNetworks/seed/issues/3421)) ([da48d75](https://github.com/MustardSeedNetworks/seed/commit/da48d75738e02c696a78ceec670f06c5eda93778)), closes [#3204](https://github.com/MustardSeedNetworks/seed/issues/3204)
+
+
+### Tests
+
+* **reporting:** wait for the capacity report to finish, not a deadline ([#3423](https://github.com/MustardSeedNetworks/seed/issues/3423)) ([7b128c6](https://github.com/MustardSeedNetworks/seed/commit/7b128c623861ba2b0fd47680165d90acf6d34c32)), closes [#3110](https://github.com/MustardSeedNetworks/seed/issues/3110)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3424](https://github.com/MustardSeedNetworks/seed/issues/3424)) ([22f8471](https://github.com/MustardSeedNetworks/seed/commit/22f84716069550ec3f8e2523b499d7e4a34347ce))
+
+## [0.257.5](https://github.com/MustardSeedNetworks/seed/compare/v0.257.4...v0.257.5) (2026-10-14)
+
+
+### Bug Fixes
+
+* **api:** give vulnerability settings one camelCase body for GET and PUT ([#3408](https://github.com/MustardSeedNetworks/seed/issues/3408)) ([1ddcf20](https://github.com/MustardSeedNetworks/seed/commit/1ddcf20690af13ad027573dee6557ceb8afbab94)), closes [#2971](https://github.com/MustardSeedNetworks/seed/issues/2971)
+* **api:** keep the NVD API key on the server in vulnerability settings ([#3413](https://github.com/MustardSeedNetworks/seed/issues/3413)) ([45a504a](https://github.com/MustardSeedNetworks/seed/commit/45a504a2ca58fb5b3057d1a7d044f2ab499afd00)), closes [#3407](https://github.com/MustardSeedNetworks/seed/issues/3407)
+* **ci:** scope the gitleaks scan to the history of HEAD ([#3416](https://github.com/MustardSeedNetworks/seed/issues/3416)) ([9de0dda](https://github.com/MustardSeedNetworks/seed/commit/9de0dda4942945e68a612381e802d7617f8157c6)), closes [#2991](https://github.com/MustardSeedNetworks/seed/issues/2991)
+* **release:** keep the release a draft until goreleaser has filled it ([#3406](https://github.com/MustardSeedNetworks/seed/issues/3406)) ([ee6d036](https://github.com/MustardSeedNetworks/seed/commit/ee6d036d86b0f1e9a8d881b63dd29950a2fb3e65)), closes [#3157](https://github.com/MustardSeedNetworks/seed/issues/3157)
+* **release:** link libpcap statically so the rpm runs on Fedora ([#3404](https://github.com/MustardSeedNetworks/seed/issues/3404)) ([7e5d411](https://github.com/MustardSeedNetworks/seed/commit/7e5d41165d770de2f7985d3aae2b3ba7ea19a56b)), closes [#2978](https://github.com/MustardSeedNetworks/seed/issues/2978)
+* **retention:** purge raw SNMP observations and listener events ([#3419](https://github.com/MustardSeedNetworks/seed/issues/3419)) ([c206026](https://github.com/MustardSeedNetworks/seed/commit/c206026b1c114449d4a0eaf03d3891ba4b183675)), closes [#3009](https://github.com/MustardSeedNetworks/seed/issues/3009)
+* **scheduler:** never poll or re-dispatch a job whose run is in flight ([#3402](https://github.com/MustardSeedNetworks/seed/issues/3402)) ([677083d](https://github.com/MustardSeedNetworks/seed/commit/677083d0171082cb232ae384d4920521a9e94c63)), closes [#3002](https://github.com/MustardSeedNetworks/seed/issues/3002)
+* **vuln:** match a local CVE only to the versions it lists ([#3409](https://github.com/MustardSeedNetworks/seed/issues/3409)) ([3591b47](https://github.com/MustardSeedNetworks/seed/commit/3591b47c75ded751861f26a3dd79935f65f8dad7)), closes [#3061](https://github.com/MustardSeedNetworks/seed/issues/3061)
+
+
+### Continuous Integration
+
+* **lint:** replace the stem-copied C lint job with a bridge header format check ([#3418](https://github.com/MustardSeedNetworks/seed/issues/3418)) ([80ed46b](https://github.com/MustardSeedNetworks/seed/commit/80ed46bb435caa548e928c713280da1fceb57528)), closes [#3055](https://github.com/MustardSeedNetworks/seed/issues/3055)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3405](https://github.com/MustardSeedNetworks/seed/issues/3405)) ([4cdfb25](https://github.com/MustardSeedNetworks/seed/commit/4cdfb2561f32b9354464fe5ccd9d8302dd259c9d))
+* **deps:** lock file maintenance ([#3410](https://github.com/MustardSeedNetworks/seed/issues/3410)) ([dcb0951](https://github.com/MustardSeedNetworks/seed/commit/dcb09516f206bfaa0f9aa8f00e104b350b6bcc51))
+* **deps:** lock file maintenance ([#3412](https://github.com/MustardSeedNetworks/seed/issues/3412)) ([9d6e9dc](https://github.com/MustardSeedNetworks/seed/commit/9d6e9dc11718dd463f0f786762e770168430444e))
+* **deps:** lock file maintenance ([#3417](https://github.com/MustardSeedNetworks/seed/issues/3417)) ([e38947e](https://github.com/MustardSeedNetworks/seed/commit/e38947ed3b4bbd6d2a3b834cd84f9000bffd0304))
+* **deps:** lock file maintenance ([#3420](https://github.com/MustardSeedNetworks/seed/issues/3420)) ([d1202f2](https://github.com/MustardSeedNetworks/seed/commit/d1202f26fe9c1b5fd049e81e54674caa4db0f198))
+* **deps:** update actions/download-artifact action to v8.0.2 ([#3414](https://github.com/MustardSeedNetworks/seed/issues/3414)) ([4b43b52](https://github.com/MustardSeedNetworks/seed/commit/4b43b52d6df4d205a5dbd306659e5c61559d47a1))
+* **deps:** update actions/upload-artifact action to v7.0.2 ([#3411](https://github.com/MustardSeedNetworks/seed/issues/3411)) ([4706618](https://github.com/MustardSeedNetworks/seed/commit/4706618ff0d1a746e935f0f1d088bd133f48c33d))
+* **packaging:** delete the dead .nfpm.yaml and drop survey from the package description ([#3415](https://github.com/MustardSeedNetworks/seed/issues/3415)) ([410d9d1](https://github.com/MustardSeedNetworks/seed/commit/410d9d17f7572407e13623932a6655a359f9278d)), closes [#2980](https://github.com/MustardSeedNetworks/seed/issues/2980)
+
+## [0.257.4](https://github.com/MustardSeedNetworks/seed/compare/v0.257.3...v0.257.4) (2026-10-14)
+
+
+### Bug Fixes
+
+* **gateway:** ping IPv6 gateways over ICMPv6, link-local ones with their zone ([#3400](https://github.com/MustardSeedNetworks/seed/issues/3400)) ([96d5afc](https://github.com/MustardSeedNetworks/seed/commit/96d5afc011e895137ef0d2f5ec21575a199164cd)), closes [#3251](https://github.com/MustardSeedNetworks/seed/issues/3251)
+* **snmp:** send each v3 credential at its own security level ([#3398](https://github.com/MustardSeedNetworks/seed/issues/3398)) ([b4b081b](https://github.com/MustardSeedNetworks/seed/commit/b4b081b03442c62e04d7b8a7b8629e240fd247db)), closes [#3053](https://github.com/MustardSeedNetworks/seed/issues/3053)
+* **sso:** keep the stored client secret when a provider is re-saved ([#3401](https://github.com/MustardSeedNetworks/seed/issues/3401)) ([642d0a6](https://github.com/MustardSeedNetworks/seed/commit/642d0a6d05dd0cf691e2d3c6e50fe339029fb38e)), closes [#3280](https://github.com/MustardSeedNetworks/seed/issues/3280)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3395](https://github.com/MustardSeedNetworks/seed/issues/3395)) ([76ba193](https://github.com/MustardSeedNetworks/seed/commit/76ba19339535d5291a092c005471970f84e149ea))
+* **deps:** lock file maintenance ([#3399](https://github.com/MustardSeedNetworks/seed/issues/3399)) ([7a99639](https://github.com/MustardSeedNetworks/seed/commit/7a996395b213bb2376702959445259bfd6a0284b))
+* **deps:** update node.js to v26.11.1 ([#3397](https://github.com/MustardSeedNetworks/seed/issues/3397)) ([167e73b](https://github.com/MustardSeedNetworks/seed/commit/167e73b973214070290a6809859a44b55665dd7c))
+
+## [0.257.3](https://github.com/MustardSeedNetworks/seed/compare/v0.257.2...v0.257.3) (2026-10-13)
+
+
+### Bug Fixes
+
+* **deps:** update module golang.org/x/sys to v0.49.0 ([#3394](https://github.com/MustardSeedNetworks/seed/issues/3394)) ([c9580b6](https://github.com/MustardSeedNetworks/seed/commit/c9580b6d01df20813ef5f70a3b26da29d3d555f2))
+* **wifi:** feed the rogue-AP rule discovery's wired MACs ([#3390](https://github.com/MustardSeedNetworks/seed/issues/3390)) ([97a08a8](https://github.com/MustardSeedNetworks/seed/commit/97a08a89aadfce5da7c05ff6927e0a7d358d8ae8)), closes [#2882](https://github.com/MustardSeedNetworks/seed/issues/2882)
+* **wifi:** scan the radio the request names, refuse a wired one ([#3393](https://github.com/MustardSeedNetworks/seed/issues/3393)) ([f3501f2](https://github.com/MustardSeedNetworks/seed/commit/f3501f217af95fd4d31246d857a48b06e0675e58)), closes [#2881](https://github.com/MustardSeedNetworks/seed/issues/2881)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3391](https://github.com/MustardSeedNetworks/seed/issues/3391)) ([015c506](https://github.com/MustardSeedNetworks/seed/commit/015c5068f8706f141fab4816e50daacc5551d914))
+
+## [0.257.2](https://github.com/MustardSeedNetworks/seed/compare/v0.257.1...v0.257.2) (2026-10-13)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-i18next to v17.0.16 ([#3386](https://github.com/MustardSeedNetworks/seed/issues/3386)) ([e3a4f23](https://github.com/MustardSeedNetworks/seed/commit/e3a4f23042f7b69411676fecf5dcfb7ba061adbb))
+* **e2e:** build the E2E backend with cgo on macOS ([#3385](https://github.com/MustardSeedNetworks/seed/issues/3385)) ([5b2240c](https://github.com/MustardSeedNetworks/seed/commit/5b2240cabace98c0edff5bbb871306922e030fa8)), closes [#2518](https://github.com/MustardSeedNetworks/seed/issues/2518)
+* **netif:** identify darwin chipsets from the IORegistry ([#3388](https://github.com/MustardSeedNetworks/seed/issues/3388)) ([d65e20f](https://github.com/MustardSeedNetworks/seed/commit/d65e20feef17a3aaa3d189af86c0a3dda1b69a52))
+
+## [0.257.1](https://github.com/MustardSeedNetworks/seed/compare/v0.257.0...v0.257.1) (2026-10-13)
+
+
+### Bug Fixes
+
+* **system:** measure CPU over the sampler's own window so darwin reads non-zero ([#3384](https://github.com/MustardSeedNetworks/seed/issues/3384)) ([7c72412](https://github.com/MustardSeedNetworks/seed/commit/7c724121c46814f1bc28629c0f271fe4b0030f3c)), closes [#2773](https://github.com/MustardSeedNetworks/seed/issues/2773)
+
+
+### Miscellaneous
+
+* **config:** delete the SystemConfig loader nothing calls ([#3382](https://github.com/MustardSeedNetworks/seed/issues/3382)) ([b150a59](https://github.com/MustardSeedNetworks/seed/commit/b150a59a6a3786cf8c599ab320e783f7a12d9f18)), closes [#3359](https://github.com/MustardSeedNetworks/seed/issues/3359)
+
+## [0.257.0](https://github.com/MustardSeedNetworks/seed/compare/v0.256.0...v0.257.0) (2026-10-13)
+
+
+### Features
+
+* **polling:** test a target with one poll now and record its last success ([#3379](https://github.com/MustardSeedNetworks/seed/issues/3379)) ([979c3a2](https://github.com/MustardSeedNetworks/seed/commit/979c3a2386ac54ff6001cf7214e915488791e64a))
+
+
+### Bug Fixes
+
+* **ci:** run the storybook defect contract on its own story file ([#3381](https://github.com/MustardSeedNetworks/seed/issues/3381)) ([d95b14e](https://github.com/MustardSeedNetworks/seed/commit/d95b14e5a5a6f4cda49cf8fb5ca6142621aab302))
+
 ## [0.256.0](https://github.com/MustardSeedNetworks/seed/compare/v0.255.3...v0.256.0) (2026-10-13)
 
 

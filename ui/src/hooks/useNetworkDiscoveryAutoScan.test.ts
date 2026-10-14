@@ -17,6 +17,7 @@ import type {
 } from '../components/cards/networkDiscoveryCardTypes';
 import type { CreateJobRequest } from '../types/generated/create-job-request';
 import type { OptionsResponse } from '../types/generated/options-response';
+import type { VulnerabilitySettings } from '../types/generated/vulnerability-settings';
 import { useNetworkDiscoveryAutoScan } from './useNetworkDiscoveryAutoScan';
 
 const mockPost = vi.fn<(path: string, body?: unknown) => Promise<unknown>>();
@@ -45,16 +46,15 @@ function discoveryOptions(portScanEnabled: boolean): { options: OptionsResponse 
   };
 }
 
-// The shape `config.VulnerabilityScanConfig` marshals today.
-function vulnSettings(enabled: boolean): Record<string, unknown> {
+function vulnSettings(enabled: boolean): VulnerabilitySettings {
   return {
     enabled,
-    cve_database: 'nvd',
-    nvd_api_key: '',
-    update_interval: 86400,
-    severity_threshold: 'medium',
-    max_concurrent: 5,
-    auto_scan: enabled,
+    cveDatabase: 'nvd',
+    hasNvdApiKey: false,
+    updateInterval: 86400,
+    severityThreshold: 'medium',
+    maxConcurrent: 5,
+    autoScan: enabled,
   };
 }
 

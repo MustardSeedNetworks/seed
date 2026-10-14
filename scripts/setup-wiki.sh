@@ -205,24 +205,13 @@ cat > Installation-Linux.md << 'EOFLINUX'
 - x86_64 or ARM64 architecture
 - 4GB RAM minimum (8GB recommended)
 - 500MB disk space
-- `libpcap` installed (for packet capture)
+
+The released Linux binaries link libpcap statically, so there is no capture
+library to install.
 
 ## Installation
 
-### 1. Install Dependencies
-
-**Ubuntu/Debian:**
-```bash
-sudo apt update
-sudo apt install libpcap0.8
-```
-
-**RHEL/AlmaLinux/Fedora:**
-```bash
-sudo dnf install libpcap
-```
-
-### 2. Download Binary
+### 1. Download Binary
 
 ```bash
 wget https://github.com/MustardSeedNetworks/seed/releases/latest/download/seed-linux-amd64.tar.gz
@@ -230,7 +219,7 @@ wget https://github.com/MustardSeedNetworks/seed/releases/latest/download/seed-l
 wget https://github.com/MustardSeedNetworks/seed/releases/latest/download/seed-linux-arm64.tar.gz
 ```
 
-### 3. Install
+### 2. Install
 
 ```bash
 tar -xzf seed-linux-amd64.tar.gz
@@ -238,13 +227,13 @@ sudo mv seed /usr/local/bin/
 sudo chmod +x /usr/local/bin/seed
 ```
 
-### 4. Grant Network Capabilities
+### 3. Grant Network Capabilities
 
 ```bash
 sudo setcap cap_net_raw=+ep /usr/local/bin/seed
 ```
 
-### 5. Verify
+### 4. Verify
 
 ```bash
 seed --version

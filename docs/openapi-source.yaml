@@ -1438,8 +1438,14 @@ operations:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VulnerabilityScanConfig'
+              $ref: '#/components/schemas/VulnerabilitySettings'
   PUT /api/v1/security/vulnerabilities/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/VulnerabilitySettingsUpdate'
     responses:
       "200":
         description: The vulnerability scan settings were saved.
@@ -2247,6 +2253,12 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/WiFiChannelGraphResponse'
+      "400":
+        description: The interface parameter is not a valid interface name.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
   POST /api/v1/wifi/wifi/connect:
     requestBody:
       required: true
@@ -2293,6 +2305,12 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/WiFiScanResponse'
+      "400":
+        description: The interface parameter is not a valid interface name.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
   GET /api/v1/wifi/wifi/settings:
     responses:
       "200":

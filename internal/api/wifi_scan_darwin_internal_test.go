@@ -15,10 +15,11 @@ import (
 
 type withheldRadio struct{ troubleshooting.Hardware }
 
-func (withheldRadio) ManagerAvailable() bool { return true }
-func (withheldRadio) ScannerAvailable() bool { return true }
-func (withheldRadio) IsWireless() bool       { return true }
-func (withheldRadio) Scan() ([]*wifi.ScannedNetwork, error) {
+func (withheldRadio) ManagerAvailable() bool          { return true }
+func (withheldRadio) ScannerAvailable() bool          { return true }
+func (withheldRadio) IsWireless() bool                { return true }
+func (withheldRadio) IsWirelessInterface(string) bool { return true }
+func (withheldRadio) Scan(string) ([]*wifi.ScannedNetwork, error) {
 	return nil, errors.Join(wifi.ErrDetailsWithheld, errors.New("no helper agent connected"))
 }
 

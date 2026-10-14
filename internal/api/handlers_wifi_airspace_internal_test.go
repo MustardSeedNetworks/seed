@@ -157,6 +157,15 @@ func TestWiFiAnomaliesNameTheRulesThatNeedCapture(t *testing.T) {
 	if got, present := get()["needsCapture"]; present {
 		t.Errorf("capturing: needsCapture = %v, want the key absent", got)
 	}
+
+	// No wired source has reported yet, so the rogue-AP rule could not run (#2882).
+	wired, ok := get()["needsWiredData"].([]any)
+	if !ok || len(wired) != 1 {
+		t.Fatalf("needsWiredData = %v, want the rogue-AP rule", wired)
+	}
+	if rule, _ := wired[0].(map[string]any); rule["id"] != wifianomaly.DefRogueAPOnLAN {
+		t.Errorf("needsWiredData[0] = %v, want id %s", wired[0], wifianomaly.DefRogueAPOnLAN)
+	}
 }
 
 // TestWiFiVisibilityTiers pins the #2351 retier through the registered routes:

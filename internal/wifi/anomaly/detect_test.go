@@ -110,7 +110,7 @@ func TestDetectionsAreAllCatalogued(t *testing.T) {
 		t.Fatalf("Catalog(): %v", err)
 	}
 	eng := anomaly.NewEngine(cat)
-	dets := wifianomaly.NewDetector().Detect(everyAnomalyTree())
+	dets := wifianomaly.NewDetector().Detect(everyAnomalyTree(), nil)
 	if len(dets) == 0 {
 		t.Fatal("expected detections from the kitchen-sink tree, got none")
 	}
@@ -210,12 +210,12 @@ func everyAnomalyTree() []airspace.SSIDGroup {
 func TestOpenAndWEPAndWPS(t *testing.T) {
 	det := wifianomaly.NewDetector()
 
-	open := det.Detect(tree("guest", bss("00:00:00:00:00:01", "guest", "Open", "5 GHz", 36)))
+	open := det.Detect(tree("guest", bss("00:00:00:00:00:01", "guest", "Open", "5 GHz", 36)), nil)
 	if !hasDef(open, wifianomaly.DefOpenNetwork) {
 		t.Errorf("open network not detected: %v", defKeys(open))
 	}
 
-	wep := det.Detect(tree("legacy", bss("00:00:00:00:00:02", "legacy", "WEP", "2.4 GHz", 6)))
+	wep := det.Detect(tree("legacy", bss("00:00:00:00:00:02", "legacy", "WEP", "2.4 GHz", 6)), nil)
 	if !hasDef(wep, wifianomaly.DefWEPInUse) {
 		t.Errorf("WEP not detected: %v", defKeys(wep))
 	}
@@ -223,7 +223,7 @@ func TestOpenAndWEPAndWPS(t *testing.T) {
 	b := bss("00:00:00:00:00:03", "home", "WPA2", "5 GHz", 36)
 	b.WPSEnabled = true
 	b.PMFRequired = true
-	wps := det.Detect(tree("home", b))
+	wps := det.Detect(tree("home", b), nil)
 	if !hasDef(wps, wifianomaly.DefWPSEnabled) {
 		t.Errorf("WPS not detected: %v", defKeys(wps))
 	}
@@ -235,13 +235,13 @@ func TestPMFNotRequiredOnlyForRSN(t *testing.T) {
 	// WPA2 without PMF → flagged.
 	weak := bss("00:00:00:00:00:01", "corp", "WPA2", "5 GHz", 36)
 	weak.PMFRequired = false
-	if !hasDef(det.Detect(tree("corp", weak)), wifianomaly.DefPMFNotRequired) {
+	if !hasDef(det.Detect(tree("corp", weak), nil), wifianomaly.DefPMFNotRequired) {
 		t.Error("WPA2 without PMF should be flagged")
 	}
 
 	// Open network is not RSN — PMF is undefined, must NOT be flagged.
 	if hasDef(
-		det.Detect(tree("guest", bss("00:00:00:00:00:02", "guest", "Open", "5 GHz", 36))),
+		det.Detect(tree("guest", bss("00:00:00:00:00:02", "guest", "Open", "5 GHz", 36)), nil),
 		wifianomaly.DefPMFNotRequired,
 	) {
 		t.Error("Open network must not raise pmf-not-required")
@@ -250,7 +250,7 @@ func TestPMFNotRequiredOnlyForRSN(t *testing.T) {
 	// WPA2 with PMF → clean.
 	ok := bss("00:00:00:00:00:03", "corp", "WPA2", "5 GHz", 36)
 	ok.PMFRequired = true
-	if hasDef(det.Detect(tree("corp", ok)), wifianomaly.DefPMFNotRequired) {
+	if hasDef(det.Detect(tree("corp", ok), nil), wifianomaly.DefPMFNotRequired) {
 		t.Error("WPA2 with PMF required must be clean")
 	}
 }
@@ -261,7 +261,7 @@ func TestSecurityMismatchAcrossSSID(t *testing.T) {
 		bss("00:00:00:00:00:01", "corp", "WPA2", "5 GHz", 36),
 		bss("00:00:00:00:00:02", "corp", "Open", "5 GHz", 40),
 	)
-	if !hasDef(det.Detect(mixed), wifianomaly.DefSecurityMismatch) {
+	if !hasDef(det.Detect(mixed, nil), wifianomaly.DefSecurityMismatch) {
 		t.Error("WPA2 + Open under one SSID should be a security-mismatch")
 	}
 
@@ -270,7 +270,7 @@ func TestSecurityMismatchAcrossSSID(t *testing.T) {
 		bss("00:00:00:00:00:03", "corp", "WPA2", "5 GHz", 36),
 		bss("00:00:00:00:00:04", "corp", "WPA2/WPA3", "5 GHz", 40),
 	)
-	if hasDef(det.Detect(consistent), wifianomaly.DefSecurityMismatch) {
+	if hasDef(det.Detect(consistent, nil), wifianomaly.DefSecurityMismatch) {
 		t.Error("WPA2 + WPA2/WPA3 are both strong; not a mismatch")
 	}
 }
@@ -293,7 +293,7 @@ func TestEvilTwinVendorMismatch(t *testing.T) {
 			},
 		},
 	}}
-	if !hasDef(det.Detect(twin), wifianomaly.DefEvilTwin) {
+	if !hasDef(det.Detect(twin, nil), wifianomaly.DefEvilTwin) {
 		t.Error("same SSID via two vendors should raise evil-twin")
 	}
 
@@ -314,7 +314,7 @@ func TestEvilTwinVendorMismatch(t *testing.T) {
 			},
 		},
 	}}
-	if hasDef(det.Detect(same), wifianomaly.DefEvilTwin) {
+	if hasDef(det.Detect(same, nil), wifianomaly.DefEvilTwin) {
 		t.Error("one vendor is a normal multi-AP WLAN, not evil-twin")
 	}
 }
@@ -329,10 +329,10 @@ func TestCoChannelContentionThreshold(t *testing.T) {
 		return tree("n", bsses...)
 	}
 	det := wifianomaly.NewDetector(wifianomaly.WithCoChannelThreshold(3))
-	if hasDef(det.Detect(mk(2)), wifianomaly.DefCoChannelContention) {
+	if hasDef(det.Detect(mk(2), nil), wifianomaly.DefCoChannelContention) {
 		t.Error("2 BSSes is below threshold 3")
 	}
-	if !hasDef(det.Detect(mk(3)), wifianomaly.DefCoChannelContention) {
+	if !hasDef(det.Detect(mk(3), nil), wifianomaly.DefCoChannelContention) {
 		t.Error("3 BSSes meets threshold 3")
 	}
 }
@@ -342,21 +342,21 @@ func TestAdjacentChannelOverlap(t *testing.T) {
 	for _, ch := range []int{2, 3, 4, 5, 7, 9} {
 		b := bss("00:00:00:00:00:01", "n", "WPA2", "2.4 GHz", ch)
 		b.PMFRequired = true
-		if !hasDef(det.Detect(tree("n", b)), wifianomaly.DefAdjacentChannelOverlap) {
+		if !hasDef(det.Detect(tree("n", b), nil), wifianomaly.DefAdjacentChannelOverlap) {
 			t.Errorf("2.4 GHz channel %d should overlap (not 1/6/11)", ch)
 		}
 	}
 	for _, ch := range []int{1, 6, 11} {
 		b := bss("00:00:00:00:00:01", "n", "WPA2", "2.4 GHz", ch)
 		b.PMFRequired = true
-		if hasDef(det.Detect(tree("n", b)), wifianomaly.DefAdjacentChannelOverlap) {
+		if hasDef(det.Detect(tree("n", b), nil), wifianomaly.DefAdjacentChannelOverlap) {
 			t.Errorf("2.4 GHz channel %d is non-overlapping", ch)
 		}
 	}
 	// 5 GHz is exempt (all channels non-overlapping at 20 MHz).
 	b := bss("00:00:00:00:00:01", "n", "WPA2", "5 GHz", 44)
 	b.PMFRequired = true
-	if hasDef(det.Detect(tree("n", b)), wifianomaly.DefAdjacentChannelOverlap) {
+	if hasDef(det.Detect(tree("n", b), nil), wifianomaly.DefAdjacentChannelOverlap) {
 		t.Error("5 GHz must not raise adjacent-channel-overlap")
 	}
 }
@@ -376,7 +376,7 @@ func TestHiddenSSID(t *testing.T) {
 	hidden := []airspace.SSIDGroup{
 		{SSID: "", Hidden: true, APs: []airspace.APGroup{{Key: "a", Vendor: "Cisco", BSSes: []airspace.BSSView{b}}}},
 	}
-	if !hasDef(det.Detect(hidden), wifianomaly.DefHiddenSSID) {
+	if !hasDef(det.Detect(hidden, nil), wifianomaly.DefHiddenSSID) {
 		t.Error("cloaked BSS should raise hidden-ssid")
 	}
 }
@@ -409,7 +409,7 @@ func TestCountryConflict(t *testing.T) {
 			},
 		}}}},
 	}
-	if !hasDef(det.Detect(conflict), wifianomaly.DefCountryConflict) {
+	if !hasDef(det.Detect(conflict, nil), wifianomaly.DefCountryConflict) {
 		t.Error("two regulatory domains in one airspace should raise country-conflict")
 	}
 
@@ -428,7 +428,7 @@ func TestCountryConflict(t *testing.T) {
 			},
 		}}}},
 	}
-	if hasDef(det.Detect(same), wifianomaly.DefCountryConflict) {
+	if hasDef(det.Detect(same, nil), wifianomaly.DefCountryConflict) {
 		t.Error("one country is not a conflict")
 	}
 }
@@ -439,7 +439,7 @@ func TestStandardMismatch(t *testing.T) {
 		bssStd("00:00:00:00:00:01", "corp", "802.11n (Wi-Fi 4)", 36),
 		bssStd("00:00:00:00:00:02", "corp", "802.11ax (Wi-Fi 6)", 40),
 	)
-	if !hasDef(det.Detect(mixed), wifianomaly.DefStandardMismatch) {
+	if !hasDef(det.Detect(mixed, nil), wifianomaly.DefStandardMismatch) {
 		t.Error("mixed 802.11 generations under one SSID should raise standard-mismatch")
 	}
 }
@@ -472,7 +472,7 @@ func TestCleanAirspaceHasNoAnomalies(t *testing.T) {
 			},
 		}}},
 	}}
-	if dets := det.Detect(clean); len(dets) != 0 {
+	if dets := det.Detect(clean, nil); len(dets) != 0 {
 		t.Errorf("clean WPA3 airspace should have zero anomalies, got %v", defKeys(dets))
 	}
 }
@@ -498,9 +498,9 @@ func TestSecurityTierCoversEveryDot11Suite(t *testing.T) {
 func TestDeterministicOrder(t *testing.T) {
 	det := wifianomaly.NewDetector()
 	in := everyAnomalyTree()
-	first := det.Detect(in)
+	first := det.Detect(in, nil)
 	for i := range 5 {
-		got := det.Detect(in)
+		got := det.Detect(in, nil)
 		if len(got) != len(first) {
 			t.Fatalf("run %d length %d != %d", i, len(got), len(first))
 		}

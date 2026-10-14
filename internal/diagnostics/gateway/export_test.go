@@ -75,6 +75,16 @@ func (t *Tester) TesterGetPinger() *enumerate.ICMPPinger {
 	return t.pinger
 }
 
+// TesterGetPinger6 gets the ICMPv6 pinger for testing.
+func (t *Tester) TesterGetPinger6() *enumerate.ICMPPinger {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.pinger6
+}
+
+// WithZone exposes withZone.
+func WithZone(gateway, iface string) string { return withZone(gateway, iface) }
+
 // TesterRunning returns the running status for testing.
 func (t *Tester) TesterRunning() bool {
 	t.mu.RLock()

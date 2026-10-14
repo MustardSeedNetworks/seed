@@ -55,7 +55,6 @@ SCOPE: tuple[str, ...] = (
     # They are dotfiles, which is why a plain `rg` survey walks straight past
     # them.
     ".goreleaser.yml",
-    ".nfpm.yaml",
     # Issue forms are customer-facing on GitHub. The rest of .github is not:
     # the workflow headers are internal, and update-oui.yml's occurrence is a
     # User-Agent, which belongs with the wire identifiers below.

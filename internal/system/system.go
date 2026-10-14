@@ -16,10 +16,14 @@ import (
 	"github.com/shirou/gopsutil/v4/process"
 )
 
-const (
-	cpuSampleInterval = 100 * time.Millisecond
-	cpuTickerInterval = 2 * time.Second
-)
+// cpuTickerInterval is both how often the sampler runs and the window each
+// reading covers. darwin advances its CPU tick counters in bursts about once a
+// second, so a window shorter than that usually sees no change at all
+// (seed#2773); two seconds always spans at least one update.
+const cpuTickerInterval = 2 * time.Second
+
+// fullPercent is 100%, the ceiling of a busy share.
+const fullPercent = 100.0
 
 // Memory conversion constants.
 const (
@@ -33,30 +37,57 @@ const (
 const topProcessCount = 5
 
 // cpuCache holds the most recent CPU sample, written by the Collector's
-// background sampler and read by Health.
+// background sampler and read by Health. prev and hasPrev belong to the sampler
+// goroutine alone.
 type cpuCache struct {
 	mu      sync.RWMutex
 	percent float64
+
+	prev    cpu.TimesStat
+	hasPrev bool
 }
 
 // cpuPercent returns the most recent sample. Zero until the sampler has taken
-// its first reading, which happens within cpuSampleInterval of NewCollector.
+// its second reading, one cpuTickerInterval after NewCollector.
 func (c *cpuCache) cpuPercent() float64 {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.percent
 }
 
-// sample takes one reading and stores it. A failed sample leaves the previous
-// value in place, which is a better answer than reporting zero load.
+// sample reads the cumulative CPU times and stores the busy share since the
+// previous reading. A failed read, or counters that have not advanced, leave
+// the previous value in place, which is a better answer than reporting zero
+// load.
 func (c *cpuCache) sample() {
-	pct, err := cpu.Percent(cpuSampleInterval, false)
-	if err != nil || len(pct) == 0 {
+	times, err := cpu.Times(false)
+	if err != nil || len(times) == 0 {
 		return
 	}
-	c.mu.Lock()
-	c.percent = pct[0]
-	c.mu.Unlock()
+	cur := times[0]
+	if pct, ok := busyPercent(c.prev, cur); ok && c.hasPrev {
+		c.mu.Lock()
+		c.percent = pct
+		c.mu.Unlock()
+	}
+	c.prev, c.hasPrev = cur, true
+}
+
+// busyPercent returns the share of CPU time spent busy between two cumulative
+// readings, and false when the counters did not advance between them. Guest
+// time is left out because Linux already counts it in User and Nice.
+func busyPercent(prev, cur cpu.TimesStat) (float64, bool) {
+	busySeconds := func(t cpu.TimesStat) float64 {
+		return t.User + t.System + t.Nice + t.Irq + t.Softirq + t.Steal
+	}
+	idleSeconds := func(t cpu.TimesStat) float64 { return t.Idle + t.Iowait }
+
+	busy := busySeconds(cur) - busySeconds(prev)
+	total := busy + idleSeconds(cur) - idleSeconds(prev)
+	if total <= 0 {
+		return 0, false
+	}
+	return min(max(fullPercent*busy/total, 0), fullPercent), true
 }
 
 // processCacheTTL is how long process info remains valid.
@@ -317,9 +348,9 @@ func (c *Collector) Health() (*Health, error) {
 	return h, nil
 }
 
-// sampleCPU takes a reading immediately and then every cpuTickerInterval until
-// Close. cpu.Percent blocks for cpuSampleInterval, so this runs off the request
-// path and Health only ever reads the last stored value.
+// sampleCPU takes a baseline reading immediately and then one every
+// cpuTickerInterval until Close, so Health only ever reads the last stored
+// value and never waits on a measurement window.
 func (c *Collector) sampleCPU() {
 	defer close(c.done)
 

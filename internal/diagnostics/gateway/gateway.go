@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"sync"
 	"time"
 
@@ -148,8 +149,11 @@ type Tester struct {
 	// stop. Without this, StopContinuous could return while the goroutine was
 	// still mid-callback, racing any state the callback touches (observed as
 	// an intermittent `go test -race` failure in TestStartContinuousCallback).
-	wg     sync.WaitGroup
-	pinger *enumerate.ICMPPinger // Raw ICMP pinger (nil if unavailable)
+	wg sync.WaitGroup
+	// pinger and pinger6 are the ICMPv4 and ICMPv6 pingers, each nil when its
+	// socket could not be opened. The gateway's family picks one.
+	pinger  *enumerate.ICMPPinger
+	pinger6 *enumerate.ICMPPinger
 	// iface is the interface the operator selected. Detection is scoped to it
 	// so the tester cannot report another link's gateway (#2690); empty means
 	// no selection, and detection stays system-wide.
@@ -168,11 +172,13 @@ func NewTester(thresholds Thresholds) *Tester {
 		routing:     systemRouting(),
 	}
 
-	// Try to create ICMP pinger. Raw needs CAP_NET_RAW or root; the constructor
+	// Try to create the ICMP pingers. Raw needs CAP_NET_RAW or root; each constructor
 	// falls back to the unprivileged datagram socket where it can (seed#2629).
-	pinger, err := enumerate.NewICMPPinger(t.pingTimeout)
-	if err == nil {
+	if pinger, err := enumerate.NewICMPPinger(t.pingTimeout); err == nil {
 		t.pinger = pinger
+	}
+	if pinger6, err := enumerate.NewICMPv6Pinger(t.pingTimeout); err == nil {
+		t.pinger6 = pinger6
 	}
 
 	return t
@@ -354,10 +360,23 @@ func defaultGatewayOn(routes []RouteInfo, iface, family string) string {
 			return route.Gateway
 		}
 		if linkLocal == "" {
-			linkLocal = route.Gateway
+			linkLocal = withZone(route.Gateway, iface)
 		}
 	}
 	return linkLocal
+}
+
+// withZone qualifies a link-local IPv6 gateway with the interface its route
+// leaves by ("fe80::1%eth0"). Every link has its own fe80::/10, so the bare
+// address names no particular router: an echo sent to it never reaches the
+// one the default route points at (seed#3251). Any other address is returned
+// as it is.
+func withZone(gateway, iface string) string {
+	addr, err := netip.ParseAddr(gateway)
+	if err != nil || !addr.Is6() || !addr.IsLinkLocalUnicast() || addr.Zone() != "" || iface == "" {
+		return gateway
+	}
+	return addr.WithZone(iface).String()
 }
 
 // leaseRouter returns the router option of iface's current DHCP lease.
@@ -401,7 +420,7 @@ func (t *Tester) Ping() *PingResult {
 	t.mu.RLock()
 	gateway := t.gateway
 	timeout := t.pingTimeout
-	pinger := t.pinger
+	pinger, pinger6 := t.pinger, t.pinger6
 	t.mu.RUnlock()
 
 	if gateway == "" {
@@ -415,10 +434,14 @@ func (t *Tester) Ping() *PingResult {
 		Sequence: 1,
 	}
 
-	if net.ParseIP(gateway) == nil {
+	addr, err := netip.ParseAddr(gateway)
+	if err != nil {
 		result.Success = false
 		result.Error = "invalid gateway address"
 		return result
+	}
+	if addr.Unmap().Is6() {
+		pinger = pinger6
 	}
 
 	// Fallback: pinger unavailable (no CAP_NET_RAW)
@@ -638,9 +661,11 @@ func (t *Tester) Close() {
 	t.StopContinuous()
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if t.pinger != nil {
-		_ = t.pinger.Close()
-		t.pinger = nil
+	for _, pinger := range []**enumerate.ICMPPinger{&t.pinger, &t.pinger6} {
+		if *pinger != nil {
+			_ = (*pinger).Close()
+			*pinger = nil
+		}
 	}
 }
 

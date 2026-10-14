@@ -26,7 +26,9 @@ export const INLINE_DEFAULT_CABLE_TEST_SETTINGS: CableTestSettingsType = {
 export const INLINE_DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityScanSettings = {
   enabled: true,
   cveDatabase: 'nvd',
+  hasNvdApiKey: false,
   nvdApiKey: '',
+  clearNvdApiKey: false,
   updateInterval: 86400,
   severityThreshold: 'medium',
   maxConcurrent: 5,

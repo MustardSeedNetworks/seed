@@ -20,8 +20,9 @@ type Hardware interface {
 	ManagerAvailable() bool
 	ScannerAvailable() bool
 	IsWireless() bool
+	IsWirelessInterface(name string) bool
 	SetInterface(name string)
-	Scan() ([]*wifi.ScannedNetwork, error)
+	Scan(iface string) ([]*wifi.ScannedNetwork, error)
 	Connect(ssid, password string) (*wifi.ConnectionResult, error)
 	Disconnect() (*wifi.ConnectionResult, error)
 }
@@ -99,7 +100,8 @@ type ScanResult struct {
 // Scan performs a neighbor-AP scan on the requested interface, falling back to
 // the configured interface when requestedIface is empty. It degrades (never
 // errors) to an Available=false / Error-bearing result when the scanner or a
-// wireless adapter is absent, mirroring the pre-strangle handler.
+// wireless adapter is absent, and refuses an interface that is not one of the
+// host's Wi-Fi adapters rather than scanning a different one.
 func (m *Management) Scan(requestedIface string) ScanResult {
 	iface := requestedIface
 	if iface == "" {
@@ -110,7 +112,14 @@ func (m *Management) Scan(requestedIface string) ScanResult {
 	switch {
 	case !m.hw.ScannerAvailable():
 		return ScanResult{Interface: iface, Available: false, Error: "WiFi scanner not initialized", Networks: empty}
-	case !m.hw.ManagerAvailable() || !m.hw.IsWireless():
+	case requestedIface != "" && !m.hw.IsWirelessInterface(iface):
+		return ScanResult{
+			Interface: iface,
+			Available: false,
+			Error:     iface + " is not a Wi-Fi adapter. Choose a Wi-Fi adapter to scan.",
+			Networks:  empty,
+		}
+	case !m.hw.IsWirelessInterface(iface):
 		return ScanResult{
 			Interface: iface,
 			Available: false,
@@ -119,7 +128,7 @@ func (m *Management) Scan(requestedIface string) ScanResult {
 		}
 	}
 
-	networks, err := m.hw.Scan()
+	networks, err := m.hw.Scan(iface)
 	if err != nil {
 		// Withheld scan results cannot establish that the airspace is empty.
 		if errors.Is(err, wifi.ErrDetailsWithheld) {
