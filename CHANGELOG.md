@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.257.5](https://github.com/MustardSeedNetworks/seed/compare/v0.257.4...v0.257.5) (2026-10-14)
+
+
+### Bug Fixes
+
+* **api:** give vulnerability settings one camelCase body for GET and PUT ([#3408](https://github.com/MustardSeedNetworks/seed/issues/3408)) ([1ddcf20](https://github.com/MustardSeedNetworks/seed/commit/1ddcf20690af13ad027573dee6557ceb8afbab94)), closes [#2971](https://github.com/MustardSeedNetworks/seed/issues/2971)
+* **api:** keep the NVD API key on the server in vulnerability settings ([#3413](https://github.com/MustardSeedNetworks/seed/issues/3413)) ([45a504a](https://github.com/MustardSeedNetworks/seed/commit/45a504a2ca58fb5b3057d1a7d044f2ab499afd00)), closes [#3407](https://github.com/MustardSeedNetworks/seed/issues/3407)
+* **ci:** scope the gitleaks scan to the history of HEAD ([#3416](https://github.com/MustardSeedNetworks/seed/issues/3416)) ([9de0dda](https://github.com/MustardSeedNetworks/seed/commit/9de0dda4942945e68a612381e802d7617f8157c6)), closes [#2991](https://github.com/MustardSeedNetworks/seed/issues/2991)
+* **release:** keep the release a draft until goreleaser has filled it ([#3406](https://github.com/MustardSeedNetworks/seed/issues/3406)) ([ee6d036](https://github.com/MustardSeedNetworks/seed/commit/ee6d036d86b0f1e9a8d881b63dd29950a2fb3e65)), closes [#3157](https://github.com/MustardSeedNetworks/seed/issues/3157)
+* **release:** link libpcap statically so the rpm runs on Fedora ([#3404](https://github.com/MustardSeedNetworks/seed/issues/3404)) ([7e5d411](https://github.com/MustardSeedNetworks/seed/commit/7e5d41165d770de2f7985d3aae2b3ba7ea19a56b)), closes [#2978](https://github.com/MustardSeedNetworks/seed/issues/2978)
+* **retention:** purge raw SNMP observations and listener events ([#3419](https://github.com/MustardSeedNetworks/seed/issues/3419)) ([c206026](https://github.com/MustardSeedNetworks/seed/commit/c206026b1c114449d4a0eaf03d3891ba4b183675)), closes [#3009](https://github.com/MustardSeedNetworks/seed/issues/3009)
+* **scheduler:** never poll or re-dispatch a job whose run is in flight ([#3402](https://github.com/MustardSeedNetworks/seed/issues/3402)) ([677083d](https://github.com/MustardSeedNetworks/seed/commit/677083d0171082cb232ae384d4920521a9e94c63)), closes [#3002](https://github.com/MustardSeedNetworks/seed/issues/3002)
+* **vuln:** match a local CVE only to the versions it lists ([#3409](https://github.com/MustardSeedNetworks/seed/issues/3409)) ([3591b47](https://github.com/MustardSeedNetworks/seed/commit/3591b47c75ded751861f26a3dd79935f65f8dad7)), closes [#3061](https://github.com/MustardSeedNetworks/seed/issues/3061)
+
+
+### Continuous Integration
+
+* **lint:** replace the stem-copied C lint job with a bridge header format check ([#3418](https://github.com/MustardSeedNetworks/seed/issues/3418)) ([80ed46b](https://github.com/MustardSeedNetworks/seed/commit/80ed46bb435caa548e928c713280da1fceb57528)), closes [#3055](https://github.com/MustardSeedNetworks/seed/issues/3055)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3405](https://github.com/MustardSeedNetworks/seed/issues/3405)) ([4cdfb25](https://github.com/MustardSeedNetworks/seed/commit/4cdfb2561f32b9354464fe5ccd9d8302dd259c9d))
+* **deps:** lock file maintenance ([#3410](https://github.com/MustardSeedNetworks/seed/issues/3410)) ([dcb0951](https://github.com/MustardSeedNetworks/seed/commit/dcb09516f206bfaa0f9aa8f00e104b350b6bcc51))
+* **deps:** lock file maintenance ([#3412](https://github.com/MustardSeedNetworks/seed/issues/3412)) ([9d6e9dc](https://github.com/MustardSeedNetworks/seed/commit/9d6e9dc11718dd463f0f786762e770168430444e))
+* **deps:** lock file maintenance ([#3417](https://github.com/MustardSeedNetworks/seed/issues/3417)) ([e38947e](https://github.com/MustardSeedNetworks/seed/commit/e38947ed3b4bbd6d2a3b834cd84f9000bffd0304))
+* **deps:** lock file maintenance ([#3420](https://github.com/MustardSeedNetworks/seed/issues/3420)) ([d1202f2](https://github.com/MustardSeedNetworks/seed/commit/d1202f26fe9c1b5fd049e81e54674caa4db0f198))
+* **deps:** update actions/download-artifact action to v8.0.2 ([#3414](https://github.com/MustardSeedNetworks/seed/issues/3414)) ([4b43b52](https://github.com/MustardSeedNetworks/seed/commit/4b43b52d6df4d205a5dbd306659e5c61559d47a1))
+* **deps:** update actions/upload-artifact action to v7.0.2 ([#3411](https://github.com/MustardSeedNetworks/seed/issues/3411)) ([4706618](https://github.com/MustardSeedNetworks/seed/commit/4706618ff0d1a746e935f0f1d088bd133f48c33d))
+* **packaging:** delete the dead .nfpm.yaml and drop survey from the package description ([#3415](https://github.com/MustardSeedNetworks/seed/issues/3415)) ([410d9d1](https://github.com/MustardSeedNetworks/seed/commit/410d9d17f7572407e13623932a6655a359f9278d)), closes [#2980](https://github.com/MustardSeedNetworks/seed/issues/2980)
+
 ## [0.257.4](https://github.com/MustardSeedNetworks/seed/compare/v0.257.3...v0.257.4) (2026-10-14)
 
 
