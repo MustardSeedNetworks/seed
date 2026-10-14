@@ -388,7 +388,10 @@
   },
   "vulnerability": {
     "apiKey": "Clave API NVD",
+    "apiKeyClear": "Quitar clave",
     "apiKeyPlaceholder": "Pegar clave API NVD",
+    "apiKeyStored": "Hay una clave API NVD guardada.",
+    "apiKeyStoredPlaceholder": "Escriba una nueva clave para reemplazar la guardada",
     "autoScan": "Escaneo automático",
     "autoScanDesc": "Escanear periódicamente los dispositivos descubiertos en busca de CVE conocidos.",
     "concurrentDesc": "Cantidad de dispositivos a escanear en paralelo.",

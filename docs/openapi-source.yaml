@@ -1445,7 +1445,7 @@ operations:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/VulnerabilitySettings'
+            $ref: '#/components/schemas/VulnerabilitySettingsUpdate'
     responses:
       "200":
         description: The vulnerability scan settings were saved.

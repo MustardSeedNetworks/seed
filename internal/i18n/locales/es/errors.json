@@ -206,6 +206,7 @@
   },
   "vulnerability": {
     "invalidApiKey": "Clave de API inválida",
+    "keyAndClear": "Envíe una nueva clave de API de NVD o borre la guardada, no ambas",
     "validateFailed": "Error al validar la clave de API",
     "invalidIp": "Dirección IP no válida",
     "missingIpParam": "Se requiere el parámetro de consulta ip",
