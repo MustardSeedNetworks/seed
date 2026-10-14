@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.257.6](https://github.com/MustardSeedNetworks/seed/compare/v0.257.5...v0.257.6) (2026-10-14)
+
+
+### Bug Fixes
+
+* **polling:** record nothing for a poll that Stop cancels ([#3421](https://github.com/MustardSeedNetworks/seed/issues/3421)) ([da48d75](https://github.com/MustardSeedNetworks/seed/commit/da48d75738e02c696a78ceec670f06c5eda93778)), closes [#3204](https://github.com/MustardSeedNetworks/seed/issues/3204)
+
+
+### Tests
+
+* **reporting:** wait for the capacity report to finish, not a deadline ([#3423](https://github.com/MustardSeedNetworks/seed/issues/3423)) ([7b128c6](https://github.com/MustardSeedNetworks/seed/commit/7b128c623861ba2b0fd47680165d90acf6d34c32)), closes [#3110](https://github.com/MustardSeedNetworks/seed/issues/3110)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3424](https://github.com/MustardSeedNetworks/seed/issues/3424)) ([22f8471](https://github.com/MustardSeedNetworks/seed/commit/22f84716069550ec3f8e2523b499d7e4a34347ce))
+
 ## [0.257.5](https://github.com/MustardSeedNetworks/seed/compare/v0.257.4...v0.257.5) (2026-10-14)
 
 
