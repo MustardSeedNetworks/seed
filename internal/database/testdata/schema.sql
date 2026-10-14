@@ -1027,7 +1027,6 @@ CREATE TABLE topology_links (
 				link_type TEXT NOT NULL DEFAULT 'unknown',
 				status TEXT NOT NULL DEFAULT 'up',
 				speed_mbps INTEGER,
-				utilization_pct REAL,
 				first_seen TEXT NOT NULL,
 				last_seen TEXT NOT NULL,
 				evidence_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),

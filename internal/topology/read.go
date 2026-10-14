@@ -24,6 +24,19 @@ type Reader interface {
 	ListInterfaces(ctx context.Context, nodeID string) ([]*Interface, error)
 	ListLinks(ctx context.Context, nodeID string) ([]*Link, error)
 	ListARPBindings(ctx context.Context, opts ARPListOptions) ([]*ARPBinding, error)
+	PortUtilization(ctx context.Context) ([]PortUtilization, error)
+}
+
+// PortUtilization is one interface of a polled node with the utilization of
+// its latest rated poll: the larger direction, in percent of line rate
+// (ADR-0033 §5). Pct is nil when that poll could not rate the octets or the
+// interface has no rated poll yet.
+type PortUtilization struct {
+	NodeID  string
+	IfIndex uint32
+	IfName  string
+	IfDescr string
+	Pct     *float64
 }
 
 // NodeDetail is the single-node read model: the node plus its interfaces and
@@ -72,13 +85,74 @@ func (q *Queries) Node(ctx context.Context, id string) (NodeDetail, error) {
 	}
 	interfaces, _ := q.reader.ListInterfaces(ctx, node.ID)
 	links, _ := q.reader.ListLinks(ctx, node.ID)
+	_ = q.attachUtilization(ctx, links)
 	return NodeDetail{Node: node, Interfaces: interfaces, Links: links}, nil
 }
 
 // Links returns the links incident to nodeID, or every link when nodeID
-// is empty.
+// is empty, each with the utilization of its port.
 func (q *Queries) Links(ctx context.Context, nodeID string) ([]*Link, error) {
-	return q.reader.ListLinks(ctx, nodeID)
+	links, err := q.reader.ListLinks(ctx, nodeID)
+	if err != nil {
+		return nil, err
+	}
+	if err = q.attachUtilization(ctx, links); err != nil {
+		return nil, err
+	}
+	return links, nil
+}
+
+// attachUtilization sets each link's UtilizationPct from its source port, or
+// from its target port when the source end is not polled. The edge
+// reconcilers name a port by its ifDescr or ifName, so a link's interface is
+// matched against both; a label that two ports of one node share names
+// neither, as in the reconcilers' own port lookup.
+func (q *Queries) attachUtilization(ctx context.Context, links []*Link) error {
+	if len(links) == 0 {
+		return nil
+	}
+	ports, err := q.reader.PortUtilization(ctx)
+	if err != nil {
+		return err
+	}
+	type portKey struct{ nodeID, label string }
+	type port struct {
+		ifIndex   uint32
+		pct       *float64
+		ambiguous bool
+	}
+	byLabel := make(map[portKey]*port, len(ports))
+	for _, p := range ports {
+		for _, label := range []string{p.IfDescr, p.IfName} {
+			if label == "" {
+				continue
+			}
+			key := portKey{p.NodeID, label}
+			prev, seen := byLabel[key]
+			switch {
+			case !seen:
+				byLabel[key] = &port{ifIndex: p.IfIndex, pct: p.Pct}
+			case prev.ifIndex != p.IfIndex:
+				prev.ambiguous = true
+			case p.Pct != nil && (prev.pct == nil || *p.Pct > *prev.pct):
+				// The same port reached through a second polling target.
+				prev.pct = p.Pct
+			}
+		}
+	}
+	lookup := func(nodeID, label string) *float64 {
+		if p, ok := byLabel[portKey{nodeID, label}]; ok && !p.ambiguous {
+			return p.pct
+		}
+		return nil
+	}
+	for _, l := range links {
+		l.UtilizationPct = lookup(l.SourceNodeID, l.SourceInterface)
+		if l.UtilizationPct == nil {
+			l.UtilizationPct = lookup(l.TargetNodeID, l.TargetInterface)
+		}
+	}
+	return nil
 }
 
 // ARP returns the ARP bindings matching opts.

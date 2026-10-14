@@ -71,3 +71,11 @@ func (a topologyReader) ListARPBindings(
 	}
 	return repo.ListARPBindings(ctx, opts)
 }
+
+func (a topologyReader) PortUtilization(ctx context.Context) ([]topology.PortUtilization, error) {
+	db := a.db()
+	if db == nil {
+		return nil, topology.ErrUnavailable
+	}
+	return db.Metrics().PortUtilization(ctx, database.DefaultClientID)
+}

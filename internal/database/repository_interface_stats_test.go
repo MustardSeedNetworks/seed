@@ -163,3 +163,72 @@ func TestInterfaceRates(t *testing.T) {
 	}
 	require.Equal(t, want, got)
 }
+
+func TestPortUtilization(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+	ctx := context.Background()
+
+	target := &polling.Target{
+		ClientID: database.DefaultClientID, Name: "core-sw", IPAddress: "10.0.0.1",
+		SNMPVersion: "v2c", PollIntervalSec: 60, Enabled: true,
+		CollectorChain: []string{"if_table"},
+	}
+	if err := db.PollingTargets().Create(ctx, target); err != nil {
+		t.Fatalf("create target: %v", err)
+	}
+	seen := time.Date(2026, 10, 14, 12, 0, 0, 0, time.UTC)
+	for _, id := range []string{"node-a", "node-b"} {
+		if _, err := db.Topology().Upsert(ctx, &topology.Node{
+			ID: id, ClientID: database.DefaultClientID, IdentityHash: "h-" + id, DisplayName: id, LastSeen: seen,
+		}); err != nil {
+			t.Fatalf("seed node %s: %v", id, err)
+		}
+	}
+	if err := db.Topology().UpsertTargetNode(ctx, database.DefaultClientID, target.ID, "node-a", seen); err != nil {
+		t.Fatalf("map target: %v", err)
+	}
+	for _, iface := range []*topology.Interface{
+		{NodeID: "node-a", IfIndex: 1, IfName: "Gi0/1", IfDescr: "GigabitEthernet0/1", LastSeen: seen},
+		{NodeID: "node-a", IfIndex: 2, IfName: "Gi0/2", LastSeen: seen},
+		{NodeID: "node-a", IfIndex: 3, IfDescr: "GigabitEthernet0/3", LastSeen: seen},
+		// node-b has no polling target, so its ports have no rates to read.
+		{NodeID: "node-b", IfIndex: 1, IfName: "eth0", LastSeen: seen},
+	} {
+		if err := db.Topology().UpsertInterface(ctx, iface); err != nil {
+			t.Fatalf("seed interface %s/%d: %v", iface.NodeID, iface.IfIndex, err)
+		}
+	}
+	older := ifrate.Utilization{In: 90, Out: 90}
+	latest := ifrate.Utilization{In: 12.5, Out: 30}
+	if err := db.Metrics().RecordInterfaceRates(ctx, []ifrate.Rate{
+		{
+			ClientID: database.DefaultClientID, TargetID: target.ID, IfIndex: 1, At: seen.Add(-time.Minute),
+			Octets: &ifrate.Octets{In: 1, Out: 1, Utilization: &older},
+		},
+		{
+			ClientID: database.DefaultClientID, TargetID: target.ID, IfIndex: 1, At: seen,
+			Octets: &ifrate.Octets{In: 1, Out: 1, Utilization: &latest},
+		},
+		// Octets not rated on the latest poll: no utilization, even though an
+		// older poll had one.
+		{
+			ClientID: database.DefaultClientID, TargetID: target.ID, IfIndex: 2, At: seen.Add(-time.Minute),
+			Octets: &ifrate.Octets{In: 1, Out: 1, Utilization: &older},
+		},
+		{ClientID: database.DefaultClientID, TargetID: target.ID, IfIndex: 2, At: seen, InErrors: 1},
+	}); err != nil {
+		t.Fatalf("RecordInterfaceRates: %v", err)
+	}
+
+	got, err := db.Metrics().PortUtilization(ctx, database.DefaultClientID)
+	if err != nil {
+		t.Fatalf("PortUtilization: %v", err)
+	}
+	busiest := 30.0
+	require.ElementsMatch(t, []topology.PortUtilization{
+		{NodeID: "node-a", IfIndex: 1, IfName: "Gi0/1", IfDescr: "GigabitEthernet0/1", Pct: &busiest},
+		{NodeID: "node-a", IfIndex: 2, IfName: "Gi0/2"},
+		{NodeID: "node-a", IfIndex: 3, IfDescr: "GigabitEthernet0/3"},
+	}, got)
+}

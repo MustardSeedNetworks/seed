@@ -98,8 +98,10 @@ type TopologyInterface struct {
 	LastSeen      string `json:"lastSeen"`
 }
 
-// TopologyLink is one edge between two nodes. Evidence is the reconciler's
-// record of what established it, as a JSON object.
+// TopologyLink is one edge between two nodes. UtilizationPct is the larger
+// direction of the latest rated poll of the link's port, in percent of line
+// rate, and is absent when neither end's port has one. Evidence is the
+// reconciler's record of what established it, as a JSON object.
 type TopologyLink struct {
 	ID              string          `json:"id"`
 	SourceNodeID    string          `json:"sourceNodeId"`
@@ -109,10 +111,10 @@ type TopologyLink struct {
 	LinkType        string          `json:"linkType"`
 	Status          string          `json:"status"`
 	SpeedMbps       uint32          `json:"speedMbps"`
-	UtilizationPct  float64         `json:"utilizationPct"`
+	UtilizationPct  *float64        `json:"utilizationPct,omitempty"`
 	FirstSeen       string          `json:"firstSeen"`
 	LastSeen        string          `json:"lastSeen"`
-	Evidence        json.RawMessage `json:"evidence"        jsonschema:"type=object"`
+	Evidence        json.RawMessage `json:"evidence"                 jsonschema:"type=object"`
 }
 
 // JSONSchemaExtend opens evidence to any keys; the reflector otherwise closes
