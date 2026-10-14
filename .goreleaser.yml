@@ -156,7 +156,7 @@ archives:
       - src: deploy/windows/build.ps1
         dst: install.ps1
 
-# Linux .deb + .rpm via nfpm (built into goreleaser). Port of .nfpm.yaml.
+# Linux .deb + .rpm via nfpm (built into goreleaser).
 nfpms:
   - id: linux-packages
     ids: [seed-linux]
@@ -170,8 +170,8 @@ nfpms:
       Seed is a professional-grade network diagnostic appliance designed
       for network technicians and engineers. Plug it into any network jack
       and instantly see link status, switch information, DHCP details, DNS
-      health, gateway connectivity, Wi-Fi survey data, and vulnerability
-      findings.
+      health, gateway connectivity, Wi-Fi radio conditions, and
+      vulnerability findings.
     license: BSL-1.1
     section: net
     priority: optional
