@@ -185,13 +185,9 @@ jobs:
       # Notes` ejected it, release-please regenerated it, and the loop repeated
       # (seed#3484 was ejected three times on 2026-10-15; G-18). At the front,
       # its merge group is main plus the release, and the freshness check
-      # below has just confirmed that is the main the changelog describes.
-      #
-      # A jump passes only entries still waiting to build: an entry whose merge
-      # group is already building stays ahead (observed on seed#3484 at 23:15Z,
-      # recorded jump: true, landed at position 2). So while any entry is
-      # building this step waits; that entry merging moves main, which
-      # regenerates the release PR, whose CI brings this step back.
+      # below has just confirmed that is the main the changelog describes. A
+      # group already merging when the jump lands can still beat it once;
+      # that costs one regeneration, not a loop.
       #
       # Not the same as merging blind: the queue still runs every required
       # check on the merge group, exactly as for any other PR.
@@ -212,11 +208,9 @@ jobs:
             mutation($id: ID!, $jump: Boolean!) {
               enqueuePullRequest(input: {pullRequestId: $id, jump: $jump}) { mergeQueueEntry { position } }
             }
-          QUEUE: >-
+          QUEUE_DEPTH: >-
             query($owner: String!, $name: String!) {
-              repository(owner: $owner, name: $name) {
-                mergeQueue(branch: "main") { entries(first: 100) { nodes { state } } }
-              }
+              repository(owner: $owner, name: $name) { mergeQueue(branch: "main") { entries { totalCount } } }
             }
         run: |
           set -euo pipefail
@@ -296,13 +290,6 @@ jobs:
             echo "Release PR #${pr}'s required checks have not all passed; not enqueuing yet."
             exit 0
           fi
-          states="$(gh api graphql -F owner="${GITHUB_REPOSITORY_OWNER}" -F name="${GITHUB_REPOSITORY#*/}" \
-                      -f query="${QUEUE}" --jq '[.data.repository.mergeQueue.entries.nodes[].state]')"
-          building="$(jq '[.[] | select(. != "QUEUED")] | length' <<<"${states}")"
-          if [ "${building}" -ne 0 ]; then
-            echo "::notice::${building} merge group(s) already building would land ahead of #${pr}; waiting."
-            exit 0
-          fi
           echo "Enqueuing #${pr} at the front of the merge queue"
           id="$(gh pr view --repo "${GITHUB_REPOSITORY}" "${pr}" --json id --jq .id)"
           position='"queued at position \(.data.enqueuePullRequest.mergeQueueEntry.position)"'
@@ -315,8 +302,10 @@ jobs:
           # it; until then a refusal must not stall releases, and an empty
           # queue's back is its front.
           echo "::warning::enqueue with jump refused: $(cat /tmp/enqueue.log)"
-          if [ "$(jq length <<<"${states}")" -ne 0 ]; then
-            echo "::notice::PRs are queued; enqueuing #${pr} behind them would eject it. Waiting."
+          depth="$(gh api graphql -F owner="${GITHUB_REPOSITORY_OWNER}" -F name="${GITHUB_REPOSITORY#*/}" \
+                     -f query="${QUEUE_DEPTH}" --jq '.data.repository.mergeQueue.entries.totalCount')"
+          if [ "${depth}" -ne 0 ]; then
+            echo "::notice::${depth} PR(s) queued; enqueuing #${pr} behind them would eject it. Waiting."
             exit 0
           fi
           gh api graphql -f id="${id}" -F jump=false -f query="${ENQUEUE}" --jq "${position}"

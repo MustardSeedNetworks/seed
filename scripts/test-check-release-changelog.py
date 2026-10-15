@@ -160,8 +160,6 @@ class ReleasePrEnqueue(unittest.TestCase):
     def test_release_pr_jumps_to_the_front_of_the_queue(self) -> None:
         self.assertIn("enqueuePullRequest(input: {pullRequestId: $id, jump: $jump})", self.step)
         self.assertIn("-F jump=true", self.step)
-        # A jump cannot pass a merge group that is already building.
-        self.assertIn('select(. != "QUEUED")', self.step)
         self.assertNotIn("gh pr merge", self.step)
 
     def test_release_pr_ci_triggers_the_enqueue(self) -> None:
