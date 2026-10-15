@@ -89,6 +89,7 @@ export const RecoveryCompleteSchema = v.pipe(
  */
 export const SetupWizardSchema = v.pipe(
   v.object({
+    setupToken: v.pipe(v.string(), v.trim(), v.minLength(1, 'Setup token is required')),
     password: v.pipe(
       v.string('Password is required'),
       v.minLength(12, 'Password must be at least 12 characters'),
@@ -98,6 +99,8 @@ export const SetupWizardSchema = v.pipe(
   }),
   v.check((c) => c.password === c.confirmPassword, 'Passwords do not match'),
 );
+
+export type SetupWizardValues = v.InferInput<typeof SetupWizardSchema>;
 
 /** Profile editor: name + optional description for network profiles. */
 export const ProfileEditorSchema = v.object({

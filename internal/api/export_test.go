@@ -5,7 +5,9 @@ import (
 	"log/slog"
 	"net/http"
 	"net/netip"
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -591,4 +593,19 @@ func ExportHostRoutesVia(
 	read func() ([]gateway.RouteInfo, error),
 ) []learn.HostRoute {
 	return hostRoutesVia(iface, read)
+}
+
+// IssueSetupToken issues s's setup token into a test directory and returns it
+// as the operator reads it from the file.
+func IssueSetupToken(t *testing.T, s *Server) string {
+	t.Helper()
+	s.setupToken = NewSetupTokenManager(t.TempDir())
+	if err := s.setupToken.Issue(); err != nil {
+		t.Fatalf("issue setup token: %v", err)
+	}
+	raw, err := os.ReadFile(s.setupToken.FilePath())
+	if err != nil {
+		t.Fatalf("read setup token: %v", err)
+	}
+	return strings.TrimSpace(string(raw))
 }

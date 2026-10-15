@@ -223,8 +223,7 @@ func TestHandleSetupComplete(t *testing.T) {
 
 			server := api.NewTestServerWithConfig(cfg)
 
-			// Generate a valid setup token for testing
-			setupToken, _ := server.SetupTokenManager().GenerateToken()
+			setupToken := api.IssueSetupToken(t, server)
 
 			// Create request
 			reqBody := api.SetupCompleteRequest{
@@ -276,7 +275,7 @@ func TestHandleSetupCompleteSaveFailure(t *testing.T) {
 	}
 	server.SetConfigPath(filepath.Join(notADir, "config.yaml"))
 
-	setupToken, _ := server.SetupTokenManager().GenerateToken()
+	setupToken := api.IssueSetupToken(t, server)
 	body, _ := json.Marshal(api.SetupCompleteRequest{Password: "MySecure123!Pass", SetupToken: setupToken})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/setup/complete", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")

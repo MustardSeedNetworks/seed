@@ -69,5 +69,5 @@ ui/src/components/settings/sections/ConfigBackupsSection.tsx:68  # read-only —
 ui/src/components/settings/sections/ConfigBackupsSection.tsx:69  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/settings/sections/DiscoverySettings.tsx:91  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/settings/sections/VulnerabilitySettings.tsx:60  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/setup/SetupWizard.tsx:119  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/setup/SetupWizard.tsx:201  # mutating but CSRF-exempt by design (the route declares no CSRF) — correct as a raw fetch
+ui/src/components/setup/SetupWizard.tsx:112  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/setup/SetupWizard.tsx:194  # mutating but CSRF-exempt by design (the route declares no CSRF) — correct as a raw fetch

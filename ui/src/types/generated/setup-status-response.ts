@@ -9,5 +9,5 @@ export interface SetupStatusResponse {
   needsSetup: boolean;
   suggestedPassword?: string;
   username: string;
-  setupToken?: string;
+  setupTokenFile?: string;
 }

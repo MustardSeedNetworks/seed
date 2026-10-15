@@ -8614,7 +8614,7 @@ components:
             properties:
                 needsSetup:
                     type: boolean
-                setupToken:
+                setupTokenFile:
                     type: string
                 suggestedPassword:
                     type: string

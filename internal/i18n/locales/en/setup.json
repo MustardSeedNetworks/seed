@@ -3,6 +3,11 @@
     "title": "Welcome to Seed",
     "subtitle": "Set up your admin password to get started"
   },
+  "setupToken": {
+    "label": "Setup token",
+    "placeholder": "Paste the setup token",
+    "help": "Seed wrote a one-time setup token to {{path}} on the machine it runs on. Copy it from there (for example with sudo cat) to prove you control that machine."
+  },
   "username": {
     "label": "Username:",
     "admin": "admin",

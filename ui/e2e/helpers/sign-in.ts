@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import type { BrowserContext } from '@playwright/test';
 
 import { TEST_CREDENTIALS } from './auth.ts';
@@ -83,8 +84,10 @@ export async function signInAndPersist(context: BrowserContext, outPath: string)
 
 /**
  * On a fresh binary the admin password is unset and /api/v1/setup/status
- * reports needsSetup=true with a one-time setupToken; POST the token plus
- * the suite's well-known password to /api/v1/setup/complete. Idempotent.
+ * reports needsSetup=true and names the file holding the setup token. The
+ * daemon runs on this host, so read the token from that file as an operator
+ * would, then POST it plus the suite's well-known password to
+ * /api/v1/setup/complete. Idempotent.
  */
 async function ensureSetupCompleted(context: BrowserContext): Promise<void> {
   const api = context.request;
@@ -97,20 +100,21 @@ async function ensureSetupCompleted(context: BrowserContext): Promise<void> {
   }
   const status = (await statusResponse.json()) as {
     needsSetup: boolean;
-    setupToken?: string;
+    setupTokenFile?: string;
   };
   if (!status.needsSetup) {
     return;
   }
-  if (!status.setupToken) {
-    throw new Error('sign-in: setup status reports needsSetup=true but no setupToken returned');
+  if (!status.setupTokenFile) {
+    throw new Error('sign-in: setup status reports needsSetup=true but no setupTokenFile');
   }
+  const setupToken = (await readFile(status.setupTokenFile, 'utf8')).trim();
 
   const completeResponse = await api.post('/api/v1/setup/complete', {
     headers: { 'Content-Type': 'application/json' },
     data: {
       password: TEST_CREDENTIALS.password,
-      setupToken: status.setupToken,
+      setupToken,
     },
   });
   if (!completeResponse.ok()) {
