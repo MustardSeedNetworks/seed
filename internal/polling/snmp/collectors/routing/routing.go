@@ -3,7 +3,7 @@
 // one Observation per poll listing the IPv4 route entries, at most
 // [MaxRows] of them. Used by
 // Stage A4 topology to draw L3 next-hop edges between routers and
-// by the listener pipeline to alert on flapping/withdrawn routes.
+// by the observation pipeline to alert on withdrawn and re-routed prefixes.
 //
 // V1.0 uses ipCidrRouteTable (RFC 2096), IPv4-only, and falls back to
 // the RFC 1213 ipRouteTable when it is empty: plenty of devices serve
