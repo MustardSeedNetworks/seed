@@ -20,7 +20,7 @@ type Service struct {
 
 // Deps holds the persistence adapters the reporting component depends on. The
 // composition root (internal/app) implements these ports with the SQLite
-// adapters in internal/reporting/store; the component itself is persistence-free.
+// repositories in internal/database; the component itself is persistence-free.
 type Deps struct {
 	Reports  ReportRepo
 	Schedule ScheduleRepo

@@ -2,8 +2,9 @@
 
 Domain-meaningful use-case packages, adapters in the composition root.
 
-**Status:** Accepted — 2026-06-09; amended 2026-10-15 (the database handle
-leaves `internal/api`; see "Amendment" below)
+**Status:** Accepted — 2026-06-09; amended twice 2026-10-15 (the database handle
+leaves `internal/api`; only `internal/app` imports the database; see the
+amendments below)
 
 **Refines:** ADR-0016 (strangle `internal/api` into use-cases). ADR-0016 set the
 thin-handler → use-case → encode direction; ADR-0020 locks the package layout,
@@ -76,8 +77,9 @@ func NewNetworkIP(mgr func() *netif.Manager, cfg *config.Config, path string) *i
 }
 ```
 
-Promote an adapter to its own `internal/<domain>/<infra>` package **only** when it
-is substantial or reused (e.g. `internal/reporting/store`). There is no generic
+Persistence adapters are the exception: a feature's SQL lives in
+`internal/database` as repositories that implement the feature's ports (see the
+second 2026-10-15 amendment), and `internal/app` wires them. There is no generic
 `adapter` package and no per-domain adapter package for thin glue — that was
 considered (Option 1) and rejected as over-packaging.
 
@@ -153,5 +155,15 @@ already degrade under. A type alias (`type DB = database.DB`) was rejected: it
 would hide the dependency without removing it.
 
 The file-count ratchet that tracked the migration reached zero and is replaced
-by the `api-no-persistence` depguard rule, which denies `internal/database` to
-every production file under `internal/api`.
+by a depguard rule.
+
+## Amendment — 2026-10-15: only the composition root imports the database
+
+The last production importer outside `internal/app` and `cmd/seed` was
+`internal/reporting/store`, a per-feature adapter package. Its repositories move
+into `internal/database` (`repository_report*.go`, `NewReport*Repository`),
+where every other feature's SQL already lives, and the package is deleted. The
+`persistence-in-app-only` depguard rule denies `internal/database` to every
+production file outside `internal/app`, `internal/database` and `cmd/seed`; it
+replaces the api-only rule above. Tests stay exempt: they are small composition
+roots that seed rows directly.

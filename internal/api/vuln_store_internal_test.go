@@ -16,7 +16,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
-	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
 )
 
 // cveFixture is a local CVE database with one critical kernel CVE, matched by
@@ -72,7 +71,7 @@ func TestVulnFindingsSurviveRestartIntoReports(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = db.Close() })
 
-	data, err := reporting.NewAggregatorService(config.DefaultConfig(), store.NewMetricsRepo(db)).
+	data, err := reporting.NewAggregatorService(config.DefaultConfig(), database.NewReportMetricsRepository(db)).
 		Aggregate(ctx, reporting.PeriodWeekly, "", "")
 	require.NoError(t, err)
 	require.Equal(t, 1, data.VulnCount.Critical)
@@ -80,7 +79,7 @@ func TestVulnFindingsSurviveRestartIntoReports(t *testing.T) {
 	require.Len(t, data.TopIssues, 1)
 	require.Equal(t, "Kernel use-after-free in the fixture driver", data.TopIssues[0].Description)
 
-	exported, err := store.NewExportRepo(db).ExportVulnerabilities(ctx)
+	exported, err := database.NewReportExportRepository(db).ExportVulnerabilities(ctx)
 	require.NoError(t, err)
 	require.Len(t, exported, 1)
 	require.Equal(t, "CVE-2099-0001", exported[0]["cve_id"])
@@ -99,7 +98,7 @@ func TestVulnRescanResolvesAndReopens(t *testing.T) {
 	t.Cleanup(func() { _ = db.Close() })
 
 	scanner := newStoredVulnScanner(t, db)
-	metrics := store.NewMetricsRepo(db)
+	metrics := database.NewReportMetricsRepository(db)
 	openCount := func() int {
 		counts, countErr := metrics.VulnerabilitySeverityCounts(ctx, time.Now().Add(-time.Hour))
 		require.NoError(t, countErr)
@@ -144,7 +143,7 @@ func TestVulnFindingsFollowRenumberedDevice(t *testing.T) {
 	_, err = scanner.ScanDevice(ctx, device)
 	require.NoError(t, err)
 
-	exported, err := store.NewExportRepo(db).ExportVulnerabilities(ctx)
+	exported, err := database.NewReportExportRepository(db).ExportVulnerabilities(ctx)
 	require.NoError(t, err)
 	require.Len(t, exported, 1)
 	ip, ok := exported[0]["device_ip"].(*string)

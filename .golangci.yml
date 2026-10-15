@@ -309,9 +309,8 @@ linters:
         # implemented in a single store adapter sub-package; the feature owns the
         # ports. depguard makes "dependencies point inward" a CI gate, not a hope.
         # The hexagon rings (internal/modules/** + internal/adapters/**) were
-        # unwound; reporting is the one feature with a persistence boundary today.
-        #
-        # The store sub-package is the adapter, so it is exempt from these bans.
+        # unwound. Reporting's repositories live in internal/database
+        # (repository_report*.go) like every other feature's (D-SEED-30).
         #
         # The no-transport / no-SQL-driver ban holds for ALL files (production
         # AND tests): reporting code, even in tests, talks to I/O through ports
@@ -319,28 +318,24 @@ linters:
         "reporting-domain-purity":
           files:
             - "**/internal/reporting/**"
-            - "!**/internal/reporting/store/**"
           deny:
             - pkg: net/http
               desc: "reporting is transport-free — define a port, implement it in an adapter"
             - pkg: database/sql
-              desc: "reporting is persistence-free — define a Repo port, implement it in internal/reporting/store"
+              desc: "reporting is persistence-free — define a Repo port, implement it in internal/database"
         # The persistence-direction ban is production-only: reporting's own code
-        # must never import internal/database nor its own store adapter (inward
-        # only — the store imports reporting, never the reverse; internal/app
-        # wires them). Test files are exempt because they are mini composition
-        # roots — they wire the real store adapter and open real SQLite DBs to
-        # exercise reporting end-to-end. $test = all _test.go files.
+        # never imports internal/database (inward only — the database imports
+        # reporting, never the reverse; internal/app wires them). Test files are
+        # exempt because they are mini composition roots — they wire the real
+        # repositories and open real SQLite DBs to exercise reporting end-to-end.
+        # $test = all _test.go files.
         "reporting-no-persistence":
           files:
             - "**/internal/reporting/**"
-            - "!**/internal/reporting/store/**"
             - "!$test"
           deny:
             - pkg: github.com/MustardSeedNetworks/seed/internal/database
-              desc: "reporting is persistence-free — define a Repo port, implement it in internal/reporting/store"
-            - pkg: github.com/MustardSeedNetworks/seed/internal/reporting/store
-              desc: "inward-only — the store adapter imports reporting, never the reverse; wire it in internal/app"
+              desc: "reporting is persistence-free — define a Repo port in internal/reporting, implement it in internal/database; wire it in internal/app"
         # WS-B repository-port discipline: the probe engine declares its
         # persistence needs as a consumer-side port (probeStorage) in its own
         # domain types (probe.Probe / probe.Result); the concrete adapter lives
@@ -455,17 +450,22 @@ linters:
           deny:
             - pkg: github.com/MustardSeedNetworks/seed/internal/database
               desc: "identity is persistence-free — its entities and port inputs live in internal/identity; the database implements the ports over them; wire it in internal/app"
-        # The delivery layer holds the store, never the database (seed#2750,
-        # ADR-0020 amendment 2026-10-15): cmd/seed wraps the opened database
-        # in an opaque app.Persistence and internal/api passes it to the
-        # internal/app use-cases. Production-only (api tests seed rows directly).
-        "api-no-persistence":
+        # Only the composition root reaches the database (seed#2750, ADR-0020
+        # amendments 2026-10-15): cmd/seed opens it and wraps it in an opaque
+        # app.Persistence, internal/app wires each feature's ports to the
+        # internal/database repositories, and every other package, internal/api
+        # included, holds ports or the app.Persistence. Production-only (tests
+        # are mini composition roots and seed rows directly).
+        "persistence-in-app-only":
           files:
-            - "**/internal/api/**"
+            - "$all"
+            - "!**/cmd/seed/**"
+            - "!**/internal/app/**"
+            - "!**/internal/database/**"
             - "!$test"
           deny:
             - pkg: github.com/MustardSeedNetworks/seed/internal/database
-              desc: "internal/api reaches persistence only through internal/app: hold and pass the *app.Persistence, and put the query behind an app use-case"
+              desc: "only internal/app (and cmd/seed) may import internal/database: declare a port in your package, implement it in internal/database, wire it in internal/app; internal/api holds the *app.Persistence"
         # Phase 6 capture port: libpcap (via gopacket/pcap) carries the CGO
         # taint that re-links libpcap into every dependent test binary. It is
         # confined to the single adapter package internal/capture/pcap; every

@@ -1,4 +1,4 @@
-package store
+package database
 
 import (
 	"context"
@@ -6,30 +6,29 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 )
 
-// ScheduleRepo implements reporting.ScheduleRepo over the scheduled_reports table.
+// ReportScheduleRepository implements reporting.ScheduleRepo over the scheduled_reports table.
 // The SQL and row scanning were lifted verbatim from the reporting package
 // (services_scheduler.go) when reporting was made I/O-free — Phase 3 slice 1b-v.
-type ScheduleRepo struct {
-	db *database.DB
+type ReportScheduleRepository struct {
+	db *DB
 }
 
-// NewScheduleRepo constructs a ScheduleRepo backed by db.
-func NewScheduleRepo(db *database.DB) *ScheduleRepo {
-	return &ScheduleRepo{db: db}
+// NewReportScheduleRepository constructs a ReportScheduleRepository backed by db.
+func NewReportScheduleRepository(db *DB) *ReportScheduleRepository {
+	return &ReportScheduleRepository{db: db}
 }
 
 // Compile-time assertion that the adapter satisfies reporting's port.
-var _ reporting.ScheduleRepo = (*ScheduleRepo)(nil)
+var _ reporting.ScheduleRepo = (*ReportScheduleRepository)(nil)
 
 // ListSchedules returns every persisted scheduled report. A row that cannot be
 // read is an error, not a skip: the skip hid that no row had ever loaded
 // (created_at was scanned into a [time.Time]), so every schedule was dropped on
 // restart without a word.
-func (r *ScheduleRepo) ListSchedules(ctx context.Context) ([]reporting.ScheduledReport, error) {
+func (r *ReportScheduleRepository) ListSchedules(ctx context.Context) ([]reporting.ScheduledReport, error) {
 	rows, err := r.db.Query(ctx, `
 		SELECT id, name, template, format, schedule_json, parameters_json, recipients_json, enabled, last_run, next_run, created_at, updated_at
 		FROM scheduled_reports
@@ -104,7 +103,7 @@ func scanSchedule(row interface{ Scan(...any) error }) (*reporting.ScheduledRepo
 }
 
 // SaveSchedule upserts a scheduled-report row.
-func (r *ScheduleRepo) SaveSchedule(ctx context.Context, sr *reporting.ScheduledReport) error {
+func (r *ReportScheduleRepository) SaveSchedule(ctx context.Context, sr *reporting.ScheduledReport) error {
 	scheduleJSON, _ := json.Marshal(sr.Schedule)
 	paramsJSON, _ := json.Marshal(sr.Parameters)
 	recipientsJSON, _ := json.Marshal(sr.Recipients)
@@ -146,7 +145,7 @@ func (r *ScheduleRepo) SaveSchedule(ctx context.Context, sr *reporting.Scheduled
 }
 
 // DeleteSchedule removes a scheduled-report row.
-func (r *ScheduleRepo) DeleteSchedule(ctx context.Context, id string) error {
+func (r *ReportScheduleRepository) DeleteSchedule(ctx context.Context, id string) error {
 	_, err := r.db.Exec(ctx, "DELETE FROM scheduled_reports WHERE id = ?", id)
 	if err != nil {
 		return fmt.Errorf("deleting scheduled report: %w", err)

@@ -19,7 +19,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
-	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
 	"github.com/MustardSeedNetworks/seed/internal/security/vulntriage"
 )
 
@@ -89,7 +88,7 @@ func findingHistory(t *testing.T, s *Server, id int64) []VulnStatusChangeRespons
 func TestVulnTriageLifecycle(t *testing.T) {
 	ctx := context.Background()
 	s, rescan, id, db := newTriageServer(t)
-	metrics := store.NewMetricsRepo(db)
+	metrics := database.NewReportMetricsRepository(db)
 	openCritical := func() int {
 		counts, err := metrics.VulnerabilitySeverityCounts(ctx, time.Now().Add(-time.Hour))
 		require.NoError(t, err)

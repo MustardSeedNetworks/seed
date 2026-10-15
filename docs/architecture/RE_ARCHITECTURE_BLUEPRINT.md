@@ -186,7 +186,8 @@ seed/
 > `internal/adapters/*` hexagon rings below were **abandoned**. The backend is
 > **capability-first**: flat `internal/<feature>` packages (e.g. `internal/harvest`,
 > `internal/reporting`, `internal/discovery`), with ports applied as a technique at
-> the I/O seam (e.g. `internal/reporting/store`) and `depguard` enforcing direction.
+> the I/O seam (ports in `internal/<feature>`, repositories in `internal/database`)
+> and `depguard` enforcing direction.
 > This table is kept only as a record of the original plan. Concretely:
 > `internal/services/discovery` relocated to **`internal/discovery`** (Phase 6 S3,
 > #1489), _not_ `internal/modules/shell/*`; `internal/harvest` stayed flat (not
@@ -500,7 +501,8 @@ between modules.
 > dormant until a producer opts in — the jobs runner keeps publishing directly
 > (its durability is its store + `Recover`, not the outbox).
 > The repo-interfaces-as-domain-ports point below is piloted in
-> `internal/reporting/store` (ReportRepo/ScheduleRepo/MetricsRepo/ExportRepo);
+> `internal/reporting/store` (ReportRepo/ScheduleRepo/MetricsRepo/ExportRepo;
+> moved into `internal/database` as `repository_report*.go` by D-SEED-30);
 > generalizing it to all 21 repos is deliberately deferred — done bespoke per
 > domain only where a use-case needs it (the ADR-0016 strangle), not wholesale
 > (which just produces near-identical adapters, as the polling-targets attempt
