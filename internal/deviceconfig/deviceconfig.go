@@ -19,6 +19,12 @@
 // Configurations hold secrets of their own (enable hashes, SNMP communities,
 // RADIUS keys), so they are stored encrypted with the credential vault's key.
 //
+// Each stored configuration is compared with the target's previous one (P-D2).
+// A change is stored and raises a config.change alert; an identical
+// configuration is neither stored again nor alerted on. The alert carries line
+// counts, never configuration text: alerts leave Seed by webhook, mail and
+// syslog, and the diff itself is read from the API by an operator.
+//
 // This is not internal/config/backups, which is Seed backing up its own
 // configuration.
 package deviceconfig
@@ -27,12 +33,16 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/pmezard/go-difflib/difflib"
+
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
 	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
@@ -113,9 +123,12 @@ const (
 	// runConcurrency is how many devices one run logs in to at once. Small on
 	// purpose: AAA servers rate-limit, and a backup is not urgent.
 	runConcurrency = 4
-	// backupRetention is how many attempts a target keeps; older ones are
-	// pruned after each new attempt is recorded.
+	// backupRetention is how many attempts, and separately how many stored
+	// configurations, a target keeps; older ones are pruned after each new
+	// attempt is recorded, so an outage cannot push out the history.
 	backupRetention = 50
+	// diffContext is the unchanged lines shown around each change.
+	diffContext = 3
 )
 
 // Fetch failure classes. A Fetcher wraps its errors in one of these so the
@@ -208,13 +221,23 @@ type BackupStore interface {
 	// InsertBackup records an attempt; ConfigCT is the configuration's
 	// ciphertext.
 	InsertBackup(ctx context.Context, b *Backup) error
-	// PruneBackups keeps the target's newest keep attempts.
+	// PruneBackups keeps the target's newest keep attempts and its newest
+	// keep successful ones.
 	PruneBackups(ctx context.Context, clientID, targetID string, keep int) error
 	// ListBackups returns a target's newest attempts first, without their
 	// configurations.
 	ListBackups(ctx context.Context, clientID, targetID string, limit int) ([]Backup, error)
 	// GetBackup returns one attempt with ConfigCT set.
 	GetBackup(ctx context.Context, clientID, id string) (Backup, error)
+	// LatestConfig returns the target's newest successful attempt taken
+	// before the given time, with ConfigCT set, or ErrNotFound.
+	LatestConfig(ctx context.Context, clientID, targetID string, before time.Time) (Backup, error)
+}
+
+// AlertWriter raises the configuration change alert; satisfied by the alert
+// write chain the pipelines emit through.
+type AlertWriter interface {
+	Create(ctx context.Context, alert *alerts.Alert) error
 }
 
 // CredentialStore reads vault rows; satisfied by the device-credential
@@ -283,21 +306,37 @@ type RunResult struct {
 	Failed    int            `json:"failed"`
 }
 
+// Diff is a stored configuration compared with the one stored before it.
+type Diff struct {
+	TargetID         string    `json:"targetId"`
+	BackupID         string    `json:"backupId"`
+	TakenAt          time.Time `json:"takenAt"`
+	PreviousBackupID string    `json:"previousBackupId"`
+	PreviousTakenAt  time.Time `json:"previousTakenAt"`
+	Added            int       `json:"added"`
+	Removed          int       `json:"removed"`
+	// Unified is the change in unified diff format.
+	Unified string `json:"unified"`
+}
+
 // Service is the configuration backup use-case.
 type Service struct {
 	repo   Repository
 	creds  CredentialStore
 	cipher Cipher
 	fetch  Fetcher
+	alerts AlertWriter
 	now    func() time.Time
 }
 
 // NewService builds the use-case. Every dependency is required.
-func NewService(repo Repository, creds CredentialStore, cipher Cipher, fetch Fetcher) (*Service, error) {
-	if repo == nil || creds == nil || cipher == nil || fetch == nil {
+func NewService(
+	repo Repository, creds CredentialStore, cipher Cipher, fetch Fetcher, alertWriter AlertWriter,
+) (*Service, error) {
+	if repo == nil || creds == nil || cipher == nil || fetch == nil || alertWriter == nil {
 		return nil, ErrUnavailable
 	}
-	return &Service{repo: repo, creds: creds, cipher: cipher, fetch: fetch, now: time.Now}, nil
+	return &Service{repo: repo, creds: creds, cipher: cipher, fetch: fetch, alerts: alertWriter, now: time.Now}, nil
 }
 
 // ListTargets returns the client's targets.
@@ -421,6 +460,30 @@ func (s *Service) GetBackup(ctx context.Context, clientID, id string) (Backup, e
 	return b, nil
 }
 
+// Diff compares a stored configuration with the target's previous one.
+// ErrNotFound covers both an unknown backup and the target's first
+// configuration, which has nothing before it.
+func (s *Service) Diff(ctx context.Context, clientID, id string) (Diff, error) {
+	cur, err := s.GetBackup(ctx, clientID, id)
+	if err != nil {
+		return Diff{}, err
+	}
+	if cur.Status != StatusOK {
+		return Diff{}, ValidationError{Msg: "the backup attempt failed and holds no configuration"}
+	}
+	prev, err := s.repo.LatestConfig(ctx, clientID, cur.TargetID, cur.TakenAt)
+	if err != nil {
+		return Diff{}, err
+	}
+	prevConfig, err := s.cipher.DecryptValue(prev.ConfigCT)
+	if err != nil {
+		return Diff{}, fmt.Errorf("decrypt configuration %s: %w", prev.ID, err)
+	}
+	d := diffConfigs(prev, prevConfig, cur, cur.Config)
+	d.Unified, err = unifiedDiff(prev, prevConfig, cur, cur.Config)
+	return d, err
+}
+
 // Run backs up the named targets, or every target of the client when ids is
 // empty. report receives the fraction of devices done.
 func (s *Service) Run(ctx context.Context, clientID string, ids []string, report func(float64)) (RunResult, error) {
@@ -488,8 +551,8 @@ func (s *Service) runTargets(ctx context.Context, clientID string, ids []string)
 // backupOne attempts one device and records the attempt. The returned error is
 // a cancelled run or a failure to record the attempt; the device's own
 // failure is in the result. A configuration identical to the target's latest
-// backup is not stored again: the result names the backup that already holds
-// it.
+// stored one is not stored again: the result names the backup that already
+// holds it. One that differs is stored and alerted on.
 func (s *Service) backupOne(ctx context.Context, t Target) (DeviceResult, error) {
 	b := Backup{ClientID: t.ClientID, TargetID: t.ID, TakenAt: s.now().UTC()}
 	output, fetchErr := s.login(ctx, t)
@@ -517,22 +580,108 @@ func (s *Service) backupOne(ctx context.Context, t Target) (DeviceResult, error)
 		}
 	}
 
+	var prev Backup
 	if b.Status == StatusOK {
-		latest, err := s.repo.ListBackups(ctx, t.ClientID, t.ID, 1)
-		if err != nil {
-			return DeviceResult{}, fmt.Errorf("read latest backup of %s: %w", t.ID, err)
-		}
-		if len(latest) == 1 && latest[0].Status == StatusOK && latest[0].SHA256 == b.SHA256 {
-			return DeviceResult{TargetID: t.ID, Name: t.Name, BackupID: latest[0].ID, Status: StatusOK}, nil
+		latest, err := s.repo.LatestConfig(ctx, t.ClientID, t.ID, b.TakenAt)
+		switch {
+		case errors.Is(err, ErrNotFound):
+		case err != nil:
+			return DeviceResult{}, fmt.Errorf("read latest configuration of %s: %w", t.ID, err)
+		case latest.SHA256 == b.SHA256:
+			return DeviceResult{TargetID: t.ID, Name: t.Name, BackupID: latest.ID, Status: StatusOK}, nil
+		default:
+			prev = latest
 		}
 	}
 	if err := s.repo.InsertBackup(ctx, &b); err != nil {
 		return DeviceResult{}, fmt.Errorf("record backup of %s: %w", t.ID, err)
 	}
+	if prev.ID != "" {
+		if err := s.alertChange(ctx, t, prev, b, output); err != nil {
+			return DeviceResult{}, err
+		}
+	}
 	if err := s.repo.PruneBackups(ctx, t.ClientID, t.ID, backupRetention); err != nil {
 		return DeviceResult{}, fmt.Errorf("prune backups of %s: %w", t.ID, err)
 	}
 	return DeviceResult{TargetID: t.ID, Name: t.Name, BackupID: b.ID, Status: b.Status, Error: b.Error}, nil
+}
+
+// alertChange raises the config.change alert for cur, which replaced prev as
+// the target's configuration.
+func (s *Service) alertChange(ctx context.Context, t Target, prev, cur Backup, config string) error {
+	prevConfig, err := s.cipher.DecryptValue(prev.ConfigCT)
+	if err != nil {
+		return fmt.Errorf("decrypt configuration %s: %w", prev.ID, err)
+	}
+	d := diffConfigs(prev, prevConfig, cur, config)
+	evidence, err := json.Marshal(alerts.ConfigChangeEvidence{
+		TargetID:         d.TargetID,
+		BackupID:         d.BackupID,
+		PreviousBackupID: d.PreviousBackupID,
+		Added:            d.Added,
+		Removed:          d.Removed,
+	})
+	if err != nil {
+		return fmt.Errorf("encode configuration change of %s: %w", t.ID, err)
+	}
+	err = s.alerts.Create(ctx, &alerts.Alert{
+		Type:     alerts.TypeSecurity,
+		Severity: alerts.SeverityWarning,
+		Title:    "Configuration changed on " + t.Name,
+		Message: fmt.Sprintf("The running configuration of %s (%s) changed since %s: %d lines added, %d removed.",
+			t.Name, t.Host, prev.TakenAt.UTC().Format(time.RFC3339), d.Added, d.Removed),
+		Source:   t.ID,
+		Rule:     alerts.RuleConfigChange,
+		Metadata: string(evidence),
+	})
+	if err != nil {
+		return fmt.Errorf("alert configuration change of %s: %w", t.ID, err)
+	}
+	return nil
+}
+
+// diffConfigs counts the lines added and removed between two stored
+// configurations, without the unified text.
+func diffConfigs(prev Backup, prevConfig string, cur Backup, curConfig string) Diff {
+	d := Diff{
+		TargetID:         cur.TargetID,
+		BackupID:         cur.ID,
+		TakenAt:          cur.TakenAt,
+		PreviousBackupID: prev.ID,
+		PreviousTakenAt:  prev.TakenAt,
+	}
+	m := difflib.NewMatcher(difflib.SplitLines(prevConfig), difflib.SplitLines(curConfig))
+	for _, op := range m.GetOpCodes() {
+		switch op.Tag {
+		case 'r':
+			d.Removed += op.I2 - op.I1
+			d.Added += op.J2 - op.J1
+		case 'd':
+			d.Removed += op.I2 - op.I1
+		case 'i':
+			d.Added += op.J2 - op.J1
+		}
+	}
+	return d
+}
+
+// unifiedDiff renders the change between two stored configurations, each side
+// named by its backup id and the time it was taken.
+func unifiedDiff(prev Backup, prevConfig string, cur Backup, curConfig string) (string, error) {
+	text, err := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+		A:        difflib.SplitLines(prevConfig),
+		B:        difflib.SplitLines(curConfig),
+		FromFile: prev.ID,
+		FromDate: prev.TakenAt.UTC().Format(time.RFC3339),
+		ToFile:   cur.ID,
+		ToDate:   cur.TakenAt.UTC().Format(time.RFC3339),
+		Context:  diffContext,
+	})
+	if err != nil {
+		return "", fmt.Errorf("render configuration diff: %w", err)
+	}
+	return text, nil
 }
 
 // encryptConfig encrypts a configuration for storage. The keyring passes

@@ -77,6 +77,21 @@ const RuleFlowIndicator = "flow.indicator"
 // stream window scored at or below the VoIP analyser's alert MOS.
 const RuleVoIPQuality = "voip.quality"
 
+// RuleConfigChange is the alert raised when a device's backed-up configuration
+// differs from the one stored before it (P-D2).
+const RuleConfigChange = "config.change"
+
+// ConfigChangeEvidence is the Metadata of a RuleConfigChange alert: the two
+// backups compared and the size of the change. It never carries configuration
+// text, which holds the device's secrets and is read through the API.
+type ConfigChangeEvidence struct {
+	TargetID         string `json:"targetId"`
+	BackupID         string `json:"backupId"`
+	PreviousBackupID string `json:"previousBackupId"`
+	Added            int    `json:"added"`
+	Removed          int    `json:"removed"`
+}
+
 // InterfaceDownEvidence is the Metadata of a RuleInterfaceDown alert: the one
 // ifTable row that went down, not the whole table it was read from.
 type InterfaceDownEvidence struct {

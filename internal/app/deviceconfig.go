@@ -10,7 +10,9 @@ package app
 import (
 	"context"
 	"errors"
+	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/deviceconfig"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
@@ -18,14 +20,31 @@ import (
 
 // NewDeviceConfigBackups builds the configuration backup use-case over a lazy
 // database accessor, the keyring that decrypts vault passwords and encrypts
-// stored configurations, and the fetcher that logs in to devices
-// (deviceconfig.SSHFetcher in production).
+// stored configurations, the fetcher that logs in to devices
+// (deviceconfig.SSHFetcher in production), and a lazy accessor for the alert
+// write chain a configuration change is raised through.
 func NewDeviceConfigBackups(
 	db func() *database.DB,
 	cipher deviceconfig.Cipher,
 	fetcher deviceconfig.Fetcher,
+	alertWriter func() deviceconfig.AlertWriter,
 ) (*deviceconfig.Service, error) {
-	return deviceconfig.NewService(deviceConfigRepo{db: db}, deviceConfigCreds{db: db}, cipher, fetcher)
+	return deviceconfig.NewService(deviceConfigRepo{db: db}, deviceConfigCreds{db: db}, cipher, fetcher,
+		deviceConfigAlerts{writer: alertWriter})
+}
+
+// deviceConfigAlerts resolves the alert write chain when a change is raised:
+// it is built with the alert pipelines, after the use-cases.
+type deviceConfigAlerts struct {
+	writer func() deviceconfig.AlertWriter
+}
+
+func (a deviceConfigAlerts) Create(ctx context.Context, alert *alerts.Alert) error {
+	w := a.writer()
+	if w == nil {
+		return deviceconfig.ErrUnavailable
+	}
+	return w.Create(ctx, alert)
 }
 
 type deviceConfigCreds struct {
@@ -146,4 +165,14 @@ func (a deviceConfigRepo) GetBackup(ctx context.Context, clientID, id string) (d
 		return deviceconfig.Backup{}, err
 	}
 	return repo.GetBackup(ctx, clientID, id)
+}
+
+func (a deviceConfigRepo) LatestConfig(
+	ctx context.Context, clientID, targetID string, before time.Time,
+) (deviceconfig.Backup, error) {
+	repo, err := a.repo()
+	if err != nil {
+		return deviceconfig.Backup{}, err
+	}
+	return repo.LatestConfig(ctx, clientID, targetID, before)
 }

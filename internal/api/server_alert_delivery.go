@@ -21,10 +21,10 @@ import (
 )
 
 // useAlertDelivery keeps the delivery Manager app.NewAlertDelivery built, for
-// settings writes to re-point, and returns the writer the alert pipelines emit
-// through.
+// settings writes to re-point, and the writer the alert pipelines and the
+// configuration backup use-case emit through, which it returns.
 func (s *Server) useAlertDelivery(manager *alertdelivery.Manager, writer alertdelivery.Writer) alertdelivery.Writer {
-	s.alertDelivery = manager
+	s.alertDelivery, s.alertWriter = manager, writer
 	return writer
 }
 

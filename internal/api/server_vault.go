@@ -21,7 +21,13 @@ func (s *Server) initVaultUseCases() {
 	if svc, credErr := app.NewDeviceCredentials(s.db, keyring); credErr == nil {
 		s.deviceCredentials = svc
 	}
-	if svc, backupErr := app.NewDeviceConfigBackups(s.db, keyring, deviceconfig.SSHFetcher{}); backupErr == nil {
+	alertWriter := func() deviceconfig.AlertWriter { return s.alertWriter }
+	if svc, backupErr := app.NewDeviceConfigBackups(
+		s.db,
+		keyring,
+		deviceconfig.SSHFetcher{},
+		alertWriter,
+	); backupErr == nil {
 		s.deviceConfigs = svc
 	}
 }

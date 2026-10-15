@@ -7,15 +7,18 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/deviceconfig"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
@@ -25,10 +28,13 @@ const coreConfig = "hostname core\nsnmp-server community n0t-public RO\n"
 
 // hostFetcher stands in for SSHFetcher: every device presents
 // "SHA256:" + host, an unpinned login stops before authenticating, and only
-// 10.0.0.1 with the right password returns a configuration.
-type hostFetcher struct{}
+// 10.0.0.1 with the right password returns a configuration: changed when set,
+// coreConfig otherwise.
+type hostFetcher struct {
+	changed *atomic.Pointer[string]
+}
 
-func (hostFetcher) Fetch(_ context.Context, req deviceconfig.FetchRequest) (deviceconfig.FetchResult, error) {
+func (f hostFetcher) Fetch(_ context.Context, req deviceconfig.FetchRequest) (deviceconfig.FetchResult, error) {
 	presented := "SHA256:" + req.Host
 	switch {
 	case req.PinnedHostKey == "":
@@ -36,6 +42,9 @@ func (hostFetcher) Fetch(_ context.Context, req deviceconfig.FetchRequest) (devi
 	case req.PinnedHostKey != presented:
 		return deviceconfig.FetchResult{}, fmt.Errorf("%w: presented %s", deviceconfig.ErrHostKeyMismatch, presented)
 	case req.Host == "10.0.0.1" && req.Password == "s3cret":
+		if changed := f.changed.Load(); changed != nil {
+			return deviceconfig.FetchResult{Output: *changed}, nil
+		}
 		return deviceconfig.FetchResult{Output: coreConfig}, nil
 	}
 	return deviceconfig.FetchResult{}, fmt.Errorf("%w: ssh: unable to authenticate", deviceconfig.ErrAuth)
@@ -49,8 +58,17 @@ const (
 )
 
 // newDeviceConfigTestServer wires the vault and backups over a real keyring,
-// so stored ciphertext is real ciphertext, and seeds an operator and a viewer.
+// so stored ciphertext is real ciphertext, and the real alert write chain, and
+// seeds an operator and a viewer.
 func newDeviceConfigTestServer(t *testing.T) *Server {
+	t.Helper()
+	s, _ := newDeviceConfigTestServerWithFetcher(t)
+	return s
+}
+
+// newDeviceConfigTestServerWithFetcher is newDeviceConfigTestServer, also
+// returning the configuration the switch at 10.0.0.1 answers with.
+func newDeviceConfigTestServerWithFetcher(t *testing.T) (*Server, *atomic.Pointer[string]) {
 	t.Helper()
 	s, _ := newJobsTestServer(t, jobs.Config{})
 	s.dbConn = newTestDB(t)
@@ -71,13 +89,16 @@ func newDeviceConfigTestServer(t *testing.T) *Server {
 		t.Fatalf("build credentials use-case: %v", err)
 	}
 	s.deviceCredentials = creds
-	backups, err := app.NewDeviceConfigBackups(s.db, keyring, hostFetcher{})
+	s.useAlertDelivery(app.NewAlertDelivery(s.dbConn, nil, logging.GetLogger()))
+	fetcher := hostFetcher{changed: new(atomic.Pointer[string])}
+	backups, err := app.NewDeviceConfigBackups(s.db, keyring, fetcher,
+		func() deviceconfig.AlertWriter { return s.alertWriter })
 	if err != nil {
 		t.Fatalf("build device config use-case: %v", err)
 	}
 	s.deviceConfigs = backups
 	s.registerDeviceConfigKind()
-	return s
+	return s, fetcher.changed
 }
 
 func callDeviceConfig(t *testing.T, h http.HandlerFunc, method, path, body string) *httptest.ResponseRecorder {
@@ -259,6 +280,98 @@ func TestDeviceConfigRunStoresConfigAndReportsCredentialFailure(t *testing.T) {
 		deviceConfigsPath+"?targetId="+bad.ID, "")
 	if list.Code != http.StatusOK || !strings.Contains(list.Body.String(), `"auth_failed"`) {
 		t.Errorf("history of the refused target: %d %s", list.Code, list.Body.String())
+	}
+}
+
+func configChangeAlerts(t *testing.T, s *Server) []*alerts.Alert {
+	t.Helper()
+	list, err := s.dbConn.Alerts().List(t.Context(), alerts.ListOptions{Limit: 100})
+	if err != nil {
+		t.Fatalf("list alerts: %v", err)
+	}
+	var out []*alerts.Alert
+	for _, a := range list {
+		if a.Rule == alerts.RuleConfigChange {
+			out = append(out, a)
+		}
+	}
+	return out
+}
+
+// TestDeviceConfigChangeIsDiffedAndAlerted is P-D2's acceptance through the
+// API: a changed configuration produces a readable diff and an alert; an
+// unchanged one produces neither.
+func TestDeviceConfigChangeIsDiffedAndAlerted(t *testing.T) {
+	s, changed := newDeviceConfigTestServerWithFetcher(t)
+	tgt := createDeviceConfigTarget(t, s, "10.0.0.1", createSSHCredential(t, s, "s3cret"))
+	runDeviceConfigBackup(t, s)
+	confirmHostKey(t, s, tgt.ID)
+
+	first := resultsByTarget(runDeviceConfigBackup(t, s))[tgt.ID].BackupID
+	unchanged := resultsByTarget(runDeviceConfigBackup(t, s))[tgt.ID].BackupID
+	if unchanged != first {
+		t.Errorf("an unchanged configuration was stored again: %s, then %s", first, unchanged)
+	}
+	if got := configChangeAlerts(t, s); len(got) != 0 {
+		t.Fatalf("the first and an unchanged configuration raised %d change alerts", len(got))
+	}
+	rec := callDeviceConfig(t, s.handleDeviceConfigBackupByID, http.MethodGet,
+		deviceConfigsPathPrefix+first+diffSuffix, "")
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("diff of the first configuration: %d %s, want 404", rec.Code, rec.Body.String())
+	}
+
+	next := strings.Replace(coreConfig, "hostname core", "hostname core-2", 1) + "ntp server 10.0.0.53\n"
+	changed.Store(&next)
+	second := resultsByTarget(runDeviceConfigBackup(t, s))[tgt.ID].BackupID
+	if second == first {
+		t.Fatal("a changed configuration was not stored")
+	}
+
+	raised := configChangeAlerts(t, s)
+	if len(raised) != 1 {
+		t.Fatalf("a changed configuration raised %d change alerts, want 1", len(raised))
+	}
+	var ev alerts.ConfigChangeEvidence
+	if err := json.Unmarshal([]byte(raised[0].Metadata), &ev); err != nil {
+		t.Fatalf("decode alert evidence %q: %v", raised[0].Metadata, err)
+	}
+	want := alerts.ConfigChangeEvidence{
+		TargetID:         tgt.ID,
+		BackupID:         second,
+		PreviousBackupID: first,
+		Added:            2,
+		Removed:          1,
+	}
+	if ev != want {
+		t.Errorf("alert evidence = %+v, want %+v", ev, want)
+	}
+	if a := raised[0]; a.Source != tgt.ID || strings.Contains(a.Message+a.Metadata, "n0t-public") {
+		t.Errorf("alert = %+v: wrong source, or configuration text leaked into it", a)
+	}
+
+	rec = callDeviceConfig(t, s.handleDeviceConfigBackupByID, http.MethodGet,
+		deviceConfigsPathPrefix+second+diffSuffix, "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("diff: %d %s", rec.Code, rec.Body.String())
+	}
+	d := decodeInto[deviceconfig.Diff](t, rec)
+	if d.PreviousBackupID != first || d.Added != 2 || d.Removed != 1 {
+		t.Errorf("diff = %+v, want 2 added and 1 removed against %s", d, first)
+	}
+	for _, line := range []string{
+		"--- " + first, "+++ " + second, "-hostname core\n", "+hostname core-2\n",
+		"+ntp server 10.0.0.53\n", " snmp-server community",
+	} {
+		if !strings.Contains(d.Unified, line) {
+			t.Errorf("unified diff lacks %q:\n%s", line, d.Unified)
+		}
+	}
+
+	viewer := callDeviceConfigAs(t, s.handleDeviceConfigBackupByID, dcViewer, http.MethodGet,
+		deviceConfigsPathPrefix+second+diffSuffix, "")
+	if viewer.Code != http.StatusForbidden || strings.Contains(viewer.Body.String(), "n0t-public") {
+		t.Errorf("diff as a viewer: %d %s, want 403", viewer.Code, viewer.Body.String())
 	}
 }
 
