@@ -203,7 +203,15 @@ done
   exit 1
 }
 
+# Seed as root keeps its setup token in the system data directory, mode 0600,
+# which the unprivileged browser run cannot read. Hand it over the way an
+# operator would: read it as root.
+setup_token_file=$(curl -skf "$base_url/api/v1/setup/status" |
+  python3 -c 'import json, sys; print(json.load(sys.stdin)["setupTokenFile"])')
+sudo install -m 0600 -o "$(id -u)" -g "$(id -g)" "$setup_token_file" "$run_dir/setup-token"
+
 cd "$repo_dir/ui"
+SEED_E2E_SETUP_TOKEN_FILE="$run_dir/setup-token" \
 SEED_E2E_NIAC_LINK=1 \
 SEED_E2E_STARTED_AT="$started_at" \
 SEED_E2E_EXPECTED_IPS="$expected_ips" \
