@@ -108,7 +108,8 @@ func (s *Server) deviceConfigRoutes() []route.Route {
 	}
 }
 
-// deviceConfigTargetInput is the POST/PUT body. Port defaults to 22.
+// deviceConfigTargetInput is the POST/PUT body. Port defaults to the
+// platform's: 830 for netconf, 22 otherwise.
 type deviceConfigTargetInput struct {
 	Name          string                `json:"name"`
 	Host          string                `json:"host"`

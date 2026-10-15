@@ -1,7 +1,7 @@
 // Package deviceconfig retrieves and keeps network device configurations
 // (P-D1, #348): log in to a switch or router over SSH with a credential from
-// the vault, run the platform's "show the running configuration" command, and
-// store what comes back.
+// the vault, run the platform's "show the running configuration" command, or
+// read the running datastore over NETCONF, and store what comes back.
 //
 // A run backs up many devices and reports each one. One device refusing the
 // credential, changing its host key or being unreachable is that device's
@@ -37,28 +37,57 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
-// Platform names the device's CLI dialect, which decides the command run.
+// Platform names how a device's configuration is read: the CLI dialect, which
+// decides the command run, or NETCONF.
 type Platform string
 
-// Supported platforms. Each answers its configuration command on an SSH exec
-// channel, which is never paged, so no "terminal length 0" dance is needed.
+// Supported platforms. The CLI platforms answer their configuration command on
+// an SSH exec channel, which is never paged, so no "terminal length 0" dance is
+// needed. PlatformNETCONF is any vendor's NETCONF server: the configuration is
+// the running datastore read with <get-config>.
 const (
 	PlatformCiscoIOS     Platform = "cisco-ios"
 	PlatformCiscoNXOS    Platform = "cisco-nxos"
 	PlatformAristaEOS    Platform = "arista-eos"
 	PlatformJuniperJunos Platform = "juniper-junos"
+	PlatformNETCONF      Platform = "netconf"
 )
 
-// Command returns the platform's configuration command, or false for an
-// unsupported platform.
+// Supported reports whether p is one of the platforms above.
+func (p Platform) Supported() bool {
+	switch p {
+	case PlatformCiscoIOS, PlatformCiscoNXOS, PlatformAristaEOS, PlatformJuniperJunos, PlatformNETCONF:
+		return true
+	}
+	return false
+}
+
+// Command returns a CLI platform's configuration command, or false for
+// PlatformNETCONF and unsupported platforms.
 func (p Platform) Command() (string, bool) {
 	switch p {
 	case PlatformCiscoIOS, PlatformCiscoNXOS, PlatformAristaEOS:
 		return "show running-config", true
 	case PlatformJuniperJunos:
 		return "show configuration", true
+	case PlatformNETCONF:
+		return "", false
 	}
 	return "", false
+}
+
+// Well-known ports: SSH, and NETCONF over SSH (RFC 6242).
+const (
+	sshPort     = 22
+	netconfPort = 830
+)
+
+// DefaultPort is the port a target uses when none is given.
+func (p Platform) DefaultPort() int {
+	if p == PlatformNETCONF {
+		return netconfPort
+	}
+	return sshPort
 }
 
 // Status is the outcome of one backup attempt.
@@ -76,9 +105,6 @@ const (
 	StatusCommandFailed      Status = "command_failed"
 	StatusError              Status = "error"
 )
-
-// DefaultPort is the SSH port a target uses when none is given.
-const DefaultPort = 22
 
 const (
 	// deviceTimeout bounds one device's login and command. A large chassis
@@ -210,7 +236,10 @@ type FetchRequest struct {
 	Port     int
 	User     string
 	Password string
-	Command  string
+	// Command is the CLI command run on an exec channel. It is ignored when
+	// NETCONF is set: the running datastore is read on the netconf subsystem.
+	Command string
+	NETCONF bool
 	// PinnedHostKey is the expected SHA256 fingerprint. Empty means none is
 	// pinned: the Fetcher must stop before authenticating and return a
 	// *HostKeyUnconfirmedError naming the key the device presented.
@@ -222,7 +251,7 @@ type FetchResult struct {
 	Output string
 }
 
-// Fetcher logs in to one device and runs one command.
+// Fetcher logs in to one device and retrieves its configuration.
 type Fetcher interface {
 	Fetch(ctx context.Context, req FetchRequest) (FetchResult, error)
 }
@@ -295,7 +324,7 @@ func (s *Service) SaveTarget(ctx context.Context, in TargetInput) (Target, error
 		CredentialsID: in.CredentialsID,
 	}
 	if t.Port == 0 {
-		t.Port = DefaultPort
+		t.Port = t.Platform.DefaultPort()
 	}
 	if err := s.validateTarget(ctx, t); err != nil {
 		return Target{}, err
@@ -327,9 +356,9 @@ func (s *Service) validateTarget(ctx context.Context, t Target) error {
 	case validation.ValidatePort(t.Port) != nil:
 		return ValidationError{Msg: "port must be between 1 and 65535"}
 	}
-	if _, ok := t.Platform.Command(); !ok {
+	if !t.Platform.Supported() {
 		return ValidationError{
-			Msg: "platform must be one of cisco-ios, cisco-nxos, arista-eos, juniper-junos",
+			Msg: "platform must be one of cisco-ios, cisco-nxos, arista-eos, juniper-junos, netconf",
 		}
 	}
 	cred, err := s.creds.Get(ctx, t.CredentialsID, t.ClientID)
@@ -544,6 +573,7 @@ func (s *Service) login(ctx context.Context, t Target) (string, error) {
 		User:          cred.SSHUser,
 		Password:      password,
 		Command:       command,
+		NETCONF:       t.Platform == PlatformNETCONF,
 		PinnedHostKey: t.HostKeySHA256,
 	})
 	if err != nil {

@@ -346,7 +346,7 @@ func TestSaveTargetValidates(t *testing.T) {
 
 	got, err := svc.SaveTarget(context.Background(), valid)
 	require.NoError(t, err)
-	require.Equal(t, deviceconfig.DefaultPort, got.Port)
+	require.Equal(t, deviceconfig.PlatformCiscoIOS.DefaultPort(), got.Port)
 }
 
 func TestSaveTargetKeepsThePinUnlessTheAddressMoves(t *testing.T) {
@@ -494,4 +494,31 @@ func TestOutputShapedLikeCiphertextIsRefused(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, deviceconfig.StatusCommandFailed, res.Results[0].Status)
 	require.Empty(t, repo.backups[0].ConfigCT)
+}
+
+func TestNETCONFTargetUsesPort830AndTheNETCONFTransport(t *testing.T) {
+	t.Parallel()
+	repo := newMemRepo()
+	fetch := &scriptedFetcher{answers: map[string]func(deviceconfig.FetchRequest) (deviceconfig.FetchResult, error){
+		"10.0.0.9": answer("<native><hostname>core</hostname></native>\n"),
+	}}
+	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch)
+	require.NoError(t, err)
+
+	got, err := svc.SaveTarget(context.Background(), deviceconfig.TargetInput{
+		ClientID: client, Name: "core", Host: "10.0.0.9",
+		Platform: deviceconfig.PlatformNETCONF, CredentialsID: "cred-ssh",
+	})
+	require.NoError(t, err)
+	require.Equal(t, 830, got.Port)
+
+	require.NoError(t, repo.SetPendingHostKey(context.Background(), client, got.ID, "SHA256:10.0.0.9"))
+	require.NoError(t, svc.ConfirmHostKey(context.Background(), client, got.ID, "SHA256:10.0.0.9"))
+	res, err := svc.Run(context.Background(), client, []string{got.ID}, func(float64) {})
+	require.NoError(t, err)
+	require.Equal(t, deviceconfig.StatusOK, res.Results[0].Status)
+	require.Len(t, fetch.requests, 1)
+	require.True(t, fetch.requests[0].NETCONF)
+	require.Empty(t, fetch.requests[0].Command)
+	require.Equal(t, 830, fetch.requests[0].Port)
 }

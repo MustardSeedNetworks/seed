@@ -35,6 +35,8 @@ type deviceOpts struct {
 	// operating systems do.
 	keyboardInteractiveOnly bool
 	commands                map[string]string
+	// netconf, when set, serves the netconf subsystem on the channel.
+	netconf func(ch ssh.Channel)
 }
 
 func startSSHDevice(t *testing.T, opts deviceOpts) sshDevice {
@@ -76,7 +78,7 @@ func startSSHDevice(t *testing.T, opts deviceOpts) sshDevice {
 			if acceptErr != nil {
 				return
 			}
-			go serveSSH(conn, cfg, opts.commands)
+			go serveSSH(conn, cfg, opts)
 		}
 	}()
 	return sshDevice{
@@ -86,7 +88,7 @@ func startSSHDevice(t *testing.T, opts deviceOpts) sshDevice {
 	}
 }
 
-func serveSSH(conn net.Conn, cfg *ssh.ServerConfig, commands map[string]string) {
+func serveSSH(conn net.Conn, cfg *ssh.ServerConfig, opts deviceOpts) {
 	defer func() { _ = conn.Close() }()
 	_, chans, reqs, err := ssh.NewServerConn(conn, cfg)
 	if err != nil {
@@ -99,6 +101,14 @@ func serveSSH(conn net.Conn, cfg *ssh.ServerConfig, commands map[string]string) 
 			return
 		}
 		for req := range chReqs {
+			// The subsystem payload is an SSH string naming the subsystem.
+			if req.Type == "subsystem" && opts.netconf != nil && string(req.Payload[4:]) == "netconf" {
+				_ = req.Reply(true, nil)
+				go ssh.DiscardRequests(chReqs)
+				opts.netconf(ch)
+				_ = ch.Close()
+				break
+			}
 			if req.Type != "exec" {
 				_ = req.Reply(false, nil)
 				continue
@@ -106,7 +116,7 @@ func serveSSH(conn net.Conn, cfg *ssh.ServerConfig, commands map[string]string) 
 			_ = req.Reply(true, nil)
 			// The exec payload is an SSH string: a uint32 length and the bytes.
 			status := uint32(0)
-			if out, ok := commands[string(req.Payload[4:])]; ok {
+			if out, ok := opts.commands[string(req.Payload[4:])]; ok {
 				_, _ = ch.Write([]byte(out))
 			} else {
 				_, _ = ch.Stderr().Write([]byte("% Invalid input detected"))

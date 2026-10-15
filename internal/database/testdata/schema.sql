@@ -566,13 +566,13 @@ CREATE TABLE device_config_backups (
 			) STRICT;
 
 -- table: device_config_targets
-CREATE TABLE device_config_targets (
+CREATE TABLE "device_config_targets" (
 				id              TEXT NOT NULL PRIMARY KEY,
 				client_id       TEXT NOT NULL REFERENCES clients(id),
 				name            TEXT NOT NULL CHECK (name <> ''),
 				host            TEXT NOT NULL CHECK (host <> ''),
 				port            INTEGER NOT NULL CHECK (port BETWEEN 1 AND 65535),
-				platform        TEXT NOT NULL CHECK (platform IN ('cisco-ios','cisco-nxos','arista-eos','juniper-junos')),
+				platform        TEXT NOT NULL CHECK (platform IN ('cisco-ios','cisco-nxos','arista-eos','juniper-junos','netconf')),
 				credentials_id  TEXT NOT NULL,
 				host_key_sha256 TEXT CHECK (host_key_sha256 IS NULL OR host_key_sha256 GLOB 'SHA256:*'),
 				pending_host_key_sha256 TEXT CHECK (pending_host_key_sha256 IS NULL OR pending_host_key_sha256 GLOB 'SHA256:*'),
