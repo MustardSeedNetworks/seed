@@ -31,8 +31,8 @@ func newRowRecorder(poller string) (*rowRecorder, *observationLog) {
 
 // NIAC keys its manifest's expectedObservations by these names (its
 // internal/scenario Collector* constants). Neither repository imports the
-// other, so a rename here without one there silently unpairs them. stp is the
-// one NIAC's manifest does not count yet.
+// other, so a rename here without one there silently unpairs them. stp and
+// ip_sla are the ones NIAC's manifest does not count yet.
 func TestCollectorsAreTheNamesNIACKeysBy(t *testing.T) {
 	t.Parallel()
 	var names []string
@@ -41,6 +41,7 @@ func TestCollectorsAreTheNamesNIACKeysBy(t *testing.T) {
 	}
 	want := []string{
 		"sys_info", "if_table", "lldp", "cdp", "fdp", "arp", "fdb", "routing", "host_resources", "bgp4_mib", "stp",
+		"ip_sla",
 	}
 	if !slices.Equal(names, want) {
 		t.Fatalf("collectors = %v, want %v", names, want)

@@ -5,18 +5,22 @@ import (
 	"fmt"
 
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/iftable"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/ipsla"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/sink"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/sla"
 )
 
-// ratingSink persists every observation through the embedded Sink and, for
-// if_table, also rates the interface counters against the target's previous
-// poll and stores the rates.
+// ratingSink persists every observation through the embedded Sink. For
+// if_table it also rates the interface counters against the target's
+// previous poll and stores the rates; for ip_sla it stores each operation's
+// new results.
 type ratingSink struct {
 	*sink.Sink
 
-	rater *ifrate.Rater
-	rates ifrate.Store
+	rater   *ifrate.Rater
+	tracker *sla.Tracker
+	metrics MetricsStore
 }
 
 // PublishIfTable implements [iftable.Publisher].
@@ -25,8 +29,19 @@ func (s ratingSink) PublishIfTable(ctx context.Context, obs iftable.Observation)
 		return err
 	}
 	rates := s.rater.Observe(snapshot(obs))
-	if err := s.rates.RecordInterfaceRates(ctx, rates); err != nil {
+	if err := s.metrics.RecordInterfaceRates(ctx, rates); err != nil {
 		return fmt.Errorf("orchestrator: record interface rates: %w", err)
+	}
+	return nil
+}
+
+// PublishIPSLA implements [ipsla.Publisher].
+func (s ratingSink) PublishIPSLA(ctx context.Context, obs ipsla.Observation) error {
+	if err := s.Sink.PublishIPSLA(ctx, obs); err != nil {
+		return err
+	}
+	if err := s.metrics.RecordSLAResults(ctx, s.tracker.Observe(obs)); err != nil {
+		return fmt.Errorf("orchestrator: record ip-sla results: %w", err)
 	}
 	return nil
 }

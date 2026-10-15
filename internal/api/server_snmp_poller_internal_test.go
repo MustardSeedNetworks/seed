@@ -22,7 +22,7 @@ func TestInitSNMPPoller_RegistersOnPro(t *testing.T) {
 	s.initSNMPPoller(snmporchestrator.Config{
 		Targets:      db.PollingTargets(),
 		Observations: db.SNMPObservations(),
-		Rates:        db.Metrics(),
+		Metrics:      db.Metrics(),
 		Credentials:  db.DeviceCredentials(),
 	})
 

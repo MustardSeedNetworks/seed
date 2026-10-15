@@ -30,9 +30,9 @@ func TestRatingSinkPersistsRatesAcrossPolls(t *testing.T) {
 	ctx := context.Background()
 
 	pub := ratingSink{
-		Sink:  sink.New(db.SNMPObservations(), nil, nil),
-		rater: ifrate.NewRater(),
-		rates: db.Metrics(),
+		Sink:    sink.New(db.SNMPObservations(), nil, nil),
+		rater:   ifrate.NewRater(),
+		metrics: db.Metrics(),
 	}
 	start := time.Date(2026, 10, 4, 12, 0, 0, 0, time.UTC)
 	polls := []struct {
