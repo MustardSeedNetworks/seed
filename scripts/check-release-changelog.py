@@ -210,9 +210,10 @@ def release_commit(version: str, prev: str | None) -> str | None:
 def check_pending() -> int:
     """Check the release the tree describes before it is tagged.
 
-    The range ends at the release commit, not HEAD: release-please tags that
-    commit, so a PR queued behind the release PR belongs to the next release
-    and must not eject this one.
+    Only the release PR's own merge group is judged, where HEAD is the release
+    commit that release-please tags. A PR queued behind the release PR builds
+    on top of that group and belongs to the next release; judging it here
+    ejected ordinary PRs whenever the release ahead of them was short (G-18).
     """
     version = newest_section_version()
     tags = sorted_tags()
@@ -227,6 +228,11 @@ def check_pending() -> int:
               f"`chore(main): release {version}` commit follows {prev or 'the root'}")
         return 1
 
+    if rev != run("git", "rev-parse", "HEAD"):
+        print(f"HEAD is not the v{version} release commit; the release PR's own "
+              "merge group judges it")
+        return 0
+
     missing = missing_entries(rev, prev, version, changelog_types())
     if not missing:
         print(f"pending v{version}: changelog matches `git log {prev}..{rev[:8]}`")
@@ -239,7 +245,8 @@ def check_pending() -> int:
     print()
     print("A PR merged ahead of the queued release PR, whose locked branch")
     print("release-please can no longer regenerate (#2769). Let this eject the")
-    print("release PR; release-please regenerates it once main's CI passes.")
+    print("release PR; release-please regenerates it and enqueues it at the")
+    print("front of the queue once its own CI passes.")
     return 1
 
 
