@@ -156,7 +156,7 @@ func TestVulnerabilityListResponseShapes(t *testing.T) {
 	require.Len(t, r.Results, 1)
 	require.Equal(t, "10.20.30.50", r.Results[0].DeviceIP)
 
-	triaged, _, _ := newTriageServer(t)
+	triaged, _, _, _ := newTriageServer(t)
 	findings := serve(t, triaged.handleVulnFindings, "/api/v1/security/vulnerabilities/findings")
 	require.Equal(t, []string{"count", "findings"}, topLevelKeys(t, findings.Body.Bytes()))
 	var f struct {
@@ -214,8 +214,8 @@ func serveClaimed(t *testing.T, h http.HandlerFunc, target string) *httptest.Res
 }
 
 func TestPollingTargetResponseShape(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
-	seeded := seedTarget(t, s.db(), "router-1")
+	s, db := newPollingTargetsTestServer(t)
+	seeded := seedTarget(t, db, "router-1")
 
 	list := serveClaimed(t, s.handlePollingTargets, pollingTargetsPath)
 	require.Equal(t, []string{"count", "targets"}, topLevelKeys(t, list.Body.Bytes()))
@@ -250,7 +250,7 @@ func TestPollingTargetResponseShape(t *testing.T) {
 }
 
 func TestDeviceCredentialListShape(t *testing.T) {
-	s := newDeviceCredentialsTestServer(t)
+	s, _ := newDeviceCredentialsTestServer(t)
 	require.Equal(t, http.StatusOK, postCredential(t, s, `{"name":"core","community":"c"}`).Code)
 
 	w := serveClaimed(t, s.handleDeviceCredentials, deviceCredentialsPath)
@@ -268,11 +268,11 @@ func TestDeviceCredentialListShape(t *testing.T) {
 // An empty estate is an empty array, never null: the documented type is an
 // array, and the UI maps over it.
 func TestEmptyPollingListsAreArrays(t *testing.T) {
-	targets := newPollingTargetsTestServer(t)
+	targets, _ := newPollingTargetsTestServer(t)
 	require.JSONEq(t, `{"count":0,"targets":[]}`,
 		serveClaimed(t, targets.handlePollingTargets, pollingTargetsPath).Body.String())
 
-	creds := newDeviceCredentialsTestServer(t)
+	creds, _ := newDeviceCredentialsTestServer(t)
 	require.JSONEq(t, `{"count":0,"credentials":[]}`,
 		serveClaimed(t, creds.handleDeviceCredentials, deviceCredentialsPath).Body.String())
 }
@@ -280,7 +280,7 @@ func TestEmptyPollingListsAreArrays(t *testing.T) {
 // A create without a chain stores the default chain; the response is the
 // stored target, so it reports that chain rather than null.
 func TestCreatedPollingTargetReportsStoredChain(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
+	s, _ := newPollingTargetsTestServer(t)
 	w := httptest.NewRecorder()
 	s.handlePollingTargets(w, postJSON(t, map[string]any{
 		"name": "router-1", "ipAddress": "10.0.0.1", "enabled": true,
@@ -304,9 +304,9 @@ func TestCreatedPollingTargetReportsStoredChain(t *testing.T) {
 
 func TestTopologyResponseShapes(t *testing.T) {
 	t.Parallel()
-	s := newTopologyTestServer(t)
-	nodeID := seedTopology(t, s.db())
-	seedARPBindingsForHandler(t, s.db())
+	s, db := newTopologyTestServer(t)
+	nodeID := seedTopology(t, db)
+	seedARPBindingsForHandler(t, db)
 
 	nodeKeys := []string{
 		"chassisId", "clientId", "deviceType", "displayName", "firstSeen", "id",
@@ -373,7 +373,7 @@ func TestTopologyResponseShapes(t *testing.T) {
 
 func TestEmptyTopologyListsAreArrays(t *testing.T) {
 	t.Parallel()
-	s := newTopologyTestServer(t)
+	s, _ := newTopologyTestServer(t)
 	require.JSONEq(t, `{"count":0,"nodes":[]}`,
 		serve(t, s.handleTopologyNodes, APIVersionPrefix+"/topology/nodes").Body.String())
 	require.JSONEq(t, `{"count":0,"links":[]}`,
@@ -383,8 +383,8 @@ func TestEmptyTopologyListsAreArrays(t *testing.T) {
 }
 
 func TestAlertRuleResponseShape(t *testing.T) {
-	s := newAlertRulesTestServer(t)
-	seeded := seedAlertRule(t, s.db(), "rule-1", true)
+	s, db := newAlertRulesTestServer(t)
+	seeded := seedAlertRule(t, db, "rule-1", true)
 
 	list := serve(t, s.handleAlertRules, alertRulesPath)
 	require.Equal(t, []string{"count", "rules"}, topLevelKeys(t, list.Body.Bytes()))
@@ -417,7 +417,7 @@ func TestAlertRuleResponseShape(t *testing.T) {
 }
 
 func TestEmptyAlertRuleListIsArray(t *testing.T) {
-	s := newAlertRulesTestServer(t)
+	s, _ := newAlertRulesTestServer(t)
 	w := serve(t, s.handleAlertRules, alertRulesPath)
 	require.JSONEq(t, `{"count":0,"rules":[]}`, w.Body.String())
 }
@@ -640,7 +640,7 @@ func TestSettingsWriteAckShape(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.Auth.SSO.Providers = []config.SSOProviderConfig{{Name: "google"}}
 	s := &Server{config: cfg, configPath: filepath.Join(t.TempDir(), "config.yaml")}
-	s.settingsStore = app.NewSettings(s.db, s.config)
+	s.settingsStore = app.NewSettings(s.persistence, s.config)
 	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath,
 		func() *alertdelivery.Manager { return nil })
 	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, nil)

@@ -37,7 +37,7 @@ func TestDNSServerSettingsCappedByTier(t *testing.T) {
 		{license.TierPro, 0},
 	} {
 		t.Run(tt.tier.String(), func(t *testing.T) {
-			s := newHealthSettingsServer(t)
+			s, _ := newHealthSettingsServer(t)
 			s.licenseMgr = licenseManagerAt(t, tt.tier)
 
 			saved := tt.limit

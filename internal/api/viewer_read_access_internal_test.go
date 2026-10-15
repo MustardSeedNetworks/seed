@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
@@ -23,7 +24,7 @@ import (
 //
 // usersTestSetup builds a bare Server with no routes registered, so it cannot
 // answer a question about the table itself; NewServer installs it.
-func routedServer(t *testing.T, username, role string) *Server {
+func routedServer(t *testing.T, username, role string) (*Server, *database.DB) {
 	t.Helper()
 
 	dir := t.TempDir()
@@ -38,10 +39,10 @@ func routedServer(t *testing.T, username, role string) *Server {
 
 	cfg := testutil.NewConfigBuilder().WithPort(8080).Build()
 	netMgr := netif.NewMockManager(netif.DefaultMockConfig())
-	s := NewServer(cfg, filepath.Join(dir, "seed.json"), "", netMgr, false, nil, db, nil)
+	s := NewServer(cfg, filepath.Join(dir, "seed.json"), "", netMgr, false, nil, app.NewPersistence(db), nil)
 	t.Cleanup(s.Close)
 
-	return s
+	return s, db
 }
 
 // probeBudget bounds one route probe. A streaming route never returns on its
@@ -123,7 +124,7 @@ func bearerRequest(t *testing.T, s *Server, method, path, username string) *http
 func TestViewerCanReadEveryRoleGatedRoute(t *testing.T) {
 	t.Parallel()
 
-	s := routedServer(t, "viewer1", roles.Viewer)
+	s, _ := routedServer(t, "viewer1", roles.Viewer)
 
 	// Counted before the subtests run, since t.Parallel defers them.
 	checked := 0
@@ -201,7 +202,7 @@ func isPreSessionPath(path string) bool {
 func TestRouteMethodsMatchTheirHandlers(t *testing.T) {
 	t.Parallel()
 
-	s := routedServer(t, "admin", roles.Admin)
+	s, _ := routedServer(t, "admin", roles.Admin)
 
 	for _, rt := range s.routes.Policies() {
 		if len(rt.Methods) == 0 {

@@ -47,7 +47,7 @@ func TestOutboxRelayEndToEnd(t *testing.T) {
 		}
 	}))
 
-	relay := outbox.NewRelay(NewOutboxStore(db), bus, slog.New(slog.DiscardHandler))
+	relay := outbox.NewRelay(NewOutboxStore(NewPersistence(db)), bus, slog.New(slog.DiscardHandler))
 
 	// First drain delivers it.
 	if n, err := relay.Drain(ctx); err != nil || n != 1 {

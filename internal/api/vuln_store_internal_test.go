@@ -45,7 +45,7 @@ func newStoredVulnScanner(t *testing.T, db *database.DB) *vuln.VulnerabilityScan
 		SeverityThreshold: "low",
 	})
 	require.NoError(t, err)
-	scanner.SetStore(app.NewVulnStore(db))
+	scanner.SetStore(app.NewVulnStore(app.NewPersistence(db)))
 	return scanner
 }
 

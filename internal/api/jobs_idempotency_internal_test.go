@@ -16,7 +16,7 @@ import (
 // interface: miss -> store -> hit (same body) -> conflict (changed body).
 func TestDBJobIdempotency(t *testing.T) {
 	t.Parallel()
-	store := app.NewJobStore(newJobStoreTestDB(t))
+	store := app.NewJobStore(app.NewPersistence(newJobStoreTestDB(t)))
 	ctx := context.Background()
 
 	// The key's FK requires the job row to exist first (the runner persists on

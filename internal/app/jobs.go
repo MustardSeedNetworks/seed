@@ -22,10 +22,10 @@ type JobStore struct {
 	now  func() time.Time
 }
 
-// NewJobStore builds the store over db's jobs repository.
-func NewJobStore(db *database.DB) *JobStore {
+// NewJobStore builds the store over persist's jobs repository.
+func NewJobStore(persist *Persistence) *JobStore {
 	return &JobStore{
-		repo: db.Jobs(),
+		repo: persist.handle().Jobs(),
 		now:  func() time.Time { return time.Now().UTC() },
 	}
 }

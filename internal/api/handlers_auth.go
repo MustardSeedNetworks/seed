@@ -149,8 +149,8 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	s.loginRateLimiter().RecordAttempt(clientIP, true)
 
-	if s.db() != nil {
-		_, totpEnabled, totpErr := s.db().GetTOTP(r.Context(), req.Username)
+	if s.identityMFA.Available() {
+		_, totpEnabled, totpErr := s.identityMFA.GetTOTP(r.Context(), req.Username)
 		if totpErr == nil && totpEnabled {
 			mfaToken, err := s.authManager().
 				GenerateMFAPendingToken(r.Context(), req.Username)

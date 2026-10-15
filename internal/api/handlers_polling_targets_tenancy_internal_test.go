@@ -19,9 +19,9 @@ const otherClientID = "other-tenant"
 
 // seedOtherClient creates a second tenant so a cross-client request has
 // something real to reach for.
-func seedOtherClient(t *testing.T, s *Server) {
+func seedOtherClient(t *testing.T, db *database.DB) {
 	t.Helper()
-	if err := s.db().Clients().Create(context.Background(), &database.Client{
+	if err := db.Clients().Create(context.Background(), &database.Client{
 		ID: otherClientID, Name: "Other", Slug: "other",
 	}); err != nil {
 		t.Fatalf("create client: %v", err)
@@ -29,10 +29,10 @@ func seedOtherClient(t *testing.T, s *Server) {
 }
 
 func TestListPollingTargetsShowsOnlyTheSessionsClient(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
-	seedOtherClient(t, s)
-	seedTarget(t, s.db(), "mine")
-	seedTargetFor(t, s.db(), otherClientID, "theirs")
+	s, db := newPollingTargetsTestServer(t)
+	seedOtherClient(t, db)
+	seedTarget(t, db, "mine")
+	seedTargetFor(t, db, otherClientID, "theirs")
 
 	req := withClaim(
 		httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets", http.NoBody),
@@ -59,8 +59,8 @@ func TestListPollingTargetsShowsOnlyTheSessionsClient(t *testing.T) {
 }
 
 func TestPollingTargetsRejectARequestWithNoClaim(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
-	seedTarget(t, s.db(), "mine")
+	s, db := newPollingTargetsTestServer(t)
+	seedTarget(t, db, "mine")
 
 	// No withClaim: this is what a route reached outside the auth middleware
 	// looks like. It must not fall back to the default tenant.
@@ -74,7 +74,7 @@ func TestPollingTargetsRejectARequestWithNoClaim(t *testing.T) {
 }
 
 func TestCreatePollingTargetRejectsACallerNamedTenant(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
+	s, db := newPollingTargetsTestServer(t)
 
 	req := postJSON(t, map[string]any{
 		"name":      "router-1",
@@ -87,7 +87,7 @@ func TestCreatePollingTargetRejectsACallerNamedTenant(t *testing.T) {
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want 400 — clientId is not a field a caller may send", w.Code)
 	}
-	list, err := s.db().PollingTargets().ListAll(context.Background(), testClientID)
+	list, err := db.PollingTargets().ListAll(context.Background(), testClientID)
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestCreatePollingTargetRejectsACallerNamedTenant(t *testing.T) {
 }
 
 func TestCreatePollingTargetOwnsItToTheSessionsClient(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
+	s, db := newPollingTargetsTestServer(t)
 
 	req := postJSON(t, map[string]any{"name": "router-1", "ipAddress": "10.0.0.1"})
 	w := httptest.NewRecorder()
@@ -106,7 +106,7 @@ func TestCreatePollingTargetOwnsItToTheSessionsClient(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d body = %s", w.Code, w.Body.String())
 	}
-	list, err := s.db().PollingTargets().ListAll(context.Background(), testClientID)
+	list, err := db.PollingTargets().ListAll(context.Background(), testClientID)
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
@@ -116,9 +116,9 @@ func TestCreatePollingTargetOwnsItToTheSessionsClient(t *testing.T) {
 }
 
 func TestCrossClientRoutesAre404NotForbidden(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
-	seedOtherClient(t, s)
-	foreign := seedTargetFor(t, s.db(), otherClientID, "theirs")
+	s, db := newPollingTargetsTestServer(t)
+	seedOtherClient(t, db)
+	foreign := seedTargetFor(t, db, otherClientID, "theirs")
 
 	body, err := json.Marshal(map[string]any{"name": "stolen", "ipAddress": "10.9.9.9"})
 	if err != nil {
@@ -156,7 +156,7 @@ func TestCrossClientRoutesAre404NotForbidden(t *testing.T) {
 		})
 	}
 
-	after, err := s.db().PollingTargets().Get(context.Background(), otherClientID, foreign.ID)
+	after, err := db.PollingTargets().Get(context.Background(), otherClientID, foreign.ID)
 	if err != nil {
 		t.Fatalf("the foreign target did not survive: %v", err)
 	}

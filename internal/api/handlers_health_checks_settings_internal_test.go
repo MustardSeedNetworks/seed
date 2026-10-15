@@ -20,7 +20,7 @@ import (
 // handlers on a bare Server (no probe engine / testers — those degrade to no-ops).
 func wireHealthSettings(s *Server) {
 	s.healthSettings = app.NewHealthSettings(
-		s.db, s.rescheduleProbeEngine,
+		s.persistence, s.rescheduleProbeEngine,
 		s.config, s.configPath, s.dnsTester, s.speedtestTester,
 	)
 }
@@ -28,15 +28,16 @@ func wireHealthSettings(s *Server) {
 // newHealthSettingsServer builds a minimal Server wired with the health-settings
 // use-case over a real test DB and a temp config path (so the PUT's config save
 // succeeds), exercising the strangled PUT/GET path end-to-end.
-func newHealthSettingsServer(t *testing.T) *Server {
+func newHealthSettingsServer(t *testing.T) (*Server, *database.DB) {
 	t.Helper()
+	db := newTestDB(t)
 	s := &Server{
 		config:     &config.Config{},
 		configPath: filepath.Join(t.TempDir(), "config.yaml"),
-		dbConn:     newTestDB(t),
+		persist:    app.NewPersistence(db),
 	}
 	wireHealthSettings(s)
-	return s
+	return s, db
 }
 
 func putHealthChecksSettings(t *testing.T, s *Server, req TestsSettingsResponse) *httptest.ResponseRecorder {
@@ -54,7 +55,7 @@ func putHealthChecksSettings(t *testing.T, s *Server, req TestsSettingsResponse)
 // table, and reading them back reconstructs the same endpoints — including a
 // vertical kind (HL7) that the pre-P2 save path silently dropped.
 func TestHealthChecksSettingsRoundTrip(t *testing.T) {
-	s := newHealthSettingsServer(t)
+	s, db := newHealthSettingsServer(t)
 
 	req := TestsSettingsResponse{
 		PingTargets: []PingTargetResponse{
@@ -75,7 +76,7 @@ func TestHealthChecksSettingsRoundTrip(t *testing.T) {
 	require.Equal(t, statusSuccess, ack.Status)
 
 	// The probes table now holds exactly the two endpoints, as their kinds.
-	probes, err := s.dbConn.Probes().ListProbes(t.Context(), database.DefaultClientID, "")
+	probes, err := db.Probes().ListProbes(t.Context(), database.DefaultClientID, "")
 	require.NoError(t, err)
 	kinds := map[string]string{}
 	for _, p := range probes {
@@ -103,7 +104,7 @@ func TestHealthChecksSettingsRoundTrip(t *testing.T) {
 // TestHealthChecksSettingsReplacesPriorSet verifies that a second save replaces
 // the prior health-check probes rather than appending.
 func TestHealthChecksSettingsReplacesPriorSet(t *testing.T) {
-	s := newHealthSettingsServer(t)
+	s, db := newHealthSettingsServer(t)
 
 	first := TestsSettingsResponse{
 		PingTargets: []PingTargetResponse{
@@ -118,7 +119,7 @@ func TestHealthChecksSettingsReplacesPriorSet(t *testing.T) {
 	}
 	require.Equal(t, http.StatusOK, putHealthChecksSettings(t, s, second).Code)
 
-	count, err := s.dbConn.Probes().CountProbes(t.Context(), database.DefaultClientID, "ping")
+	count, err := db.Probes().CountProbes(t.Context(), database.DefaultClientID, "ping")
 	require.NoError(t, err)
 	require.Equal(t, 1, count, "second save should replace, not append")
 }

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 )
 
@@ -22,17 +23,17 @@ func (testEncrypter) EncryptValue(plaintext string) (string, error) {
 	return "enc:v1:" + plaintext, nil
 }
 
-func newDeviceCredentialsTestServer(t *testing.T) *Server {
+func newDeviceCredentialsTestServer(t *testing.T) (*Server, *database.DB) {
 	t.Helper()
 	db := newTestDB(t)
 	s := &Server{}
-	s.dbConn = db
-	svc, err := app.NewDeviceCredentials(s.db, testEncrypter{})
+	s.persist = app.NewPersistence(db)
+	svc, err := app.NewDeviceCredentials(s.persistence, testEncrypter{})
 	if err != nil {
 		t.Fatalf("build credentials use-case: %v", err)
 	}
 	s.deviceCredentials = svc
-	return s
+	return s, db
 }
 
 func postCredential(t *testing.T, s *Server, body string) *httptest.ResponseRecorder {
@@ -49,7 +50,7 @@ func postCredential(t *testing.T, s *Server, body string) *httptest.ResponseReco
 // to clients; no response on this surface may carry a secret, in plaintext or
 // ciphertext.
 func TestCredentialResponsesNeverCarrySecrets(t *testing.T) {
-	s := newDeviceCredentialsTestServer(t)
+	s, _ := newDeviceCredentialsTestServer(t)
 
 	created := postCredential(t, s, `{"name":"core","community":"s3cret-community"}`)
 	if created.Code != http.StatusOK {
@@ -77,7 +78,7 @@ func TestCredentialResponsesNeverCarrySecrets(t *testing.T) {
 // TestCredentialIsScopedToTheCallersClient — a credential owned by another
 // tenant must be indistinguishable from one that does not exist.
 func TestCredentialIsScopedToTheCallersClient(t *testing.T) {
-	s := newDeviceCredentialsTestServer(t)
+	s, _ := newDeviceCredentialsTestServer(t)
 
 	created := postCredential(t, s, `{"name":"mine","community":"c"}`)
 	var body map[string]any
@@ -99,7 +100,7 @@ func TestCredentialIsScopedToTheCallersClient(t *testing.T) {
 }
 
 func TestCredentialValidationIsA400WithAReason(t *testing.T) {
-	s := newDeviceCredentialsTestServer(t)
+	s, _ := newDeviceCredentialsTestServer(t)
 
 	for _, tc := range []struct{ name, body, want string }{
 		{"both kinds", `{"name":"x","community":"c","snmpV3User":"u"}`, "not several"},
@@ -139,7 +140,7 @@ func TestCredentialStoreUnavailableIs503(t *testing.T) {
 // carry newlines and forge log entries, which is what CodeQL flagged on the
 // first revision of this handler.
 func TestCredentialIDMustBeServerGenerated(t *testing.T) {
-	s := newDeviceCredentialsTestServer(t)
+	s, _ := newDeviceCredentialsTestServer(t)
 
 	for _, id := range []string{
 		"",
@@ -173,7 +174,7 @@ func TestCredentialIDMustBeServerGenerated(t *testing.T) {
 }
 
 func TestCredentialDeleteReturns204(t *testing.T) {
-	s := newDeviceCredentialsTestServer(t)
+	s, _ := newDeviceCredentialsTestServer(t)
 	created := postCredential(t, s, `{"name":"gone","community":"c"}`)
 	var body map[string]any
 	_ = json.Unmarshal(created.Body.Bytes(), &body)
@@ -191,7 +192,7 @@ func TestCredentialDeleteReturns204(t *testing.T) {
 // credential existed is asked with it only if saving it re-profiles the
 // device; otherwise it is never promoted to a polling target (seed#2692).
 func TestSavingACredentialAsksFoundDevicesAgain(t *testing.T) {
-	s := newDeviceCredentialsTestServer(t)
+	s, _ := newDeviceCredentialsTestServer(t)
 	cfg := discovery.DefaultProfilerConfig()
 	cfg.Timeout = 100 * time.Millisecond
 	cfg.ConnectTimeout = 100 * time.Millisecond

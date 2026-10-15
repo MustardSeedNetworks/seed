@@ -24,7 +24,7 @@ const prodSeedStarterVector = "MSN1.eyJjb2RlIjoiNDAwMSIsImlhdCI6MTc4MDg3NjgwMCwi
 // Starter licence could generate one (#2327).
 func TestReportGenerateGatesPDFOnAuditPDF(t *testing.T) {
 	t.Parallel()
-	s, mgr := apiTokenTestSetup(t)
+	s, mgr, _ := apiTokenTestSetup(t)
 	// The reports routes are rate-limited; the shared fixture leaves the
 	// endpoint limiter nil, which panics before any handler runs.
 	s.endpointLimiter = NewEndpointRateLimiter(DefaultEndpointRateLimitConfig())

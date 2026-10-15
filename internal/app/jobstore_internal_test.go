@@ -26,7 +26,7 @@ func newJobStoreTestDB(t *testing.T) *database.DB {
 // adapter: the result is stored as JSON and returned as [json.RawMessage].
 func TestJobStoreSaveLoadRoundTrip(t *testing.T) {
 	t.Parallel()
-	store := NewJobStore(newJobStoreTestDB(t))
+	store := NewJobStore(NewPersistence(newJobStoreTestDB(t)))
 	ctx := context.Background()
 
 	want := jobs.Job{
@@ -60,7 +60,7 @@ func TestJobStoreSaveLoadRoundTrip(t *testing.T) {
 // TestJobStoreLoadMiss: an unknown id is a clean miss, not an error.
 func TestJobStoreLoadMiss(t *testing.T) {
 	t.Parallel()
-	store := NewJobStore(newJobStoreTestDB(t))
+	store := NewJobStore(NewPersistence(newJobStoreTestDB(t)))
 
 	_, ok, err := store.Load(context.Background(), "absent")
 	if err != nil {
@@ -74,7 +74,7 @@ func TestJobStoreLoadMiss(t *testing.T) {
 // TestJobStoreMarkInterrupted: only non-terminal jobs are reconciled to failed.
 func TestJobStoreMarkInterrupted(t *testing.T) {
 	t.Parallel()
-	store := NewJobStore(newJobStoreTestDB(t))
+	store := NewJobStore(NewPersistence(newJobStoreTestDB(t)))
 	ctx := context.Background()
 
 	for _, j := range []jobs.Job{
@@ -113,7 +113,7 @@ func TestJobStoreMarkInterrupted(t *testing.T) {
 func TestRunnerRecoversAcrossRestart(t *testing.T) {
 	t.Parallel()
 	db := newJobStoreTestDB(t)
-	store := NewJobStore(db)
+	store := NewJobStore(NewPersistence(db))
 	ctx := context.Background()
 
 	// Prior process left a job mid-flight.

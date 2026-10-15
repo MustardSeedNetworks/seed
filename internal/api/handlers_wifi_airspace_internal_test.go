@@ -211,7 +211,7 @@ func TestWiFiVisibilityTiers(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			s, mgr := apiTokenTestSetup(t)
+			s, mgr, _ := apiTokenTestSetup(t)
 			s.setupRoutes()
 			tc.activate(t, mgr)
 			s.wifiQueries = troubleshooting.NewQueries(airspaceWithOneClient(t), stubAnomalyStore{available: true})

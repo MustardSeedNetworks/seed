@@ -75,8 +75,8 @@ func TestAddressesInUse(t *testing.T) {
 // hand-count of the router's recent ARP table gives, and an entry older
 // than the window is not counted.
 func TestHandleIPAMSubnetsCountsRecentARPEntries(t *testing.T) {
-	s := newTopologyTestServer(t)
-	_ = seedTopology(t, s.db())
+	s, db := newTopologyTestServer(t)
+	_ = seedTopology(t, db)
 	ctx := context.Background()
 	now := time.Now().UTC()
 	for _, b := range []*topology.ARPBinding{
@@ -86,7 +86,7 @@ func TestHandleIPAMSubnetsCountsRecentARPEntries(t *testing.T) {
 		{IPAddress: "10.44.99.5", MACAddress: "aa:bb:cc:00:00:05", LastSeen: now},
 	} {
 		b.ClientID, b.SourceNodeID, b.IfIndex = "default", "node-test-1", 1
-		require.NoError(t, s.db().Topology().UpsertARPBinding(ctx, b))
+		require.NoError(t, db.Topology().UpsertARPBinding(ctx, b))
 	}
 	s.discoverySettings = discoverysettings.NewService(&fakeDiscoveryStore{cfg: config.NetworkDiscoveryConfig{
 		TargetNetworks: []config.SubnetConfig{{CIDR: "10.44.20.0/24", Learned: true}},
@@ -113,10 +113,10 @@ func TestHandleIPAMSubnetsCountsRecentARPEntries(t *testing.T) {
 // count is a hand-count of the addresses seen inside it, and running out
 // raises an alert through the alert write chain, once per climb.
 func TestDHCPScopeExhaustionAlerts(t *testing.T) {
-	s := newTopologyTestServer(t)
-	_ = seedTopology(t, s.db())
+	s, db := newTopologyTestServer(t)
+	_ = seedTopology(t, db)
 	s.discoverySettings = discoverysettings.NewService(&fakeDiscoveryStore{}, noopSink{}, noopApplier{})
-	s.useAlertDelivery(app.NewAlertDelivery(s.dbConn, nil, logging.GetLogger()))
+	s.useAlertDelivery(app.NewAlertDelivery(s.persist, nil, logging.GetLogger()))
 
 	scopes := func(method, query, body string) *httptest.ResponseRecorder {
 		w := httptest.NewRecorder()
@@ -141,13 +141,13 @@ func TestDHCPScopeExhaustionAlerts(t *testing.T) {
 
 	s.afterSweep(t.Context(), devices)
 	s.afterSweep(t.Context(), devices)
-	require.NoError(t, s.db().Topology().UpsertARPBinding(t.Context(), &topology.ARPBinding{
+	require.NoError(t, db.Topology().UpsertARPBinding(t.Context(), &topology.ARPBinding{
 		ClientID: "default", SourceNodeID: "node-test-1", IfIndex: 1,
 		IPAddress: "10.44.20.109", MACAddress: "aa:bb:cc:00:01:09", LastSeen: time.Now().UTC(),
 	}))
 	s.afterSweep(t.Context(), devices)
 
-	list, err := s.dbConn.Alerts().List(t.Context(), alerts.ListOptions{Limit: 100})
+	list, err := db.Alerts().List(t.Context(), alerts.ListOptions{Limit: 100})
 	require.NoError(t, err)
 	var raised []*alerts.Alert
 	for _, a := range list {

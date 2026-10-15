@@ -20,7 +20,7 @@ func newSSOSync(t *testing.T) *ssosync.Service {
 		t.Fatalf("open db: %v", err)
 	}
 	t.Cleanup(func() { _ = db.Close() })
-	return app.NewIdentityOAuth(func() *database.DB { return db })
+	return app.NewIdentityOAuth(func() *app.Persistence { return app.NewPersistence(db) })
 }
 
 // The three tests below pin the SSO identity-sync seam end to end. The OAuth
@@ -30,7 +30,7 @@ func newSSOSync(t *testing.T) *ssosync.Service {
 
 func TestIdentityOAuthSyncUserWithoutDatabase(t *testing.T) {
 	t.Parallel()
-	svc := app.NewIdentityOAuth(func() *database.DB { return nil })
+	svc := app.NewIdentityOAuth(func() *app.Persistence { return nil })
 	_, err := svc.SyncUser(t.Context(), ssosync.Identity{Provider: "google", ExternalID: "sub-1"})
 	if !errors.Is(err, ssosync.ErrUnavailable) {
 		t.Fatalf("err = %v, want ErrUnavailable", err)

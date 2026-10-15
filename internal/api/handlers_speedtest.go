@@ -149,7 +149,7 @@ func (s *Server) recordSpeedtest(ctx context.Context, res *speedtest.Result) {
 	if s.netManager() != nil {
 		iface = s.netManager().GetCurrentInterface()
 	}
-	if err := app.RecordSpeedtest(ctx, s.db(), iface, res); err != nil {
+	if err := app.RecordSpeedtest(ctx, s.persistence(), iface, res); err != nil {
 		logging.FromContext(ctx).WarnContext(ctx, "storing speed test result failed", "error", err)
 	}
 }

@@ -20,13 +20,13 @@ import (
 // newPromotionTestServer returns a Server with the pieces promotion touches: a
 // real database, so the polling-target rows it writes are the rows the poller
 // and the topology read.
-func newPromotionTestServer(t *testing.T) *Server {
+func newPromotionTestServer(t *testing.T) (*Server, *database.DB) {
 	t.Helper()
 	db := newTestDB(t)
 	s := &Server{}
-	s.dbConn = db
-	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
-	return s
+	s.persist = app.NewPersistence(db)
+	s.pollingTargets = app.NewPollingTargets(s.persistence, s.pollingTargetLimit)
+	return s, db
 }
 
 // seedCredential stores a credential promotion can reference. polling_targets
@@ -64,9 +64,9 @@ func answered(ip, sysName, credID, version string) *discovery.DiscoveredDevice {
 // targets behind, each naming the credential that device actually answered, so
 // the topology fills without a hand-built target list (seed#2692).
 func TestPromotionWritesATargetPerAnsweringDevice(t *testing.T) {
-	s := newPromotionTestServer(t)
-	seedCredential(t, s.db(), "cred-v2c", polling.CredentialKindV2c)
-	seedCredential(t, s.db(), "cred-v3", polling.CredentialKindV3)
+	s, db := newPromotionTestServer(t)
+	seedCredential(t, db, "cred-v2c", polling.CredentialKindV2c)
+	seedCredential(t, db, "cred-v3", polling.CredentialKindV3)
 
 	s.promoteDiscoveredDevices(context.Background(), []*discovery.DiscoveredDevice{
 		answered("10.44.40.1", "edge-rtr", "cred-v2c", snmp.VersionV2c),
@@ -101,13 +101,13 @@ func TestPromotionWritesATargetPerAnsweringDevice(t *testing.T) {
 // later sweep exactly as it is: disabling is how an operator says "do not poll
 // this", and re-creating or re-enabling it would overrule them once a minute.
 func TestPromotionLeavesAnExistingTargetAlone(t *testing.T) {
-	s := newPromotionTestServer(t)
-	seedCredential(t, s.db(), "cred-v2c", polling.CredentialKindV2c)
+	s, db := newPromotionTestServer(t)
+	seedCredential(t, db, "cred-v2c", polling.CredentialKindV2c)
 	existing := &polling.Target{
 		ClientID: database.DefaultClientID, Name: "operator's own",
 		IPAddress: "10.44.40.1", SNMPVersion: snmp.VersionV2c, Enabled: false,
 	}
-	if err := s.db().PollingTargets().Create(context.Background(), existing); err != nil {
+	if err := db.PollingTargets().Create(context.Background(), existing); err != nil {
 		t.Fatalf("seed target: %v", err)
 	}
 
@@ -128,8 +128,8 @@ func TestPromotionLeavesAnExistingTargetAlone(t *testing.T) {
 // A second sweep of an unchanged network writes nothing: every device it found
 // already has the target the first sweep created.
 func TestPromotionIsIdempotentAcrossSweeps(t *testing.T) {
-	s := newPromotionTestServer(t)
-	seedCredential(t, s.db(), "cred-v2c", polling.CredentialKindV2c)
+	s, db := newPromotionTestServer(t)
+	seedCredential(t, db, "cred-v2c", polling.CredentialKindV2c)
 	sweep := []*discovery.DiscoveredDevice{
 		answered("10.44.40.1", "edge-rtr", "cred-v2c", snmp.VersionV2c),
 		answered("10.44.40.2", "core-sw", "cred-v2c", snmp.VersionV2c),
@@ -182,8 +182,8 @@ func (noopApplier) ReloadOptions() error { return nil }
 // target networks but promoted nothing (or the reverse) is exactly the defect
 // each of seed#2695 and seed#2692 was filed for.
 func TestAfterSweepBothLearnsAndPromotes(t *testing.T) {
-	s := newPromotionTestServer(t)
-	seedCredential(t, s.db(), "cred-v2c", polling.CredentialKindV2c)
+	s, db := newPromotionTestServer(t)
+	seedCredential(t, db, "cred-v2c", polling.CredentialKindV2c)
 	store := &fakeDiscoveryStore{}
 	s.discoverySettings = discoverysettings.NewService(store, noopSink{}, noopApplier{})
 	s.deviceDisc = enumerate.NewDeviceDiscovery("")
@@ -209,8 +209,8 @@ func TestAfterSweepBothLearnsAndPromotes(t *testing.T) {
 // that each read the target list before either wrote would each create a row
 // for the same device, and the poller would then poll it twice.
 func TestConcurrentPromotionsCreateOneTargetPerDevice(t *testing.T) {
-	s := newPromotionTestServer(t)
-	seedCredential(t, s.db(), "cred-v2c", polling.CredentialKindV2c)
+	s, db := newPromotionTestServer(t)
+	seedCredential(t, db, "cred-v2c", polling.CredentialKindV2c)
 	sweep := []*discovery.DiscoveredDevice{
 		answered("10.44.40.1", "edge-rtr", "cred-v2c", snmp.VersionV2c),
 		answered("10.44.40.2", "core-sw", "cred-v2c", snmp.VersionV2c),
@@ -235,10 +235,10 @@ func TestConcurrentPromotionsCreateOneTargetPerDevice(t *testing.T) {
 // credential on another tenant's device — the isolation failure the vault
 // exists to prevent.
 func TestPromotionRefusesWhenTheTenantIsAmbiguous(t *testing.T) {
-	s := newPromotionTestServer(t)
-	seedCredential(t, s.db(), "cred-v2c", polling.CredentialKindV2c)
+	s, db := newPromotionTestServer(t)
+	seedCredential(t, db, "cred-v2c", polling.CredentialKindV2c)
 	second := &database.Client{Name: "second tenant", Slug: "second"}
-	if err := s.db().Clients().Create(context.Background(), second); err != nil {
+	if err := db.Clients().Create(context.Background(), second); err != nil {
 		t.Fatalf("seed client: %v", err)
 	}
 
@@ -254,16 +254,16 @@ func TestPromotionRefusesWhenTheTenantIsAmbiguous(t *testing.T) {
 // countingPollerStorage counts the poller's target reads, which is how a
 // reload shows up from outside the poller.
 type countingPollerStorage struct {
-	mu     sync.Mutex
-	reads  int
-	shared *Server
+	mu    sync.Mutex
+	reads int
+	db    *database.DB
 }
 
 func (c *countingPollerStorage) ListEnabled(ctx context.Context) ([]*polling.Target, error) {
 	c.mu.Lock()
 	c.reads++
 	c.mu.Unlock()
-	return c.shared.db().PollingTargets().ListEnabled(ctx)
+	return c.db.PollingTargets().ListEnabled(ctx)
 }
 
 func (c *countingPollerStorage) UpdateLastPoll(context.Context, string, string, string) error {
@@ -288,9 +288,9 @@ func (noopScheduler) Stop()                  {}
 // its target list once and reloads when the list changes — the create handler
 // says so, and promotion writes the same rows by another door.
 func TestPromotionReloadsTheLivePoller(t *testing.T) {
-	s := newPromotionTestServer(t)
-	seedCredential(t, s.db(), "cred-v2c", polling.CredentialKindV2c)
-	storage := &countingPollerStorage{shared: s}
+	s, db := newPromotionTestServer(t)
+	seedCredential(t, db, "cred-v2c", polling.CredentialKindV2c)
+	storage := &countingPollerStorage{db: db}
 	poller := snmppoller.NewPoller(storage, noopScheduler{}, nil)
 	if err := poller.Start(context.Background()); err != nil {
 		t.Fatalf("start poller: %v", err)

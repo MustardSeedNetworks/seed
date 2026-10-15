@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	api "github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
@@ -67,7 +68,7 @@ func newMFAFixture(t *testing.T) *mfaTestFixture {
 
 	// Wire the DB and a UserStore so VerifyPasswordOnly and the MFA
 	// helpers find the user we just created.
-	api.SetTestDB(server, db)
+	api.SetTestPersistence(server, app.NewPersistence(db))
 	server.AuthManager().SetUserStore(database.NewUserStoreAdapter(db))
 
 	// Pre-issue an access token so the authenticated MFA endpoints

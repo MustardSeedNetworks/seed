@@ -94,12 +94,12 @@ func runServe(_ *cobra.Command, _ []string, state *cliState) {
 	}
 
 	// Initialize database
-	db := initializeDatabase(cfg)
+	persist := initializeDatabase(cfg)
 
 	// Initialize components
-	components := initializeBackgroundComponents(cfg, db)
+	components := initializeBackgroundComponents(cfg, persist)
 
-	server := api.NewServer(cfg, configPath, logPath, netMgr, icmpAvailable, proxies, db, components)
+	server := api.NewServer(cfg, configPath, logPath, netMgr, icmpAvailable, proxies, persist, components)
 	// Publish the port the listener settled on, so `seed license` and friends
 	// can name it when they refuse.
 	server.SetBoundPortObserver(func(port int) {
@@ -111,7 +111,7 @@ func runServe(_ *cobra.Command, _ []string, state *cliState) {
 }
 
 // initializeDatabase opens and configures the SQLite database.
-func initializeDatabase(cfg *config.Config) *database.DB {
+func initializeDatabase(cfg *config.Config) *app.Persistence {
 	dbPath := cfg.Database.Path
 	if dbPath == "" {
 		dbPath = "data/seed.db"
@@ -129,11 +129,11 @@ func initializeDatabase(cfg *config.Config) *database.DB {
 	}
 
 	logging.GetLogger().Info("Database initialized", "path", dbPath)
-	return db
+	return app.NewPersistence(db)
 }
 
 // initializeBackgroundComponents creates all application components.
-func initializeBackgroundComponents(cfg *config.Config, db *database.DB) *api.BackgroundComponents {
+func initializeBackgroundComponents(cfg *config.Config, persist *app.Persistence) *api.BackgroundComponents {
 	components := &api.BackgroundComponents{}
 
 	// Reporting: report generation, templates, scheduling.
@@ -143,8 +143,8 @@ func initializeBackgroundComponents(cfg *config.Config, db *database.DB) *api.Ba
 	// before it binds a listener (#2380). internal/api treats a nil database as
 	// a supported degraded mode throughout, so this honours the same contract
 	// rather than inventing a second one here.
-	if db != nil {
-		components.Reporting = app.NewReporting(cfg, db)
+	if persist != nil {
+		components.Reporting = app.NewReporting(cfg, persist)
 		logging.GetLogger().Info("Reporting module initialized")
 	} else {
 		logging.GetLogger().Warn("Reporting module disabled: no database is available")

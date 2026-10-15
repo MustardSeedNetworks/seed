@@ -19,8 +19,8 @@ import (
 // scope values are ignored rather than locking the token out.
 func TestCallerRole_ClampsOnTokenScope(t *testing.T) {
 	t.Parallel()
-	s, _ := usersTestSetup(t) // seeds "admin"
-	seedRoledUser(t, s, "operator1", roles.Operator)
+	s, _, db := usersTestSetup(t) // seeds "admin"
+	seedRoledUser(t, db, "operator1", roles.Operator)
 
 	cases := []struct {
 		owner     string
@@ -62,7 +62,7 @@ func TestCallerRole_ClampsOnTokenScope(t *testing.T) {
 // reads the clamped role from callerRole, no special case needed.
 func TestWriteGate_ViewerScopedAdminTokenBlocksWrites(t *testing.T) {
 	t.Parallel()
-	s, _ := usersTestSetup(t)
+	s, _, _ := usersTestSetup(t)
 
 	// As "admin", the write gate would let the request through.
 	req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/probe", nil, "admin")
@@ -87,8 +87,7 @@ func TestWriteGate_ViewerScopedAdminTokenBlocksWrites(t *testing.T) {
 // path persists and reads back the per-token scope.
 func TestAPITokenRepo_ScopeRoundtrips(t *testing.T) {
 	t.Parallel()
-	s, _ := usersTestSetup(t)
-	db := s.dbConn
+	_, _, db := usersTestSetup(t)
 	repo := database.NewAPITokenRepository(db)
 
 	// Seed two tokens for "admin": one viewer-scoped, one inherits.
@@ -142,11 +141,11 @@ func TestAPITokenRepo_ScopeRoundtrips(t *testing.T) {
 // — that would be a one-line escalation if accepted.
 func TestMintAPIToken_RejectsScopeAboveOwner(t *testing.T) {
 	t.Parallel()
-	s, mgr := usersTestSetup(t)
+	s, mgr, db := usersTestSetup(t)
 	if r := mgr.StartTrial(); !r.Success { // mint requires Pro
 		t.Fatalf("StartTrial: %s", r.Message)
 	}
-	seedRoledUser(t, s, "operator1", roles.Operator)
+	seedRoledUser(t, db, "operator1", roles.Operator)
 	// Operator tries to mint an admin-scoped token.
 	req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/tokens",
 		[]byte(`{"name":"escalate","scope":"admin"}`), "operator1")
@@ -162,7 +161,7 @@ func TestMintAPIToken_RejectsScopeAboveOwner(t *testing.T) {
 // returns a clearer 400 up front.
 func TestMintAPIToken_RejectsUnknownScope(t *testing.T) {
 	t.Parallel()
-	s, mgr := usersTestSetup(t)
+	s, mgr, _ := usersTestSetup(t)
 	if r := mgr.StartTrial(); !r.Success {
 		t.Fatalf("StartTrial: %s", r.Message)
 	}

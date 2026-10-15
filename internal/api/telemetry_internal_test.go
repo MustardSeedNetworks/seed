@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
@@ -28,7 +29,7 @@ func TestTelemetry_DaemonRecordsAndRollsUp(t *testing.T) {
 		gatewayTest: gw,
 		// localhost resolves from the hosts file, so the lookup needs no network.
 		dnsTest: dns.NewTester("", "localhost", dns.DefaultThresholds()),
-		dbConn:  db,
+		persist: app.NewPersistence(db),
 	}
 	s.initDatabaseDependentServices()
 

@@ -42,7 +42,7 @@ func TestInitListeners_NoEnvVarsRegistersNoListeners(t *testing.T) {
 
 	s := &Server{engines: engine.NewRegistry(nil)}
 	before := len(s.engines.Engines())
-	s.initListeners(app.NewListenerPersistence(newTestDB(t)))
+	s.initListeners(app.NewListenerPersistence(app.NewPersistence(newTestDB(t))))
 	after := len(s.engines.Engines())
 
 	if after != before {
@@ -55,7 +55,7 @@ func TestInitListeners_SyslogEnvVarRegistersListener(t *testing.T) {
 	t.Setenv("SEED_SNMP_TRAP_BIND", "")
 
 	s := &Server{engines: engine.NewRegistry(nil)}
-	s.initListeners(app.NewListenerPersistence(newTestDB(t)))
+	s.initListeners(app.NewListenerPersistence(app.NewPersistence(newTestDB(t))))
 
 	names := make(map[string]bool)
 	for _, e := range s.engines.Engines() {
@@ -74,7 +74,7 @@ func TestInitListeners_SnmpTrapEnvVarRegistersListener(t *testing.T) {
 	t.Setenv("SEED_SNMP_TRAP_BIND", freeAddr(t))
 
 	s := &Server{engines: engine.NewRegistry(nil)}
-	s.initListeners(app.NewListenerPersistence(newTestDB(t)))
+	s.initListeners(app.NewListenerPersistence(app.NewPersistence(newTestDB(t))))
 
 	names := make(map[string]bool)
 	for _, e := range s.engines.Engines() {
@@ -90,7 +90,7 @@ func TestInitListeners_BothEnvVarsRegistersBoth(t *testing.T) {
 	t.Setenv("SEED_SNMP_TRAP_BIND", freeAddr(t))
 
 	s := &Server{engines: engine.NewRegistry(nil)}
-	s.initListeners(app.NewListenerPersistence(newTestDB(t)))
+	s.initListeners(app.NewListenerPersistence(app.NewPersistence(newTestDB(t))))
 
 	names := make(map[string]bool)
 	for _, e := range s.engines.Engines() {
@@ -113,7 +113,7 @@ func TestInitListeners_MicroburstUnknownInterfaceRegistersNothing(t *testing.T) 
 		t.Fatalf("netif manager: %v", err)
 	}
 	s := &Server{engines: engine.NewRegistry(nil), netMgr: mgr}
-	s.initListeners(app.NewListenerPersistence(newTestDB(t)))
+	s.initListeners(app.NewListenerPersistence(app.NewPersistence(newTestDB(t))))
 	for _, e := range s.engines.Engines() {
 		if e.Name() == microburst.Name {
 			t.Fatalf("microburst registered for an unknown interface")

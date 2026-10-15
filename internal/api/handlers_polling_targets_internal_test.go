@@ -16,13 +16,13 @@ import (
 
 // newPollingTargetsTestServer returns a Server with only the bits
 // the polling-targets handlers touch.
-func newPollingTargetsTestServer(t *testing.T) *Server {
+func newPollingTargetsTestServer(t *testing.T) (*Server, *database.DB) {
 	t.Helper()
 	db := newTestDB(t)
 	s := &Server{}
-	s.dbConn = db
-	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
-	return s
+	s.persist = app.NewPersistence(db)
+	s.pollingTargets = app.NewPollingTargets(s.persistence, s.pollingTargetLimit)
+	return s, db
 }
 
 // testClientID is the tenant every request in this file is authenticated as.
@@ -98,9 +98,9 @@ func postJSON(t *testing.T, body any) *http.Request {
 }
 
 func TestHandlePollingTargets_GETReturnsList(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
-	seedTarget(t, s.db(), "router-1")
-	seedTarget(t, s.db(), "router-2")
+	s, db := newPollingTargetsTestServer(t)
+	seedTarget(t, db, "router-1")
+	seedTarget(t, db, "router-2")
 
 	req := withClaim(httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets", http.NoBody))
 	w := httptest.NewRecorder()
@@ -122,7 +122,7 @@ func TestHandlePollingTargets_GETReturnsList(t *testing.T) {
 }
 
 func TestHandlePollingTargets_POSTCreates(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
+	s, db := newPollingTargetsTestServer(t)
 	req := postJSON(t, map[string]any{
 		"name":                "router-1",
 		"ipAddress":           "10.0.0.1",
@@ -145,14 +145,14 @@ func TestHandlePollingTargets_POSTCreates(t *testing.T) {
 		t.Errorf("response = %+v", resp)
 	}
 	// Confirm the row landed in the DB.
-	list, _ := s.db().PollingTargets().ListAll(context.Background(), testClientID)
+	list, _ := db.PollingTargets().ListAll(context.Background(), testClientID)
 	if len(list) != 1 {
 		t.Errorf("db rows = %d, want 1", len(list))
 	}
 }
 
 func TestHandlePollingTargets_POSTMissingNameReturns400(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
+	s, _ := newPollingTargetsTestServer(t)
 	req := postJSON(t, map[string]any{"ipAddress": "10.0.0.1"})
 	w := httptest.NewRecorder()
 	s.handlePollingTargets(w, req)
@@ -162,7 +162,7 @@ func TestHandlePollingTargets_POSTMissingNameReturns400(t *testing.T) {
 }
 
 func TestHandlePollingTargets_POSTMissingIPReturns400(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
+	s, _ := newPollingTargetsTestServer(t)
 	req := postJSON(t, map[string]any{"name": "router-1"})
 	w := httptest.NewRecorder()
 	s.handlePollingTargets(w, req)
@@ -172,7 +172,7 @@ func TestHandlePollingTargets_POSTMissingIPReturns400(t *testing.T) {
 }
 
 func TestHandlePollingTargets_POSTUnknownFieldsReturns400(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
+	s, _ := newPollingTargetsTestServer(t)
 	// "extra" isn't a known input field; the disallow-unknown-fields
 	// decoder rejects the request.
 	body := []byte(`{"name":"r","ipAddress":"10.0.0.1","extra":true}`)
@@ -188,7 +188,7 @@ func TestHandlePollingTargets_POSTUnknownFieldsReturns400(t *testing.T) {
 }
 
 func TestHandlePollingTargets_UnknownMethodReturns405(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
+	s, _ := newPollingTargetsTestServer(t)
 	req := withClaim(httptest.NewRequest(http.MethodPatch, APIVersionPrefix+"/polling-targets", http.NoBody))
 	w := httptest.NewRecorder()
 	s.handlePollingTargets(w, req)
@@ -198,8 +198,8 @@ func TestHandlePollingTargets_UnknownMethodReturns405(t *testing.T) {
 }
 
 func TestHandlePollingTargetByID_GET(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
-	target := seedTarget(t, s.db(), "router-1")
+	s, db := newPollingTargetsTestServer(t)
+	target := seedTarget(t, db, "router-1")
 
 	req := withClaim(
 		httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets/"+target.ID, http.NoBody),
@@ -217,7 +217,7 @@ func TestHandlePollingTargetByID_GET(t *testing.T) {
 }
 
 func TestHandlePollingTargetByID_GETUnknownReturns404(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
+	s, _ := newPollingTargetsTestServer(t)
 	req := withClaim(
 		httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets/no-such-id", http.NoBody),
 	)
@@ -229,8 +229,8 @@ func TestHandlePollingTargetByID_GETUnknownReturns404(t *testing.T) {
 }
 
 func TestHandlePollingTargetByID_PUTUpdates(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
-	target := seedTarget(t, s.db(), "old-name")
+	s, db := newPollingTargetsTestServer(t)
+	target := seedTarget(t, db, "old-name")
 
 	buf := &bytes.Buffer{}
 	_ = json.NewEncoder(buf).Encode(map[string]any{
@@ -250,7 +250,7 @@ func TestHandlePollingTargetByID_PUTUpdates(t *testing.T) {
 		t.Fatalf("status = %d, body=%s", w.Code, w.Body.String())
 	}
 	// Re-fetch from DB to confirm.
-	got, _ := s.db().PollingTargets().Get(context.Background(), testClientID, target.ID)
+	got, _ := db.PollingTargets().Get(context.Background(), testClientID, target.ID)
 	if got.Name != "new-name" || got.IPAddress != "10.0.0.99" {
 		t.Errorf("update didn't persist: %+v", got)
 	}
@@ -260,7 +260,7 @@ func TestHandlePollingTargetByID_PUTUpdates(t *testing.T) {
 }
 
 func TestHandlePollingTargetByID_PUTUnknownReturns404(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
+	s, _ := newPollingTargetsTestServer(t)
 	buf := &bytes.Buffer{}
 	_ = json.NewEncoder(buf).Encode(map[string]any{
 		"name":      "x",
@@ -276,8 +276,8 @@ func TestHandlePollingTargetByID_PUTUnknownReturns404(t *testing.T) {
 }
 
 func TestHandlePollingTargetByID_DELETERemoves(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
-	target := seedTarget(t, s.db(), "to-delete")
+	s, db := newPollingTargetsTestServer(t)
+	target := seedTarget(t, db, "to-delete")
 
 	req := withClaim(
 		httptest.NewRequest(http.MethodDelete, APIVersionPrefix+"/polling-targets/"+target.ID, http.NoBody),
@@ -288,13 +288,13 @@ func TestHandlePollingTargetByID_DELETERemoves(t *testing.T) {
 		t.Errorf("status = %d, want 204", w.Code)
 	}
 
-	if _, err := s.db().PollingTargets().Get(context.Background(), testClientID, target.ID); err == nil {
+	if _, err := db.PollingTargets().Get(context.Background(), testClientID, target.ID); err == nil {
 		t.Error("target should be deleted from DB")
 	}
 }
 
 func TestHandlePollingTargetByID_DELETEUnknownReturns404(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
+	s, _ := newPollingTargetsTestServer(t)
 	req := withClaim(
 		httptest.NewRequest(http.MethodDelete, APIVersionPrefix+"/polling-targets/no-such-id", http.NoBody),
 	)
@@ -306,8 +306,8 @@ func TestHandlePollingTargetByID_DELETEUnknownReturns404(t *testing.T) {
 }
 
 func TestHandlePollingTargetByID_PATCHRejected(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
-	target := seedTarget(t, s.db(), "r-1")
+	s, db := newPollingTargetsTestServer(t)
+	target := seedTarget(t, db, "r-1")
 	req := withClaim(
 		httptest.NewRequest(http.MethodPatch, APIVersionPrefix+"/polling-targets/"+target.ID, http.NoBody),
 	)

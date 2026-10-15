@@ -9,6 +9,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/license"
@@ -27,7 +28,7 @@ func TestNewServerWiresTheDatabaseServices(t *testing.T) {
 	cfg.Database.RetentionDays = 0
 
 	s := NewServer(cfg, filepath.Join(t.TempDir(), "seed.json"), "",
-		netif.NewMockManager(netif.DefaultMockConfig()), false, nil, db, nil)
+		netif.NewMockManager(netif.DefaultMockConfig()), false, nil, app.NewPersistence(db), nil)
 	t.Cleanup(s.Close)
 
 	if _, err := db.GetUser(t.Context(), "admin"); err != nil {
@@ -87,7 +88,7 @@ func TestDatabaseServicesRegisterTheEnginesAndUseCases(t *testing.T) {
 		configPath: filepath.Join(t.TempDir(), "seed.json"),
 		engines:    engine.NewRegistry(nil),
 		licenseDir: licenseDir,
-		dbConn:     db,
+		persist:    app.NewPersistence(db),
 	}
 	s.initDatabaseDependentServices()
 	s.initHealthUseCases()

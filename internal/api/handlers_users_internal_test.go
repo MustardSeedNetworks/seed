@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
@@ -21,7 +22,7 @@ import (
 // that user on the request context (#2632). The returned license.Manager is fresh
 // (no key activated) so tests can opt-in to Pro by calling
 // mgr.StartTrial() when they need it.
-func usersTestSetup(t *testing.T) (*Server, *license.Manager) {
+func usersTestSetup(t *testing.T) (*Server, *license.Manager, *database.DB) {
 	t.Helper()
 	db, openErr := database.Open(dbtest.Path(t))
 	if openErr != nil {
@@ -44,24 +45,24 @@ func usersTestSetup(t *testing.T) (*Server, *license.Manager) {
 
 	s := &Server{}
 	s.withRouteDeps(t)
-	s.dbConn = db
+	s.persist = app.NewPersistence(db)
 	s.licenseMgr = mgr
 	// Wire the identity use-cases (ADR-0024) so callerRole/requireRole and the
 	// user/token handlers resolve through the repository ports against the
 	// seeded store rather than nil-panicking on a bare server.
 	s.initIdentityUseCases()
-	return s, mgr
+	return s, mgr, db
 }
 
 func TestUserCreate_RequiresAdmin(t *testing.T) {
 	t.Parallel()
-	s, mgr := usersTestSetup(t)
+	s, mgr, db := usersTestSetup(t)
 	if r := mgr.StartTrial(); !r.Success {
 		t.Fatalf("StartTrial: %s", r.Message)
 	}
 
 	// Add a non-admin user.
-	_, err := s.dbConn.CreateUser(t.Context(), "viewer1", "$2a$10$x", roles.Viewer)
+	_, err := db.CreateUser(t.Context(), "viewer1", "$2a$10$x", roles.Viewer)
 	if err != nil {
 		t.Fatalf("seed viewer: %v", err)
 	}
@@ -80,7 +81,7 @@ func TestUserCreate_RequiresAdmin(t *testing.T) {
 
 func TestUserCreate_RequiresPro(t *testing.T) {
 	t.Parallel()
-	s, _ := usersTestSetup(t)
+	s, _, _ := usersTestSetup(t)
 	// No trial → Free tier → multi_user gate fires.
 
 	body, _ := json.Marshal(
@@ -97,7 +98,7 @@ func TestUserCreate_RequiresPro(t *testing.T) {
 
 func TestUserCreate_Success(t *testing.T) {
 	t.Parallel()
-	s, mgr := usersTestSetup(t)
+	s, mgr, _ := usersTestSetup(t)
 	if r := mgr.StartTrial(); !r.Success {
 		t.Fatalf("StartTrial: %s", r.Message)
 	}
@@ -126,7 +127,7 @@ func TestUserCreate_Success(t *testing.T) {
 
 func TestUserDelete_RefusesLastAdmin(t *testing.T) {
 	t.Parallel()
-	s, mgr := usersTestSetup(t)
+	s, mgr, db := usersTestSetup(t)
 	if r := mgr.StartTrial(); !r.Success {
 		t.Fatalf("StartTrial: %s", r.Message)
 	}
@@ -134,7 +135,7 @@ func TestUserDelete_RefusesLastAdmin(t *testing.T) {
 	// Seed a second admin so we can delete one of them without hitting
 	// the self-delete guard, then expect the last-admin guard to fire
 	// when we try to delete the remaining admin (us).
-	_, err := s.dbConn.CreateUser(t.Context(), "admin2", "$2a$10$x", roles.Admin)
+	_, err := db.CreateUser(t.Context(), "admin2", "$2a$10$x", roles.Admin)
 	if err != nil {
 		t.Fatalf("seed admin2: %v", err)
 	}
@@ -150,12 +151,12 @@ func TestUserDelete_RefusesLastAdmin(t *testing.T) {
 	// Now try to delete admin via another admin — there's only one left.
 	// We need a second admin to act, so re-seed and then try to delete
 	// the first one.
-	_, err = s.dbConn.CreateUser(t.Context(), "admin3", "$2a$10$x", roles.Admin)
+	_, err = db.CreateUser(t.Context(), "admin3", "$2a$10$x", roles.Admin)
 	if err != nil {
 		t.Fatalf("seed admin3: %v", err)
 	}
 	// Now demote admin3 and try to delete admin (the only admin left).
-	if upErr := s.dbConn.UpdateUserRole(t.Context(), "admin3", roles.Operator); upErr != nil {
+	if upErr := db.UpdateUserRole(t.Context(), "admin3", roles.Operator); upErr != nil {
 		t.Fatalf("demote admin3: %v", upErr)
 	}
 
@@ -170,7 +171,7 @@ func TestUserDelete_RefusesLastAdmin(t *testing.T) {
 
 func TestUserDelete_RefusesSelfDelete(t *testing.T) {
 	t.Parallel()
-	s, mgr := usersTestSetup(t)
+	s, mgr, _ := usersTestSetup(t)
 	if r := mgr.StartTrial(); !r.Success {
 		t.Fatalf("StartTrial: %s", r.Message)
 	}
@@ -185,11 +186,11 @@ func TestUserDelete_RefusesSelfDelete(t *testing.T) {
 
 func TestUserList_AdminOnly(t *testing.T) {
 	t.Parallel()
-	s, mgr := usersTestSetup(t)
+	s, mgr, db := usersTestSetup(t)
 	if r := mgr.StartTrial(); !r.Success {
 		t.Fatalf("StartTrial: %s", r.Message)
 	}
-	_, err := s.dbConn.CreateUser(t.Context(), "viewer1", "$2a$10$x", roles.Viewer)
+	_, err := db.CreateUser(t.Context(), "viewer1", "$2a$10$x", roles.Viewer)
 	if err != nil {
 		t.Fatalf("seed viewer: %v", err)
 	}
@@ -220,7 +221,7 @@ func TestUserList_AdminOnly(t *testing.T) {
 
 func TestCurrentUser_ReturnsCallerOwnRecord(t *testing.T) {
 	t.Parallel()
-	s, _ := usersTestSetup(t)
+	s, _, _ := usersTestSetup(t)
 
 	req := newAuthedRequest(http.MethodGet, APIVersionPrefix+"/users/me", nil, "admin")
 	w := httptest.NewRecorder()
@@ -304,11 +305,10 @@ func TestUpsertSSOUser_SubsequentDefaultsToViewer(t *testing.T) {
 // tokens and asserting the tokens are gone.
 func TestDeleteUser_CascadesAPITokens(t *testing.T) {
 	t.Parallel()
-	s, mgr := usersTestSetup(t)
+	s, mgr, db := usersTestSetup(t)
 	if r := mgr.StartTrial(); !r.Success {
 		t.Fatalf("StartTrial: %s", r.Message)
 	}
-	db := s.dbConn
 
 	// Seed a second admin so we can delete one of them.
 	if _, err := db.CreateUser(t.Context(), "bob", "$2a$10$x", roles.Admin); err != nil {
@@ -421,7 +421,7 @@ func TestUserHandlers_DomainErrorStatus(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			s, mgr := usersTestSetup(t)
+			s, mgr, _ := usersTestSetup(t)
 			if r := mgr.StartTrial(); !r.Success {
 				t.Fatalf("StartTrial: %s", r.Message)
 			}

@@ -33,7 +33,7 @@ func serveFlowIndicators(t *testing.T, s *Server, method, body string) (int, Flo
 func TestFlowIndicatorsReplaceAndClear(t *testing.T) {
 	t.Parallel()
 
-	s := newHistoryServer(t)
+	s, _ := newHistoryServer(t)
 	code, resp := serveFlowIndicators(t, s, http.MethodGet, "")
 	require.Equal(t, http.StatusOK, code)
 	require.Equal(t, []string{}, resp.Indicators)
@@ -62,8 +62,8 @@ func TestFlowIndicatorsRejectAnInvalidList(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			s := newHistoryServer(t)
-			require.NoError(t, s.db().FlowRecords().SetFlowIndicators(t.Context(), mustIndicators(t, "198.51.100.7")))
+			s, db := newHistoryServer(t)
+			require.NoError(t, db.FlowRecords().SetFlowIndicators(t.Context(), mustIndicators(t, "198.51.100.7")))
 
 			w := httptest.NewRecorder()
 			s.handleFlowIndicators(
@@ -73,7 +73,7 @@ func TestFlowIndicatorsRejectAnInvalidList(t *testing.T) {
 			require.Equal(t, http.StatusBadRequest, w.Code)
 			require.NotContains(t, w.Body.String(), "evil.example")
 
-			list, err := s.db().FlowRecords().FlowIndicators(t.Context())
+			list, err := db.FlowRecords().FlowIndicators(t.Context())
 			require.NoError(t, err)
 			require.Equal(
 				t,

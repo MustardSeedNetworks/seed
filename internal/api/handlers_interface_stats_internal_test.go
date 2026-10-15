@@ -28,7 +28,7 @@ func getInterfaceStats(s *Server) *httptest.ResponseRecorder {
 func TestHandleInterfaceStatsWithoutDatabase(t *testing.T) {
 	t.Parallel()
 	s := &Server{}
-	s.interfaceStats = app.NewInterfaceStats(s.db)
+	s.interfaceStats = app.NewInterfaceStats(s.persistence)
 
 	w := getInterfaceStats(s)
 	require.Equal(t, http.StatusServiceUnavailable, w.Code, w.Body.String())
@@ -37,8 +37,8 @@ func TestHandleInterfaceStatsWithoutDatabase(t *testing.T) {
 func TestHandleInterfaceStats(t *testing.T) {
 	t.Parallel()
 	db := newTestDB(t)
-	s := &Server{dbConn: db}
-	s.interfaceStats = app.NewInterfaceStats(s.db)
+	s := &Server{persist: app.NewPersistence(db)}
+	s.interfaceStats = app.NewInterfaceStats(s.persistence)
 	ctx := context.Background()
 
 	w := getInterfaceStats(s)
@@ -88,8 +88,8 @@ func getInterfaceHistory(s *Server, query string) *httptest.ResponseRecorder {
 
 func TestHandleInterfaceHistoryRejectsBadQuery(t *testing.T) {
 	t.Parallel()
-	s := &Server{dbConn: newTestDB(t)}
-	s.interfaceStats = app.NewInterfaceStats(s.db)
+	s := &Server{persist: app.NewPersistence(newTestDB(t))}
+	s.interfaceStats = app.NewInterfaceStats(s.persistence)
 	for _, query := range []string{
 		"ifIndex=1", "target=t1", "target=t1&ifIndex=-1", "target=t1&ifIndex=4294967296",
 		"target=t1&ifIndex=one", "target=t1&ifIndex=1&range=30d", "target=t1&ifIndex=1&range=2h",
@@ -102,7 +102,7 @@ func TestHandleInterfaceHistoryRejectsBadQuery(t *testing.T) {
 func TestHandleInterfaceHistoryWithoutDatabase(t *testing.T) {
 	t.Parallel()
 	s := &Server{}
-	s.interfaceStats = app.NewInterfaceStats(s.db)
+	s.interfaceStats = app.NewInterfaceStats(s.persistence)
 
 	w := getInterfaceHistory(s, "target=t1&ifIndex=1")
 	require.Equal(t, http.StatusServiceUnavailable, w.Code, w.Body.String())
@@ -111,8 +111,8 @@ func TestHandleInterfaceHistoryWithoutDatabase(t *testing.T) {
 func TestHandleInterfaceHistory(t *testing.T) {
 	t.Parallel()
 	db := newTestDB(t)
-	s := &Server{dbConn: db}
-	s.interfaceStats = app.NewInterfaceStats(s.db)
+	s := &Server{persist: app.NewPersistence(db)}
+	s.interfaceStats = app.NewInterfaceStats(s.persistence)
 
 	w := getInterfaceHistory(s, "target=t1&ifIndex=2&range=1h")
 	require.Equal(t, http.StatusOK, w.Code, w.Body.String())

@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	api "github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
@@ -105,7 +106,7 @@ func newFullChainServer(t *testing.T) *testEndpointServer {
 		t.Logf("warning: network manager: %v", err)
 	}
 
-	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, db, nil)
+	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, app.NewPersistence(db), nil)
 
 	ln, err := net.Listen("tcp4", "127.0.0.1:0")
 	if err != nil {

@@ -177,7 +177,7 @@ func (a profilesLiveConfig) Apply(ctx context.Context, profileJSON string) error
 // cfg and persists to path. The database is resolved through db on each call
 // so the api test harness's later-set DB is honored; the use-case reports
 // Available()==false when no DB is wired.
-func NewProfiles(db func() *database.DB, cfg *config.Config, path string) *catalog.Service {
-	store := profilesStore{db: db}
+func NewProfiles(persist func() *Persistence, cfg *config.Config, path string) *catalog.Service {
+	store := profilesStore{db: lazyHandle(persist)}
 	return catalog.NewService(store, store, profilesLiveConfig{cfg: cfg, path: path})
 }

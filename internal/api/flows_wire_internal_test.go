@@ -37,7 +37,7 @@ func flowWireBody(t *testing.T, handler http.HandlerFunc, req *http.Request) str
 func TestFlowReadsWireShape(t *testing.T) {
 	t.Parallel()
 
-	s := newHistoryServer(t)
+	s, db := newHistoryServer(t)
 	end := time.Now().UTC().Add(-10 * time.Minute)
 	rec := func(src, dst string, proto uint8, dport uint16, bytes, pkts uint64) flow.Record {
 		return flow.Record{
@@ -47,7 +47,7 @@ func TestFlowReadsWireShape(t *testing.T) {
 			SrcPort: 50000, DstPort: dport, Protocol: proto, Bytes: bytes, Packets: pkts,
 		}
 	}
-	require.NoError(t, s.db().FlowRecords().InsertFlows(t.Context(), []flow.Record{
+	require.NoError(t, db.FlowRecords().InsertFlows(t.Context(), []flow.Record{
 		rec("10.0.0.1", "10.0.0.2", 6, 443, 900, 3),
 		rec("10.0.0.3", "10.0.0.1", 17, 53, 50, 1),
 	}))
@@ -73,7 +73,7 @@ func TestFlowReadsWireShape(t *testing.T) {
 func TestFlowSettingsWireShape(t *testing.T) {
 	t.Parallel()
 
-	s := newHistoryServer(t)
+	s, _ := newHistoryServer(t)
 	put := func(path, body string) *http.Request {
 		return httptest.NewRequest(http.MethodPut, path, strings.NewReader(body))
 	}
@@ -101,7 +101,7 @@ func TestRecordSpeedtestStoresTheResult(t *testing.T) {
 
 	(&Server{}).recordSpeedtest(t.Context(), &speedtest.Result{Download: 1})
 
-	s := newHistoryServer(t)
+	s, db := newHistoryServer(t)
 	at := time.Date(2026, 10, 7, 9, 30, 0, 0, time.FixedZone("CEST", 2*60*60))
 	s.recordSpeedtest(t.Context(), &speedtest.Result{
 		Download: 94.5, Upload: 21.25, Latency: 7.5,
@@ -112,7 +112,7 @@ func TestRecordSpeedtestStoresTheResult(t *testing.T) {
 		iface, server, location, ts string
 		down, up, latency           float64
 	)
-	require.NoError(t, s.db().QueryRow(t.Context(),
+	require.NoError(t, db.QueryRow(t.Context(),
 		`SELECT interface_name, server_name, server_location, download_mbps, upload_mbps,
 			latency_ms, timestamp FROM speedtest_results`).
 		Scan(&iface, &server, &location, &down, &up, &latency, &ts))

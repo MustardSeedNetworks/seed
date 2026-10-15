@@ -209,7 +209,7 @@ func TestServerRegistersThePacketCaptureKind(t *testing.T) {
 
 func TestCaptureDownloadRefusals(t *testing.T) {
 	t.Parallel()
-	srv, _ := usersTestSetup(t)
+	srv, _, _ := usersTestSetup(t)
 	srv.captures = packetcapture.NewStore(t.TempDir())
 
 	tests := []struct {

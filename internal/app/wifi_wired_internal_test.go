@@ -54,7 +54,7 @@ func TestWiFiWiredSourceReadsDiscoveryAndPolledTables(t *testing.T) {
 	devices := []*discovery.DiscoveredDevice{{MAC: "00:00:5e:00:53:d1"}, {IP: "192.0.2.10"}}
 	src := WiFiWiredSource(
 		func() []*discovery.DiscoveredDevice { return devices },
-		func() *database.DB { return db },
+		func() *Persistence { return NewPersistence(db) },
 	)
 	got, err := src(ctx)
 	if err != nil {
@@ -70,7 +70,7 @@ func TestWiFiWiredSourceReadsDiscoveryAndPolledTables(t *testing.T) {
 func TestWiFiWiredSourceWithoutDatabaseReadsDiscoveryOnly(t *testing.T) {
 	src := WiFiWiredSource(
 		func() []*discovery.DiscoveredDevice { return []*discovery.DiscoveredDevice{{MAC: "00:00:5e:00:53:d1"}} },
-		func() *database.DB { return nil },
+		func() *Persistence { return nil },
 	)
 	got, err := src(t.Context())
 	if err != nil {

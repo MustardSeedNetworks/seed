@@ -22,7 +22,7 @@ import (
 // that regression.
 func TestSSEEventsRequiresLiveTelemetry(t *testing.T) {
 	t.Parallel()
-	s, mgr := apiTokenTestSetup(t)
+	s, mgr, _ := apiTokenTestSetup(t)
 	s.setupRoutes()
 
 	// 1. No license → 402, requiredFeature reports the right key.
@@ -67,7 +67,7 @@ func TestSSEEventsRequiresLiveTelemetry(t *testing.T) {
 // route, this test fails.
 func TestDiscoveryEngineEventsStaysOpen(t *testing.T) {
 	t.Parallel()
-	s, _ := apiTokenTestSetup(t)
+	s, _, _ := apiTokenTestSetup(t)
 	s.setupRoutes()
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/discovery/engine/events", http.NoBody)

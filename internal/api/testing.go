@@ -9,7 +9,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/dhcp"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/cable"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
@@ -85,12 +84,11 @@ func (s *Server) Close() {
 	}
 }
 
-// SetTestDB injects a *database.DB into the test server. Wave 3 (#85)
-// added MFA endpoints that require persistence; tests use this to
-// attach a temp SQLite database without standing up the full
-// NewServer dependency graph.
-func SetTestDB(s *Server, db *database.DB) {
-	s.dbConn = db
+// SetTestPersistence attaches a store to the test server, so tests of the
+// persistence-backed endpoints need not stand up the full NewServer
+// dependency graph.
+func SetTestPersistence(s *Server, persist *app.Persistence) {
+	s.persist = persist
 }
 
 // ResetMFAAttempts clears the package-level MFA rate-limit store.
@@ -162,17 +160,17 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	// gracefully here: no visibility component, scanner, or discovery bridge is
 	// wired, so reads return empty results and management/discovery report the
 	// adapter-absent states.
-	s.settingsStore = app.NewSettings(s.db, s.config)
+	s.settingsStore = app.NewSettings(s.persistence, s.config)
 	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath,
 		func() *alertdelivery.Manager { return s.alertDelivery })
 	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, s.rogueDetector)
 	s.healthSettings = app.NewHealthSettings(
-		s.db, s.rescheduleProbeEngine,
+		s.persistence, s.rescheduleProbeEngine,
 		s.config, s.configPath, s.dnsTester, s.speedtestTester,
 	)
-	s.profiles = app.NewProfiles(s.db, s.config, s.configPath)
+	s.profiles = app.NewProfiles(s.persistence, s.config, s.configPath)
 	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
-	s.alertRules = app.NewAlertRules(s.db)
+	s.alertRules = app.NewAlertRules(s.persistence)
 	s.initUseCases()
 
 	// Setup routes

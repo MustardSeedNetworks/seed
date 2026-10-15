@@ -15,6 +15,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/deviceconfig"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/license"
@@ -60,21 +61,22 @@ const (
 // newDeviceConfigTestServer wires the vault and backups over a real keyring,
 // so stored ciphertext is real ciphertext, and the real alert write chain, and
 // seeds an operator and a viewer.
-func newDeviceConfigTestServer(t *testing.T) *Server {
+func newDeviceConfigTestServer(t *testing.T) (*Server, *database.DB) {
 	t.Helper()
-	s, _ := newDeviceConfigTestServerWithFetcher(t)
-	return s
+	s, _, db := newDeviceConfigTestServerWithFetcher(t)
+	return s, db
 }
 
 // newDeviceConfigTestServerWithFetcher is newDeviceConfigTestServer, also
 // returning the configuration the switch at 10.0.0.1 answers with.
-func newDeviceConfigTestServerWithFetcher(t *testing.T) (*Server, *atomic.Pointer[string]) {
+func newDeviceConfigTestServerWithFetcher(t *testing.T) (*Server, *atomic.Pointer[string], *database.DB) {
 	t.Helper()
 	s, _ := newJobsTestServer(t, jobs.Config{})
-	s.dbConn = newTestDB(t)
+	db := newTestDB(t)
+	s.persist = app.NewPersistence(db)
 	s.initIdentityUseCases()
-	seedRoledUser(t, s, dcOperator, roles.Operator)
-	seedRoledUser(t, s, dcViewer, roles.Viewer)
+	seedRoledUser(t, db, dcOperator, roles.Operator)
+	seedRoledUser(t, db, dcViewer, roles.Viewer)
 
 	cfg := &config.Config{}
 	if err := cfg.InitCredentialKeyring(t.TempDir()); err != nil {
@@ -84,21 +86,21 @@ func newDeviceConfigTestServerWithFetcher(t *testing.T) (*Server, *atomic.Pointe
 	if err != nil {
 		t.Fatalf("keyring: %v", err)
 	}
-	creds, err := app.NewDeviceCredentials(s.db, keyring)
+	creds, err := app.NewDeviceCredentials(s.persistence, keyring)
 	if err != nil {
 		t.Fatalf("build credentials use-case: %v", err)
 	}
 	s.deviceCredentials = creds
-	s.useAlertDelivery(app.NewAlertDelivery(s.dbConn, nil, logging.GetLogger()))
+	s.useAlertDelivery(app.NewAlertDelivery(s.persist, nil, logging.GetLogger()))
 	fetcher := hostFetcher{changed: new(atomic.Pointer[string])}
-	backups, err := app.NewDeviceConfigBackups(s.db, keyring, fetcher,
+	backups, err := app.NewDeviceConfigBackups(s.persistence, keyring, fetcher,
 		func() deviceconfig.AlertWriter { return s.alertWriter })
 	if err != nil {
 		t.Fatalf("build device config use-case: %v", err)
 	}
 	s.deviceConfigs = backups
 	s.registerDeviceConfigKind()
-	return s, fetcher.changed
+	return s, fetcher.changed, db
 }
 
 func callDeviceConfig(t *testing.T, h http.HandlerFunc, method, path, body string) *httptest.ResponseRecorder {
@@ -198,7 +200,7 @@ func confirmHostKey(t *testing.T, s *Server, id string) {
 // nothing is sent to it until an operator confirms that exact key, and
 // clearing the pin puts the target back to waiting.
 func TestDeviceConfigHostKeyWaitsForAnOperator(t *testing.T) {
-	s := newDeviceConfigTestServer(t)
+	s, _ := newDeviceConfigTestServer(t)
 	tgt := createDeviceConfigTarget(t, s, "10.0.0.1", createSSHCredential(t, s, "s3cret"))
 	path := deviceConfigTargetsPathPrefix + tgt.ID
 
@@ -234,7 +236,7 @@ func TestDeviceConfigHostKeyWaitsForAnOperator(t *testing.T) {
 // stored encrypted, and another refusing the credential is reported for that
 // device while the run itself succeeds.
 func TestDeviceConfigRunStoresConfigAndReportsCredentialFailure(t *testing.T) {
-	s := newDeviceConfigTestServer(t)
+	s, db := newDeviceConfigTestServer(t)
 	good := createDeviceConfigTarget(t, s, "10.0.0.1", createSSHCredential(t, s, "s3cret"))
 	bad := createDeviceConfigTarget(t, s, "10.0.0.2", createSSHCredential(t, s, "wrong"))
 	if good.Port != deviceconfig.PlatformCiscoIOS.DefaultPort() {
@@ -262,7 +264,7 @@ func TestDeviceConfigRunStoresConfigAndReportsCredentialFailure(t *testing.T) {
 		t.Errorf("stored backup = %+v", b)
 	}
 	var raw string
-	if err := s.dbConn.QueryRow(t.Context(), `SELECT CAST(config_enc AS TEXT) FROM device_config_backups
+	if err := db.QueryRow(t.Context(), `SELECT CAST(config_enc AS TEXT) FROM device_config_backups
 		WHERE id = ?`, statuses[good.ID].BackupID).Scan(&raw); err != nil {
 		t.Fatalf("read stored configuration: %v", err)
 	}
@@ -283,9 +285,9 @@ func TestDeviceConfigRunStoresConfigAndReportsCredentialFailure(t *testing.T) {
 	}
 }
 
-func configChangeAlerts(t *testing.T, s *Server) []*alerts.Alert {
+func configChangeAlerts(t *testing.T, db *database.DB) []*alerts.Alert {
 	t.Helper()
-	list, err := s.dbConn.Alerts().List(t.Context(), alerts.ListOptions{Limit: 100})
+	list, err := db.Alerts().List(t.Context(), alerts.ListOptions{Limit: 100})
 	if err != nil {
 		t.Fatalf("list alerts: %v", err)
 	}
@@ -302,7 +304,7 @@ func configChangeAlerts(t *testing.T, s *Server) []*alerts.Alert {
 // API: a changed configuration produces a readable diff and an alert; an
 // unchanged one produces neither.
 func TestDeviceConfigChangeIsDiffedAndAlerted(t *testing.T) {
-	s, changed := newDeviceConfigTestServerWithFetcher(t)
+	s, changed, db := newDeviceConfigTestServerWithFetcher(t)
 	tgt := createDeviceConfigTarget(t, s, "10.0.0.1", createSSHCredential(t, s, "s3cret"))
 	runDeviceConfigBackup(t, s)
 	confirmHostKey(t, s, tgt.ID)
@@ -312,7 +314,7 @@ func TestDeviceConfigChangeIsDiffedAndAlerted(t *testing.T) {
 	if unchanged != first {
 		t.Errorf("an unchanged configuration was stored again: %s, then %s", first, unchanged)
 	}
-	if got := configChangeAlerts(t, s); len(got) != 0 {
+	if got := configChangeAlerts(t, db); len(got) != 0 {
 		t.Fatalf("the first and an unchanged configuration raised %d change alerts", len(got))
 	}
 	rec := callDeviceConfig(t, s.handleDeviceConfigBackupByID, http.MethodGet,
@@ -328,7 +330,7 @@ func TestDeviceConfigChangeIsDiffedAndAlerted(t *testing.T) {
 		t.Fatal("a changed configuration was not stored")
 	}
 
-	raised := configChangeAlerts(t, s)
+	raised := configChangeAlerts(t, db)
 	if len(raised) != 1 {
 		t.Fatalf("a changed configuration raised %d change alerts, want 1", len(raised))
 	}
@@ -378,7 +380,7 @@ func TestDeviceConfigChangeIsDiffedAndAlerted(t *testing.T) {
 // TestDeviceConfigBackupReadsNeedOperator: a configuration carries the
 // device's secrets, so a viewer can read neither a backup nor the history.
 func TestDeviceConfigBackupReadsNeedOperator(t *testing.T) {
-	s := newDeviceConfigTestServer(t)
+	s, _ := newDeviceConfigTestServer(t)
 	tgt := createDeviceConfigTarget(t, s, "10.0.0.1", createSSHCredential(t, s, "s3cret"))
 	runDeviceConfigBackup(t, s)
 	confirmHostKey(t, s, tgt.ID)
@@ -415,7 +417,7 @@ func TestDeviceConfigBackupReadsNeedOperator(t *testing.T) {
 // refusal is the role gate's and not the CSRF wall's.
 func TestViewerCannotChangeDeviceConfigs(t *testing.T) {
 	t.Parallel()
-	s := routedServer(t, dcViewer, roles.Viewer)
+	s, _ := routedServer(t, dcViewer, roles.Viewer)
 	// Pro, so the feature gate in front of the role gate lets the request by.
 	mgr, err := license.NewManagerWithDir(t.TempDir())
 	if err != nil {
@@ -454,7 +456,7 @@ func TestViewerCannotChangeDeviceConfigs(t *testing.T) {
 }
 
 func TestDeviceConfigTargetsAreScopedToTheCallersClient(t *testing.T) {
-	s := newDeviceConfigTestServer(t)
+	s, _ := newDeviceConfigTestServer(t)
 	tgt := createDeviceConfigTarget(t, s, "10.0.0.1", createSSHCredential(t, s, "s3cret"))
 
 	other := newAuthedRequest(http.MethodGet, deviceConfigTargetsPathPrefix+tgt.ID, nil, dcOperator)
@@ -467,7 +469,7 @@ func TestDeviceConfigTargetsAreScopedToTheCallersClient(t *testing.T) {
 }
 
 func TestDeviceConfigTargetValidationIsA400(t *testing.T) {
-	s := newDeviceConfigTestServer(t)
+	s, _ := newDeviceConfigTestServer(t)
 	snmp := decodeInto[map[string]any](t, postCredential(t, s, `{"name":"ro","community":"public"}`))["id"].(string)
 
 	for name, body := range map[string]string{
@@ -485,7 +487,7 @@ func TestDeviceConfigTargetValidationIsA400(t *testing.T) {
 // TestJobsRouteRefusesDeviceConfigRuns — POST /jobs cannot say whose devices
 // to back up, so it must not start a run.
 func TestJobsRouteRefusesDeviceConfigRuns(t *testing.T) {
-	s := newDeviceConfigTestServer(t)
+	s, _ := newDeviceConfigTestServer(t)
 	req := httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/jobs",
 		strings.NewReader(`{"kind":"`+deviceConfigJobKind+`","params":{"ClientID":"tenant-other"}}`))
 	rec := httptest.NewRecorder()
@@ -499,7 +501,7 @@ func TestJobsRouteRefusesDeviceConfigRuns(t *testing.T) {
 // configuration backup run only to the client that started it; a job no
 // client owns stays visible to everyone.
 func TestBackupJobsAreTheirClientsOnly(t *testing.T) {
-	s := newDeviceConfigTestServer(t)
+	s, _ := newDeviceConfigTestServer(t)
 	createDeviceConfigTarget(t, s, "10.0.0.1", createSSHCredential(t, s, "s3cret"))
 	rec := callDeviceConfig(t, s.handleDeviceConfigRun, http.MethodPost, deviceConfigRunPath, `{}`)
 	if rec.Code != http.StatusCreated {

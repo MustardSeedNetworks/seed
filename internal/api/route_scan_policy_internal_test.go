@@ -118,8 +118,8 @@ func TestHostProbesRequireOperator(t *testing.T) {
 // the wire.
 func TestHostProbesRefuseViewerAtTheMux(t *testing.T) {
 	t.Parallel()
-	s := routedServer(t, "viewer1", roles.Viewer)
-	seedRoledUser(t, s, "operator1", roles.Operator)
+	s, db := routedServer(t, "viewer1", roles.Viewer)
+	seedRoledUser(t, db, "operator1", roles.Operator)
 
 	for _, suffix := range []string{"/security/discovery/probe", "/security/discovery/fingerprint"} {
 		for _, c := range []struct {

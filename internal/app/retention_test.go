@@ -33,7 +33,7 @@ func TestRunDataRetentionScalesTheWindow(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	result, err := app.RunDataRetention(ctx, db, 10, 0)
+	result, err := app.RunDataRetention(ctx, app.NewPersistence(db), 10, 0)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), result.SpeedTestsDeleted)
 	require.Equal(t, int64(1), result.AuditLogsDeleted)
@@ -64,7 +64,7 @@ func TestRunDataRetentionPurgesRawIngest(t *testing.T) {
 		}))
 	}
 
-	result, err := app.RunDataRetention(ctx, db, 10, 0)
+	result, err := app.RunDataRetention(ctx, app.NewPersistence(db), 10, 0)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), result.SNMPObservationsDeleted)
 	require.Equal(t, int64(1), result.ListenerEventsDeleted)

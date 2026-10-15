@@ -22,9 +22,8 @@ import (
 // TestAlertListResponseShape pins every key the inbox serves: the fixed keys
 // on every alert, and each optional key present only when its value is set.
 func TestAlertListResponseShape(t *testing.T) {
-	s := newAlertsTestServer(t)
+	s, db := newAlertsTestServer(t)
 	ctx := context.Background()
-	db := s.db()
 	seedLinkFault(t, db, alertcorrelation.WrapWriter(db.Alerts(), alertcorrelation.Config{}))
 
 	device := "02:00:00:00:00:07"
@@ -93,8 +92,8 @@ func sortedKeys(base []string, extra ...string) []string {
 }
 
 func TestAlertActionResponseShapes(t *testing.T) {
-	s := newAlertsTestServer(t)
-	id := seedAlert(t, s.db(), alerts.SeverityWarning)
+	s, db := newAlertsTestServer(t)
+	id := seedAlert(t, db, alerts.SeverityWarning)
 	idPath := alertsPath + "/" + strconv.FormatInt(id, 10)
 
 	req := httptest.NewRequest(http.MethodPost, idPath+"/acknowledge", http.NoBody)

@@ -15,9 +15,9 @@ import (
 
 // NewTFTPAudit returns the writer for TFTP audit events. The database is
 // resolved on each call; with none wired the event is dropped.
-func NewTFTPAudit(db func() *database.DB) func(context.Context, tftp.AuditEvent) error {
+func NewTFTPAudit(persist func() *Persistence) func(context.Context, tftp.AuditEvent) error {
 	return func(ctx context.Context, e tftp.AuditEvent) error {
-		d := db()
+		d := lazyHandle(persist)()
 		if d == nil {
 			return nil
 		}

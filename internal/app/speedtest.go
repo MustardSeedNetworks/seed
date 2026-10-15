@@ -12,7 +12,8 @@ import (
 
 // RecordSpeedtest stores res as measured on iface. A nil database stores
 // nothing: the test harness and a daemon without a store still run tests.
-func RecordSpeedtest(ctx context.Context, db *database.DB, iface string, res *speedtest.Result) error {
+func RecordSpeedtest(ctx context.Context, persist *Persistence, iface string, res *speedtest.Result) error {
+	db := persist.handle()
 	if db == nil {
 		return nil
 	}

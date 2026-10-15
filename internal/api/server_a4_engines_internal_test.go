@@ -30,7 +30,7 @@ func TestInitTopologyReconcilers_RegistersOnPro(t *testing.T) {
 	// No license manager wired -> effectiveTier returns Pro,
 	// so all four topology reconcilers land.
 	s := &Server{engines: engine.NewRegistry(nil)}
-	s.initTopologyReconcilers(app.NewEnginePersistence(newTestDB(t)).Topology)
+	s.initTopologyReconcilers(app.NewEnginePersistence(app.NewPersistence(newTestDB(t))).Topology)
 
 	names := make(map[string]bool)
 	for _, e := range s.engines.Engines() {
@@ -51,8 +51,8 @@ func TestInitTopologyReconcilers_RegistersOnPro(t *testing.T) {
 
 func TestInitAlertPipelines_RegistersOnPro(t *testing.T) {
 	db := newTestDB(t)
-	s := &Server{engines: engine.NewRegistry(nil), dbConn: db}
-	persistence := app.NewEnginePersistence(db)
+	s := &Server{engines: engine.NewRegistry(nil), persist: app.NewPersistence(db)}
+	persistence := app.NewEnginePersistence(app.NewPersistence(db))
 	s.initAlertPipelines(persistence.ListenerAlerts, persistence.ObservationAlerts)
 
 	names := make(map[string]bool)
@@ -79,7 +79,7 @@ func TestInitDatabaseDependentServices_GatesByFreeLicense(t *testing.T) {
 	// real ~/.config/seed: this assertion used to depend on whether the machine
 	// running it happened to have a licence activated, and was green in CI only
 	// because runners start clean (#2155).
-	s := &Server{engines: engine.NewRegistry(nil), licenseDir: t.TempDir(), dbConn: newTestDB(t)}
+	s := &Server{engines: engine.NewRegistry(nil), licenseDir: t.TempDir(), persist: app.NewPersistence(newTestDB(t))}
 	s.initDatabaseDependentServices()
 
 	names := make(map[string]bool)
@@ -122,7 +122,7 @@ func TestInitDatabaseDependentServices_HonoursLicenseDir(t *testing.T) {
 	realLicense := realLicensePath()
 	existedBefore := realLicense != "" && fileExists(realLicense)
 
-	s := &Server{engines: engine.NewRegistry(nil), licenseDir: dir, dbConn: newTestDB(t)}
+	s := &Server{engines: engine.NewRegistry(nil), licenseDir: dir, persist: app.NewPersistence(newTestDB(t))}
 	s.initDatabaseDependentServices()
 
 	names := make(map[string]bool)

@@ -67,9 +67,9 @@ func reportsTestServerOn(t *testing.T, cfg *config.Config, configPath string, db
 
 	// Load is what cmd_serve runs before serving: it reads the templates and the
 	// persisted schedules.
-	rep := app.NewReporting(cfg, db)
+	rep := app.NewReporting(cfg, app.NewPersistence(db))
 	require.NoError(t, rep.Load(t.Context()))
-	s := api.NewServer(cfg, configPath, "", nil, false, nil, db, &api.BackgroundComponents{
+	s := api.NewServer(cfg, configPath, "", nil, false, nil, app.NewPersistence(db), &api.BackgroundComponents{
 		Reporting: rep,
 	})
 
@@ -103,8 +103,8 @@ const reportsOperator = "reports-operator"
 func TestReports_FeatureGatedOnFreeTier(t *testing.T) {
 	cfg, configPath := reportsTestConfig(t)
 	db := reportsTestDB(t)
-	s := api.NewServer(cfg, configPath, "", nil, false, nil, db, &api.BackgroundComponents{
-		Reporting: app.NewReporting(cfg, db),
+	s := api.NewServer(cfg, configPath, "", nil, false, nil, app.NewPersistence(db), &api.BackgroundComponents{
+		Reporting: app.NewReporting(cfg, app.NewPersistence(db)),
 	})
 
 	// An unactivated manager over a temp dir, so this asserts Free-tier

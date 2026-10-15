@@ -30,6 +30,7 @@ import (
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
@@ -75,7 +76,7 @@ func newProfileRouterFixture(t *testing.T) *profileRouterFixture {
 		t.Logf("warning: network manager: %v", err)
 	}
 
-	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, db, nil)
+	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, app.NewPersistence(db), nil)
 	t.Cleanup(server.Close)
 	server.AuthManager().SetUserStore(database.NewUserStoreAdapter(db))
 

@@ -51,7 +51,7 @@ func TestLicenseStatusCarriesFeatures(t *testing.T) {
 			name: "free grants nothing",
 			setup: func(t *testing.T) *Server {
 				t.Helper()
-				s, _ := apiTokenTestSetup(t)
+				s, _, _ := apiTokenTestSetup(t)
 				return s
 			},
 			wantNot: uiGated,
@@ -60,7 +60,7 @@ func TestLicenseStatusCarriesFeatures(t *testing.T) {
 			name: "trial grants the Pro catalogue",
 			setup: func(t *testing.T) *Server {
 				t.Helper()
-				s, mgr := apiTokenTestSetup(t)
+				s, mgr, _ := apiTokenTestSetup(t)
 				if res := mgr.StartTrial(); !res.Success {
 					t.Fatalf("StartTrial: %s", res.Message)
 				}
@@ -120,7 +120,7 @@ func licenseStatusJSON(t *testing.T, s *Server) LicenseStatusResponse {
 func TestLicenseStatusFeaturesMatchCatalogue(t *testing.T) {
 	t.Parallel()
 
-	s, mgr := apiTokenTestSetup(t)
+	s, mgr, _ := apiTokenTestSetup(t)
 	if res := mgr.StartTrial(); !res.Success {
 		t.Fatalf("StartTrial: %s", res.Message)
 	}

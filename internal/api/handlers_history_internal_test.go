@@ -15,13 +15,14 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
-func newHistoryServer(t *testing.T) *Server {
+func newHistoryServer(t *testing.T) (*Server, *database.DB) {
 	t.Helper()
+	db := newTestDB(t)
 	s := &Server{}
-	s.dbConn = newTestDB(t)
-	s.historyQueries = app.NewHistory(s.db)
-	s.flows = app.NewFlows(s.db)
-	return s
+	s.persist = app.NewPersistence(db)
+	s.historyQueries = app.NewHistory(s.persistence)
+	s.flows = app.NewFlows(s.persistence)
+	return s, db
 }
 
 func historyRequest(t *testing.T, path string) *http.Request {
@@ -36,7 +37,8 @@ func TestProbeHistoryRefusesARequestWithNoClientClaim(t *testing.T) {
 	t.Parallel()
 
 	rec := httptest.NewRecorder()
-	routed(historyProbePath, newHistoryServer(t).handleProbeHistory)(rec,
+	s, _ := newHistoryServer(t)
+	routed(historyProbePath, s.handleProbeHistory)(rec,
 		httptest.NewRequest(http.MethodGet, "/api/v1/history/probes/p1", nil))
 
 	require.Equal(t, http.StatusUnauthorized, rec.Code)
@@ -49,7 +51,8 @@ func TestProbeHistoryRejectsAnUnusableRange(t *testing.T) {
 		t.Run(raw, func(t *testing.T) {
 			t.Parallel()
 			rec := httptest.NewRecorder()
-			routed(historyProbePath, newHistoryServer(t).handleProbeHistory)(rec,
+			s, _ := newHistoryServer(t)
+			routed(historyProbePath, s.handleProbeHistory)(rec,
 				historyRequest(t, "/api/v1/history/probes/p1?range="+url.QueryEscape(raw)))
 
 			require.Equal(t, http.StatusBadRequest, rec.Code, "range=%q", raw)
@@ -64,7 +67,8 @@ func TestProbeHistoryRequiresOneProbeIDSegment(t *testing.T) {
 
 	for _, path := range []string{"/api/v1/history/probes/", "/api/v1/history/probes/p1/extra"} {
 		rec := httptest.NewRecorder()
-		routed(historyProbePath, newHistoryServer(t).handleProbeHistory)(rec, historyRequest(t, path))
+		s, _ := newHistoryServer(t)
+		routed(historyProbePath, s.handleProbeHistory)(rec, historyRequest(t, path))
 
 		require.Equal(t, http.StatusNotFound, rec.Code, path)
 	}
@@ -76,13 +80,13 @@ func TestProbeHistoryRequiresOneProbeIDSegment(t *testing.T) {
 func TestProbeHistoryReportsTheServedWindow(t *testing.T) {
 	t.Parallel()
 
-	s := newHistoryServer(t)
+	s, db := newHistoryServer(t)
 	now := time.Now().UTC()
-	require.NoError(t, s.db().Probes().CreateProbe(t.Context(), &database.Probe{
+	require.NoError(t, db.Probes().CreateProbe(t.Context(), &database.Probe{
 		ID: "p-window", ClientID: database.DefaultClientID,
 		Kind: "ping", Target: "10.0.0.1", Enabled: true,
 	}))
-	require.NoError(t, s.db().Probes().RecordResult(t.Context(), &database.ProbeResult{
+	require.NoError(t, db.Probes().RecordResult(t.Context(), &database.ProbeResult{
 		ProbeID: "p-window", Kind: "ping", Timestamp: now.Add(-10 * time.Minute),
 		Success: true, LatencyMs: 12,
 	}))
@@ -109,7 +113,8 @@ func TestProbeHistoryServesAnEmptySeriesAsAnArray(t *testing.T) {
 	t.Parallel()
 
 	rec := httptest.NewRecorder()
-	routed(historyProbePath, newHistoryServer(t).handleProbeHistory)(rec,
+	s, _ := newHistoryServer(t)
+	routed(historyProbePath, s.handleProbeHistory)(rec,
 		historyRequest(t, "/api/v1/history/probes/never-run"))
 
 	require.Equal(t, http.StatusOK, rec.Code)
@@ -122,7 +127,8 @@ func TestAnomalyHistoryReportsTheServedWindow(t *testing.T) {
 	t.Parallel()
 
 	rec := httptest.NewRecorder()
-	newHistoryServer(t).handleAnomalyHistory(rec,
+	s, _ := newHistoryServer(t)
+	s.handleAnomalyHistory(rec,
 		historyRequest(t, "/api/v1/history/anomalies?range=3d"))
 	require.Equal(t, http.StatusOK, rec.Code)
 

@@ -19,17 +19,17 @@ import (
 )
 
 // NewAlertInbox builds the alert-inbox use-case over a lazy database accessor.
-func NewAlertInbox(db func() *database.DB) *inbox.Service {
-	return inbox.NewService(alertInboxRepo{db: db})
+func NewAlertInbox(persist func() *Persistence) *inbox.Service {
+	return inbox.NewService(alertInboxRepo{db: lazyHandle(persist)})
 }
 
 // NewAlertNarrator explains alerts for the delivery channels with the inbox's
 // own narratives (P-B7), rendered in the default language: a receiver has no
 // reader whose language Seed could follow, and the rest of what each channel
 // sends is English.
-func NewAlertNarrator(db *database.DB) alertdelivery.Narrator {
+func NewAlertNarrator(persist *Persistence) alertdelivery.Narrator {
 	return alertNarrator{
-		inbox: NewAlertInbox(func() *database.DB { return db }),
+		inbox: NewAlertInbox(func() *Persistence { return persist }),
 		t:     i18n.NewLocalizer(i18n.DefaultLanguage),
 	}
 }

@@ -20,13 +20,13 @@ import (
 // SQLite DB. Only the fields the topology handlers touch are
 // initialized — everything else stays nil so unrelated handlers
 // would crash if called.
-func newTopologyTestServer(t *testing.T) *Server {
+func newTopologyTestServer(t *testing.T) (*Server, *database.DB) {
 	t.Helper()
 	db := newTestDB(t)
 	s := &Server{}
-	s.dbConn = db
-	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
-	return s
+	s.persist = app.NewPersistence(db)
+	s.topologyQueries = app.NewTopologyQueries(s.persistence, topologyMaxLimit)
+	return s, db
 }
 
 // seedTopology inserts one node + one interface + one link so the
@@ -81,8 +81,8 @@ func seedTopology(t *testing.T, db *database.DB) string {
 // (seed#3024); a link whose port has none omits the field rather than
 // claiming 0.
 func TestHandleTopologyLinks_ReportsPortUtilization(t *testing.T) {
-	s := newTopologyTestServer(t)
-	nodeID := seedTopology(t, s.db())
+	s, db := newTopologyTestServer(t)
+	nodeID := seedTopology(t, db)
 	ctx := context.Background()
 	now := time.Now().UTC()
 
@@ -90,13 +90,13 @@ func TestHandleTopologyLinks_ReportsPortUtilization(t *testing.T) {
 		ClientID: database.DefaultClientID, Name: "router-1", IPAddress: "10.0.0.1",
 		SNMPVersion: "v2c", PollIntervalSec: 60, Enabled: true, CollectorChain: []string{"if_table"},
 	}
-	if err := s.db().PollingTargets().Create(ctx, target); err != nil {
+	if err := db.PollingTargets().Create(ctx, target); err != nil {
 		t.Fatalf("create target: %v", err)
 	}
-	if err := s.db().Topology().UpsertTargetNode(ctx, database.DefaultClientID, target.ID, nodeID, now); err != nil {
+	if err := db.Topology().UpsertTargetNode(ctx, database.DefaultClientID, target.ID, nodeID, now); err != nil {
 		t.Fatalf("map target: %v", err)
 	}
-	if err := s.db().Topology().UpsertLink(ctx, &topology.Link{
+	if err := db.Topology().UpsertLink(ctx, &topology.Link{
 		ID: "link-test-1", SourceNodeID: nodeID, TargetNodeID: "node-test-2",
 		SourceInterface: "Gi0/0", LinkType: "lldp", Status: "up", LastSeen: now,
 	}); err != nil {
@@ -122,7 +122,7 @@ func TestHandleTopologyLinks_ReportsPortUtilization(t *testing.T) {
 	}
 
 	util := ifrate.Utilization{In: 12.5, Out: 30}
-	if err := s.db().Metrics().RecordInterfaceRates(ctx, []ifrate.Rate{{
+	if err := db.Metrics().RecordInterfaceRates(ctx, []ifrate.Rate{{
 		ClientID: database.DefaultClientID, TargetID: target.ID, IfIndex: 1, At: now,
 		Octets: &ifrate.Octets{In: 1.5e6, Out: 3.75e6, Utilization: &util},
 	}}); err != nil {
@@ -134,8 +134,8 @@ func TestHandleTopologyLinks_ReportsPortUtilization(t *testing.T) {
 }
 
 func TestHandleTopologyNodes_ReturnsSeedededNodes(t *testing.T) {
-	s := newTopologyTestServer(t)
-	seedTopology(t, s.db())
+	s, db := newTopologyTestServer(t)
+	seedTopology(t, db)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/nodes", http.NoBody)
 	w := httptest.NewRecorder()
@@ -160,8 +160,8 @@ func TestHandleTopologyNodes_ReturnsSeedededNodes(t *testing.T) {
 }
 
 func TestHandleTopologyNodes_DeviceTypeFilter(t *testing.T) {
-	s := newTopologyTestServer(t)
-	seedTopology(t, s.db())
+	s, db := newTopologyTestServer(t)
+	seedTopology(t, db)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/nodes?device_type=cisco", http.NoBody)
 	w := httptest.NewRecorder()
@@ -179,7 +179,7 @@ func TestHandleTopologyNodes_DeviceTypeFilter(t *testing.T) {
 }
 
 func TestHandleTopologyNodes_InvalidSinceReturns400(t *testing.T) {
-	s := newTopologyTestServer(t)
+	s, _ := newTopologyTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/nodes?since=not-a-date", http.NoBody)
 	w := httptest.NewRecorder()
 	s.handleTopologyNodes(w, req)
@@ -189,7 +189,7 @@ func TestHandleTopologyNodes_InvalidSinceReturns400(t *testing.T) {
 }
 
 func TestHandleTopologyNodes_InvalidLimitReturns400(t *testing.T) {
-	s := newTopologyTestServer(t)
+	s, _ := newTopologyTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/nodes?limit=zero", http.NoBody)
 	w := httptest.NewRecorder()
 	s.handleTopologyNodes(w, req)
@@ -199,8 +199,8 @@ func TestHandleTopologyNodes_InvalidLimitReturns400(t *testing.T) {
 }
 
 func TestHandleTopologyNodeByID_ReturnsNodeWithInterfacesAndLinks(t *testing.T) {
-	s := newTopologyTestServer(t)
-	nodeID := seedTopology(t, s.db())
+	s, db := newTopologyTestServer(t)
+	nodeID := seedTopology(t, db)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/nodes/"+nodeID, http.NoBody)
 	w := httptest.NewRecorder()
@@ -229,8 +229,8 @@ func TestHandleTopologyNodeByID_ReturnsNodeWithInterfacesAndLinks(t *testing.T) 
 }
 
 func TestHandleTopologyNodeByID_UnknownReturns404(t *testing.T) {
-	s := newTopologyTestServer(t)
-	seedTopology(t, s.db())
+	s, db := newTopologyTestServer(t)
+	seedTopology(t, db)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/nodes/no-such-node", http.NoBody)
 	w := httptest.NewRecorder()
@@ -242,7 +242,7 @@ func TestHandleTopologyNodeByID_UnknownReturns404(t *testing.T) {
 
 // An empty or nested node id is not a node: the router answers 404.
 func TestHandleTopologyNodeByID_EmptyOrNestedIDReturns404(t *testing.T) {
-	s := newTopologyTestServer(t)
+	s, _ := newTopologyTestServer(t)
 	for _, path := range []string{"/topology/nodes/", "/topology/nodes/a/b"} {
 		req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+path, http.NoBody)
 		w := httptest.NewRecorder()
@@ -258,8 +258,8 @@ func TestHandleTopologyNodeByID_EmptyOrNestedIDReturns404(t *testing.T) {
 // the endpoint serves the global edge list. It used to answer 400, so the map
 // would have had to fetch the edges of every node one request at a time.
 func TestHandleTopologyLinks_WithoutNodeIDReturnsEveryLink(t *testing.T) {
-	s := newTopologyTestServer(t)
-	seedTopology(t, s.db())
+	s, db := newTopologyTestServer(t)
+	seedTopology(t, db)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/links", http.NoBody)
 	w := httptest.NewRecorder()
@@ -280,8 +280,8 @@ func TestHandleTopologyLinks_WithoutNodeIDReturnsEveryLink(t *testing.T) {
 }
 
 func TestHandleTopologyLinks_ReturnsLinksForNode(t *testing.T) {
-	s := newTopologyTestServer(t)
-	nodeID := seedTopology(t, s.db())
+	s, db := newTopologyTestServer(t)
+	nodeID := seedTopology(t, db)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/links?node_id="+nodeID, http.NoBody)
 	w := httptest.NewRecorder()
@@ -319,8 +319,8 @@ func seedARPBindingsForHandler(t *testing.T, db *database.DB) {
 }
 
 func TestHandleTopologyARP_ReturnsBindings(t *testing.T) {
-	s := newTopologyTestServer(t)
-	seedARPBindingsForHandler(t, s.db())
+	s, db := newTopologyTestServer(t)
+	seedARPBindingsForHandler(t, db)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/arp", http.NoBody)
 	w := httptest.NewRecorder()
@@ -342,8 +342,8 @@ func TestHandleTopologyARP_ReturnsBindings(t *testing.T) {
 }
 
 func TestHandleTopologyARP_FilterByNodeID(t *testing.T) {
-	s := newTopologyTestServer(t)
-	seedARPBindingsForHandler(t, s.db())
+	s, db := newTopologyTestServer(t)
+	seedARPBindingsForHandler(t, db)
 
 	req := httptest.NewRequest(http.MethodGet,
 		APIVersionPrefix+"/topology/arp?node_id=node-test-1", http.NoBody)
@@ -363,7 +363,7 @@ func TestHandleTopologyARP_FilterByNodeID(t *testing.T) {
 }
 
 func TestHandleTopologyARP_InvalidSinceReturns400(t *testing.T) {
-	s := newTopologyTestServer(t)
+	s, _ := newTopologyTestServer(t)
 	req := httptest.NewRequest(http.MethodGet,
 		APIVersionPrefix+"/topology/arp?since=garbage", http.NoBody)
 	w := httptest.NewRecorder()
@@ -374,8 +374,8 @@ func TestHandleTopologyARP_InvalidSinceReturns400(t *testing.T) {
 }
 
 func TestHandleTopologyARP_LimitClampsToMax(t *testing.T) {
-	s := newTopologyTestServer(t)
-	seedARPBindingsForHandler(t, s.db())
+	s, db := newTopologyTestServer(t)
+	seedARPBindingsForHandler(t, db)
 
 	req := httptest.NewRequest(http.MethodGet,
 		APIVersionPrefix+"/topology/arp?limit=5000", http.NoBody)
