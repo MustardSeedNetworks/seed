@@ -88,14 +88,14 @@ func DefaultProfilerConfig() *ProfilerConfig {
 		EnableSNMPCollection: true,
 		// Default to interface MIBs for network device discovery
 		SNMPMIBs: &SNMPMIBSelection{
-			System:      true,  // sysDescr, sysName, sysLocation, etc.
-			Interfaces:  true,  // IF-MIB (interface speeds, MACs, status)
-			IPAddresses: true,  // IP-MIB (device IPs)
-			Bridge:      true,  // BRIDGE-MIB (MAC table for switches)
-			VLAN:        true,  // Q-BRIDGE-MIB (VLAN info)
-			LLDP:        true,  // LLDP-MIB (neighbor discovery)
-			Routing:     true,  // IP-FORWARD-MIB, bounded at snmp.MaxRouteRows (seed#2833)
-			Entity:      false, // ENTITY-MIB (disable by default - not always useful)
+			System:      true, // sysDescr, sysName, sysLocation, etc.
+			Interfaces:  true, // IF-MIB (interface speeds, MACs, status)
+			IPAddresses: true, // IP-MIB (device IPs)
+			Bridge:      true, // BRIDGE-MIB (MAC table for switches)
+			VLAN:        true, // Q-BRIDGE-MIB (VLAN info)
+			LLDP:        true, // LLDP-MIB (neighbor discovery)
+			Routing:     true, // IP-FORWARD-MIB, bounded at snmp.MaxRouteRows (seed#2833)
+			Entity:      true, // ENTITY-MIB (model and serial numbers; the lifecycle report needs them)
 		},
 		// Enable automatic name resolution
 		EnableNameResolution:  true,

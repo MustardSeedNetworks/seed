@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/lifecycle-eox-response.schema.json",
+  "$ref": "#/$defs/LifecycleEoXResponse",
+  "$defs": {
+    "EoXRecord": {
+      "properties": {
+        "productId": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "endOfSale": {
+          "type": "string"
+        },
+        "endOfSwMaintenance": {
+          "type": "string"
+        },
+        "endOfSecuritySupport": {
+          "type": "string"
+        },
+        "lastDateOfSupport": {
+          "type": "string"
+        },
+        "bulletin": {
+          "type": "string"
+        },
+        "migrationProductId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "productId"
+      ]
+    },
+    "LifecycleEoXResponse": {
+      "properties": {
+        "records": {
+          "items": {
+            "$ref": "#/$defs/EoXRecord"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "records"
+      ]
+    }
+  },
+  "title": "LifecycleEoXResponse",
+  "description": "LifecycleEoXResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

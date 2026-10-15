@@ -57,6 +57,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 	"github.com/MustardSeedNetworks/seed/internal/ipam"
 	"github.com/MustardSeedNetworks/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/lifecycle"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	logquery "github.com/MustardSeedNetworks/seed/internal/logs/query"
 	"github.com/MustardSeedNetworks/seed/internal/mibdb"
@@ -290,6 +291,7 @@ type Server struct {
 	historyQueries     *history.Service            // Probe/anomaly history read use-case (#175, ADR-0020)
 	vulnTriage         *vulntriage.Service         // Vulnerability-triage use-case (#899, ADR-0020)
 	flows              *flows.Service              // Flow top-N reads and flow settings use-case (ADR-0020)
+	lifecycleEoX       lifecycle.Store             // Imported EoX data for the lifecycle report (P-D9)
 	interfaceStats     *ifstats.Service            // Interface rates read use-case (UI-SEED-21, #3191)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)

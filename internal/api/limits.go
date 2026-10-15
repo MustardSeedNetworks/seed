@@ -18,4 +18,9 @@ const (
 	// MaxBodySizeDefault is the default limit for unspecified endpoints (1 MB).
 	// Safe default for general use.
 	MaxBodySizeDefault int64 = 1 * 1024 * 1024
+
+	// MaxBodySizeEoXImport is for an imported Cisco EoX document (8 MB).
+	// The API spends about 2 KB on each product, and an estate runs to a
+	// few thousand product IDs once its modules and optics are counted.
+	MaxBodySizeEoXImport int64 = 8 * 1024 * 1024
 )

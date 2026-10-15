@@ -1,0 +1,65 @@
+{
+  "PaginationResponseRecord": {
+    "PageIndex": 1,
+    "LastIndex": 1,
+    "TotalRecords": 3,
+    "PageRecords": 3
+  },
+  "EOXRecord": [
+    {
+      "EOLProductID": "WS-C3750X-48P-S",
+      "ProductIDDescription": "Catalyst 3750X 48 Port PoE IP Base",
+      "ProductBulletinNumber": "EOL10425",
+      "LinkToProductBulletinURL": "https://www.cisco.com/c/en/us/products/collateral/switches/catalyst-3750-x-series-switches/eos-eol-notice-c51-736181.html",
+      "EOXExternalAnnouncementDate": {"value": "2015-10-31", "dateFormat": "YYYY-MM-DD"},
+      "EndOfSaleDate": {"value": "2016-10-30", "dateFormat": "YYYY-MM-DD"},
+      "EndOfSWMaintenanceReleases": {"value": "2017-10-30", "dateFormat": "YYYY-MM-DD"},
+      "EndOfSecurityVulSupportDate": {"value": "2019-10-30", "dateFormat": "YYYY-MM-DD"},
+      "EndOfRoutineFailureAnalysisDate": {"value": "2017-10-30", "dateFormat": "YYYY-MM-DD"},
+      "EndOfServiceContractRenewal": {"value": "2021-01-28", "dateFormat": "YYYY-MM-DD"},
+      "LastDateOfSupport": {"value": "2021-10-31", "dateFormat": "YYYY-MM-DD"},
+      "EndOfSvcAttachDate": {"value": "2017-10-30", "dateFormat": "YYYY-MM-DD"},
+      "UpdatedTimeStamp": {"value": "2016-11-07", "dateFormat": "YYYY-MM-DD"},
+      "EOXMigrationDetails": {
+        "PIDActiveFlag": "Y",
+        "MigrationInformation": "Catalyst 3850 48 Port PoE",
+        "MigrationOption": "Enter PID(s)",
+        "MigrationProductId": "WS-C3850-48P-S",
+        "MigrationProductName": "",
+        "MigrationStrategy": "",
+        "MigrationProductInfoURL": ""
+      },
+      "EOXInputType": "ShowEOXByPids",
+      "EOXInputValue": "WS-C3750X-48P-S"
+    },
+    {
+      "EOLProductID": "C9300-48P",
+      "ProductIDDescription": "Catalyst 9300 48-port PoE+, Network Essentials",
+      "ProductBulletinNumber": "EOL99999",
+      "LinkToProductBulletinURL": "https://www.cisco.com/c/en/us/products/eos-eol-notice-example.html",
+      "EOXExternalAnnouncementDate": {"value": "2026-03-01", "dateFormat": "YYYY-MM-DD"},
+      "EndOfSaleDate": {"value": "2026-09-01", "dateFormat": "YYYY-MM-DD"},
+      "EndOfSWMaintenanceReleases": {"value": "2027-09-01", "dateFormat": "YYYY-MM-DD"},
+      "EndOfSecurityVulSupportDate": {"value": "", "dateFormat": null},
+      "LastDateOfSupport": {"value": "2031-09-30", "dateFormat": "YYYY-MM-DD"},
+      "EOXMigrationDetails": {"PIDActiveFlag": "Y", "MigrationProductId": ""},
+      "EOXInputType": "ShowEOXByPids",
+      "EOXInputValue": "C9300-48P"
+    },
+    {
+      "EOLProductID": "",
+      "ProductIDDescription": "",
+      "EndOfSaleDate": {"value": "", "dateFormat": null},
+      "LastDateOfSupport": {"value": "", "dateFormat": null},
+      "EOXMigrationDetails": {"PIDActiveFlag": "", "MigrationProductId": ""},
+      "EOXError": {
+        "ErrorID": "SSA_ERR_026",
+        "ErrorDescription": "EOX information does not exist for the following product ID(s): GLC-TE",
+        "ErrorDataType": "PRODUCT_ID",
+        "ErrorDataValue": "GLC-TE"
+      },
+      "EOXInputType": "ShowEOXByPids",
+      "EOXInputValue": "GLC-TE"
+    }
+  ]
+}

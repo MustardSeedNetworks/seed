@@ -680,6 +680,53 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/LicenseStatusResponse'
+  GET /api/v1/lifecycle/devices:
+    responses:
+      "200":
+        description: >
+          Every part the last discovery inventoried over ENTITY-MIB that has
+          a model name, grouped by device, with where its product stands
+          today against the imported EoX data: not_listed when the data has
+          no record for it, announced before the first milestone, then
+          end_of_sale, end_of_sw_maintenance, end_of_security_support and
+          end_of_support as each date passes.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LifecycleDevicesResponse'
+  GET /api/v1/lifecycle/eox:
+    responses:
+      "200":
+        description: >
+          The imported EoX records, in product ID order. Seed ships none and
+          fetches none; an install with nothing imported returns an empty
+          list.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LifecycleEoXResponse'
+  PUT /api/v1/lifecycle/eox:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            description: >
+              A Cisco EoX API response as downloaded (an object with an
+              EOXRecord array), or an array of them for a query that spanned
+              several pages or calls.
+    responses:
+      "200":
+        description: >
+          The EoX data was replaced; the records now in effect. Records for
+          product IDs Cisco has no data for are skipped, and a response with
+          no records clears the data. A document that is not an EoX response,
+          or carries a date that is not YYYY-MM-DD, is 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LifecycleEoXResponse'
   POST /api/v1/network/mtu:
     requestBody:
       required: true

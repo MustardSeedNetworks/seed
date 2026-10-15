@@ -2708,6 +2708,28 @@ components:
                 - title
                 - level
             type: object
+        EoXRecord:
+            additionalProperties: false
+            properties:
+                bulletin:
+                    type: string
+                description:
+                    type: string
+                endOfSale:
+                    type: string
+                endOfSecuritySupport:
+                    type: string
+                endOfSwMaintenance:
+                    type: string
+                lastDateOfSupport:
+                    type: string
+                migrationProductId:
+                    type: string
+                productId:
+                    type: string
+            required:
+                - productId
+            type: object
         Error:
             properties:
                 code:
@@ -5053,6 +5075,70 @@ components:
                 - canMintTokens
                 - activated
                 - features
+            type: object
+        LifecycleComponent:
+            additionalProperties: false
+            properties:
+                class:
+                    type: string
+                name:
+                    type: string
+                productId:
+                    type: string
+                record:
+                    $ref: '#/components/schemas/EoXRecord'
+                serialNum:
+                    type: string
+                status:
+                    enum:
+                        - not_listed
+                        - announced
+                        - end_of_sale
+                        - end_of_sw_maintenance
+                        - end_of_security_support
+                        - end_of_support
+                    type: string
+            required:
+                - productId
+                - status
+            type: object
+        LifecycleDevice:
+            additionalProperties: false
+            properties:
+                components:
+                    items:
+                        $ref: '#/components/schemas/LifecycleComponent'
+                    type: array
+                ip:
+                    type: string
+                name:
+                    type: string
+            required:
+                - ip
+                - components
+            type: object
+        LifecycleDevicesResponse:
+            additionalProperties: false
+            properties:
+                devices:
+                    items:
+                        $ref: '#/components/schemas/LifecycleDevice'
+                    type: array
+                records:
+                    type: integer
+            required:
+                - records
+                - devices
+            type: object
+        LifecycleEoXResponse:
+            additionalProperties: false
+            properties:
+                records:
+                    items:
+                        $ref: '#/components/schemas/EoXRecord'
+                    type: array
+            required:
+                - records
             type: object
         LinkCard:
             additionalProperties: false
@@ -13870,6 +13956,116 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
+    /api/v1/lifecycle/devices:
+        get:
+            operationId: getApiV1LifecycleDevices
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LifecycleDevicesResponse'
+                    description: |
+                        Every part the last discovery inventoried over ENTITY-MIB that has a model name, grouped by device, with where its product stands today against the imported EoX data: not_listed when the data has no record for it, announced before the first milestone, then end_of_sale, end_of_sw_maintenance, end_of_security_support and end_of_support as each date passes.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+    /api/v1/lifecycle/eox:
+        get:
+            operationId: getApiV1LifecycleEox
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LifecycleEoXResponse'
+                    description: |
+                        The imported EoX records, in product ID order. Seed ships none and fetches none; an install with nothing imported returns an empty list.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+        put:
+            description: Requires an operator-scoped token.
+            operationId: putApiV1LifecycleEox
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            description: |
+                                A Cisco EoX API response as downloaded (an object with an EOXRecord array), or an array of them for a query that spanned several pages or calls.
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LifecycleEoXResponse'
+                    description: |
+                        The EoX data was replaced; the records now in effect. Records for product IDs Cisco has no data for are skipped, and a response with no records clears the data. A document that is not an EoX response, or carries a date that is not YYYY-MM-DD, is 400.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 8388608 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
     /api/v1/network/mtu:
         post:
             description: Requires an operator-scoped token.
