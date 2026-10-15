@@ -205,8 +205,12 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           ENQUEUE: >-
-            mutation($id: ID!) {
-              enqueuePullRequest(input: {pullRequestId: $id, jump: true}) { mergeQueueEntry { position } }
+            mutation($id: ID!, $jump: Boolean!) {
+              enqueuePullRequest(input: {pullRequestId: $id, jump: $jump}) { mergeQueueEntry { position } }
+            }
+          QUEUE_DEPTH: >-
+            query($owner: String!, $name: String!) {
+              repository(owner: $owner, name: $name) { mergeQueue(branch: "main") { entries { totalCount } } }
             }
         run: |
           set -euo pipefail
@@ -287,10 +291,24 @@ jobs:
             exit 0
           fi
           echo "Enqueuing #${pr} at the front of the merge queue"
-          gh api graphql \
-            -f id="$(gh pr view --repo "${GITHUB_REPOSITORY}" "${pr}" --json id --jq .id)" \
-            -f query="${ENQUEUE}" \
-            --jq '"queued at position \(.data.enqueuePullRequest.mergeQueueEntry.position)"'
+          id="$(gh pr view --repo "${GITHUB_REPOSITORY}" "${pr}" --json id --jq .id)"
+          position='"queued at position \(.data.enqueuePullRequest.mergeQueueEntry.position)"'
+          if gh api graphql -f id="${id}" -F jump=true -f query="${ENQUEUE}" --jq "${position}" >/tmp/enqueue.log 2>&1; then
+            cat /tmp/enqueue.log
+            exit 0
+          fi
+          # Probe, to be settled by its first run (#3500): whether the msn-ci-bot
+          # App may jump the queue is unverified. If it may not, the owner grants
+          # it; until then a refusal must not stall releases, and an empty
+          # queue's back is its front.
+          echo "::warning::enqueue with jump refused: $(cat /tmp/enqueue.log)"
+          depth="$(gh api graphql -F owner="${GITHUB_REPOSITORY_OWNER}" -F name="${GITHUB_REPOSITORY#*/}" \
+                     -f query="${QUEUE_DEPTH}" --jq '.data.repository.mergeQueue.entries.totalCount')"
+          if [ "${depth}" -ne 0 ]; then
+            echo "::notice::${depth} PR(s) queued; enqueuing #${pr} behind them would eject it. Waiting."
+            exit 0
+          fi
+          gh api graphql -f id="${id}" -F jump=false -f query="${ENQUEUE}" --jq "${position}"
 
       - name: Output release info
         if: steps.release.outputs.release_created

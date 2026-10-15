@@ -158,7 +158,8 @@ class ReleasePrEnqueue(unittest.TestCase):
         self.step = text[start : end if end != -1 else len(text)]
 
     def test_release_pr_jumps_to_the_front_of_the_queue(self) -> None:
-        self.assertIn("enqueuePullRequest(input: {pullRequestId: $id, jump: true})", self.step)
+        self.assertIn("enqueuePullRequest(input: {pullRequestId: $id, jump: $jump})", self.step)
+        self.assertIn("-F jump=true", self.step)
         self.assertNotIn("gh pr merge", self.step)
 
     def test_release_pr_ci_triggers_the_enqueue(self) -> None:
