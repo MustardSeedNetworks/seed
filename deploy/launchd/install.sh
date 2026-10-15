@@ -92,9 +92,7 @@ echo ""
 # Step 1: Create installation directory
 log_step "1/6 Creating installation directory..."
 mkdir -p "$INSTALL_DIR"
-mkdir -p "$INSTALL_DIR/configs"
 mkdir -p "$INSTALL_DIR/logs"
-mkdir -p "$INSTALL_DIR/data"
 log_info "Created $INSTALL_DIR"
 
 # Step 2: Stop existing service if running
@@ -191,7 +189,9 @@ if launchctl list | grep -q "com.seed"; then
 
         # Check if initial setup is required and display instructions
         log_info "Checking setup status..."
-        if "$INSTALL_DIR/$BINARY_NAME" credentials --config "$INSTALL_DIR/configs/seed.json" --json 2>/dev/null | grep -q '"needs_setup":true'; then
+        # Run as root with no --config, so it resolves the same /etc/seed config
+        # the root daemon uses.
+        if [[ "$("$INSTALL_DIR/$BINARY_NAME" credentials --json 2>/dev/null | plutil -extract needs_setup raw -o - -)" == "true" ]]; then
             echo ""
             log_warn "Initial setup required!"
             log_warn "Visit the web UI to set your admin password: https://localhost:8443"

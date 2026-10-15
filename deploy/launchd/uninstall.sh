@@ -10,6 +10,8 @@ INSTALL_DIR="/usr/local/seed"
 BINARY_NAME="seed"
 PLIST_NAME="com.seed.plist"
 PLIST_PATH="/Library/LaunchDaemons/$PLIST_NAME"
+# Where the root daemon keeps its state (internal/paths system mode).
+DAEMON_DIRS=("/etc/seed" "/var/lib/seed" "/var/log/seed" "/var/cache/seed")
 
 # Colors for output
 RED='\033[0;31m'
@@ -144,10 +146,12 @@ log_step "3/3 Removing files..."
 
 if [[ "$PURGE" == true ]]; then
     log_warn "Purge mode: Removing ALL data including configs and surveys"
-    if [[ -d "$INSTALL_DIR" ]]; then
-        rm -rf "$INSTALL_DIR"
-        log_info "Removed $INSTALL_DIR and all contents"
-    fi
+    for dir in "$INSTALL_DIR" "${DAEMON_DIRS[@]}"; do
+        if [[ -d "$dir" ]]; then
+            rm -rf "$dir"
+            log_info "Removed $dir and all contents"
+        fi
+    done
 else
     # Keep configs, logs, data - just remove binary
     if [[ -f "$INSTALL_DIR/$BINARY_NAME" ]]; then
@@ -157,10 +161,10 @@ else
     fi
 
     if [[ -d "$INSTALL_DIR" ]]; then
-        log_warn "Data preserved in $INSTALL_DIR"
-        log_warn "  - Configs: $INSTALL_DIR/configs/"
-        log_warn "  - Logs:    $INSTALL_DIR/logs/"
-        log_warn "  - Data:    $INSTALL_DIR/data/"
+        log_warn "Data preserved:"
+        log_warn "  - Config: /etc/seed/"
+        log_warn "  - Data:   /var/lib/seed/"
+        log_warn "  - Logs:   $INSTALL_DIR/logs/"
         echo ""
         log_info "To remove all data, run: sudo $0 --purge"
     fi

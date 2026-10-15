@@ -34,7 +34,9 @@ func initUninstallCmd(state *cliState) {
 		Long: `Uninstall Seed and optionally remove all data.
 
 By default, configuration and data files are preserved.
-Use --purge to remove all files including configuration.`,
+Use --purge to remove all files including configuration.
+
+Linux only. On macOS, run 'sudo ./uninstall.sh' from the release archive.`,
 		Example: `  # Remove the system-wide installation (keeps /etc/seed + data)
   sudo seed uninstall --system
 
@@ -252,7 +254,7 @@ func printUninstallComplete(p *paths.Paths, purge bool) {
 
 func runUninstall(cmd *cobra.Command, _ []string, _ *cliState) {
 	if runtime.GOOS != "linux" {
-		fmt.Fprintf(os.Stderr, "Error: uninstall command is only supported on Linux\n")
+		fmt.Fprint(os.Stderr, unsupportedServiceMessage("uninstall", runtime.GOOS))
 		os.Exit(1)
 	}
 

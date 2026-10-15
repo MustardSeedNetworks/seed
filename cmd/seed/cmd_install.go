@@ -37,7 +37,10 @@ This command will:
 3. Copy the binary to the install location
 4. Set capabilities for raw socket access
 5. Install and enable the systemd service
-6. Create a default configuration file if needed`,
+6. Create a default configuration file if needed
+
+Linux only. On macOS, run 'sudo ./install.sh' from the release archive,
+which installs Seed as a launchd daemon.`,
 		Example: `  # System-wide install (Linux, requires root)
   sudo seed install --system
 
@@ -254,6 +257,16 @@ func createDefaultConfig(configDir string) {
 	}
 }
 
+// unsupportedServiceMessage refuses the systemd-based install and uninstall
+// commands off Linux, naming the launchd script the darwin archive ships.
+func unsupportedServiceMessage(command, goos string) string {
+	msg := "Error: " + command + " command is only supported on Linux"
+	if goos == "darwin" {
+		msg += "; on macOS run 'sudo ./" + command + ".sh' from the release archive"
+	}
+	return msg + "\n"
+}
+
 // printCompletionMessage displays post-installation instructions.
 func printCompletionMessage(mode paths.Mode) {
 	fmt.Fprintln(os.Stdout, "\n[ok] Installation complete!")
@@ -269,7 +282,7 @@ func printCompletionMessage(mode paths.Mode) {
 
 func runInstall(cmd *cobra.Command, _ []string, _ *cliState) {
 	if runtime.GOOS != "linux" {
-		fmt.Fprintf(os.Stderr, "Error: install command is only supported on Linux\n")
+		fmt.Fprint(os.Stderr, unsupportedServiceMessage("install", runtime.GOOS))
 		os.Exit(1)
 	}
 

@@ -143,6 +143,22 @@ archives:
         dst: configs
       - src: internal/api/ui
         dst: ui
+      # `seed install` is systemd-only; these install the launchd daemon.
+      # install.sh copies com.seed.plist from its own directory.
+      - src: deploy/launchd/com.seed.plist
+        dst: com.seed.plist
+      - src: deploy/launchd/install.sh
+        dst: install.sh
+        info:
+          mode: 0o755
+      - src: deploy/launchd/uninstall.sh
+        dst: uninstall.sh
+        info:
+          mode: 0o755
+      - src: deploy/launchd/upgrade.sh
+        dst: upgrade.sh
+        info:
+          mode: 0o755
 
   - id: windows-archive
     ids: [seed-windows]

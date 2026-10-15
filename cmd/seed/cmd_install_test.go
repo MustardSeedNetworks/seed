@@ -206,3 +206,33 @@ func containsSubstringHelper(s, substr string) bool {
 	}
 	return false
 }
+
+func TestUnsupportedServiceMessage(t *testing.T) {
+	const macHint = " from the release archive\n"
+	tests := []struct {
+		command, goos, want string
+	}{
+		{
+			command: "install",
+			goos:    "darwin",
+			want:    "Error: install command is only supported on Linux; on macOS run 'sudo ./install.sh'" + macHint,
+		},
+		{
+			command: "uninstall",
+			goos:    "darwin",
+			want:    "Error: uninstall command is only supported on Linux; on macOS run 'sudo ./uninstall.sh'" + macHint,
+		},
+		{
+			command: "install",
+			goos:    "windows",
+			want:    "Error: install command is only supported on Linux\n",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.command+"/"+tt.goos, func(t *testing.T) {
+			if got := unsupportedServiceMessage(tt.command, tt.goos); got != tt.want {
+				t.Errorf("unsupportedServiceMessage(%q, %q) = %q, want %q", tt.command, tt.goos, got, tt.want)
+			}
+		})
+	}
+}

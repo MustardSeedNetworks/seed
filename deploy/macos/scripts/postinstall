@@ -28,9 +28,7 @@ log() {
 log "Starting post-install for Seed..."
 
 # Ensure directories exist
-mkdir -p "$INSTALL_DIR/configs"
 mkdir -p "$INSTALL_DIR/logs"
-mkdir -p "$INSTALL_DIR/data"
 
 # Set proper ownership
 chown -R root:wheel "$INSTALL_DIR"
