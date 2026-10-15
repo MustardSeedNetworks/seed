@@ -98,9 +98,55 @@
     },
     "database": {
       "$ref": "#/$defs/DatabaseConfig"
+    },
+    "lifecycle": {
+      "$ref": "#/$defs/LifecycleConfig"
     }
   },
   "$defs": {
+    "LifecycleConfig": {
+      "type": "object",
+      "description": "End-of-life tracking for inventoried hardware",
+      "additionalProperties": false,
+      "properties": {
+        "eox_feed": {
+          "$ref": "#/$defs/EoXFeedConfig"
+        }
+      }
+    },
+    "EoXFeedConfig": {
+      "type": "object",
+      "description": "Opt-in Cisco EoX feed. An unanswered or off feed makes no outbound request",
+      "additionalProperties": false,
+      "properties": {
+        "choice": {
+          "type": "string",
+          "enum": ["", "off", "on"],
+          "description": "The operator's answer; empty means not asked yet, which fetches nothing",
+          "default": ""
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "https base URL of the EoX API; empty means Cisco's",
+          "default": ""
+        },
+        "token_url": {
+          "type": "string",
+          "description": "https OAuth token URL for the client credentials; empty means Cisco's",
+          "default": ""
+        },
+        "client_id": {
+          "type": "string",
+          "description": "OAuth client ID for the EoX API",
+          "default": ""
+        },
+        "client_secret": {
+          "type": "string",
+          "description": "OAuth client secret held as keyring ciphertext (enc: prefix); never stored or served in plaintext",
+          "default": ""
+        }
+      }
+    },
     "Duration": {
       "oneOf": [
         {

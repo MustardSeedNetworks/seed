@@ -243,6 +243,8 @@ func Targets() []Target {
 		{&api.IPAMSubnetsResponse{}, "ipam-subnets-response.schema.json"},
 		{&api.LifecycleEoXResponse{}, "lifecycle-eox-response.schema.json"},
 		{&api.LifecycleDevicesResponse{}, "lifecycle-devices-response.schema.json"},
+		{&api.LifecycleFeedResponse{}, "lifecycle-feed-response.schema.json"},
+		{&api.LifecycleFeedUpdate{}, "lifecycle-feed-update.schema.json"},
 		{&api.IPAMScopeRequest{}, "ipam-scope-request.schema.json"},
 
 		// Profile envelope DTOs. The backend treats the per-profile Config as an

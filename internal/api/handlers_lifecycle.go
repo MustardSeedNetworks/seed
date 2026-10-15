@@ -11,6 +11,7 @@ import (
 
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
@@ -19,8 +20,9 @@ import (
 )
 
 // handlers_lifecycle.go serves end-of-life tracking for inventoried hardware
-// (P-D9). The operator imports Cisco's EoX data as a file; Seed never fetches
-// it, so an air-gapped install stays silent.
+// (P-D9). The operator imports Cisco's EoX data as a file, or turns on the
+// feed that fetches it. The feed is off until an admin answers on, so an
+// air-gapped install stays silent.
 
 // LifecycleEoXResponse is the imported EoX table, in product ID order.
 type LifecycleEoXResponse struct {
@@ -53,8 +55,54 @@ type LifecycleDevicesResponse struct {
 	Devices []LifecycleDevice `json:"devices"`
 }
 
+// LifecycleFeedResponse is GET /api/v1/lifecycle/feed. Choice "unanswered"
+// means the operator has not been asked yet, and the feed is off until they
+// answer on. The client secret is never served.
+type LifecycleFeedResponse struct {
+	Choice          lifecycle.Choice `json:"choice"          jsonschema:"enum=unanswered,enum=off,enum=on"`
+	Endpoint        string           `json:"endpoint"`
+	TokenURL        string           `json:"tokenUrl"`
+	ClientID        string           `json:"clientId"`
+	HasClientSecret bool             `json:"hasClientSecret"`
+	// LastAttempt, LastSuccess and LastError describe the last refresh since
+	// the daemon started; absent when none has run.
+	LastAttempt *time.Time `json:"lastAttempt,omitempty"`
+	LastSuccess *time.Time `json:"lastSuccess,omitempty"`
+	LastError   string     `json:"lastError,omitempty"`
+	// Fetched is how many products the last successful refresh returned.
+	Fetched int `json:"fetched"`
+}
+
+// LifecycleFeedUpdate is the PUT body: the whole feed setting. Choice answers
+// the question; it cannot be set back to unanswered. Empty endpoint and
+// tokenUrl mean Cisco's. An empty clientSecret keeps the stored one;
+// clearClientSecret removes it.
+type LifecycleFeedUpdate struct {
+	Choice            lifecycle.Choice `json:"choice"                      jsonschema:"enum=off,enum=on"`
+	Endpoint          string           `json:"endpoint,omitempty"`
+	TokenURL          string           `json:"tokenUrl,omitempty"`
+	ClientID          string           `json:"clientId,omitempty"`
+	ClientSecret      string           `json:"clientSecret,omitempty"`
+	ClearClientSecret bool             `json:"clearClientSecret,omitempty"`
+}
+
+// lifecycleFeedSettings is the feed's settings use-case.
+type lifecycleFeedSettings interface {
+	Settings() lifecycle.FeedSettings
+	Update(u lifecycle.FeedUpdate) error
+}
+
 func (s *Server) lifecycleRoutes() []route.Route {
 	return []route.Route{
+		{
+			Path:         APIVersionPrefix + "/lifecycle/feed",
+			Handler:      s.handleLifecycleFeed,
+			Methods:      []string{http.MethodGet, http.MethodPut},
+			Scope:        roles.Admin,
+			MaxBodyBytes: MaxBodySizeConfig,
+			Auth:         true,
+			CSRF:         true,
+		},
 		{
 			Path:         APIVersionPrefix + "/lifecycle/eox",
 			Handler:      s.handleLifecycleEoX,
@@ -110,6 +158,98 @@ func (s *Server) handleLifecycleEoX(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sendJSONResponse(w, logger, http.StatusOK, LifecycleEoXResponse{Records: table.Records()})
+}
+
+// handleLifecycleFeed serves /api/v1/lifecycle/feed: GET reads the feed
+// settings and the last refresh, PUT records the admin's answer and settings
+// and, when the answer is on, asks for a refresh now. Admin only: turning it
+// on makes Seed call out, with credentials it holds.
+func (s *Server) handleLifecycleFeed(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	if r.Method == http.MethodPut {
+		var in LifecycleFeedUpdate
+		if !decodeJSONStrict(w, r, &in, MaxBodySizeConfig) {
+			return
+		}
+		err := s.lifecycleFeed.Update(lifecycle.FeedUpdate{
+			Choice:            in.Choice,
+			Endpoint:          strings.TrimSpace(in.Endpoint),
+			TokenURL:          strings.TrimSpace(in.TokenURL),
+			ClientID:          strings.TrimSpace(in.ClientID),
+			ClientSecret:      strings.TrimSpace(in.ClientSecret),
+			ClearClientSecret: in.ClearClientSecret,
+		})
+		if errors.Is(err, lifecycle.ErrInvalidFeed) {
+			writeError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
+			return
+		}
+		if err != nil {
+			lifecycleFailed(w, r, err)
+			return
+		}
+		logger.InfoContext(r.Context(), "EoX feed settings changed",
+			"event", "lifecycle.feed.updated", "choice", in.Choice, "user", usernameFromContext(r))
+		if in.Choice == lifecycle.ChoiceOn && s.lifecycleRefresher != nil {
+			s.lifecycleRefresher.Wake()
+		}
+	}
+
+	settings := s.lifecycleFeed.Settings()
+	resp := LifecycleFeedResponse{
+		Choice:          settings.Choice,
+		Endpoint:        settings.Endpoint,
+		TokenURL:        settings.TokenURL,
+		ClientID:        settings.ClientID,
+		HasClientSecret: settings.HasClientSecret,
+	}
+	if s.lifecycleRefresher != nil {
+		status := s.lifecycleRefresher.Status()
+		if !status.LastAttempt.IsZero() {
+			resp.LastAttempt = &status.LastAttempt
+			resp.LastError = status.LastError
+		}
+		if !status.LastSuccess.IsZero() {
+			resp.LastSuccess = &status.LastSuccess
+		}
+		resp.Fetched = status.Fetched
+	}
+	sendJSONResponse(w, logger, http.StatusOK, resp)
+}
+
+// initLifecycleFeed builds the feed settings and registers the refresher,
+// which asks about the inventory only while the feed is on.
+func (s *Server) initLifecycleFeed() {
+	feed := app.NewLifecycleFeed(s.config, s.configPath)
+	s.lifecycleFeed = feed
+	s.lifecycleRefresher = lifecycle.NewRefresher(feed, s.inventoryProductIDs, s.lifecycleEoX,
+		lifecycle.NewFetcher(nil), lifecycle.RefreshInterval, logging.GetLogger())
+	if err := s.registerEngineIfLicensed(s.lifecycleRefresher); err != nil {
+		logging.GetLogger().Warn("lifecycle feed engine registration failed", "error", err)
+	}
+}
+
+// inventoryProductIDs lists every distinct model name the last discovery
+// inventoried, in order.
+func (s *Server) inventoryProductIDs() []string {
+	if s.deviceDiscovery() == nil {
+		return nil
+	}
+	seen := map[string]bool{}
+	var out []string
+	for _, device := range s.deviceDiscovery().GetDevices() {
+		if device.SNMPData == nil {
+			continue
+		}
+		for _, entity := range device.SNMPData.Inventory {
+			id := strings.ToUpper(strings.TrimSpace(entity.ModelName))
+			if id != "" && !seen[id] {
+				seen[id] = true
+				out = append(out, id)
+			}
+		}
+	}
+	slices.Sort(out)
+	return out
 }
 
 // handleLifecycleDevices reports every part the last discovery inventoried

@@ -30,6 +30,7 @@ export interface Config {
   database: DatabaseConfig;
   link?: LinkConfig;
   cableTest?: CableTestConfig;
+  lifecycle?: LifecycleConfig;
 }
 export interface ServerConfig {
   port: number;
@@ -469,4 +470,14 @@ export interface LinkConfig {
 }
 export interface CableTestConfig {
   enabled: boolean;
+}
+export interface LifecycleConfig {
+  eox_feed?: EoXFeedConfig;
+}
+export interface EoXFeedConfig {
+  choice?: string;
+  endpoint?: string;
+  token_url?: string;
+  client_id?: string;
+  client_secret?: string;
 }

@@ -703,6 +703,38 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/LicenseStatusResponse'
+  GET /api/v1/lifecycle/feed:
+    responses:
+      "200":
+        description: >
+          The opt-in EoX feed's settings and its last refresh. Choice
+          unanswered means the operator has not been asked yet; the feed is
+          off until an admin answers on, and off makes no outbound request.
+          The client secret is never served; hasClientSecret says whether
+          one is stored.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LifecycleFeedResponse'
+  PUT /api/v1/lifecycle/feed:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LifecycleFeedUpdate'
+    responses:
+      "200":
+        description: >
+          The answer and settings were saved; the settings now in effect. On
+          asks the Cisco EoX API about every inventoried product ID now and
+          then daily, merging what it returns into the EoX data. A setting
+          that could never fetch (on against Cisco without a client ID and
+          secret, an endpoint that is not https) is 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LifecycleFeedResponse'
   GET /api/v1/lifecycle/devices:
     responses:
       "200":
@@ -721,9 +753,9 @@ operations:
     responses:
       "200":
         description: >
-          The imported EoX records, in product ID order. Seed ships none and
-          fetches none; an install with nothing imported returns an empty
-          list.
+          The EoX records, imported or fetched by the opt-in feed, in product
+          ID order. Seed ships none; an install with nothing imported and the
+          feed off returns an empty list.
         content:
           application/json:
             schema:

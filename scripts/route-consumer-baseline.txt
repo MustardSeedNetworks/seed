@@ -40,6 +40,7 @@
 /api/v1/ipam/scopes                       # scheduled: UI #3440 enters scopes; P-D5 slice 2 (#3439) backend landed first
 /api/v1/lifecycle/devices                 # scheduled: UI #3460; P-D9 backend (#3459) landed first, API-driven until then
 /api/v1/lifecycle/eox                     # scheduled: UI #3460 imports the file; P-D9 backend (#3459) landed first
+/api/v1/lifecycle/feed                    # scheduled: UI #3460 asks the first-run question and holds the Settings toggle; P-D9 backend (#3459) landed first
 /api/v1/path/traceroute                   # scheduled: Wave 4 path cluster (#165 #395 #435), one traceroute engine
 /api/v1/reporting/logs/query              # PAT-only allow-list (owner 2026-09-04)
 /api/v1/security/discovery/fingerprint    # scheduled: S4-5 #2456 reuses it (owner 2026-09-24, keep and reuse); operator+ and rate limited (#2635)

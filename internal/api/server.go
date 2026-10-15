@@ -292,6 +292,8 @@ type Server struct {
 	vulnTriage         *vulntriage.Service         // Vulnerability-triage use-case (#899, ADR-0020)
 	flows              *flows.Service              // Flow top-N reads and flow settings use-case (ADR-0020)
 	lifecycleEoX       lifecycle.Store             // Imported EoX data for the lifecycle report (P-D9)
+	lifecycleFeed      lifecycleFeedSettings       // Opt-in EoX feed settings (P-D9)
+	lifecycleRefresher *lifecycle.Refresher        // Fetches EoX data while the feed is on (P-D9)
 	interfaceStats     *ifstats.Service            // Interface rates read use-case (UI-SEED-21, #3191)
 	ipSLA              *sla.Service                // IP-SLA operations and trend read use-case (P-D8, #3463)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)

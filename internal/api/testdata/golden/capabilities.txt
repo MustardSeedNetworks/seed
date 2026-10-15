@@ -1971,6 +1971,18 @@ body:
   {
     "auth": true,
     "csrf": true,
+    "maxBodyBytes": 65536,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
+    "path": "/api/v1/lifecycle/feed",
+    "rateLimited": false,
+    "scope": "admin"
+  },
+  {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 8388608,
     "methods": [
       "GET",
