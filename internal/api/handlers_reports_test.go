@@ -69,8 +69,13 @@ func reportsTestServerOn(t *testing.T, cfg *config.Config, configPath string, db
 	// persisted schedules.
 	rep := app.NewReporting(cfg, app.NewPersistence(db))
 	require.NoError(t, rep.Load(t.Context()))
-	s := api.NewServer(cfg, configPath, "", nil, false, nil, app.NewPersistence(db), &api.BackgroundComponents{
-		Reporting: rep,
+	s := api.MustNewServer(t, api.Deps{
+		Config:      cfg,
+		ConfigPath:  configPath,
+		Persistence: app.NewPersistence(db),
+		Background: &api.BackgroundComponents{
+			Reporting: rep,
+		},
 	})
 
 	// Reports are gated on export_csv_json, which is Starter+. A test server
@@ -103,8 +108,13 @@ const reportsOperator = "reports-operator"
 func TestReports_FeatureGatedOnFreeTier(t *testing.T) {
 	cfg, configPath := reportsTestConfig(t)
 	db := reportsTestDB(t)
-	s := api.NewServer(cfg, configPath, "", nil, false, nil, app.NewPersistence(db), &api.BackgroundComponents{
-		Reporting: app.NewReporting(cfg, app.NewPersistence(db)),
+	s := api.MustNewServer(t, api.Deps{
+		Config:      cfg,
+		ConfigPath:  configPath,
+		Persistence: app.NewPersistence(db),
+		Background: &api.BackgroundComponents{
+			Reporting: app.NewReporting(cfg, app.NewPersistence(db)),
+		},
 	})
 
 	// An unactivated manager over a temp dir, so this asserts Free-tier
@@ -149,7 +159,10 @@ func reportsDo(t *testing.T, s *api.Server, method, path, body string) *httptest
 // reporting is optional at construction, so every handler resolves it first.
 func TestReports_UnavailableWithoutReportingService(t *testing.T) {
 	cfg, configPath := reportsTestConfig(t)
-	s := api.NewServer(cfg, configPath, "", nil, false, nil, nil, nil)
+	s := api.MustNewServer(t, api.Deps{
+		Config:     cfg,
+		ConfigPath: configPath,
+	})
 
 	rec := reportsDo(t, s, http.MethodGet, "/api/v1/reports", "")
 

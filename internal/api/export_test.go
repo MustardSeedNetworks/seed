@@ -609,3 +609,14 @@ func IssueSetupToken(t *testing.T, s *Server) string {
 	}
 	return strings.TrimSpace(string(raw))
 }
+
+// MustNewServer builds a Server from d and fails the test on a construction
+// error; it registers no cleanup, so the caller still owns Close.
+func MustNewServer(t testing.TB, d Deps) *Server {
+	t.Helper()
+	s, err := NewServer(d)
+	if err != nil {
+		t.Fatalf("NewServer: %v", err)
+	}
+	return s
+}

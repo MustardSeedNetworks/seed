@@ -76,7 +76,12 @@ func newProfileRouterFixture(t *testing.T) *profileRouterFixture {
 		t.Logf("warning: network manager: %v", err)
 	}
 
-	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, app.NewPersistence(db), nil)
+	server := api.MustNewServer(t, api.Deps{
+		Config:      cfg,
+		ConfigPath:  configPath,
+		NetManager:  netMgr,
+		Persistence: app.NewPersistence(db),
+	})
 	t.Cleanup(server.Close)
 	server.AuthManager().SetUserStore(database.NewUserStoreAdapter(db))
 

@@ -106,7 +106,12 @@ func newFullChainServer(t *testing.T) *testEndpointServer {
 		t.Logf("warning: network manager: %v", err)
 	}
 
-	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, app.NewPersistence(db), nil)
+	server := api.MustNewServer(t, api.Deps{
+		Config:      cfg,
+		ConfigPath:  configPath,
+		NetManager:  netMgr,
+		Persistence: app.NewPersistence(db),
+	})
 
 	ln, err := net.Listen("tcp4", "127.0.0.1:0")
 	if err != nil {

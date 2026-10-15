@@ -27,8 +27,12 @@ func TestNewServerWiresTheDatabaseServices(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().WithAuth("admin", adminHash).Build()
 	cfg.Database.RetentionDays = 0
 
-	s := NewServer(cfg, filepath.Join(t.TempDir(), "seed.json"), "",
-		netif.NewMockManager(netif.DefaultMockConfig()), false, nil, app.NewPersistence(db), nil)
+	s := MustNewServer(t, Deps{
+		Config:      cfg,
+		ConfigPath:  filepath.Join(t.TempDir(), "seed.json"),
+		NetManager:  netif.NewMockManager(netif.DefaultMockConfig()),
+		Persistence: app.NewPersistence(db),
+	})
 	t.Cleanup(s.Close)
 
 	if _, err := db.GetUser(t.Context(), "admin"); err != nil {
@@ -57,8 +61,11 @@ func TestNewServerWiresTheDatabaseServices(t *testing.T) {
 func TestNewServerWithoutDatabaseSkipsTheDatabaseServices(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
 
-	s := NewServer(cfg, filepath.Join(t.TempDir(), "seed.json"), "",
-		netif.NewMockManager(netif.DefaultMockConfig()), false, nil, nil, nil)
+	s := MustNewServer(t, Deps{
+		Config:     cfg,
+		ConfigPath: filepath.Join(t.TempDir(), "seed.json"),
+		NetManager: netif.NewMockManager(netif.DefaultMockConfig()),
+	})
 	t.Cleanup(s.Close)
 
 	if s.MibDB() != nil || s.snmpCreds != nil || s.retentionEngine != nil || s.snmpPoller != nil {

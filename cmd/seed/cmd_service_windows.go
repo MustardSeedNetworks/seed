@@ -95,12 +95,26 @@ func (p *seedProgram) run() {
 	// Initialize components
 	p.components = initializeBackgroundComponentsForService(cfg, persist)
 
-	p.server = api.NewServer(cfg, configPath, logPath, netMgr, true, proxies, persist, p.components)
+	server, err := api.NewServer(api.Deps{
+		Config:         cfg,
+		ConfigPath:     configPath,
+		LogPath:        logPath,
+		NetManager:     netMgr,
+		ICMPAvailable:  true,
+		TrustedProxies: proxies,
+		Persistence:    persist,
+		Background:     p.components,
+	})
+	if err != nil {
+		logging.GetLogger().Error("Failed to build the server", "error", err)
+		return
+	}
+	p.server = server
 
 	// Start components
 	ctx := context.Background()
 	if p.components != nil {
-		if err := p.components.Start(ctx); err != nil {
+		if err = p.components.Start(ctx); err != nil {
 			logging.GetLogger().Error("Failed to start components", "error", err)
 			return
 		}
@@ -116,7 +130,7 @@ func (p *seedProgram) run() {
 
 	// Wait for stop signal or server error
 	select {
-	case err := <-serverErrors:
+	case err = <-serverErrors:
 		if err != nil {
 			logging.GetLogger().Error("Server error", "error", err)
 		}

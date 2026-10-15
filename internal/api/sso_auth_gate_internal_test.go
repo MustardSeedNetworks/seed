@@ -46,7 +46,12 @@ func ssoGateServer(t *testing.T) *Server {
 		{Name: "google", Enabled: false, ClientID: "original-client-id"},
 	}
 	netMgr := netif.NewMockManager(netif.DefaultMockConfig())
-	s := NewServer(cfg, filepath.Join(dir, "seed.json"), "", netMgr, false, nil, app.NewPersistence(db), nil)
+	s := MustNewServer(t, Deps{
+		Config:      cfg,
+		ConfigPath:  filepath.Join(dir, "seed.json"),
+		NetManager:  netMgr,
+		Persistence: app.NewPersistence(db),
+	})
 	t.Cleanup(s.Close)
 
 	// /sso/update is Pro-gated as well as operator-gated, and ADR-0002 composes

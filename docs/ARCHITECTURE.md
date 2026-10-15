@@ -129,13 +129,15 @@
 
 ## Key Packages
 
-### HTTP API Layer (`internal/httpapi/`)
+### HTTP API Layer (`internal/api/`)
 
-- `server.go` - Server initialization, routes, middleware
-- `services.go` - ServiceContainer dependency injection
+- `server.go` - `Server`, its `Deps` and the `NewServer` constructor
+- `server_wiring.go`, `server_init.go` - the service wiring `NewServer` composes
+- `server_accessors.go` - service accessors
+- `server_routes*.go`, `server_middleware.go` - routes and middleware
+- `server_lifecycle.go`, `server_shutdown.go` - start, HTTPS and shutdown
 - `handlers_*.go` - Request handlers by domain
-- `sse.go` - Server-Sent Events for real-time updates
-- `websocket.go` - WebSocket support (deprecated, prefer SSE)
+- `handlers_sse.go` - Server-Sent Events for real-time updates
 
 ### Discovery System (`internal/discovery/`)
 
