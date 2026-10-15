@@ -3906,6 +3906,50 @@ components:
                 - avgRtt
                 - jitter
             type: object
+        IPAMSubnet:
+            additionalProperties: false
+            properties:
+                cidr:
+                    type: string
+                free:
+                    type: integer
+                inUse:
+                    items:
+                        type: string
+                    type: array
+                name:
+                    type: string
+                size:
+                    type: integer
+                source:
+                    enum:
+                        - local
+                        - configured
+                        - learned
+                    type: string
+                used:
+                    type: integer
+                utilizationPct:
+                    type: number
+            required:
+                - cidr
+                - source
+                - size
+                - used
+                - free
+                - utilizationPct
+                - inUse
+            type: object
+        IPAMSubnetsResponse:
+            additionalProperties: false
+            properties:
+                subnets:
+                    items:
+                        $ref: '#/components/schemas/IPAMSubnet'
+                    type: array
+            required:
+                - subnets
+            type: object
         IPConfig:
             additionalProperties: false
             properties:
@@ -13416,6 +13460,35 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/CategorizedInterfacesResponse'
                     description: The usable interfaces split into the Ethernet and Wi-Fi lists, with the recommended interface of each.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+    /api/v1/ipam/subnets:
+        get:
+            operationId: getApiV1IpamSubnets
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IPAMSubnetsResponse'
+                    description: |
+                        The address utilization of the active interface's subnet and of every target network an operator has not dismissed. An address counts as in use when the last sweep found it or a router's ARP table held it in the last 24 hours. IPv6 networks are not listed.
                 "401":
                     content:
                         application/json:

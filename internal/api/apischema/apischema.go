@@ -240,6 +240,7 @@ func Targets() []Target {
 		{&api.WiFiDiscoveryAPsResponse{}, "wifi-discovery-aps-response.schema.json"},
 		{&api.WiFiDiscoveryStatsResponse{}, "wifi-discovery-stats-response.schema.json"},
 		{&api.PathResponse{}, "path-response.schema.json"},
+		{&api.IPAMSubnetsResponse{}, "ipam-subnets-response.schema.json"},
 
 		// Profile envelope DTOs. The backend treats the per-profile Config as an
 		// opaque JSON blob (json.RawMessage) — it only ever inspects the

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/ipam-subnets-response.schema.json",
+  "$ref": "#/$defs/IPAMSubnetsResponse",
+  "$defs": {
+    "IPAMSubnet": {
+      "properties": {
+        "cidr": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "local",
+            "configured",
+            "learned"
+          ]
+        },
+        "size": {
+          "type": "integer"
+        },
+        "used": {
+          "type": "integer"
+        },
+        "free": {
+          "type": "integer"
+        },
+        "utilizationPct": {
+          "type": "number"
+        },
+        "inUse": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "cidr",
+        "source",
+        "size",
+        "used",
+        "free",
+        "utilizationPct",
+        "inUse"
+      ]
+    },
+    "IPAMSubnetsResponse": {
+      "properties": {
+        "subnets": {
+          "items": {
+            "$ref": "#/$defs/IPAMSubnet"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "subnets"
+      ]
+    }
+  },
+  "title": "IPAMSubnetsResponse",
+  "description": "IPAMSubnetsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
