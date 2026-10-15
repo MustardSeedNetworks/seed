@@ -131,13 +131,23 @@ func (s *Service) Get(ctx context.Context, clientID, id string) (Group, error) {
 	return s.store.Get(ctx, clientID, id)
 }
 
-// Summary returns the group's dashboard read.
-func (s *Service) Summary(ctx context.Context, clientID, id string) (Summary, error) {
+// Members returns the group and its members' polling targets, ordered by
+// name.
+func (s *Service) Members(ctx context.Context, clientID, id string) (Group, []polling.Target, error) {
 	g, err := s.store.Get(ctx, clientID, id)
 	if err != nil {
-		return Summary{}, err
+		return Group{}, nil, err
 	}
 	targets, err := s.store.MemberTargets(ctx, g.ID)
+	if err != nil {
+		return Group{}, nil, err
+	}
+	return g, targets, nil
+}
+
+// Summary returns the group's dashboard read.
+func (s *Service) Summary(ctx context.Context, clientID, id string) (Summary, error) {
+	g, targets, err := s.Members(ctx, clientID, id)
 	if err != nil {
 		return Summary{}, err
 	}

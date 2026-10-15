@@ -185,7 +185,7 @@
     "listFailed": "Failed to list reports",
     "generateFailed": "Failed to generate report",
     "invalidRequest": "Unknown report type or format",
-    "groupNeedsCapacity": "A device-group filter applies only to the capacity report",
+    "groupUnsupported": "A device-group filter applies only to the capacity and summary reports",
     "invalidID": "Missing or invalid report id",
     "notFound": "Report not found",
     "notReady": "Report file is not available yet",

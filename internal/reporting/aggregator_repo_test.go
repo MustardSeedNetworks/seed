@@ -52,20 +52,26 @@ func (f *fakeMetricsRepo) Trends(context.Context, string, string) ([]reporting.D
 }
 
 func (f *fakeMetricsRepo) InterfaceHealth(
-	context.Context, reporting.DateRange,
+	context.Context, reporting.DateRange, *reporting.GroupScope,
 ) ([]reporting.InterfaceHealth, error) {
 	return f.interfaces, nil
 }
 
-func (f *fakeMetricsRepo) AlertSeverityCounts(context.Context, reporting.DateRange) (map[string]int, int, error) {
+func (f *fakeMetricsRepo) AlertSeverityCounts(
+	context.Context, reporting.DateRange, *reporting.GroupScope,
+) (map[string]int, int, error) {
 	return f.alerts, f.openAlerts, nil
 }
 
-func (f *fakeMetricsRepo) TopologyChanges(context.Context, reporting.DateRange) (reporting.TopologyChanges, error) {
+func (f *fakeMetricsRepo) TopologyChanges(
+	context.Context, reporting.DateRange, *reporting.GroupScope,
+) (reporting.TopologyChanges, error) {
 	return f.topology, nil
 }
 
-func (f *fakeMetricsRepo) ProbeOutcomes(context.Context, reporting.DateRange) ([]reporting.ProbeOutcome, error) {
+func (f *fakeMetricsRepo) ProbeOutcomes(
+	context.Context, reporting.DateRange, *reporting.GroupScope,
+) ([]reporting.ProbeOutcome, error) {
 	return f.probes, nil
 }
 

@@ -185,7 +185,7 @@
     "listFailed": "No se pudieron listar los informes",
     "generateFailed": "No se pudo generar el informe",
     "invalidRequest": "Tipo o formato de informe desconocido",
-    "groupNeedsCapacity": "El filtro de grupo de dispositivos solo se aplica al informe de capacidad",
+    "groupUnsupported": "El filtro de grupo de dispositivos solo se aplica a los informes de capacidad y de resumen",
     "invalidID": "Falta el id del informe o no es válido",
     "notFound": "Informe no encontrado",
     "notReady": "El archivo del informe aún no está disponible",

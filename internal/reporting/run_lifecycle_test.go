@@ -185,19 +185,27 @@ func (nopMetricsRepo) Trends(context.Context, string, string) ([]reporting.DataP
 	return nil, nil
 }
 
-func (nopMetricsRepo) InterfaceHealth(context.Context, reporting.DateRange) ([]reporting.InterfaceHealth, error) {
+func (nopMetricsRepo) InterfaceHealth(
+	context.Context, reporting.DateRange, *reporting.GroupScope,
+) ([]reporting.InterfaceHealth, error) {
 	return nil, nil
 }
 
-func (nopMetricsRepo) AlertSeverityCounts(context.Context, reporting.DateRange) (map[string]int, int, error) {
+func (nopMetricsRepo) AlertSeverityCounts(
+	context.Context, reporting.DateRange, *reporting.GroupScope,
+) (map[string]int, int, error) {
 	return map[string]int{}, 0, nil
 }
 
-func (nopMetricsRepo) TopologyChanges(context.Context, reporting.DateRange) (reporting.TopologyChanges, error) {
+func (nopMetricsRepo) TopologyChanges(
+	context.Context, reporting.DateRange, *reporting.GroupScope,
+) (reporting.TopologyChanges, error) {
 	return reporting.TopologyChanges{}, nil
 }
 
-func (nopMetricsRepo) ProbeOutcomes(context.Context, reporting.DateRange) ([]reporting.ProbeOutcome, error) {
+func (nopMetricsRepo) ProbeOutcomes(
+	context.Context, reporting.DateRange, *reporting.GroupScope,
+) ([]reporting.ProbeOutcome, error) {
 	return nil, nil
 }
 
