@@ -114,7 +114,7 @@ func (p *seedProgram) run() {
 	// Start components
 	ctx := context.Background()
 	if p.components != nil {
-		if err := p.components.Start(ctx); err != nil {
+		if err = p.components.Start(ctx); err != nil {
 			logging.GetLogger().Error("Failed to start components", "error", err)
 			return
 		}
@@ -130,7 +130,7 @@ func (p *seedProgram) run() {
 
 	// Wait for stop signal or server error
 	select {
-	case err := <-serverErrors:
+	case err = <-serverErrors:
 		if err != nil {
 			logging.GetLogger().Error("Server error", "error", err)
 		}
