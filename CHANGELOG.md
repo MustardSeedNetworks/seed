@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.262.0](https://github.com/MustardSeedNetworks/seed/compare/v0.261.0...v0.262.0) (2026-10-15)
+
+
+### Features
+
+* **ip-sla:** read and trend Cisco IP-SLA operations (P-D8) ([#3457](https://github.com/MustardSeedNetworks/seed/issues/3457)) ([a15f9ca](https://github.com/MustardSeedNetworks/seed/commit/a15f9ca56b0d7e9008500b29333b1d91e4195179)), closes [#3455](https://github.com/MustardSeedNetworks/seed/issues/3455)
+* **lifecycle:** track Cisco EoX milestones for inventoried hardware (P-D9) ([#3462](https://github.com/MustardSeedNetworks/seed/issues/3462)) ([de31c32](https://github.com/MustardSeedNetworks/seed/commit/de31c32f2244178182164fa1c6f5ce6ecb12a708))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3458](https://github.com/MustardSeedNetworks/seed/issues/3458)) ([fffe08c](https://github.com/MustardSeedNetworks/seed/commit/fffe08cf672f215be0e468466a83d95239912448))
+* **deps:** lock file maintenance ([#3468](https://github.com/MustardSeedNetworks/seed/issues/3468)) ([fe32fca](https://github.com/MustardSeedNetworks/seed/commit/fe32fca8a394dcfeeb4959132e5b1ce808b9625d))
+* **deps:** update dependency msw to v3 ([#3163](https://github.com/MustardSeedNetworks/seed/issues/3163)) ([9d2dd93](https://github.com/MustardSeedNetworks/seed/commit/9d2dd93b8a1b4d2d7b75430ca8bcaac923e1ed42))
+
 ## [0.261.0](https://github.com/MustardSeedNetworks/seed/compare/v0.260.0...v0.261.0) (2026-10-15)
 
 
