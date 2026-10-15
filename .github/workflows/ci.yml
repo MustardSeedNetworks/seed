@@ -1340,11 +1340,20 @@ jobs:
       always() &&
       needs.frontend.result == 'success' &&
       (needs.backend.result == 'success' || needs.backend.result == 'skipped')
+    # The release's toolchain image, pinned to the same digest as release.yml's
+    # goreleaser job, so CI and release compile both architectures with one
+    # toolchain. It ships the arm64 cross compiler, which this job used to
+    # apt-install from the mirror on every run (#3496). Keep the two pins equal.
+    container:
+      image: goreleaser/goreleaser-cross:v1.27.1-2-v2.18.2@sha256:8def7638d4f31ce8b22034694875c41c0cccb8392c9d06258c7dca9383bf1948
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Mark workspace as safe (container runs as root)
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Set up Go
         uses: ./.github/actions/setup-go
@@ -1355,11 +1364,52 @@ jobs:
           name: frontend-dist
           path: internal/api/ui/
 
-      - name: Install libpcap-dev
-        uses: ./.github/actions/setup-libpcap
-        timeout-minutes: 10
+      # libpcap is linked statically, as the release links it. The archives
+      # depend only on the build script and the image's compilers, so they are
+      # cached on those and rebuilt only when one changes.
+      - name: Resolve static libpcap cache key
+        id: libpcap-key
+        env:
+          SCRIPT_HASH: ${{ hashFiles('scripts/build-static-libpcap.sh') }}
+        run: |
+          echo "key=libpcap-static-gcc$(gcc -dumpfullversion)-$(aarch64-linux-gnu-gcc -dumpfullversion)-${SCRIPT_HASH}" >> "$GITHUB_OUTPUT"
 
-      - name: Build Go binary (amd64)
+      - name: Restore static libpcap
+        id: libpcap-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /opt/libpcap-static
+          key: ${{ steps.libpcap-key.outputs.key }}
+
+      - name: Install libpcap build tools
+        if: steps.libpcap-cache.outputs.cache-hit != 'true'
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        timeout-minutes: 10
+        with:
+          packages: flex bison
+
+      - name: Build a static libpcap for amd64 + arm64
+        if: steps.libpcap-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 15
+        shell: bash
+        run: |
+          ./scripts/build-static-libpcap.sh /opt/libpcap-static/amd64
+          ./scripts/build-static-libpcap.sh /opt/libpcap-static/arm64 \
+            --host=aarch64-linux-gnu CC=aarch64-linux-gnu-gcc
+
+      # Default branch only, like the Go cache: a PR-scoped entry is unusable
+      # once the PR merges.
+      - name: Save static libpcap (default branch only)
+        if: |
+          steps.libpcap-cache.outputs.cache-hit != 'true' &&
+          github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /opt/libpcap-static
+          key: ${{ steps.libpcap-key.outputs.key }}
+
+      - name: Build Go binaries (amd64 + arm64)
+        shell: bash
         env:
           CGO_ENABLED: 1
         run: |
@@ -1371,93 +1421,22 @@ jobs:
           # uiBuildHash to prove the UI was embedded.
           UI_BUILD_HASH=$(./scripts/ui-build-hash.sh)
           echo "UI_BUILD_HASH=${UI_BUILD_HASH}"
-          go build -trimpath -buildvcs=false \
-            -ldflags="-s -w \
-              -X github.com/MustardSeedNetworks/seed/internal/version.Version=${VERSION} \
-              -X github.com/MustardSeedNetworks/seed/internal/version.Commit=${COMMIT} \
-              -X github.com/MustardSeedNetworks/seed/internal/version.BuildTime=${BUILD_TIME} \
-              -X github.com/MustardSeedNetworks/seed/internal/version.UIBuildHash=${UI_BUILD_HASH}" \
-            -o seed-linux-amd64 ./cmd/seed
-
-      - name: Configure arm64 apt sources
-        timeout-minutes: 10
-        # Stays a run step because it rewrites the runner's source lists, which
-        # the composite has no business doing. It writes the same apt.conf
-        # drop-in the composite writes so its own tolerant refresh below is
-        # bounded too — a stalled mirror otherwise blocks forever (stem job
-        # 95068053052). The package install itself is delegated to the
-        # composite in the following step.
-        run: |
-          sudo dpkg --add-architecture arm64
-          sudo rm -f /etc/apt/sources.list.d/ubuntu.sources
-          sudo tee /etc/apt/sources.list.d/ubuntu-amd64.list >/dev/null <<'EOF'
-          deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble main universe multiverse restricted
-          deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-updates main universe multiverse restricted
-          deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-backports main universe multiverse restricted
-          deb [arch=amd64] http://security.ubuntu.com/ubuntu noble-security main universe multiverse restricted
-          EOF
-          for f in /etc/apt/sources.list.d/*.list /etc/apt/sources.list; do
-            [ -f "$f" ] || continue
-            case "$f" in
-              */ubuntu-amd64.list|*/ports-arm64.list) continue ;;
-            esac
-            sudo sed -i '/^deb \[/!s|^deb |deb [arch=amd64] |' "$f"
+          for arch in amd64 arm64; do
+            cc=gcc
+            [ "$arch" = arm64 ] && cc=aarch64-linux-gnu-gcc
+            # -L, not the archive path: the directory holds only libpcap.a, so
+            # gopacket's -lpcap resolves to it (scripts/build-static-libpcap.sh).
+            GOARCH=$arch CC=$cc \
+              CGO_CFLAGS="-I/opt/libpcap-static/$arch/include" \
+              CGO_LDFLAGS="-L/opt/libpcap-static/$arch/lib" \
+              go build -trimpath -buildvcs=false \
+                -ldflags="-s -w \
+                  -X github.com/MustardSeedNetworks/seed/internal/version.Version=${VERSION} \
+                  -X github.com/MustardSeedNetworks/seed/internal/version.Commit=${COMMIT} \
+                  -X github.com/MustardSeedNetworks/seed/internal/version.BuildTime=${BUILD_TIME} \
+                  -X github.com/MustardSeedNetworks/seed/internal/version.UIBuildHash=${UI_BUILD_HASH}" \
+                -o "seed-linux-$arch" ./cmd/seed
           done
-          sudo tee /etc/apt/sources.list.d/ports-arm64.list >/dev/null <<'EOF'
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main universe multiverse restricted
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main universe multiverse restricted
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main universe multiverse restricted
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-backports main universe multiverse restricted
-          EOF
-
-          sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
-          Acquire::http::Timeout "20";
-          Acquire::https::Timeout "20";
-          Acquire::Retries "2";
-          DPkg::Lock::Timeout "240";
-          EOF
-          # Tolerated deliberately: with both amd64 and arm64 sources active a
-          # partial refresh is normal, and the install below is what must
-          # succeed. Run as root so the bound can reap it.
-          sudo timeout -k 15 270 apt-get update || true
-
-      # Installed via the composite rather than a hand-rolled retry: the
-      # wrapper this replaces could not reap the root-owned apt-get it
-      # started, so a killed attempt left it holding the dpkg lock for the
-      # retry to block on (#1950). It also swallowed total failure — the exit
-      # branch tested `attempt -eq 3` inside a `for attempt in 1 2` loop, so
-      # two failed attempts fell out of the loop and reported success.
-      # update: false because the refresh above is deliberately tolerant.
-      - name: Install arm64 cross-build dependencies
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
-        timeout-minutes: 10
-        with:
-          update: 'false'
-          packages: >-
-            gcc-aarch64-linux-gnu linux-libc-dev:arm64 libpcap-dev:arm64
-            libpcap0.8-dev:arm64 pkg-config
-
-      - name: Build Go binary (arm64)
-        env:
-          GOOS: linux
-          GOARCH: arm64
-          CGO_ENABLED: 1
-          CC: aarch64-linux-gnu-gcc
-          PKG_CONFIG_PATH: /usr/lib/aarch64-linux-gnu/pkgconfig
-        run: |
-          # Reuses UI_BUILD_HASH semantics from the amd64 step but computes
-          # afresh (each step gets its own shell — env doesn't persist).
-          VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
-          COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-          BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          UI_BUILD_HASH=$(./scripts/ui-build-hash.sh)
-          go build -trimpath -buildvcs=false \
-            -ldflags="-s -w \
-              -X github.com/MustardSeedNetworks/seed/internal/version.Version=${VERSION} \
-              -X github.com/MustardSeedNetworks/seed/internal/version.Commit=${COMMIT} \
-              -X github.com/MustardSeedNetworks/seed/internal/version.BuildTime=${BUILD_TIME} \
-              -X github.com/MustardSeedNetworks/seed/internal/version.UIBuildHash=${UI_BUILD_HASH}" \
-            -o seed-linux-arm64 ./cmd/seed
 
       - name: Verify binaries
         run: |
