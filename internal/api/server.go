@@ -236,6 +236,7 @@ type Server struct {
 	jobRunner    *jobs.Runner            // unified async job runner (ADR-0005)
 	jobIdemp     jobIdempotencyStore     // Idempotency-Key dedup for POST /jobs
 	captures     *packetcapture.Store    // packet-capture job files, downloaded by ID
+	tftp         tftpService             // admin-started TFTP session (P-D4)
 
 	// --- Database ---
 	dbConn          *database.DB
@@ -854,6 +855,7 @@ func (s *Server) initUseCases() {
 	s.initHealthUseCases()
 	s.initEngineUseCases()
 	s.initIdentityUseCases()
+	s.initTFTP()
 }
 
 // webAuthnConfigFromServer derives the relying-party config from the exact

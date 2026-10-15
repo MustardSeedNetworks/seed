@@ -16,9 +16,10 @@ StandardOutput=journal
 StandardError=journal
 
 # Security hardening
-# Grant network capabilities for ICMP ping, ARP scanning, packet capture, and link config
-AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
-CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
+# Grant network capabilities for ICMP ping, ARP scanning, packet capture, and link config,
+# and for the operator-started TFTP session, which must answer on UDP 69
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN CAP_NET_BIND_SERVICE
 NoNewPrivileges=yes
 
 # Filesystem protection
