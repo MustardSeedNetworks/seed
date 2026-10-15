@@ -423,6 +423,9 @@ func Targets() []Target {
 		{&api.AlertRuleRequest{}, "alert-rule-request.schema.json"},
 		{&api.AlertRuleResponse{}, "alert-rule-response.schema.json"},
 		{&api.AlertRuleListResponse{}, "alert-rule-list-response.schema.json"},
+		{&api.DeviceGroupRequest{}, "device-group-request.schema.json"},
+		{&api.DeviceGroupResponse{}, "device-group-response.schema.json"},
+		{&api.DeviceGroupListResponse{}, "device-group-list-response.schema.json"},
 
 		// The alert inbox and its acknowledge/resolve actions (Stage A5.2).
 		{&api.AlertListResponse{}, "alert-list-response.schema.json"},

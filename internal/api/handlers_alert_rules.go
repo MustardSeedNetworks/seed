@@ -2,7 +2,9 @@ package api
 
 // /api/v1/alert-rules — Stage A5.10. Operator-defined alert rules.
 // The Stage A4.5/A4.6 pipelines retain their hardcoded fallback
-// rule set; rows in alert_rules are applied additively.
+// rule set; rows in alert_rules are applied additively. A rule with a
+// groupId fires only for events from that device group's members (P-D10);
+// the group must be one of the caller's own.
 //
 //   GET    /api/v1/alert-rules            list (filter ?enabled_only)
 //   POST   /api/v1/alert-rules            create
@@ -17,6 +19,7 @@ import (
 	"strconv"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts/rules"
+	"github.com/MustardSeedNetworks/seed/internal/devicegroups"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -36,6 +39,7 @@ type AlertRuleRequest struct {
 	AlertMessage         string `json:"alertMessage"`
 	WindowSeconds        int    `json:"windowSeconds,omitempty"`
 	ThresholdCount       int    `json:"thresholdCount,omitempty"`
+	GroupID              string `json:"groupId,omitempty"`
 }
 
 // AlertRuleResponse is one alert rule on the wire. Every field is always
@@ -53,6 +57,7 @@ type AlertRuleResponse struct {
 	AlertMessage         string `json:"alertMessage"`
 	WindowSeconds        int    `json:"windowSeconds"`
 	ThresholdCount       int    `json:"thresholdCount"`
+	GroupID              string `json:"groupId"`
 	CreatedAt            string `json:"createdAt"`
 	UpdatedAt            string `json:"updatedAt"`
 }
@@ -143,6 +148,9 @@ func (s *Server) createAlertRule(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, err.Error())
 		return
 	}
+	if !s.ownRuleGroup(w, r, in.GroupID) {
+		return
+	}
 	rule, createErr := s.alertRules.Create(r.Context(), inputToRule(in))
 	if createErr != nil {
 		if ve, ok := errors.AsType[*rules.ValidationError](createErr); ok {
@@ -168,12 +176,19 @@ func (s *Server) updateAlertRule(w http.ResponseWriter, r *http.Request, id int6
 		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, err.Error())
 		return
 	}
+	if !s.ownRuleGroup(w, r, in.GroupID) {
+		return
+	}
 	// The use-case writes the row and echoes the freshly-read record so the
 	// JSON reflects updated_at (falling back to the written shape on re-read).
 	rule, updateErr := s.alertRules.Update(r.Context(), id, inputToRule(in))
 	if updateErr != nil {
 		if errors.Is(updateErr, rules.ErrNotFound) {
 			writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "Rule not found")
+			return
+		}
+		if ve, ok := errors.AsType[*rules.ValidationError](updateErr); ok {
+			writeError(w, r, http.StatusBadRequest, ErrCodeValidation, ve.Msg)
 			return
 		}
 		logger.ErrorContext(r.Context(), "update alert_rule failed", "id", id, "error", updateErr)
@@ -199,6 +214,29 @@ func (s *Server) deleteAlertRule(w http.ResponseWriter, r *http.Request, id int6
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// ownRuleGroup checks that a rule's groupId names one of the caller's device
+// groups, writing the denial and reporting false when it does not. Rules are
+// install-wide, so without this an operator could scope a rule by another
+// client's group. An empty groupId is an unscoped rule.
+func (s *Server) ownRuleGroup(w http.ResponseWriter, r *http.Request, groupID string) bool {
+	if groupID == "" {
+		return true
+	}
+	clientID, ok := s.callerClient(w, r)
+	if !ok {
+		return false
+	}
+	if _, err := s.deviceGroups.Get(r.Context(), clientID, groupID); err != nil {
+		if errors.Is(err, devicegroups.ErrNotFound) {
+			writeError(w, r, http.StatusBadRequest, ErrCodeValidation, "groupId does not name a device group")
+			return false
+		}
+		writeDeviceGroupError(w, r, err)
+		return false
+	}
+	return true
 }
 
 func decodeAlertRuleInput(r *http.Request) (*AlertRuleRequest, error) {
@@ -235,6 +273,7 @@ func inputToRule(in *AlertRuleRequest) rules.Rule {
 		AlertMessage:         in.AlertMessage,
 		WindowSeconds:        in.WindowSeconds,
 		ThresholdCount:       in.ThresholdCount,
+		GroupID:              in.GroupID,
 	}
 }
 
@@ -252,6 +291,7 @@ func encodeAlertRule(rule rules.Rule) AlertRuleResponse {
 		AlertMessage:         rule.AlertMessage,
 		WindowSeconds:        rule.WindowSeconds,
 		ThresholdCount:       rule.ThresholdCount,
+		GroupID:              rule.GroupID,
 		CreatedAt:            formatTime(rule.CreatedAt),
 		UpdatedAt:            formatTime(rule.UpdatedAt),
 	}

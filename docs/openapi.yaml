@@ -258,6 +258,8 @@ components:
                     type: string
                 enabled:
                     type: boolean
+                groupId:
+                    type: string
                 matchKind:
                     type: string
                 matchPayloadContains:
@@ -293,6 +295,8 @@ components:
                     type: string
                 enabled:
                     type: boolean
+                groupId:
+                    type: string
                 id:
                     type: integer
                 matchKind:
@@ -322,6 +326,7 @@ components:
                 - alertMessage
                 - windowSeconds
                 - thresholdCount
+                - groupId
                 - createdAt
                 - updatedAt
             type: object
@@ -2060,6 +2065,59 @@ components:
                 - subnet
                 - localIP
                 - interface
+            type: object
+        DeviceGroupListResponse:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                groups:
+                    items:
+                        $ref: '#/components/schemas/DeviceGroupResponse'
+                    type: array
+            required:
+                - count
+                - groups
+            type: object
+        DeviceGroupRequest:
+            additionalProperties: false
+            properties:
+                description:
+                    type: string
+                members:
+                    items:
+                        type: string
+                    type: array
+                name:
+                    type: string
+            required:
+                - name
+                - members
+            type: object
+        DeviceGroupResponse:
+            additionalProperties: false
+            properties:
+                createdAt:
+                    type: string
+                description:
+                    type: string
+                id:
+                    type: string
+                members:
+                    items:
+                        type: string
+                    type: array
+                name:
+                    type: string
+                updatedAt:
+                    type: string
+            required:
+                - id
+                - name
+                - description
+                - members
+                - createdAt
+                - updatedAt
             type: object
         DeviceInfo:
             additionalProperties: false
@@ -11499,7 +11557,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/AlertRuleListResponse'
-                    description: Operator-defined alert rules, applied on top of the built-in rule set. enabled_only=true lists only the enabled ones.
+                    description: Operator-defined alert rules, applied on top of the built-in rule set. enabled_only=true lists only the enabled ones. A rule with a groupId fires only for events from that device group's members.
                 "401":
                     content:
                         application/json:
@@ -11533,7 +11591,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/AlertRuleResponse'
-                    description: The created rule; Location names it. name, alertType, alertSeverity and alertTitle are required, and unknown fields are a 400.
+                    description: The created rule; Location names it. name, alertType, alertSeverity and alertTitle are required, and unknown fields are a 400. A groupId that is not one of the caller's device groups is a 400.
                 "401":
                     content:
                         application/json:
@@ -12957,6 +13015,206 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Credentials'
                     description: The replaced credential, without its secrets.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/device-groups:
+        get:
+            operationId: getApiV1DeviceGroups
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeviceGroupListResponse'
+                    description: The caller's client's device groups, ordered by name. Members are polling target ids.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+        post:
+            description: Requires an operator-scoped token.
+            operationId: postApiV1DeviceGroups
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DeviceGroupRequest'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeviceGroupResponse'
+                    description: The created group; Location names it. A member that is not one of the caller's polling targets is a 400, and a name the client already uses is a 409.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/device-groups/{groupId}:
+        delete:
+            description: Requires an operator-scoped token.
+            operationId: deleteApiV1DeviceGroupsGroupId
+            responses:
+                "204":
+                    description: The group was deleted. A group an alert rule is scoped to is a 409 until the rule is changed or deleted.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+        get:
+            operationId: getApiV1DeviceGroupsGroupId
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeviceGroupResponse'
+                    description: The device group.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: groupId
+              required: true
+              schema:
+                type: string
+        put:
+            description: Requires an operator-scoped token.
+            operationId: putApiV1DeviceGroupsGroupId
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DeviceGroupRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeviceGroupResponse'
+                    description: The replaced group. The member list is replaced as a whole.
                 "401":
                     content:
                         application/json:

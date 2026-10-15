@@ -495,6 +495,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.interfaceStats = app.NewInterfaceStats(s.persistence)
 	s.ipSLA = app.NewIPSLA(s.persistence)
 	s.pollingTargets = app.NewPollingTargets(s.persistence, s.pollingTargetLimit)
+	s.deviceGroups = app.NewDeviceGroups(s.persistence)
 	s.initVaultUseCases()
 	s.alertInbox = app.NewAlertInbox(s.persistence)
 }

@@ -859,7 +859,7 @@ operations:
   GET /api/v1/alert-rules:
     responses:
       "200":
-        description: Operator-defined alert rules, applied on top of the built-in rule set. enabled_only=true lists only the enabled ones.
+        description: Operator-defined alert rules, applied on top of the built-in rule set. enabled_only=true lists only the enabled ones. A rule with a groupId fires only for events from that device group's members.
         content:
           application/json:
             schema:
@@ -873,7 +873,7 @@ operations:
             $ref: '#/components/schemas/AlertRuleRequest'
     responses:
       "200":
-        description: The created rule; Location names it. name, alertType, alertSeverity and alertTitle are required, and unknown fields are a 400.
+        description: The created rule; Location names it. name, alertType, alertSeverity and alertTitle are required, and unknown fields are a 400. A groupId that is not one of the caller's device groups is a 400.
         content:
           application/json:
             schema:
@@ -904,6 +904,54 @@ operations:
     responses:
       "204":
         description: The rule was deleted.
+  GET /api/v1/device-groups:
+    responses:
+      "200":
+        description: The caller's client's device groups, ordered by name. Members are polling target ids.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceGroupListResponse'
+  POST /api/v1/device-groups:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeviceGroupRequest'
+    responses:
+      "201":
+        description: The created group; Location names it. A member that is not one of the caller's polling targets is a 400, and a name the client already uses is a 409.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceGroupResponse'
+  GET /api/v1/device-groups/{groupId}:
+    responses:
+      "200":
+        description: The device group.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceGroupResponse'
+  PUT /api/v1/device-groups/{groupId}:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeviceGroupRequest'
+    responses:
+      "200":
+        description: The replaced group. The member list is replaced as a whole.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceGroupResponse'
+  DELETE /api/v1/device-groups/{groupId}:
+    responses:
+      "204":
+        description: The group was deleted. A group an alert rule is scoped to is a 409 until the rule is changed or deleted.
   GET /api/v1/polling-targets:
     responses:
       "200":

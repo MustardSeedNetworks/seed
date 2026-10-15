@@ -78,6 +78,7 @@ func NewEnginePersistence(persist *Persistence) EnginePersistence {
 			Events:       db.ListenerEvents(),
 			Settings:     settings,
 			AlertRules:   db.AlertRules(),
+			Groups:       db.DeviceGroups(),
 			Suppressions: suppressions,
 		},
 		ObservationAlerts: alertpipeline.ObservationConfig{

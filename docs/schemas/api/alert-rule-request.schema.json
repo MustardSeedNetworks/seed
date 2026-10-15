@@ -37,6 +37,9 @@
         },
         "thresholdCount": {
           "type": "integer"
+        },
+        "groupId": {
+          "type": "string"
         }
       },
       "additionalProperties": false,

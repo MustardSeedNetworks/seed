@@ -140,6 +140,17 @@ func (db *DB) DeviceConfigs() *DeviceConfigRepository {
 	return db.deviceConfigs
 }
 
+// DeviceGroups returns the device group repository (P-D10).
+func (db *DB) DeviceGroups() *DeviceGroupRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.deviceGroups == nil {
+		db.deviceGroups = &DeviceGroupRepository{db: db}
+	}
+	return db.deviceGroups
+}
+
 // SNMPObservations returns the unified SNMP observations repository
 // (Stage A3.5b). Every collector Publisher writes one row per poll;
 // Stage A4 topology + the listener pipeline read kind-filtered rows

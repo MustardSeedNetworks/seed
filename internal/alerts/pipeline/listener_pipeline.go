@@ -64,6 +64,7 @@ type ListenerPipeline struct {
 	alerts         alertWriter
 	settings       settingsKV
 	alertRules     alertRulesReader
+	groups         groupMembersReader
 	logger         *slog.Logger
 	now            func() time.Time
 	interval       time.Duration
@@ -100,6 +101,10 @@ type ListenerConfig struct {
 	// Ignored when Rules is also set (Rules wins for static-config
 	// tests).
 	AlertRules alertRulesReader
+
+	// Groups resolves the device groups that rules may be scoped to
+	// (P-D10). When nil, a scoped rule matches nothing.
+	Groups groupMembersReader
 
 	// ReloadInterval controls how often AlertRules is re-queried.
 	// Defaults to 60s; floored at 1s.
@@ -166,6 +171,7 @@ func NewListenerPipeline(cfg ListenerConfig) (*ListenerPipeline, error) {
 		alerts:         cfg.Alerts,
 		settings:       cfg.Settings,
 		alertRules:     cfg.AlertRules,
+		groups:         cfg.Groups,
 		logger:         cfg.Logger,
 		now:            cfg.Now,
 		interval:       cfg.Interval,

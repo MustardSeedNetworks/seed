@@ -14,6 +14,11 @@ package pipeline
 // on operator configuration held elsewhere, such as the threat indicator
 // list, and an unrelated rule edit must not silence them.
 //
+// Group scope (P-D10): a row naming a device group matches only events
+// whose source address is one of the group's members. A group with no
+// members, or one the pipeline could not read, matches nothing: a scoped
+// rule never widens to every device.
+//
 // Template support (#1378): AlertTitle / AlertMessage are parsed as
 // text/template at compile time. The runtime context (exposed to
 // templates) is the ListenerEventContext struct below — operators
@@ -28,6 +33,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"net"
+	"net/netip"
 	"strconv"
 	"strings"
 	"text/template"
@@ -61,19 +68,27 @@ type ListenerEventContext struct {
 // CompileRulesFromDB converts every enabled alert_rules row into a
 // runtime Rule. Disabled rows are dropped. Returns an empty slice
 // when no enabled rows are present so callers can decide to fall
-// back to DefaultListenerRules.
-func CompileRulesFromDB(rows []*alerts.Rule) []Rule {
+// back to DefaultListenerRules. groups maps a device group id to its
+// members' addresses; a row whose group is absent matches nothing.
+func CompileRulesFromDB(rows []*alerts.Rule, groups map[string][]string) []Rule {
 	out := make([]Rule, 0, len(rows))
 	for _, row := range rows {
 		if row == nil || !row.Enabled {
 			continue
 		}
-		out = append(out, compileOne(row))
+		out = append(out, compileOne(row, groups))
 	}
 	return out
 }
 
-func compileOne(row *alerts.Rule) Rule {
+func compileOne(row *alerts.Rule, groups map[string][]string) Rule {
+	var members map[string]bool
+	if row.GroupID != "" {
+		members = make(map[string]bool, len(groups[row.GroupID]))
+		for _, addr := range groups[row.GroupID] {
+			members[canonicalHost(addr)] = true
+		}
+	}
 	matchKind := row.MatchKind
 	matchSev := row.MatchSeverity
 	matchSubstring := row.MatchPayloadContains
@@ -100,6 +115,9 @@ func compileOne(row *alerts.Rule) Rule {
 		Window:    window,
 		counter:   counter,
 		Match: func(evt *listener.EventRecord) bool {
+			if members != nil && !members[canonicalHost(evt.SourceAddr)] {
+				return false
+			}
 			if matchKind != "" && evt.Kind != matchKind {
 				return false
 			}
@@ -123,6 +141,20 @@ func compileOne(row *alerts.Rule) Rule {
 			}
 		},
 	}
+}
+
+// canonicalHost reduces a source address ("10.0.0.1:514", "[fe80::1]:162")
+// or a target address to the host in one spelling, so a member's
+// "2001:db8::1" and an event from "[2001:DB8:0::1]:514" compare equal.
+func canonicalHost(addr string) string {
+	host := addr
+	if h, _, err := net.SplitHostPort(addr); err == nil {
+		host = h
+	}
+	if ip, err := netip.ParseAddr(host); err == nil {
+		return ip.Unmap().WithZone("").String()
+	}
+	return strings.ToLower(host)
 }
 
 // templateRenderer is a closure that takes the event context and
@@ -177,4 +209,10 @@ func buildEventContext(evt *listener.EventRecord, ruleName string) ListenerEvent
 // *database.AlertRulesRepository.
 type alertRulesReader interface {
 	List(ctx context.Context, enabledOnly bool) ([]*alerts.Rule, error)
+}
+
+// groupMembersReader returns every device group's member addresses keyed
+// by group id. Implemented by *database.DeviceGroupRepository.
+type groupMembersReader interface {
+	MemberAddresses(ctx context.Context) (map[string][]string, error)
 }

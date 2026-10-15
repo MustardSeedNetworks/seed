@@ -27,6 +27,8 @@
 /api/v1/discovery/engine/full             # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/quick            # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/scan             # PAT-only allow-list (owner 2026-09-04)
+/api/v1/device-groups                     # scheduled: UI-SEED-25; P-D10 backend (#3475) landed first, API-driven until then
+/api/v1/device-groups/{groupId}           # scheduled: UI-SEED-25, see /device-groups
 /api/v1/discovery/engine/stats            # PAT-only allow-list (owner 2026-09-04)
 /api/v1/engines                           # PAT-only allow-list (owner 2026-09-04)
 /api/v1/flows/application-signatures      # scheduled: editor needs a UI row (#3101); P-C4 backend landed first, API-edited until then
