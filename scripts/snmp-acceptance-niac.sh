@@ -25,8 +25,9 @@
 # the pack does not author, or that it authors and seed does not draw. Last,
 # NIAC takes one interface down (a behaviour timeline added to the pack, due
 # a minute after that poll should be done), every agent's interface table is
-# polled again, and seed's alert pipeline must raise exactly one alert: that
-# interface going down.
+# polled again, and seed's alert pipeline must raise exactly two alerts: that
+# interface going down, and a spanning-tree topology change NIAC signals in the
+# same phase on one other switch seed polls.
 set -eu
 
 repo_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
@@ -245,7 +246,8 @@ settle = generated["manifest"].get("timing", {}).get("neighborsStableAfterSecond
 # off from no agent, which the test's second poll of every agent confirms. In
 # a routed pack NIAC can fault only addressed interfaces (niac-go#2482). It is
 # due a minute after the neighbours settle; the poll before it takes about
-# fifteen seconds.
+# fifteen seconds. The same phase signals a spanning-tree topology change on
+# the first other polled device that runs spanning tree.
 polled = {ipaddress.ip_address(agent["address"]) for agent in agents}
 fault = next((
     {"device": device["name"], "interface": interface["name"]}
@@ -259,22 +261,32 @@ fault = next((
 ), None)
 if fault is None:
     sys.exit("no polled device has an up interface off every polled subnet to take down")
+stp_change = next((
+    {"device": device["name"]}
+    for device in scenario.get("devices") or []
+    if device.get("snmp_agent") and device.get("ips")
+    and (device.get("stp") or {}).get("enabled")
+    and device["name"] != fault["device"]
+), None)
+if stp_change is None:
+    sys.exit("no polled device other than the faulted one runs spanning tree")
 fault_offset = settle + 60
 timeline = {"behavior_timelines": [{
     "name": "seed-alert-consumer",
     "start_offset_ms": fault_offset * 1000,
     "repeat_count": 1,
     "phases": [{
-        "name": "link-down",
+        "name": "faults",
         "duration_ms": 600000,
         "faults": [{**fault, "type": "link_down", "value": 1}],
+        "actions": [{**stp_change, "type": "stp_topology_change"}],
     }],
 }]}
 with open(f"{run_dir}/{pack}.yaml", "w", encoding="utf-8") as config:
     config.write(generated["content"].rstrip("\n") + "\n")
     config.write(yaml.safe_dump(timeline, sort_keys=False))
 
-json.dump({"pack": pack, "agents": agents, "links": agent_links, "fault": fault}, open(f"{run_dir}/{pack}.targets.json", "w", encoding="utf-8"))
+json.dump({"pack": pack, "agents": agents, "links": agent_links, "fault": fault, "stp": stp_change}, open(f"{run_dir}/{pack}.targets.json", "w", encoding="utf-8"))
 with open(f"{run_dir}/{pack}.wiring", "w", encoding="utf-8") as wiring:
     for value in (attachment["name"], vlan, f"{poller}/{access.prefixlen}", gateway, settle, fault_offset):
         wiring.write(f"{value}\n")

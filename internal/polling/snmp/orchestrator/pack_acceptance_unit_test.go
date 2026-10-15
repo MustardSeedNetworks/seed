@@ -221,8 +221,14 @@ func TestTopologyFindings(t *testing.T) {
 func TestAlertFindings(t *testing.T) {
 	t.Parallel()
 	fault := packFault{Device: "core", Interface: "Gi0/2"}
+	change := packSTPChange{Device: "dist"}
 	down := func(source, iface string) *alerts.Alert {
 		return &alerts.Alert{Rule: ifaceDownRule, Source: source, Title: "Interface " + iface + " down on " + source}
+	}
+	topology := func(source string) *alerts.Alert {
+		return &alerts.Alert{
+			Rule: alerts.RuleSTPTopologyChange, Source: source, Title: "Spanning-tree topology change on " + source,
+		}
 	}
 	tests := []struct {
 		name   string
@@ -230,48 +236,71 @@ func TestAlertFindings(t *testing.T) {
 		want   []string
 	}{
 		{
-			name:   "the faulted interface alone",
-			raised: []*alerts.Alert{down("core", "Gi0/2")},
+			name:   "each fault once",
+			raised: []*alerts.Alert{down("core", "Gi0/2"), topology("dist")},
 		},
 		{
 			name: "nothing raised",
-			want: []string{"alerts: no iface.down for core Gi0/2, which NIAC took down"},
+			want: []string{
+				"alerts: no iface.down for core Gi0/2, which NIAC took down",
+				"alerts: no stp.topology_change for dist, which NIAC signalled a topology change on",
+			},
+		},
+		{
+			name:   "the topology change is missing",
+			raised: []*alerts.Alert{down("core", "Gi0/2")},
+			want:   []string{"alerts: no stp.topology_change for dist, which NIAC signalled a topology change on"},
+		},
+		{
+			name:   "the link fault is missing",
+			raised: []*alerts.Alert{topology("dist")},
+			want:   []string{"alerts: no iface.down for core Gi0/2, which NIAC took down"},
 		},
 		{
 			name:   "an interface whose name extends the faulted one",
-			raised: []*alerts.Alert{down("core", "Gi0/20")},
+			raised: []*alerts.Alert{down("core", "Gi0/20"), topology("dist")},
 			want: []string{
-				`alerts: iface.down on core ("Interface Gi0/20 down on core"), which the fault does not explain`,
+				`alerts: iface.down on core ("Interface Gi0/20 down on core"), which the faults do not explain`,
 				"alerts: no iface.down for core Gi0/2, which NIAC took down",
 			},
 		},
 		{
 			name:   "the same interface on another device",
-			raised: []*alerts.Alert{down("core", "Gi0/2"), down("dist", "Gi0/2")},
+			raised: []*alerts.Alert{down("core", "Gi0/2"), down("dist", "Gi0/2"), topology("dist")},
 			want: []string{
-				`alerts: iface.down on dist ("Interface Gi0/2 down on dist"), which the fault does not explain`,
+				`alerts: iface.down on dist ("Interface Gi0/2 down on dist"), which the faults do not explain`,
+			},
+		},
+		{
+			name:   "a topology change on another bridge",
+			raised: []*alerts.Alert{down("core", "Gi0/2"), topology("dist"), topology("acc1")},
+			want: []string{
+				`alerts: stp.topology_change on acc1 ("Spanning-tree topology change on acc1"), which the faults do not explain`,
 			},
 		},
 		{
 			name: "another rule on the faulted device",
 			raised: []*alerts.Alert{
-				down("core", "Gi0/2"),
+				down("core", "Gi0/2"), topology("dist"),
 				{Rule: "storage.high", Source: "core", Title: "Filesystem / high on core"},
 			},
 			want: []string{
-				`alerts: storage.high on core ("Filesystem / high on core"), which the fault does not explain`,
+				`alerts: storage.high on core ("Filesystem / high on core"), which the faults do not explain`,
 			},
 		},
 		{
 			name:   "raised twice",
-			raised: []*alerts.Alert{down("core", "Gi0/2"), down("core", "Gi0/2")},
-			want:   []string{"alerts: 2 iface.down alerts for core Gi0/2, want one"},
+			raised: []*alerts.Alert{down("core", "Gi0/2"), down("core", "Gi0/2"), topology("dist"), topology("dist")},
+			want: []string{
+				"alerts: 2 iface.down alerts for core Gi0/2, want one",
+				"alerts: 2 stp.topology_change alerts for dist, want one",
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			if got := alertFindings(fault, tt.raised); !slices.Equal(got, tt.want) {
+			if got := alertFindings(fault, change, tt.raised); !slices.Equal(got, tt.want) {
 				t.Errorf("findings = %q, want %q", got, tt.want)
 			}
 		})
