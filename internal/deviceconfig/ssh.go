@@ -22,14 +22,15 @@ const (
 	maxStderrBytes = 4 << 10
 )
 
-// SSHFetcher runs the configuration command over an SSH exec channel.
+// SSHFetcher retrieves the configuration over SSH: by running the CLI command
+// on an exec channel, or with a NETCONF <get-config> on the netconf subsystem.
 type SSHFetcher struct{}
 
 // Fetch checks the host key against the pin, logs in with password or
 // keyboard-interactive authentication (network operating systems offer one or
-// the other for the same password), and runs req.Command. The host key is
-// checked during key exchange, before any authentication method runs, so an
-// unpinned or mismatched key never receives the password.
+// the other for the same password), and retrieves the configuration. The host
+// key is checked during key exchange, before any authentication method runs,
+// so an unpinned or mismatched key never receives the password.
 func (SSHFetcher) Fetch(ctx context.Context, req FetchRequest) (FetchResult, error) {
 	addr := net.JoinHostPort(req.Host, strconv.Itoa(req.Port))
 	var dialer net.Dialer
@@ -81,25 +82,40 @@ func (SSHFetcher) Fetch(ctx context.Context, req FetchRequest) (FetchResult, err
 	}
 	defer func() { _ = session.Close() }()
 
+	var output string
+	if req.NETCONF {
+		output, err = getRunningConfig(session)
+	} else {
+		output, err = runCommand(session, req.Command)
+	}
+	if ctx.Err() != nil {
+		return FetchResult{}, fmt.Errorf("%w: %w", ErrUnreachable, ctx.Err())
+	}
+	if err != nil {
+		return FetchResult{}, err
+	}
+	return FetchResult{Output: output}, nil
+}
+
+// runCommand runs command on the session's exec channel and returns its
+// output.
+func runCommand(session *ssh.Session, command string) (string, error) {
 	stdout := &cappedBuffer{limit: maxConfigBytes}
 	stderr := &cappedBuffer{limit: maxStderrBytes}
 	session.Stdout = stdout
 	session.Stderr = stderr
-	runErr := session.Run(req.Command)
-	if ctx.Err() != nil {
-		return FetchResult{}, fmt.Errorf("%w: %w", ErrUnreachable, ctx.Err())
-	}
+	runErr := session.Run(command)
 	if stdout.overflow {
-		return FetchResult{}, fmt.Errorf("%w: output exceeds %d bytes", ErrCommand, maxConfigBytes)
+		return "", fmt.Errorf("%w: output exceeds %d bytes", ErrCommand, maxConfigBytes)
 	}
 	if runErr != nil {
 		msg := strings.TrimSpace(stderr.String())
 		if msg == "" {
-			return FetchResult{}, fmt.Errorf("%w: %w", ErrCommand, runErr)
+			return "", fmt.Errorf("%w: %w", ErrCommand, runErr)
 		}
-		return FetchResult{}, fmt.Errorf("%w: %w: %s", ErrCommand, runErr, msg)
+		return "", fmt.Errorf("%w: %w: %s", ErrCommand, runErr, msg)
 	}
-	return FetchResult{Output: stdout.String()}, nil
+	return stdout.String(), nil
 }
 
 // classifyHandshake names a failed SSH handshake. The library has no typed

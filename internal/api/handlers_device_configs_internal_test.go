@@ -216,7 +216,7 @@ func TestDeviceConfigRunStoresConfigAndReportsCredentialFailure(t *testing.T) {
 	s := newDeviceConfigTestServer(t)
 	good := createDeviceConfigTarget(t, s, "10.0.0.1", createSSHCredential(t, s, "s3cret"))
 	bad := createDeviceConfigTarget(t, s, "10.0.0.2", createSSHCredential(t, s, "wrong"))
-	if good.Port != deviceconfig.DefaultPort {
+	if good.Port != deviceconfig.PlatformCiscoIOS.DefaultPort() {
 		t.Errorf("port defaulted to %d, want 22", good.Port)
 	}
 	runDeviceConfigBackup(t, s)
