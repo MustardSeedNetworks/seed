@@ -359,6 +359,7 @@ func NewServer(
 	// Security fix #891: Record setup mode start time
 	if auth.IsDefaultPasswordHash(cfg.Auth.DefaultPasswordHash) {
 		s.setupModeStartTime = time.Now()
+		s.issueSetupToken()
 	}
 
 	// Set up link state change callback
@@ -423,8 +424,9 @@ func (s *Server) initAuthSecurity(cfg *config.Config, trustedProxies *TrustedPro
 		cfg.Auth.DefaultPasswordHash,
 	)
 	s.csrf = csrf.NewManager()
-	s.setupToken = NewSetupTokenManager()
-	s.recovery = auth.NewRecoveryTokenManager(paths.Resolve(paths.ModeAuto).DataDir)
+	dataDir := paths.Resolve(paths.ModeAuto).DataDir
+	s.setupToken = NewSetupTokenManager(dataDir)
+	s.recovery = auth.NewRecoveryTokenManager(dataDir)
 	s.proxies = trustedProxies
 
 	s.loginLimiter = NewRateLimiter(DefaultRateLimitConfig())
@@ -626,9 +628,6 @@ func (s *Server) AuthManager() *auth.Manager { return s.authMgr }
 
 // CSRFManager returns the CSRF token manager.
 func (s *Server) CSRFManager() *csrf.Manager { return s.csrf }
-
-// SetupTokenManager returns the setup token manager.
-func (s *Server) SetupTokenManager() *SetupTokenManager { return s.setupToken }
 
 // RecoveryManager returns the password recovery token manager.
 func (s *Server) RecoveryManager() *auth.RecoveryTokenManager { return s.recovery }

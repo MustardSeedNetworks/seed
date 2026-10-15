@@ -23,13 +23,19 @@ function renderWizard(overrides: { onComplete?: () => void } = {}) {
   const onComplete = overrides.onComplete ?? vi.fn();
   const onLogin = vi.fn(async () => ({ status: 'ok' }) as const);
   render(
-    <SetupWizard onComplete={onComplete} onLogin={onLogin} username="admin" setupToken="t-1" />,
+    <SetupWizard
+      onComplete={onComplete}
+      onLogin={onLogin}
+      username="admin"
+      setupTokenFile="/var/lib/seed/.setup-token"
+    />,
   );
   return { onComplete, onLogin };
 }
 
 /** Fills the password step and submits it; leaves the wizard wherever it lands. */
 async function completePasswordStep(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+  await user.type(screen.getByLabelText('Setup token'), 't-1');
   await user.type(screen.getByLabelText('Password'), PASSWORD);
   await user.type(screen.getByLabelText('Confirm Password'), PASSWORD);
   await user.click(screen.getByRole('button', { name: 'Complete Setup' }));
@@ -112,6 +118,7 @@ describe('SetupWizard — first-run SNMP community', () => {
     const user = userEvent.setup();
     renderWizard();
 
+    await user.type(screen.getByLabelText('Token de configuración'), 't-1');
     await user.type(screen.getByLabelText('Contraseña'), PASSWORD);
     await user.type(screen.getByLabelText('Confirmar Contraseña'), PASSWORD);
     await user.click(screen.getByRole('button', { name: 'Completar Configuración' }));

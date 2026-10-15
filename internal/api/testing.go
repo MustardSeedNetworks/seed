@@ -2,6 +2,8 @@ package api
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
 
@@ -129,7 +131,9 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 		cfg.Auth.DefaultPasswordHash,
 	)
 	s.csrf = csrf.NewManager()
-	s.setupToken = NewSetupTokenManager()
+	// Never written unless a test issues a token; IssueSetupToken repoints it
+	// at the test's own directory first.
+	s.setupToken = NewSetupTokenManager(filepath.Join(os.TempDir(), "seed-test-setup"))
 	s.proxies = NewTrustedProxies("") // Empty for testing
 
 	s.loginLimiter = NewRateLimiter(DefaultRateLimitConfig())

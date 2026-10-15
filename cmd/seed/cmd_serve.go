@@ -502,8 +502,9 @@ func printSetupBanner(w io.Writer, port int) {
 ║                                                                  ║
 ║    %s://localhost:%-42d ║
 ║                                                                  ║
-║  You will be prompted to set your admin password.                ║
-║  A secure password will be suggested for you.                    ║
+║  The wizard first asks for the one-time setup token Seed         ║
+║  writes to .setup-token in its data directory; the startup       ║
+║  log names the file. Then set your admin password.               ║
 ║                                                                  ║
 ╚══════════════════════════════════════════════════════════════════╝
 `

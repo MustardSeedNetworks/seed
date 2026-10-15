@@ -14,7 +14,7 @@
         "username": {
           "type": "string"
         },
-        "setupToken": {
+        "setupTokenFile": {
           "type": "string"
         }
       },

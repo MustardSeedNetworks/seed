@@ -41,7 +41,7 @@ function App(): JSX.Element {
     useAuth();
 
   // Setup wizard state (extracted to hook #889)
-  const { needsSetup, suggestedPassword, setupUsername, setupToken, completeSetup } =
+  const { needsSetup, suggestedPassword, setupUsername, setupTokenFile, completeSetup } =
     useSetupState();
 
   // Handle session expiration via API client callback.
@@ -85,7 +85,7 @@ function App(): JSX.Element {
         onLogin={login}
         suggestedPassword={suggestedPassword}
         username={setupUsername}
-        setupToken={setupToken} // Security fix #724, #758
+        setupTokenFile={setupTokenFile}
       />
     );
   } else if (needsSetup === null) {

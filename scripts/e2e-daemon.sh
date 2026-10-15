@@ -36,5 +36,12 @@ printf '%s\n' \
 # activated Pro licence — every RequireFeature page unlocked and the free-tier
 # gate assertions in reports-page.spec.ts passed or failed by accident of the
 # host. CI was green only because its runners have no licence file.
+#
+# INVOCATION_ID and NOTIFY_SOCKET are dropped because paths.ModeAuto reads
+# them as "running as a systemd service" and moves the data directory to
+# /var/lib/seed. GitHub's runner and the dev-srv drivers both run under
+# systemd and leak INVOCATION_ID to their children, so the daemon could not
+# write its first-run setup token and setup never completed.
 cd "$run_dir"
-HOME="$run_dir" SEED_LOGIN_MAX_ATTEMPTS=200 exec "$repo_dir/seed" --config "$run_dir/config.json"
+exec env -u INVOCATION_ID -u NOTIFY_SOCKET HOME="$run_dir" XDG_DATA_HOME="$run_dir/data" \
+  SEED_LOGIN_MAX_ATTEMPTS=200 "$repo_dir/seed" --config "$run_dir/config.json"

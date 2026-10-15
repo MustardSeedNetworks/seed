@@ -4,18 +4,10 @@ import { Tooltip } from '../ui/Tooltip';
  *
  * Guides users through the first-time setup process for the Seed application.
  *
- * Features:
- * - Password setup with validation (minimum 12 characters)
- * - Password confirmation requirement
- * - Generated password suggestion option
- * - Custom password entry mode
- * - Automatic login after setup completion
- * - Error handling and user feedback
- *
  * Flow:
- * 1. User enters password (or accepts suggested password)
- * 2. Confirms password matches
- * 3. SetupWizard sends POST /api/v1/setup/complete with new password
+ * 1. User pastes the setup token the daemon wrote to a file on its host
+ * 2. User enters password (or accepts suggested password) and confirms it
+ * 3. SetupWizard sends POST /api/v1/setup/complete with the token and password
  * 4. Server hashes and stores password
  * 5. Component automatically logs in user
  * 6. Calls onComplete callback to exit setup flow
@@ -33,7 +25,7 @@ import { useTranslation } from 'react-i18next';
 import type { LoginOutcome } from '../../hooks/useAuth';
 import { LogComponents, logger } from '../../lib/logger';
 import { evaluatePassword, type PasswordRule } from '../../lib/passwordPolicy';
-import { SetupWizardSchema } from '../../schemas/auth';
+import { SetupWizardSchema, type SetupWizardValues } from '../../schemas/auth';
 import {
   button,
   card,
@@ -46,6 +38,7 @@ import {
   status as statusColor,
 } from '../../styles/theme';
 import { FirstRunSnmpStep } from './FirstRunSnmpStep';
+import { SetupTokenField } from './SetupTokenField';
 
 // API base URL for setup endpoints
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';
@@ -62,8 +55,8 @@ interface SetupWizardProps {
   suggestedPassword?: string;
   /** Username from config (fixes #768 - no hardcoded 'admin') */
   username?: string;
-  /** Security fix #724, #758: One-time setup token required for setup completion */
-  setupToken?: string;
+  /** Host file holding the setup token; reading it proves the operator controls the host */
+  setupTokenFile?: string;
 }
 
 /**
@@ -84,7 +77,7 @@ export function SetupWizard({
   onLogin,
   suggestedPassword,
   username = 'admin',
-  setupToken,
+  setupTokenFile,
 }: SetupWizardProps): React.JSX.Element {
   const { t } = useTranslation('setup');
   const { t: tCommon } = useTranslation('common');
@@ -106,9 +99,9 @@ export function SetupWizard({
     watch,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<{ password: string; confirmPassword: string }>({
+  } = useForm<SetupWizardValues>({
     resolver: valibotResolver(SetupWizardSchema),
-    defaultValues: { password: '', confirmPassword: '' },
+    defaultValues: { setupToken: '', password: '', confirmPassword: '' },
     mode: 'onBlur',
   });
 
@@ -176,7 +169,8 @@ export function SetupWizard({
   // They hold the same string, but a shadow here means the three uses below
   // silently read whichever binding won, which is the sort of thing that only
   // stays correct by luck.
-  const onSubmit: SubmitHandler<{ password: string; confirmPassword: string }> = async ({
+  const onSubmit: SubmitHandler<SetupWizardValues> = async ({
+    setupToken,
     password: submittedPassword,
   }) => {
     setSubmitError(null);
@@ -197,7 +191,6 @@ export function SetupWizard({
 
     try {
       // Step 1: Complete setup (set password on server)
-      // Security fix #724, #758: Include the one-time setup token to prevent CSRF attacks
       const response = await fetch(`${API_BASE}/api/v1/setup/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -264,6 +257,12 @@ export function SetupWizard({
           onSubmit={handleSubmit(onSubmit)}
           className={cn(card.base, card.variant.default, card.padding.lg)}
         >
+          <SetupTokenField
+            registration={register('setupToken')}
+            error={errors.setupToken?.message}
+            tokenFile={setupTokenFile}
+          />
+
           <div className={spacing.margin.bottom.content}>
             <p className={cn('body-small', spacing.margin.bottom.content)}>
               {t('username.label')} <strong>{username}</strong> {t('username.cannotChange')}

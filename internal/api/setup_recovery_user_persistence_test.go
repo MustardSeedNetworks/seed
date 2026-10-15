@@ -57,8 +57,7 @@ func newPersistenceServer(t *testing.T, state string) (*api.Server, *database.DB
 func checkSetupPersistence(t *testing.T, state string) {
 	t.Helper()
 	server, db, username := newPersistenceServer(t, state)
-	setupToken, err := server.SetupTokenManager().GenerateToken()
-	require.NoError(t, err)
+	setupToken := api.IssueSetupToken(t, server)
 	body, err := json.Marshal(api.SetupCompleteRequest{Password: persistedPassword, SetupToken: setupToken})
 	require.NoError(t, err)
 	w := httptest.NewRecorder()

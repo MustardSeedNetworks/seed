@@ -3,6 +3,11 @@
     "title": "Bienvenido a Seed",
     "subtitle": "Configure su contraseña de administrador para comenzar"
   },
+  "setupToken": {
+    "label": "Token de configuración",
+    "placeholder": "Pegue el token de configuración",
+    "help": "Seed escribió un token de configuración de un solo uso en {{path}} en el equipo donde se ejecuta. Cópielo desde allí (por ejemplo con sudo cat) para demostrar que controla ese equipo."
+  },
   "username": {
     "label": "Usuario:",
     "admin": "admin",

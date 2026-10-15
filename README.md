@@ -116,8 +116,12 @@ Or grab an artifact from the [releases page](https://github.com/MustardSeedNetwo
 ### First run
 
 1. Open `https://<device-ip>:8443` (accept the self-signed cert).
-2. Walk the first-run setup wizard to create the admin password — there is
-   no shipped default password.
+2. On the seed host, copy the one-time setup token the daemon wrote at
+   startup: `sudo cat /var/lib/seed/.setup-token` for the system service
+   (the wizard shows the exact path). Only someone who can read that file
+   can finish setup.
+3. Walk the first-run setup wizard: paste the token and create the admin
+   password — there is no shipped default password.
 
 ### First-time TLS trust setup (optional)
 

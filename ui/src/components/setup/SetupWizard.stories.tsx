@@ -13,6 +13,7 @@ const noop = (): void => {
  * SetupWizard guides users through initial system setup.
  *
  * Features:
+ * - Setup token from a host file, proving the operator controls the host
  * - Admin password creation with validation
  * - Generated password suggestion option
  * - Custom password entry mode
@@ -26,6 +27,9 @@ const noop = (): void => {
 const meta: Meta<typeof SetupWizard> = {
   title: 'Setup/SetupWizard',
   component: SetupWizard,
+  args: {
+    setupTokenFile: '/var/lib/seed/.setup-token',
+  },
   parameters: {
     layout: 'fullscreen',
   },

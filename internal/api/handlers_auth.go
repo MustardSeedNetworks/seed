@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
@@ -364,12 +365,13 @@ func (s *Server) handleCSRFToken(w http.ResponseWriter, r *http.Request) {
 type SetupStatusResponse struct {
 	NeedsSetup        bool   `json:"needsSetup"`
 	SuggestedPassword string `json:"suggestedPassword,omitempty"`
-	Username          string `json:"username"`             // Fixes #768 - provide username from config
-	SetupToken        string `json:"setupToken,omitempty"` // Security fix #724, #758 - one-time setup token
+	Username          string `json:"username"` // Fixes #768 - provide username from config
+	// SetupTokenFile is where the operator reads the token setup/complete
+	// requires. The token itself is never returned here.
+	SetupTokenFile string `json:"setupTokenFile,omitempty"`
 }
 
 // handleSetupStatus checks if initial setup is required (fixes #544 - split from handlers.go).
-// Security fix #724, #758: Generates a one-time setup token to prevent CSRF/unauthenticated access.
 func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
@@ -393,24 +395,12 @@ func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
 		Username:   s.config.Auth.DefaultUsername, // Fixes #768 - provide username from config
 	}
 
-	// If setup is needed, generate setup token and suggested password
 	if needsSetup {
 		suggestedPassword, err := auth.GenerateSecurePassword(suggestedPasswordLength)
 		if err == nil {
 			resp.SuggestedPassword = suggestedPassword
 		}
-
-		// Generate one-time setup token (fixes #724, #758)
-		// This token must be provided when completing setup to prevent CSRF attacks
-		setupToken, err := s.setupTokenManager().GenerateToken()
-		if err != nil {
-			logger.ErrorContext(r.Context(), "Failed to generate setup token", "error", err)
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal,
-				"Failed to initialize setup", "")
-			return
-		}
-		resp.SetupToken = setupToken
-		logger.InfoContext(r.Context(), "Setup token generated", "event", "auth.setup.token_generated")
+		resp.SetupTokenFile = s.setupTokenManager().FilePath()
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)
@@ -502,17 +492,17 @@ func (s *Server) ensureValidSetupToken(
 	clientIP string,
 	token string,
 ) bool {
-	// Security fix #724, #758: Validate the one-time setup token
-	// This prevents CSRF attacks and ensures the request came from a legitimate setup session
-	if s.setupTokenManager().ValidateToken(token) {
+	// The token proves the caller can read the host's data directory, so a
+	// network peer or a cross-site form cannot complete setup (#724, #758).
+	if s.setupTokenManager().Validate(strings.TrimSpace(token)) {
 		return true
 	}
 
-	logger.Warn("Setup complete attempted with invalid or expired token",
+	logger.Warn("Setup complete attempted with invalid token",
 		"client_ip", clientIP,
 		"event", "auth.setup.invalid_token")
 	sendErrorResponseWithDetails(w, logger, http.StatusForbidden, ErrCodeForbidden,
-		"Invalid or expired setup token. Please refresh the setup page and try again.", "")
+		"Invalid setup token. Copy it from "+s.setupTokenManager().FilePath()+" and try again.", "")
 	return false
 }
 
@@ -589,6 +579,10 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal,
 			localizer.T("errors.config.failedToSave"), "")
 		return
+	}
+
+	if consumeErr := s.setupTokenManager().Consume(); consumeErr != nil {
+		logger.WarnContext(r.Context(), "Failed to remove setup token file", "error", consumeErr)
 	}
 
 	// Security audit log: initial setup completed (fixes #697)
