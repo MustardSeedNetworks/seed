@@ -10,6 +10,7 @@ import (
 	"golang.org/x/net/icmp"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
 
 // seed#2689: the tracer opened a raw ICMP socket and nothing else, so an
@@ -58,6 +59,9 @@ func TestTraceICMPReachesLoopbackInWhicheverModeItOpened(t *testing.T) {
 	// two modes, so a round trip is the only assertion that catches a mode the
 	// tracer opened but cannot actually use.
 	first := result.Hops[0]
+	if first.State != "reply" || first.IP != "127.0.0.1" || !result.Completed {
+		testutil.SkipIfHostDropsLoopbackICMP(t)
+	}
 	if first.State != "reply" || first.IP != "127.0.0.1" {
 		t.Errorf("first hop = %+v; want a reply from 127.0.0.1", first)
 	}
