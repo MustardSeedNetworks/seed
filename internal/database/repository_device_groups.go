@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/devicegroups"
+	"github.com/MustardSeedNetworks/seed/internal/polling"
 )
 
 // DeviceGroupRepository owns device_groups and device_group_members (P-D10).
@@ -148,6 +149,31 @@ func (r *DeviceGroupRepository) Delete(ctx context.Context, clientID, id string)
 		return devicegroups.ErrNotFound
 	}
 	return nil
+}
+
+// MemberTargets returns the group's member polling targets ordered by name.
+// The caller has already resolved the group within its client.
+func (r *DeviceGroupRepository) MemberTargets(ctx context.Context, groupID string) ([]polling.Target, error) {
+	rows, err := r.db.Query(ctx, selectPollingTarget+`
+		WHERE id IN (SELECT target_id FROM device_group_members WHERE group_id = ?)
+		ORDER BY name, id`, groupID)
+	if err != nil {
+		return nil, fmt.Errorf("list device group members: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []polling.Target
+	for rows.Next() {
+		t, scanErr := scanPollingTarget(rows.Scan)
+		if scanErr != nil {
+			return nil, scanErr
+		}
+		out = append(out, *t)
+	}
+	if iterErr := rows.Err(); iterErr != nil {
+		return nil, fmt.Errorf("iterate device group members: %w", iterErr)
+	}
+	return out, nil
 }
 
 // MemberAddresses returns every group's member addresses keyed by group id,

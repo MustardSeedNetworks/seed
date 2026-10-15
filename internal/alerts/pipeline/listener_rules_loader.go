@@ -33,14 +33,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"net"
-	"net/netip"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	"github.com/MustardSeedNetworks/seed/internal/devicegroups"
 	"github.com/MustardSeedNetworks/seed/internal/listener"
 )
 
@@ -86,7 +85,7 @@ func compileOne(row *alerts.Rule, groups map[string][]string) Rule {
 	if row.GroupID != "" {
 		members = make(map[string]bool, len(groups[row.GroupID]))
 		for _, addr := range groups[row.GroupID] {
-			members[canonicalHost(addr)] = true
+			members[devicegroups.Host(addr)] = true
 		}
 	}
 	matchKind := row.MatchKind
@@ -115,7 +114,7 @@ func compileOne(row *alerts.Rule, groups map[string][]string) Rule {
 		Window:    window,
 		counter:   counter,
 		Match: func(evt *listener.EventRecord) bool {
-			if members != nil && !members[canonicalHost(evt.SourceAddr)] {
+			if members != nil && !members[devicegroups.Host(evt.SourceAddr)] {
 				return false
 			}
 			if matchKind != "" && evt.Kind != matchKind {
@@ -141,20 +140,6 @@ func compileOne(row *alerts.Rule, groups map[string][]string) Rule {
 			}
 		},
 	}
-}
-
-// canonicalHost reduces a source address ("10.0.0.1:514", "[fe80::1]:162")
-// or a target address to the host in one spelling, so a member's
-// "2001:db8::1" and an event from "[2001:DB8:0::1]:514" compare equal.
-func canonicalHost(addr string) string {
-	host := addr
-	if h, _, err := net.SplitHostPort(addr); err == nil {
-		host = h
-	}
-	if ip, err := netip.ParseAddr(host); err == nil {
-		return ip.Unmap().WithZone("").String()
-	}
-	return strings.ToLower(host)
 }
 
 // templateRenderer is a closure that takes the event context and

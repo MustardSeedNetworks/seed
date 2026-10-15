@@ -2066,6 +2066,26 @@ components:
                 - localIP
                 - interface
             type: object
+        DeviceGroupAlertCounts:
+            additionalProperties: false
+            properties:
+                critical:
+                    type: integer
+                error:
+                    type: integer
+                info:
+                    type: integer
+                total:
+                    type: integer
+                warning:
+                    type: integer
+            required:
+                - total
+                - critical
+                - error
+                - warning
+                - info
+            type: object
         DeviceGroupListResponse:
             additionalProperties: false
             properties:
@@ -2078,6 +2098,17 @@ components:
             required:
                 - count
                 - groups
+            type: object
+        DeviceGroupMemberResponse:
+            additionalProperties: false
+            properties:
+                openAlerts:
+                    type: integer
+                target:
+                    $ref: '#/components/schemas/PollingTargetResponse'
+            required:
+                - target
+                - openAlerts
             type: object
         DeviceGroupRequest:
             additionalProperties: false
@@ -2118,6 +2149,25 @@ components:
                 - members
                 - createdAt
                 - updatedAt
+            type: object
+        DeviceGroupSummaryResponse:
+            additionalProperties: false
+            properties:
+                id:
+                    type: string
+                members:
+                    items:
+                        $ref: '#/components/schemas/DeviceGroupMemberResponse'
+                    type: array
+                name:
+                    type: string
+                openAlerts:
+                    $ref: '#/components/schemas/DeviceGroupAlertCounts'
+            required:
+                - id
+                - name
+                - members
+                - openAlerts
             type: object
         DeviceInfo:
             additionalProperties: false
@@ -13248,6 +13298,41 @@ paths:
             security:
                 - BearerAuth: []
                   CsrfToken: []
+    /api/v1/device-groups/{groupId}/summary:
+        get:
+            operationId: getApiV1DeviceGroupsGroupIdSummary
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeviceGroupSummaryResponse'
+                    description: The group's dashboard read. Each member's last poll, ordered by name, and the members' unresolved alerts by severity. An alert is a member's when its source is the member's polling target id or names its address (host:port for syslog and traps, in any IPv6 spelling); an alert two members share counts once in openAlerts. Alerts are not stored per client, so an address two clients both poll counts for both.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: groupId
+              required: true
+              schema:
+                type: string
     /api/v1/discovery/bonjour:
         get:
             operationId: getApiV1DiscoveryBonjour

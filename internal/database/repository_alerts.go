@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	"github.com/MustardSeedNetworks/seed/internal/devicegroups"
 )
 
 // deliveriesColumn reads an alert's per-channel delivery outcomes as one JSON
@@ -138,6 +139,29 @@ func (r *AlertRepository) List(ctx context.Context, opts alerts.ListOptions) ([]
 	out, err := r.queryAlerts(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list alerts: %w", err)
+	}
+	return out, nil
+}
+
+// OpenSources returns every unresolved alert's source and severity, for the
+// device-group summary to attribute to members.
+func (r *AlertRepository) OpenSources(ctx context.Context) ([]devicegroups.OpenAlert, error) {
+	rows, err := r.db.Query(ctx, `SELECT COALESCE(source, ''), severity FROM alerts WHERE resolved = 0`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list open alert sources: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []devicegroups.OpenAlert
+	for rows.Next() {
+		var a devicegroups.OpenAlert
+		if scanErr := rows.Scan(&a.Source, &a.Severity); scanErr != nil {
+			return nil, fmt.Errorf("failed to scan open alert source: %w", scanErr)
+		}
+		out = append(out, a)
+	}
+	if iterErr := rows.Err(); iterErr != nil {
+		return nil, fmt.Errorf("failed to iterate open alert sources: %w", iterErr)
 	}
 	return out, nil
 }

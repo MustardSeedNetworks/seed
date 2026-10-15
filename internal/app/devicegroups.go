@@ -9,6 +9,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/devicegroups"
+	"github.com/MustardSeedNetworks/seed/internal/polling"
 )
 
 // NewDeviceGroups builds the device-group use-case over a lazy database accessor.
@@ -58,4 +59,20 @@ func (a deviceGroupStore) Delete(ctx context.Context, clientID, id string) error
 		return err
 	}
 	return repo.Delete(ctx, clientID, id)
+}
+
+func (a deviceGroupStore) MemberTargets(ctx context.Context, groupID string) ([]polling.Target, error) {
+	repo, err := a.repo()
+	if err != nil {
+		return nil, err
+	}
+	return repo.MemberTargets(ctx, groupID)
+}
+
+func (a deviceGroupStore) OpenAlerts(ctx context.Context) ([]devicegroups.OpenAlert, error) {
+	db := a.db()
+	if db == nil {
+		return nil, devicegroups.ErrUnavailable
+	}
+	return db.Alerts().OpenSources(ctx)
 }

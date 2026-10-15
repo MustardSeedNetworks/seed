@@ -2050,6 +2050,16 @@ body:
   {
     "auth": true,
     "csrf": false,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/device-groups/{groupId}/summary",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": false,
     "feature": "live_telemetry",
     "maxBodyBytes": 262144,
     "methods": [
