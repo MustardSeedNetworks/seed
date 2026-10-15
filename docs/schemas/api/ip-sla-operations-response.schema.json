@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/ip-sla-operations-response.schema.json",
+  "$ref": "#/$defs/IPSLAOperationsResponse",
+  "$defs": {
+    "IPSLAJitterResponse": {
+      "properties": {
+        "avgJitterMs": {
+          "type": "integer"
+        },
+        "received": {
+          "type": "integer"
+        },
+        "lost": {
+          "type": "integer"
+        },
+        "mos": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "avgJitterMs",
+        "received",
+        "lost",
+        "mos"
+      ]
+    },
+    "IPSLAOperationResponse": {
+      "properties": {
+        "targetId": {
+          "type": "string"
+        },
+        "targetName": {
+          "type": "string"
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "index": {
+          "type": "integer"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "rttType": {
+          "type": "integer"
+        },
+        "target": {
+          "type": "string"
+        },
+        "thresholdMs": {
+          "type": "integer"
+        },
+        "frequencySeconds": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "integer"
+        },
+        "latest": {
+          "$ref": "#/$defs/IPSLAResultResponse"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "targetId",
+        "targetName",
+        "observedAt",
+        "index",
+        "rttType",
+        "thresholdMs",
+        "frequencySeconds",
+        "status"
+      ]
+    },
+    "IPSLAOperationsResponse": {
+      "properties": {
+        "operations": {
+          "items": {
+            "$ref": "#/$defs/IPSLAOperationResponse"
+          },
+          "type": "array"
+        },
+        "count": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "operations",
+        "count"
+      ]
+    },
+    "IPSLAResultResponse": {
+      "properties": {
+        "completed": {
+          "type": "boolean"
+        },
+        "sense": {
+          "type": "integer"
+        },
+        "rttMs": {
+          "type": "integer"
+        },
+        "jitter": {
+          "$ref": "#/$defs/IPSLAJitterResponse"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "completed",
+        "sense",
+        "rttMs"
+      ]
+    }
+  },
+  "title": "IPSLAOperationsResponse",
+  "description": "IPSLAOperationsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

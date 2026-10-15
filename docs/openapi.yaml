@@ -4121,6 +4121,145 @@ components:
                 - lastSeen
                 - isResolved
             type: object
+        IPSLAHistoryResponse:
+            additionalProperties: false
+            properties:
+                bucketSeconds:
+                    type: number
+                from:
+                    format: date-time
+                    type: string
+                index:
+                    type: integer
+                points:
+                    items:
+                        $ref: '#/components/schemas/IPSLARunResponse'
+                    type: array
+                range:
+                    enum:
+                        - 1h
+                        - 24h
+                        - 7d
+                    type: string
+                targetId:
+                    type: string
+                to:
+                    format: date-time
+                    type: string
+            required:
+                - targetId
+                - index
+                - range
+                - from
+                - to
+                - bucketSeconds
+                - points
+            type: object
+        IPSLAJitterResponse:
+            additionalProperties: false
+            properties:
+                avgJitterMs:
+                    type: integer
+                lost:
+                    type: integer
+                mos:
+                    type: number
+                received:
+                    type: integer
+            required:
+                - avgJitterMs
+                - received
+                - lost
+                - mos
+            type: object
+        IPSLAOperationResponse:
+            additionalProperties: false
+            properties:
+                frequencySeconds:
+                    type: integer
+                index:
+                    type: integer
+                latest:
+                    $ref: '#/components/schemas/IPSLAResultResponse'
+                observedAt:
+                    format: date-time
+                    type: string
+                rttType:
+                    type: integer
+                status:
+                    type: integer
+                tag:
+                    type: string
+                target:
+                    type: string
+                targetId:
+                    type: string
+                targetName:
+                    type: string
+                thresholdMs:
+                    type: integer
+            required:
+                - targetId
+                - targetName
+                - observedAt
+                - index
+                - rttType
+                - thresholdMs
+                - frequencySeconds
+                - status
+            type: object
+        IPSLAOperationsResponse:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                operations:
+                    items:
+                        $ref: '#/components/schemas/IPSLAOperationResponse'
+                    type: array
+            required:
+                - operations
+                - count
+            type: object
+        IPSLAResultResponse:
+            additionalProperties: false
+            properties:
+                completed:
+                    type: boolean
+                jitter:
+                    $ref: '#/components/schemas/IPSLAJitterResponse'
+                rttMs:
+                    type: integer
+                sense:
+                    type: integer
+            required:
+                - completed
+                - sense
+                - rttMs
+            type: object
+        IPSLARunResponse:
+            additionalProperties: false
+            properties:
+                completedPct:
+                    type: number
+                jitterMs:
+                    type: number
+                lossPct:
+                    type: number
+                mos:
+                    type: number
+                rttMs:
+                    type: number
+                runs:
+                    type: integer
+                sampledAt:
+                    format: date-time
+                    type: string
+            required:
+                - sampledAt
+                - runs
+                - completedPct
+            type: object
         IPSetting:
             additionalProperties: false
             properties:
@@ -13618,6 +13757,64 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/CategorizedInterfacesResponse'
                     description: The usable interfaces split into the Ethernet and Wi-Fi lists, with the recommended interface of each.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+    /api/v1/ip-sla/operations:
+        get:
+            operationId: getApiV1IpSlaOperations
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IPSLAOperationsResponse'
+                    description: |
+                        Every Cisco IP-SLA operation the polling targets run, from each target's latest ip_sla poll, with its most recent run. Failed operations come first, then those over their threshold, then the healthy ones, then those that have not run.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+    /api/v1/ip-sla/operations/history:
+        get:
+            operationId: getApiV1IpSlaOperationsHistory
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IPSLAHistoryResponse'
+                    description: |
+                        One IP-SLA operation's runs over the last 1h, 24h or 7d: per bucket, the share of runs that completed and the mean RTT, jitter, loss and MOS they measured.
                 "401":
                     content:
                         application/json:

@@ -274,6 +274,11 @@
     "readFailed": "Failed to read interface statistics",
     "invalidHistoryQuery": "Name a polling target, an ifIndex and a range of 1h, 24h or 7d"
   },
+  "ipSla": {
+    "storeUnavailable": "IP SLA results are unavailable: the database is not open",
+    "readFailed": "Failed to read IP SLA results",
+    "invalidHistoryQuery": "Name a polling target, an operation index and a range of 1h, 24h or 7d"
+  },
   "dashboard": {
     "storeUnavailable": "Dashboards are unavailable: the database is not open",
     "invalidLayout": "That dashboard layout cannot be saved",
