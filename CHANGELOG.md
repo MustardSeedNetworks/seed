@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.259.0](https://github.com/MustardSeedNetworks/seed/compare/v0.258.0...v0.259.0) (2026-10-15)
+
+
+### Features
+
+* **deviceconfig:** back up configurations over NETCONF ([#3438](https://github.com/MustardSeedNetworks/seed/issues/3438)) ([789185f](https://github.com/MustardSeedNetworks/seed/commit/789185f4cf6c0ad2663cc477148d3e5e12ee5da8))
+* **deviceconfig:** diff stored configurations and alert on change (P-D2) ([#3445](https://github.com/MustardSeedNetworks/seed/issues/3445)) ([f978ac7](https://github.com/MustardSeedNetworks/seed/commit/f978ac747285871afc7910c279360665944bc80c)), closes [#3444](https://github.com/MustardSeedNetworks/seed/issues/3444)
+* **ipam:** DHCP scope utilization and exhaustion alert (P-D5) ([#3447](https://github.com/MustardSeedNetworks/seed/issues/3447)) ([14be3fc](https://github.com/MustardSeedNetworks/seed/commit/14be3fc1131e2d70ce1390a8ccea0a672dcf4054))
+* **ipam:** report subnet address utilization ([#3441](https://github.com/MustardSeedNetworks/seed/issues/3441)) ([0d9a9a7](https://github.com/MustardSeedNetworks/seed/commit/0d9a9a7ce8e725b56be5a3aaa810d21d1ad1edea))
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.53.0 ([#3446](https://github.com/MustardSeedNetworks/seed/issues/3446)) ([55ee73a](https://github.com/MustardSeedNetworks/seed/commit/55ee73ad9d5a8f3af52f4e084f2ca5984b6837b9))
+
+
+### Miscellaneous
+
+* **deps:** update actions/setup-node action to v7.1.0 ([#3442](https://github.com/MustardSeedNetworks/seed/issues/3442)) ([84bc005](https://github.com/MustardSeedNetworks/seed/commit/84bc005ca8f3c6578cc8768186abf00815f94318))
+
 ## [0.258.0](https://github.com/MustardSeedNetworks/seed/compare/v0.257.8...v0.258.0) (2026-10-15)
 
 
