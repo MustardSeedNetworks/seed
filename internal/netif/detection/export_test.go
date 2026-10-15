@@ -5,11 +5,6 @@ import (
 	"fmt"
 )
 
-// DetectTypeByName exposes detectTypeByName for testing.
-func DetectTypeByName(name string) string {
-	return detectTypeByName(name)
-}
-
 // DetectType exposes detectType for testing.
 func DetectType(name string) string {
 	return detectType(name)
