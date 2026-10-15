@@ -71,6 +71,15 @@ no plaintext listener. A plaintext request to that port, such as a browser
 given `<host>:8443` without a scheme, gets a `308` redirect to the same URL
 over `https://` and nothing else.
 
+On macOS, unpack the archive and run its installer, which registers a launchd
+daemon running as root. The daemon keeps its config in `/etc/seed` and its data
+in `/var/lib/seed`; `uninstall.sh --purge` removes both.
+
+```bash
+mkdir seed && tar -xzf seed-<version>-darwin-arm64.tar.gz -C seed
+cd seed && sudo ./install.sh
+```
+
 Verify what you installed before trusting it:
 
 ```bash
