@@ -45,6 +45,14 @@ func (a deviceGroupStore) Get(ctx context.Context, clientID, id string) (deviceg
 	return repo.Get(ctx, clientID, id)
 }
 
+func (a deviceGroupStore) Lookup(ctx context.Context, id string) (devicegroups.Group, error) {
+	repo, err := a.repo()
+	if err != nil {
+		return devicegroups.Group{}, err
+	}
+	return repo.Lookup(ctx, id)
+}
+
 func (a deviceGroupStore) Save(ctx context.Context, g *devicegroups.Group) error {
 	repo, err := a.repo()
 	if err != nil {

@@ -15,6 +15,7 @@ export interface ReportScheduleInfo {
   format: string;
   schedule: Schedule;
   enabled: boolean;
+  groupId?: string;
   lastRun?: string;
   nextRun?: string;
   createdAt: string;

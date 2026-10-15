@@ -209,6 +209,29 @@ func (s *Server) saveDeviceGroup(w http.ResponseWriter, r *http.Request, clientI
 	sendJSONResponse(w, logging.FromContext(r.Context()), status, encodeDeviceGroup(g))
 }
 
+// ownGroup checks that a request's groupId names one of the caller's device
+// groups, writing the denial and reporting false when it does not. Alert rules
+// and scheduled reports are install-wide, so without this an operator could
+// scope one by another client's group. An empty groupId is unscoped.
+func (s *Server) ownGroup(w http.ResponseWriter, r *http.Request, groupID string) bool {
+	if groupID == "" {
+		return true
+	}
+	clientID, ok := s.callerClient(w, r)
+	if !ok {
+		return false
+	}
+	if _, err := s.deviceGroups.Get(r.Context(), clientID, groupID); err != nil {
+		if errors.Is(err, devicegroups.ErrNotFound) {
+			writeError(w, r, http.StatusBadRequest, ErrCodeValidation, "groupId does not name a device group")
+			return false
+		}
+		writeDeviceGroupError(w, r, err)
+		return false
+	}
+	return true
+}
+
 func writeDeviceGroupError(w http.ResponseWriter, r *http.Request, err error) {
 	if ve, ok := errors.AsType[*devicegroups.ValidationError](err); ok {
 		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, ve.Msg)
@@ -223,7 +246,7 @@ func writeDeviceGroupError(w http.ResponseWriter, r *http.Request, err error) {
 		writeError(w, r, http.StatusConflict, ErrCodeConflict, "A device group with this name already exists")
 	case errors.Is(err, devicegroups.ErrInUse):
 		writeError(w, r, http.StatusConflict, ErrCodeConflict,
-			"An alert rule is scoped to this device group; change or delete the rule first")
+			"An alert rule or scheduled report is scoped to this device group; change or delete it first")
 	case errors.Is(err, devicegroups.ErrUnavailable):
 		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Database not initialized")
 	default:

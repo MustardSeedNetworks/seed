@@ -1025,7 +1025,7 @@ CREATE TABLE scheduled_reports (
 				next_run TEXT,
 				created_at TEXT NOT NULL,
 				updated_at TEXT NOT NULL
-			) STRICT;
+			, group_id TEXT REFERENCES device_groups(id) ON DELETE RESTRICT) STRICT;
 
 -- table: settings
 CREATE TABLE settings (

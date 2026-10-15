@@ -23,6 +23,9 @@
         "enabled": {
           "type": "boolean"
         },
+        "groupId": {
+          "type": "string"
+        },
         "lastRun": {
           "type": "string"
         },

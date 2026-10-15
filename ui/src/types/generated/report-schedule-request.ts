@@ -11,6 +11,7 @@ export interface ReportScheduleRequest {
   format: string;
   schedule: Schedule;
   enabled: boolean;
+  groupId?: string;
 }
 export interface Schedule {
   frequency: string;

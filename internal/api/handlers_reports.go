@@ -1,14 +1,17 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
 	"regexp"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/devicegroups"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/polling"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 )
 
@@ -200,11 +203,26 @@ func (s *Server) reportGroup(w http.ResponseWriter, r *http.Request, id string) 
 		writeDeviceGroupError(w, r, err)
 		return nil, false
 	}
+	return groupScope(g, targets), true
+}
+
+// resolveReportGroup is the scheduler's group read: a scheduled report's
+// group, whatever its client, as it stands when the report runs.
+func (s *Server) resolveReportGroup(ctx context.Context, id string) (*reporting.GroupScope, error) {
+	g, targets, err := s.deviceGroups.Resolve(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return groupScope(g, targets), nil
+}
+
+// groupScope is the part of a resolved device group a report reads.
+func groupScope(g devicegroups.Group, targets []polling.Target) *reporting.GroupScope {
 	scope := &reporting.GroupScope{ID: g.ID, Name: g.Name, Targets: g.Members}
 	for _, t := range targets {
 		scope.Addresses = append(scope.Addresses, t.IPAddress)
 	}
-	return scope, true
+	return scope
 }
 
 // handleReportByID serves GET and DELETE on /api/v1/reports/{reportId}.

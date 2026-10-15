@@ -2,6 +2,7 @@ package reporting_test
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/devicegroups"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 )
 
@@ -119,6 +121,7 @@ func TestSchedulerService_Validate(t *testing.T) {
 			sr.Schedule.Frequency = reporting.FrequencyMonthly
 			sr.Schedule.DayOfMonth = new(29)
 		}, "dayOfMonth"},
+		{"group on an inventory", func(sr *reporting.ScheduledReport) { sr.GroupID = "grp-1" }, "groupId"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -131,4 +134,104 @@ func TestSchedulerService_Validate(t *testing.T) {
 	}
 
 	require.NoError(t, ss.Create(ctx, valid()), "the unmutated schedule is valid")
+}
+
+// A group-scoped schedule runs over the group as the resolver reads it then,
+// and a run whose group cannot be read generates nothing: it must never fall
+// back to a report on every device. The schedule still moves to its next run.
+func TestRunScheduledReport_GroupScope(t *testing.T) {
+	db, cleanup := testDBHelper(t)
+	defer cleanup()
+
+	cfg := testConfigHelper()
+	ts := reporting.NewTemplateService(cfg)
+	require.NoError(t, ts.Load())
+	gs := newGenerator(cfg, db, ts, reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db)))
+	repo := database.NewReportScheduleRepository(db)
+	ctx := context.Background()
+
+	group := devicegroups.Group{ClientID: database.DefaultClientID, Name: "core"}
+	require.NoError(t, db.DeviceGroups().Save(ctx, &group))
+	scope := &reporting.GroupScope{
+		ID: group.ID, Name: "core", Targets: []string{"t-1"}, Addresses: []string{"10.0.0.1"},
+	}
+
+	tests := []struct {
+		name     string
+		resolver reporting.GroupResolver
+		want     *reporting.GroupScope
+	}{
+		{"resolved", func(context.Context, string) (*reporting.GroupScope, error) { return scope, nil }, scope},
+		{"group unreadable", func(context.Context, string) (*reporting.GroupScope, error) {
+			return nil, errors.New("database is locked")
+		}, nil},
+		{"no resolver wired", nil, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ss := reporting.NewSchedulerService(cfg, repo, gs)
+			if tt.resolver != nil {
+				ss.SetGroupResolver(tt.resolver)
+			}
+			sr := &reporting.ScheduledReport{
+				Name:     tt.name,
+				Template: "summary",
+				Format:   reporting.FormatJSON,
+				Schedule: reporting.Schedule{Frequency: reporting.FrequencyDaily, Hour: 6, Timezone: "UTC"},
+				GroupID:  group.ID,
+				Enabled:  true,
+			}
+			require.NoError(t, ss.Create(ctx, sr))
+			before, err := gs.ListReports(ctx)
+			require.NoError(t, err)
+
+			ss.ExportRunScheduledReport(ctx, sr)
+
+			after, err := gs.ListReports(ctx)
+			require.NoError(t, err)
+			if tt.want == nil {
+				assert.Len(t, after, len(before), "an unresolved group must not produce a report")
+			} else {
+				require.Len(t, after, len(before)+1)
+				idx := slices.IndexFunc(after, func(r reporting.Report) bool {
+					return !slices.ContainsFunc(before, func(b reporting.Report) bool { return b.ID == r.ID })
+				})
+				require.GreaterOrEqual(t, idx, 0)
+				assert.Equal(t, tt.want, after[idx].Parameters.Group)
+			}
+
+			stored, err := ss.Get(ctx, sr.ID)
+			require.NoError(t, err)
+			assert.NotNil(t, stored.LastRun, "a failed run still moves the schedule on")
+			assert.Equal(t, group.ID, stored.GroupID)
+		})
+	}
+}
+
+// The group survives a restart, and a group that does not exist is refused by
+// the store rather than saved as a schedule on every device.
+func TestScheduleRepo_GroupID(t *testing.T) {
+	db, cleanup := testDBHelper(t)
+	defer cleanup()
+	ctx := context.Background()
+	repo := database.NewReportScheduleRepository(db)
+
+	group := devicegroups.Group{ClientID: database.DefaultClientID, Name: "core"}
+	require.NoError(t, db.DeviceGroups().Save(ctx, &group))
+
+	sr := &reporting.ScheduledReport{
+		ID: "s-1", Name: "scoped", Template: "capacity", Format: reporting.FormatJSON,
+		Schedule: reporting.Schedule{Frequency: reporting.FrequencyDaily, Timezone: "UTC"},
+		GroupID:  group.ID, Enabled: true,
+	}
+	require.NoError(t, repo.SaveSchedule(ctx, sr))
+	rows, err := repo.ListSchedules(ctx)
+	require.NoError(t, err)
+	require.Len(t, rows, 1)
+	assert.Equal(t, group.ID, rows[0].GroupID)
+
+	require.ErrorIs(t, db.DeviceGroups().Delete(ctx, database.DefaultClientID, group.ID), devicegroups.ErrInUse)
+
+	sr.ID, sr.GroupID = "s-2", "no-such-group"
+	require.ErrorIs(t, repo.SaveSchedule(ctx, sr), reporting.ErrInvalidSchedule)
 }

@@ -30,7 +30,7 @@ var _ reporting.ScheduleRepo = (*ReportScheduleRepository)(nil)
 // restart without a word.
 func (r *ReportScheduleRepository) ListSchedules(ctx context.Context) ([]reporting.ScheduledReport, error) {
 	rows, err := r.db.Query(ctx, `
-		SELECT id, name, template, format, schedule_json, parameters_json, recipients_json, enabled, last_run, next_run, created_at, updated_at
+		SELECT id, name, template, format, schedule_json, parameters_json, recipients_json, enabled, last_run, next_run, created_at, updated_at, group_id
 		FROM scheduled_reports
 	`)
 	if err != nil {
@@ -58,7 +58,7 @@ func (r *ReportScheduleRepository) ListSchedules(ctx context.Context) ([]reporti
 func scanSchedule(row interface{ Scan(...any) error }) (*reporting.ScheduledReport, error) {
 	var sr reporting.ScheduledReport
 	var scheduleJSON, paramsJSON, recipientsJSON, createdAt, updatedAt string
-	var lastRun, nextRun *string
+	var lastRun, nextRun, groupID *string
 
 	if err := row.Scan(
 		&sr.ID,
@@ -73,12 +73,16 @@ func scanSchedule(row interface{ Scan(...any) error }) (*reporting.ScheduledRepo
 		&nextRun,
 		&createdAt,
 		&updatedAt,
+		&groupID,
 	); err != nil {
 		return nil, fmt.Errorf("scanning scheduled report: %w", err)
 	}
 
 	if err := json.Unmarshal([]byte(scheduleJSON), &sr.Schedule); err != nil {
 		return nil, fmt.Errorf("decoding schedule of scheduled report %s: %w", sr.ID, err)
+	}
+	if groupID != nil {
+		sr.GroupID = *groupID
 	}
 	_ = json.Unmarshal([]byte(paramsJSON), &sr.Parameters)
 	_ = json.Unmarshal([]byte(recipientsJSON), &sr.Recipients)
@@ -118,11 +122,16 @@ func (r *ReportScheduleRepository) SaveSchedule(ctx context.Context, sr *reporti
 		nextRun = &t
 	}
 
+	var groupID *string
+	if sr.GroupID != "" {
+		groupID = &sr.GroupID
+	}
+
 	_, err := r.db.Exec(
 		ctx,
 		`
-		INSERT OR REPLACE INTO scheduled_reports (id, name, template, format, schedule_json, parameters_json, recipients_json, enabled, last_run, next_run, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT OR REPLACE INTO scheduled_reports (id, name, template, format, schedule_json, parameters_json, recipients_json, enabled, last_run, next_run, created_at, updated_at, group_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`,
 		sr.ID,
 		sr.Name,
@@ -136,7 +145,11 @@ func (r *ReportScheduleRepository) SaveSchedule(ctx context.Context, sr *reporti
 		nextRun,
 		sr.CreatedAt.Format(time.RFC3339),
 		sr.UpdatedAt.Format(time.RFC3339),
+		groupID,
 	)
+	if isForeignKeyConstraintError(err) {
+		return fmt.Errorf("%w: groupId does not name a device group", reporting.ErrInvalidSchedule)
+	}
 	if err != nil {
 		return fmt.Errorf("saving scheduled report: %w", err)
 	}

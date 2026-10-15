@@ -32,8 +32,9 @@ var (
 	ErrNotFound = errors.New("device group not found")
 	// ErrNameTaken is returned when the client already has a group of that name.
 	ErrNameTaken = errors.New("a device group with this name already exists")
-	// ErrInUse is returned when deleting a group an alert rule names.
-	ErrInUse = errors.New("the device group is used by an alert rule")
+	// ErrInUse is returned when deleting a group an alert rule or a scheduled
+	// report names.
+	ErrInUse = errors.New("the device group is used by an alert rule or a scheduled report")
 	// ErrUnknownMember is returned when a member is not one of the client's
 	// polling targets.
 	ErrUnknownMember = errors.New("a member is not a polling target")
@@ -99,6 +100,9 @@ type OpenAlert struct {
 type Store interface {
 	List(ctx context.Context, clientID string) ([]Group, error)
 	Get(ctx context.Context, clientID, id string) (Group, error)
+	// Lookup returns a group whatever its client, for an install-wide
+	// reference already checked against the client when it was saved.
+	Lookup(ctx context.Context, id string) (Group, error)
 	// Save creates g when g.ID is blank, generating the id, and otherwise
 	// replaces the group's name, description and members.
 	Save(ctx context.Context, g *Group) error
@@ -135,6 +139,21 @@ func (s *Service) Get(ctx context.Context, clientID, id string) (Group, error) {
 // name.
 func (s *Service) Members(ctx context.Context, clientID, id string) (Group, []polling.Target, error) {
 	g, err := s.store.Get(ctx, clientID, id)
+	if err != nil {
+		return Group{}, nil, err
+	}
+	targets, err := s.store.MemberTargets(ctx, g.ID)
+	if err != nil {
+		return Group{}, nil, err
+	}
+	return g, targets, nil
+}
+
+// Resolve returns the group and its members' polling targets whatever its
+// client. A scheduled report reads its group through here when it runs: the
+// schedule routes checked the group against the caller's client on save.
+func (s *Service) Resolve(ctx context.Context, id string) (Group, []polling.Target, error) {
+	g, err := s.store.Lookup(ctx, id)
 	if err != nil {
 		return Group{}, nil, err
 	}

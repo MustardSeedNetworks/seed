@@ -223,12 +223,15 @@ func (s *Server) initSSEAndLogging() {
 	}
 
 	// The cmd layer built the report scheduler before the server owned the
-	// licence manager; give it the check the schedule routes use (#3050). It
-	// reads the manager per tick, so a later activation or expiry applies.
+	// licence manager and the device groups; give it the check the schedule
+	// routes use (#3050) and the group read a scoped schedule runs through.
+	// Both are read per run, so a later activation or membership edit applies.
 	if s.background != nil && s.background.Reporting != nil {
-		s.background.Reporting.Scheduler().SetEntitlement(func() bool {
+		sched := s.background.Reporting.Scheduler()
+		sched.SetEntitlement(func() bool {
 			return s.hasFeature("scheduled_reports")
 		})
+		sched.SetGroupResolver(s.resolveReportGroup)
 	}
 
 	// Wire up database persistence for logs if database is available

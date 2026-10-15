@@ -6,6 +6,7 @@ package reporting
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -29,10 +30,16 @@ type SchedulerService struct {
 	mu        sync.RWMutex
 	schedules map[string]*ScheduledReport
 	entitled  func() bool
+	resolve   GroupResolver
 	// paused is touched only by the Run goroutine; it turns the per-tick
 	// entitlement check into one log line per transition.
 	paused bool
 }
+
+// GroupResolver returns a device group's scope as it stands now. The group is
+// any client's: the schedule routes checked it against the caller's client
+// when the schedule was saved.
+type GroupResolver func(ctx context.Context, groupID string) (*GroupScope, error)
 
 // SchedulerOption tunes a SchedulerService.
 type SchedulerOption func(*SchedulerService)
@@ -81,6 +88,16 @@ func (s *SchedulerService) SetEntitlement(entitled func() bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.entitled = entitled
+}
+
+// SetGroupResolver installs the device-group read a group-scoped schedule
+// runs through. The server builds the device-group use-case after the cmd
+// layer built this component, as with SetEntitlement. Until it is set a
+// group-scoped schedule fails rather than covering every device.
+func (s *SchedulerService) SetGroupResolver(resolve GroupResolver) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.resolve = resolve
 }
 
 // Load reads the persisted schedules into memory. Called once, synchronously,
@@ -192,12 +209,7 @@ func (s *SchedulerService) dueSchedules(now time.Time) []*ScheduledReport {
 
 func (s *SchedulerService) runScheduledReport(ctx context.Context, schedule *ScheduledReport) {
 	logger := logging.GetLogger()
-	if _, err := s.generator.GenerateFromTemplate(
-		ctx,
-		schedule.Template,
-		schedule.Format,
-		&schedule.Parameters,
-	); err != nil {
+	if err := s.generateScheduled(ctx, schedule); err != nil {
 		logger.ErrorContext(ctx, "scheduled report failed",
 			"event", "report.schedule.failed", "schedule_id", schedule.ID, "error", err)
 	}
@@ -222,6 +234,28 @@ func (s *SchedulerService) runScheduledReport(ctx context.Context, schedule *Sch
 		logger.ErrorContext(ctx, "saving scheduled report failed",
 			"event", "report.schedule.save_failed", "schedule_id", schedule.ID, "error", err)
 	}
+}
+
+// generateScheduled generates one run of schedule. A group-scoped schedule
+// reads the group's members as they stand now; when the group cannot be read
+// the run fails, and is never widened to every device.
+func (s *SchedulerService) generateScheduled(ctx context.Context, schedule *ScheduledReport) error {
+	params := schedule.Parameters
+	if schedule.GroupID != "" {
+		s.mu.RLock()
+		resolve := s.resolve
+		s.mu.RUnlock()
+		if resolve == nil {
+			return errors.New("device groups are unavailable")
+		}
+		group, err := resolve(ctx, schedule.GroupID)
+		if err != nil {
+			return fmt.Errorf("resolving device group: %w", err)
+		}
+		params.Group = group
+	}
+	_, err := s.generator.GenerateFromTemplate(ctx, schedule.Template, schedule.Format, &params)
+	return err
 }
 
 // calculateNextRun returns the first occurrence of schedule strictly after now,
@@ -296,6 +330,9 @@ func (s *SchedulerService) validate(sr *ScheduledReport) error {
 	}
 	if !slices.Contains(tmpl.Formats, sr.Format) {
 		return fmt.Errorf("%w: the template does not produce this format", ErrInvalidSchedule)
+	}
+	if sr.GroupID != "" && tmpl.Type != ReportTypeCapacity && tmpl.Type != ReportTypeSummary {
+		return fmt.Errorf("%w: groupId applies only to the capacity and summary templates", ErrInvalidSchedule)
 	}
 	return sr.Schedule.validate()
 }
