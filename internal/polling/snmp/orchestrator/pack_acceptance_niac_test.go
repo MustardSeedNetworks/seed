@@ -46,13 +46,14 @@ const faultGrace = 2 * time.Second
 
 // packTargets is what scripts/snmp-acceptance-niac.sh reads out of a
 // generated pack: every device that runs an SNMP agent, at its first address,
-// every pair of those agents the pack links, and the interface it has NIAC
-// take down.
+// every pair of those agents the pack links, the interface it has NIAC take
+// down, and the switch it has NIAC signal a topology change on.
 type packTargets struct {
-	Pack   string      `json:"pack"`
-	Agents []packAgent `json:"agents"`
-	Links  []packLink  `json:"links"`
-	Fault  packFault   `json:"fault"`
+	Pack   string        `json:"pack"`
+	Agents []packAgent   `json:"agents"`
+	Links  []packLink    `json:"links"`
+	Fault  packFault     `json:"fault"`
+	STP    packSTPChange `json:"stp"`
 }
 
 type packAgent struct {
@@ -173,12 +174,15 @@ func packInputs(t *testing.T) (packTargets, packManifest, string, time.Time) {
 	if targets.Fault.Device == "" || targets.Fault.Interface == "" {
 		t.Fatal("the harness names no fault; the alert check would assert nothing")
 	}
+	if targets.STP.Device == "" {
+		t.Fatal("the harness names no spanning-tree change; the alert check would assert nothing")
+	}
 	return targets, manifest, poller, time.Unix(faultAt, 0)
 }
 
 // checkAlerts runs seed's observation alert pipeline over the poll above, then
-// again after the fault NIAC injects at due, and compares what it raised with
-// that fault.
+// again after the faults NIAC injects at due, and compares what it raised with
+// those faults.
 func checkAlerts(
 	t *testing.T, db *database.DB, store orchestrator.Publisher,
 	targets packTargets, manifest packManifest, poller string, due time.Time,
@@ -207,10 +211,11 @@ func checkAlerts(
 
 	// Every agent again, not just the faulted one: an interface the fault
 	// did not touch going down is as much a finding as the faulted one
-	// staying up, and an agent the fault cut off fails its collect.
+	// staying up, and an agent the fault cut off fails its collect. The
+	// spanning-tree view is read too, for the topology-change counter.
 	ifTable := map[string]packObservation{"if_table": manifest.Expected["if_table"]}
 	findings := packFindings(ifTable, tallyResults(
-		pollPack(t.Context(), targets.Agents, poller, store, "if_table")))
+		pollPack(t.Context(), targets.Agents, poller, store, "if_table", "stp")))
 	if scanErr := watcher.ScanOnce(t.Context()); scanErr != nil {
 		t.Fatalf("fault scan: %v", scanErr)
 	}
@@ -218,12 +223,12 @@ func checkAlerts(
 	if err != nil {
 		t.Fatalf("list alerts: %v", err)
 	}
-	findings = append(findings, alertFindings(targets.Fault, raised)...)
+	findings = append(findings, alertFindings(targets.Fault, targets.STP, raised)...)
 	for _, finding := range findings {
 		t.Errorf("%s: %s", targets.Pack, finding)
 	}
-	t.Logf("%s: alerts with %s %s down: %d raised, %d findings",
-		targets.Pack, targets.Fault.Device, targets.Fault.Interface, len(raised), len(findings))
+	t.Logf("%s: alerts with %s %s down and a topology change on %s: %d raised, %d findings",
+		targets.Pack, targets.Fault.Device, targets.Fault.Interface, targets.STP.Device, len(raised), len(findings))
 }
 
 // reconcileTopology runs the topology reconcilers once each, in the order the

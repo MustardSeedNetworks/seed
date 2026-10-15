@@ -248,32 +248,48 @@ type packFault struct {
 	Interface string `json:"interface"`
 }
 
+// packSTPChange is the switch the harness has NIAC signal a spanning-tree
+// topology change on, in the same phase as the packFault.
+type packSTPChange struct {
+	Device string `json:"device"`
+}
+
 // ifaceDownRule is the observation pipeline's rule for an interface that was
 // up and no longer is (internal/alerts/pipeline evaluateIfTable).
 const ifaceDownRule = "iface.down"
 
-// alertFindings compares what seed's alert pipeline raised with the one fault
-// NIAC injected. The interface going down must raise exactly one alert, and
-// nothing else in the pack changed, so any other alert is invented.
-func alertFindings(fault packFault, raised []*alerts.Alert) []string {
+// alertFindings compares what seed's alert pipeline raised with the faults
+// NIAC injected: the interface going down, and the topology change on one
+// bridge. Each must raise exactly one alert, and nothing else in the pack
+// changed, so any other alert is invented.
+func alertFindings(fault packFault, change packSTPChange, raised []*alerts.Alert) []string {
 	var findings []string
-	matched := 0
+	down, topology := 0, 0
 	for _, alert := range raised {
-		if alert.Rule == ifaceDownRule && alert.Source == fault.Device &&
-			strings.Contains(alert.Title, " "+fault.Interface+" ") {
-			matched++
-			continue
+		switch {
+		case alert.Rule == ifaceDownRule && alert.Source == fault.Device &&
+			strings.Contains(alert.Title, " "+fault.Interface+" "):
+			down++
+		case alert.Rule == alerts.RuleSTPTopologyChange && alert.Source == change.Device:
+			topology++
+		default:
+			findings = append(findings, fmt.Sprintf("alerts: %s on %s (%q), which the faults do not explain",
+				alert.Rule, alert.Source, alert.Title))
 		}
-		findings = append(findings, fmt.Sprintf("alerts: %s on %s (%q), which the fault does not explain",
-			alert.Rule, alert.Source, alert.Title))
 	}
-	switch {
-	case matched == 0:
-		findings = append(findings, fmt.Sprintf("alerts: no %s for %s %s, which NIAC took down",
-			ifaceDownRule, fault.Device, fault.Interface))
-	case matched > 1:
-		findings = append(findings, fmt.Sprintf("alerts: %d %s alerts for %s %s, want one",
-			matched, ifaceDownRule, fault.Device, fault.Interface))
-	}
+	findings = append(findings, countFinding(down, ifaceDownRule, fault.Device+" "+fault.Interface, "took down")...)
+	findings = append(findings, countFinding(topology, alerts.RuleSTPTopologyChange, change.Device,
+		"signalled a topology change on")...)
 	return findings
+}
+
+// countFinding reports a rule raised other than once for one injected fault.
+func countFinding(count int, rule, subject, verb string) []string {
+	switch {
+	case count == 0:
+		return []string{fmt.Sprintf("alerts: no %s for %s, which NIAC %s", rule, subject, verb)}
+	case count > 1:
+		return []string{fmt.Sprintf("alerts: %d %s alerts for %s, want one", count, rule, subject)}
+	}
+	return nil
 }
