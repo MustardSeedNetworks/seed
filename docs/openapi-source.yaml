@@ -569,6 +569,18 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/CategorizedInterfacesResponse'
+  GET /api/v1/ipam/subnets:
+    responses:
+      "200":
+        description: >
+          The address utilization of the active interface's subnet and of
+          every target network an operator has not dismissed. An address
+          counts as in use when the last sweep found it or a router's ARP
+          table held it in the last 24 hours. IPv6 networks are not listed.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IPAMSubnetsResponse'
   POST /api/v1/jobs:
     requestBody:
       required: true
