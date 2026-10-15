@@ -240,7 +240,12 @@ func newTLSSession(t *testing.T) *tlsSession {
 	// into the settings use-case and wires the database-backed user store, both
 	// of which this test relies on.
 	netMgr := netif.NewMockManager(netif.DefaultMockConfig())
-	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, app.NewPersistence(db), nil)
+	server := api.MustNewServer(t, api.Deps{
+		Config:      cfg,
+		ConfigPath:  configPath,
+		NetManager:  netMgr,
+		Persistence: app.NewPersistence(db),
+	})
 	t.Cleanup(server.Close)
 
 	if _, _, certErr := api.EnsureSelfSignedCert(); certErr != nil {

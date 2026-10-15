@@ -71,7 +71,12 @@ func TestSecondFactorLoginSurvivesTheMiddlewareChain(t *testing.T) {
 
 	cfg := testutil.NewConfigBuilder().WithPort(8080).Build()
 	netMgr := netif.NewMockManager(netif.DefaultMockConfig())
-	server := api.NewServer(cfg, filepath.Join(dir, "seed.json"), "", netMgr, false, nil, app.NewPersistence(db), nil)
+	server := api.MustNewServer(t, api.Deps{
+		Config:      cfg,
+		ConfigPath:  filepath.Join(dir, "seed.json"),
+		NetManager:  netMgr,
+		Persistence: app.NewPersistence(db),
+	})
 	t.Cleanup(server.Close)
 	handler := server.Handler()
 

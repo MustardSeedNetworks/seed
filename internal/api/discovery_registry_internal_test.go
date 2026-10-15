@@ -19,8 +19,11 @@ import (
 func TestDiscoveryServiceSweepsTheRegistryTheAPIServes(t *testing.T) {
 	dir := t.TempDir()
 	cfg := testutil.NewConfigBuilder().WithPort(8080).Build()
-	s := NewServer(cfg, filepath.Join(dir, "seed.json"), "",
-		netif.NewMockManager(netif.DefaultMockConfig()), false, nil, nil, nil)
+	s := MustNewServer(t, Deps{
+		Config:     cfg,
+		ConfigPath: filepath.Join(dir, "seed.json"),
+		NetManager: netif.NewMockManager(netif.DefaultMockConfig()),
+	})
 	t.Cleanup(s.Close)
 
 	swept := s.discoveryService().DeviceDiscovery()

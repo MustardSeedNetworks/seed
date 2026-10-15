@@ -99,7 +99,16 @@ func runServe(_ *cobra.Command, _ []string, state *cliState) {
 	// Initialize components
 	components := initializeBackgroundComponents(cfg, persist)
 
-	server := api.NewServer(cfg, configPath, logPath, netMgr, icmpAvailable, proxies, persist, components)
+	server := mustNewServer(api.Deps{
+		Config:         cfg,
+		ConfigPath:     configPath,
+		LogPath:        logPath,
+		NetManager:     netMgr,
+		ICMPAvailable:  icmpAvailable,
+		TrustedProxies: proxies,
+		Persistence:    persist,
+		Background:     components,
+	})
 	// Publish the port the listener settled on, so `seed license` and friends
 	// can name it when they refuse.
 	server.SetBoundPortObserver(func(port int) {
@@ -108,6 +117,16 @@ func runServe(_ *cobra.Command, _ []string, state *cliState) {
 		}
 	})
 	runServerWithShutdown(server, cfg, components)
+}
+
+// mustNewServer builds the API server, exiting when a dependency is missing.
+func mustNewServer(deps api.Deps) *api.Server {
+	server, err := api.NewServer(deps)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Fatal: Failed to build the server: %v\n", err)
+		os.Exit(1)
+	}
+	return server
 }
 
 // initializeDatabase opens and configures the SQLite database.

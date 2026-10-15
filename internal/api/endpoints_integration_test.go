@@ -45,7 +45,11 @@ func newTestEndpointServer(t *testing.T) *testEndpointServer {
 		t.Logf("Warning: Could not create network manager: %v", err)
 	}
 
-	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, nil, nil)
+	server := api.MustNewServer(t, api.Deps{
+		Config:     cfg,
+		ConfigPath: configPath,
+		NetManager: netMgr,
+	})
 	// Force IPv4 listener to avoid environments where IPv6 binds are disallowed
 	ln, err := net.Listen("tcp4", "127.0.0.1:0")
 	if err != nil {
@@ -247,7 +251,11 @@ func TestWebSocketHub(t *testing.T) {
 	}
 
 	netMgr, _ := netif.NewManager("")
-	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, nil, nil)
+	server := api.MustNewServer(t, api.Deps{
+		Config:     cfg,
+		ConfigPath: configPath,
+		NetManager: netMgr,
+	})
 	defer server.Close()
 
 	// Test SSE hub exists
@@ -256,49 +264,6 @@ func TestWebSocketHub(t *testing.T) {
 		t.Error("SSE hub is nil")
 	}
 }
-
-// func TestThresholdsUpdate(t *testing.T) {
-// 	tmpDir := t.TempDir()
-// 	configPath := filepath.Join(tmpDir, "test-config.json")
-//
-// 	cfg := config.DefaultConfig()
-// 	cfg.Interface.Default = "lo"
-//
-// 	if err := cfg.Save(configPath); err != nil {
-// 		t.Fatalf("Failed to save test config: %v", err)
-// 	}
-//
-// 	netMgr, _ := netif.NewManager("")
-// 	server := NewServer(cfg, configPath, "", netMgr, false, nil, nil, nil)
-//
-// 	ts := httptest.NewServer(server.mux)
-// 	defer ts.Close()
-//
-// 	// Test threshold update
-// 	thresholds := map[string]interface{}{
-// 		"thresholds": map[string]interface{}{
-// 			"dns": map[string]int64{
-// 				"good":    50,
-// 				"warning": 100,
-// 			},
-// 		},
-// 	}
-//
-// 	body, _ := json.Marshal(thresholds)
-// 	req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/v1/settings", bytes.NewReader(body))
-// 	req.Header.Set("Content-Type", "application/json")
-//
-// 	client := &http.Client{Timeout: 15 * time.Second}
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		t.Fatalf("PUT /api/settings failed: %v", err)
-// 	}
-// 	defer func() { _ = resp.Body.Close() }()
-//
-// 	if resp.StatusCode != http.StatusOK {
-// 		t.Errorf("Expected status 200, got %d", resp.StatusCode)
-// 	}
-// }
 
 // devicesTestServer wraps test server state for device endpoint tests.
 type devicesTestServer struct {
@@ -321,7 +286,11 @@ func newDevicesTestServer(t *testing.T) *devicesTestServer {
 	}
 
 	netMgr, _ := netif.NewManager("")
-	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, nil, nil)
+	server := api.MustNewServer(t, api.Deps{
+		Config:     cfg,
+		ConfigPath: configPath,
+		NetManager: netMgr,
+	})
 
 	return &devicesTestServer{ts: httptest.NewServer(server.Mux()), server: server}
 }
@@ -434,7 +403,12 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 	defer func() { _ = db.Close() }()
 
 	netMgr, _ := netif.NewManager("")
-	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, app.NewPersistence(db), nil)
+	server := api.MustNewServer(t, api.Deps{
+		Config:      cfg,
+		ConfigPath:  configPath,
+		NetManager:  netMgr,
+		Persistence: app.NewPersistence(db),
+	})
 	defer server.Close()
 
 	ts := httptest.NewServer(server.Mux())

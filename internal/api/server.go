@@ -1,19 +1,18 @@
 // Package api provides the HTTP/REST/SSE server.
 package api
 
-// server.go holds the Server struct, NewServer constructor, and the public/
-// lowercase service-accessor methods used throughout the api package. The
-// initialisation helpers (NewServer composes), routes, middleware stack,
-// SPA fallback, server lifecycle (Start/HTTPS/Shutdown), and data
+// server.go holds the Server struct, its Deps and the NewServer constructor.
+// The service accessors (server_accessors.go), the initialisation helpers
+// NewServer composes (server_wiring.go, server_init.go), routes, middleware
+// stack, SPA fallback, server lifecycle (Start/HTTPS/Shutdown), and data
 // retention each live in sibling server_*.go files.
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"net/url"
-	"strconv"
 	"time"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
@@ -21,7 +20,6 @@ import (
 
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
-	alertpipeline "github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/rules"
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/app"
@@ -35,7 +33,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/export"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
-	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/packetcapture"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
@@ -64,7 +61,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/network/ipconfig"
 	"github.com/MustardSeedNetworks/seed/internal/oauth"
-	"github.com/MustardSeedNetworks/seed/internal/paths"
 	"github.com/MustardSeedNetworks/seed/internal/pipeline/publicip"
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
@@ -73,7 +69,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/targets"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
 	probeanomaly "github.com/MustardSeedNetworks/seed/internal/probe/anomaly"
-	"github.com/MustardSeedNetworks/seed/internal/probe/checkers"
 	"github.com/MustardSeedNetworks/seed/internal/profiles/catalog"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 	securitysettings "github.com/MustardSeedNetworks/seed/internal/security/settings"
@@ -308,32 +303,57 @@ type Server struct {
 	tlsFingerprint     tlsFingerprintCache         // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
 }
 
+// Deps is everything NewServer needs from the composition root (cmd/seed).
+// Config and ConfigPath are required; every other field may be left zero:
+// a nil NetManager, Persistence or Background, or a nil TrustedProxies, is a
+// server without that collaborator (the api tests run that way).
+type Deps struct {
+	Config         *config.Config
+	ConfigPath     string
+	LogPath        string
+	NetManager     *netif.Manager
+	ICMPAvailable  bool
+	TrustedProxies *TrustedProxies
+	Persistence    *app.Persistence
+	Background     *BackgroundComponents
+}
+
+// ErrMissingDependency is returned by NewServer when a required Deps field is
+// unset; the wrapped message names the field.
+var ErrMissingDependency = errors.New("api: missing server dependency")
+
+func (d Deps) validate() error {
+	switch {
+	case d.Config == nil:
+		return fmt.Errorf("%w: Config", ErrMissingDependency)
+	case d.ConfigPath == "":
+		return fmt.Errorf("%w: ConfigPath", ErrMissingDependency)
+	}
+	return nil
+}
+
 // NewServer creates a new server instance.
-func NewServer(
-	cfg *config.Config,
-	configPath, logPath string,
-	netMgr *netif.Manager,
-	icmpAvailable bool,
-	trustedProxies *TrustedProxies,
-	persist *app.Persistence,
-	background *BackgroundComponents,
-) *Server {
+func NewServer(d Deps) (*Server, error) {
+	if err := d.validate(); err != nil {
+		return nil, err
+	}
+	cfg, persist := d.Config, d.Persistence
 	s := &Server{
 		config:        cfg,
-		configPath:    configPath,
-		logPath:       logPath,
-		icmpAvailable: icmpAvailable,
+		configPath:    d.ConfigPath,
+		logPath:       d.LogPath,
+		icmpAvailable: d.ICMPAvailable,
 		startTime:     time.Now(),
-		background:    background,
+		background:    d.Background,
 		health:        system.NewCollector(),
 		engines:       engine.NewRegistry(nil),
 	}
 
 	// Initialize auth, WebAuthn, and rate-limiting services
-	s.initAuthSecurity(cfg, trustedProxies)
+	s.initAuthSecurity(cfg, d.TrustedProxies)
 
 	// Initialize network services
-	s.netMgr = netMgr
+	s.netMgr = d.NetManager
 	s.linkMon = netif.NewLinkMonitor(cfg.Interface.Default)
 	// LinkMonitorPool tracks every interface in the multi_interface set
 	// (Pro). Reconcile primes the pool from the active profile; the pool
@@ -411,464 +431,5 @@ func NewServer(
 	// Setup routes (sseHub already initialized and running above)
 	s.setupRoutes()
 
-	return s
-}
-
-// initAuthSecurity wires the auth manager, CSRF manager, setup-token and
-// recovery-token managers, the optional WebAuthn manager, and the
-// login/endpoint rate limiters. Split out of NewServer to keep it under the
-// funlen limit; kept as one helper since these all share the "auth surface"
-// concern and construction order does not matter across them.
-func (s *Server) initAuthSecurity(cfg *config.Config, trustedProxies *TrustedProxies) {
-	s.authMgr = auth.NewManager(
-		cfg.Auth.JWTSecret,
-		cfg.Auth.SessionTimeout,
-		cfg.Auth.DefaultUsername,
-		cfg.Auth.DefaultPasswordHash,
-	)
-	s.csrf = csrf.NewManager()
-	dataDir := paths.Resolve(paths.ModeAuto).DataDir
-	s.setupToken = NewSetupTokenManager(dataDir)
-	s.recovery = auth.NewRecoveryTokenManager(dataDir)
-	s.proxies = trustedProxies
-
-	s.loginLimiter = NewRateLimiter(DefaultRateLimitConfig())
-	s.endpointLimiter = NewEndpointRateLimiter(DefaultEndpointRateLimitConfig())
-}
-
-// initTelemetryAndWiFiServices constructs the diagnostic test tools (DNS,
-// gateway, VLAN, speedtest, iperf, cable, public-IP) and the Wi-Fi
-// manager/scanner. Grouped together because none of these depend on the
-// database or on each other; split out of NewServer to keep it under the
-// funlen limit.
-func (s *Server) initTelemetryAndWiFiServices(cfg *config.Config) {
-	s.dnsTest = dns.NewTesterForInterface("", cfg.DNS.TestHostname, dns.DefaultThresholds(), cfg.Interface.Default)
-	s.gatewayTest = gateway.NewTesterForInterface(gateway.DefaultThresholds(), cfg.Interface.Default)
-	s.vlanMgr = vlan.NewManager(cfg.Interface.Default)
-	s.speedtestTest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
-	s.iperf = iperfDeps{mgr: iperf.NewManager(), version: iperf.GetVersion}
-	s.cableTest = cable.NewTester(cfg.Interface.Default)
-	s.publicIP = publicip.NewChecker()
-
-	s.wifiMgr = wifi.NewManager(cfg.Interface.ResolvedWiFi())
-	s.wifiScan = wifi.NewScanner(cfg.Interface.ResolvedWiFi())
-	s.startWiFiHelper()
-}
-
-// initCaptureServices constructs the services that perform live packet capture
-// (device discovery via LLDP/CDP/EDP, DHCP monitoring, rogue-DHCP detection, and
-// VLAN traffic) and injects the capture port adapter into each. The adapter is
-// build-tagged (libpcap under CGO/Windows, a CGO-free no-op otherwise) so the
-// domain packages stay CGO-free. See docs/architecture/CGO_BUILD_STRATEGY.md.
-func (s *Server) initCaptureServices(cfg *config.Config) {
-	captureOpener := defaultCaptureOpener()
-
-	// s.discoverySvc is initialized later, after the shared profiler.
-	s.deviceDisc = enumerate.NewDeviceDiscoveryWithOUI(
-		cfg.Interface.Default,
-		cfg.NetworkDiscovery.OUIFilePath,
-		enumerate.WithCapture(captureOpener),
-	)
-	if cfg.NetworkDiscovery.OUIMaxAge > 0 {
-		go s.deviceDisc.RefreshOUI(cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge)
-	}
-	s.dhcpMon = dhcp.NewMonitor(cfg.Interface.Default, dhcp.WithCapture(captureOpener))
-	s.rogueDet = dhcp.NewRogueDetector(&dhcp.RogueDetectorConfig{
-		Interface:        cfg.Interface.Default,
-		KnownServers:     cfg.DHCP.RogueDetection.KnownServers,
-		AlertOnDetection: cfg.DHCP.RogueDetection.AlertOnDetection,
-	}, dhcp.WithCapture(captureOpener))
-}
-
-// initLicense wires the Phase D-2 license manager onto the server. It is
-// best-effort: failure to load isn't fatal. It leaves s.licenseMgr nil,
-// which every gate reads as the pre-license dev state and treats as Pro
-// (effectiveTier, the mint flag, and the feature catalogue on
-// GET /api/v1/license) — so the warning has to say "unenforced", not
-// "disabled", which is what it claimed while permitting minting.
-func (s *Server) initLicense() {
-	lm, lmErr := s.newLicenseManager()
-	if lmErr != nil {
-		logging.GetLogger().Warn("license manager init failed; licensing is unenforced (Pro)",
-			"error", lmErr)
-		return
-	}
-	if status := lm.LoadStatus(); !status.Usable() {
-		logging.GetLogger().Warn("license state is unusable; running as Free until the key is re-entered",
-			"status", status.String(), "error", lm.LoadError())
-	}
-	s.licenseMgr = lm
-}
-
-// newLicenseManager builds the manager against s.licenseDir, falling back to
-// the real user config directory when it is unset.
-func (s *Server) newLicenseManager() (*license.Manager, error) {
-	if s.licenseDir != "" {
-		return license.NewManagerWithDir(s.licenseDir)
-	}
-
-	return license.NewManager()
-}
-
-// initProbeEngine constructs the unified probe.Engine, wires it to
-// the probes table and a fresh scheduler, registers V1.0 baseline
-// Checkers (DNS + TLS), and parks it on s.probeEngine for the
-// lifecycle to Start. The engine is *not* started here — that
-// happens in Server.Start so probes don't run during partial
-// server construction.
-//
-// V1.0 NMS expansion — Stage A1.8.
-func (s *Server) initProbeEngine(storage *app.ProbeStorage) {
-	sched := scheduler.New(probeSchedulerTick)
-
-	probeEngine := probe.NewEngine(logging.GetLogger()).
-		WithStorage(storage, sched)
-
-	// Register V1.0 baseline checkers plus the health-check vertical
-	// checkers absorbed onto the probe engine (ADR-0027 P1).
-	probeEngine.RegisterChecker(checkers.NewDNSChecker())
-	probeEngine.RegisterChecker(checkers.NewTLSChecker())
-	probeEngine.RegisterChecker(checkers.NewPingChecker())
-	probeEngine.RegisterChecker(checkers.NewTCPChecker())
-	probeEngine.RegisterChecker(checkers.NewUDPChecker())
-	probeEngine.RegisterChecker(checkers.NewHTTPChecker())
-	probeEngine.RegisterChecker(checkers.NewHTTPSChecker())
-	probeEngine.RegisterChecker(checkers.NewRTSPChecker())
-	probeEngine.RegisterChecker(checkers.NewDICOMChecker())
-	probeEngine.RegisterChecker(checkers.NewHL7Checker())
-	probeEngine.RegisterChecker(checkers.NewFHIRChecker())
-	probeEngine.RegisterChecker(checkers.NewSQLChecker())
-	probeEngine.RegisterChecker(checkers.NewFileShareChecker())
-	probeEngine.RegisterChecker(checkers.NewLDAPChecker())
-	probeEngine.RegisterChecker(checkers.NewLTIChecker())
-	probeEngine.RegisterChecker(checkers.NewOPCUAChecker())
-	probeEngine.RegisterChecker(checkers.NewModbusChecker())
-
-	s.probeEngine = probeEngine
-	s.probeScheduler = sched
-	if regErr := s.registerEngineIfLicensed(probeEngine); regErr != nil {
-		logging.GetLogger().Warn("probe engine registry registration failed", "error", regErr)
-	}
-
-	// Wire the active-monitoring anomaly producer (ADR-0025): it subscribes to
-	// the probe engine's ResultEvent channel here (so it does not miss events
-	// before its own Start) and persists threshold breaches as anomalies under
-	// source=probe through the shared, server-owned Coordinator (ADR-0029).
-	// Subscription happens now; the consume/maintenance loops start with the
-	// lifecycle. A nil Coordinator (malformed merged catalog) skips the producer
-	// rather than aborting probe startup.
-	if s.anomalyCoord == nil {
-		logging.GetLogger().Warn("probe anomaly producer not wired: no anomaly coordinator")
-		return
-	}
-	producer, prodErr := probeanomaly.New(
-		probeEngine.Subscribe(), s.anomalyCoord,
-		probeanomaly.WithLogger(logging.GetLogger()),
-	)
-	if prodErr != nil {
-		logging.GetLogger().Warn("probe anomaly producer not wired", "error", prodErr)
-		return
-	}
-	s.probeAnomaly = producer
-	if regErr := s.registerEngineIfLicensed(producer); regErr != nil {
-		logging.GetLogger().Warn("probe anomaly producer registry registration failed", "error", regErr)
-	}
-}
-
-// probeSchedulerTick is the scheduler's tick interval — how often
-// it checks whether any registered Job is due. Production default
-// 5s; tests can run faster via direct scheduler.New construction.
-const probeSchedulerTick = 5 * time.Second
-
-// snmpPollerSchedulerTick is the cadence the snmp.Poller's
-// scheduler wakes up at to dispatch due target jobs. The actual
-// per-target cadence comes from polling_targets.poll_interval_seconds
-// (default 300s); a 5s tick gives 1% scheduling-grain overhead on
-// the default-cadence targets and is plenty fast for the 60s
-// cadence operators typically use on high-priority devices.
-const snmpPollerSchedulerTick = 5 * time.Second
-
-// initAlertPipelines wires the two Stage A4.5 / A4.6 alert
-// pipelines into the engine registry. The listener pipeline scans
-// listener_events for severe syslog + traps; the observation
-// pipeline scans snmp_observations for state transitions
-// (iface down, BGP flap, storage thresholds). Both write into the
-// existing alerts table via the same Alert repository.
-//
-// V1.0 NMS expansion — Stage A4 wire-up.
-func (s *Server) initAlertPipelines(
-	listener alertpipeline.ListenerConfig,
-	observation alertpipeline.ObservationConfig,
-) {
-	logger := logging.GetLogger()
-	alerts := s.useAlertDelivery(app.NewAlertDelivery(s.persist, s.config, logger))
-	listener.Alerts, listener.Logger = alerts, logger
-	observation.Alerts, observation.Logger = alerts, logger
-
-	if p, err := alertpipeline.NewListenerPipeline(listener); err != nil {
-		logger.Warn("listener alert pipeline init failed", "error", err)
-	} else if regErr := s.registerEngineIfLicensed(p); regErr != nil {
-		logger.Warn("listener alert pipeline registry registration failed", "error", regErr)
-	}
-
-	if p, err := alertpipeline.NewObservationPipeline(observation); err != nil {
-		logger.Warn("observation alert pipeline init failed", "error", err)
-	} else if regErr := s.registerEngineIfLicensed(p); regErr != nil {
-		logger.Warn("observation alert pipeline registry registration failed", "error", regErr)
-	}
-
-	s.registerAlertEscalator(app.NewAlertEscalator(s.persist, s.alertDelivery, logger))
-}
-
-// Service accessors — the in-package read interface and the lazy method
-// values the ADR-0020 use-cases bind to (D1, formerly #888).
-
-// GetConfig returns the server configuration.
-func (s *Server) GetConfig() *config.Config { return s.config }
-
-// AuthManager returns the authentication manager.
-func (s *Server) AuthManager() *auth.Manager { return s.authMgr }
-
-// CSRFManager returns the CSRF token manager.
-func (s *Server) CSRFManager() *csrf.Manager { return s.csrf }
-
-// RecoveryManager returns the password recovery token manager.
-func (s *Server) RecoveryManager() *auth.RecoveryTokenManager { return s.recovery }
-
-// OAuthManager returns the OAuth manager.
-func (s *Server) OAuthManager() *oauth.Manager { return s.oauthMgr }
-
-// TrustedProxies returns the trusted proxies configuration.
-func (s *Server) TrustedProxies() *TrustedProxies { return s.proxies }
-
-// LoginRateLimiter returns the login rate limiter.
-func (s *Server) LoginRateLimiter() *RateLimiter { return s.loginLimiter }
-
-// EndpointRateLimiter returns the endpoint rate limiter.
-func (s *Server) EndpointRateLimiter() *EndpointRateLimiter { return s.endpointLimiter }
-
-// NetManager returns the network manager.
-func (s *Server) NetManager() *netif.Manager { return s.netMgr }
-
-// LinkMonitor returns the link monitor.
-func (s *Server) LinkMonitor() *netif.LinkMonitor { return s.linkMon }
-
-// DeviceDiscovery returns the device discovery service.
-func (s *Server) DeviceDiscovery() *enumerate.DeviceDiscovery { return s.deviceDisc }
-
-// DiscoveryService returns the unified discovery service.
-func (s *Server) DiscoveryService() *enumerate.Service { return s.discoverySvc }
-
-// VulnScanner returns the vulnerability scanner.
-func (s *Server) VulnScanner() *vuln.VulnerabilityScanner { return s.vulnScan }
-
-// DNSTester returns the DNS tester.
-func (s *Server) DNSTester() *dns.Tester { return s.dnsTest }
-
-// DHCPMonitor returns the DHCP monitor.
-func (s *Server) DHCPMonitor() *dhcp.Monitor { return s.dhcpMon }
-
-// RogueDetector returns the rogue DHCP detector.
-func (s *Server) RogueDetector() *dhcp.RogueDetector { return s.rogueDet }
-
-// GatewayTester returns the gateway tester.
-func (s *Server) GatewayTester() *gateway.Tester { return s.gatewayTest }
-
-// VLANManager returns the VLAN manager.
-func (s *Server) VLANManager() *vlan.Manager { return s.vlanMgr }
-
-// SpeedtestTester returns the speedtest tester.
-func (s *Server) SpeedtestTester() *speedtest.Tester { return s.speedtestTest }
-
-// IperfManager returns the iperf manager.
-func (s *Server) IperfManager() *iperf.Manager { return s.iperf.mgr }
-
-// CableTester returns the cable tester.
-func (s *Server) CableTester() *cable.Tester { return s.cableTest }
-
-// PublicIPChecker returns the public IP checker.
-func (s *Server) PublicIPChecker() *publicip.Checker { return s.publicIP }
-
-// WiFiManager returns the WiFi manager.
-func (s *Server) WiFiManager() *wifi.Manager { return s.wifiMgr }
-
-// WiFiScanner returns the WiFi scanner.
-func (s *Server) WiFiScanner() *wifi.Scanner { return s.wifiScan }
-
-// SSEHub returns the SSE hub.
-func (s *Server) SSEHub() *SSEHub { return s.sse }
-
-// LogBroadcaster returns the log broadcaster.
-func (s *Server) LogBroadcaster() *logging.LogBroadcaster { return s.logBroadcast }
-
-// MibDB returns the MIB database for SNMP OID resolution.
-func (s *Server) MibDB() *mibdb.DB { return s.mibDB }
-
-// Lowercase accessors — the unexported in-package read interface; many are
-// also taken as method values by the ADR-0020 use-case wiring, so they must
-// stay methods (not be inlined to field access).
-
-func (s *Server) authManager() *auth.Manager                  { return s.authMgr }
-func (s *Server) csrfManager() *csrf.Manager                  { return s.csrf }
-func (s *Server) setupTokenManager() *SetupTokenManager       { return s.setupToken }
-func (s *Server) recoveryManager() *auth.RecoveryTokenManager { return s.recovery }
-func (s *Server) oauthManager() *oauth.Manager                { return s.oauthMgr }
-func (s *Server) trustedProxies() *TrustedProxies             { return s.proxies }
-func (s *Server) webAuthnManager() *auth.WebAuthnManager      { return s.webAuthn }
-func (s *Server) loginRateLimiter() *RateLimiter              { return s.loginLimiter }
-func (s *Server) endpointRateLimiter() *EndpointRateLimiter   { return s.endpointLimiter }
-func (s *Server) netManager() *netif.Manager                  { return s.netMgr }
-func (s *Server) defaultInterface() string                    { return s.config.Interface.Default }
-func (s *Server) discoveryScanTimeout() time.Duration         { return s.config.NetworkDiscovery.ScanTimeout }
-func (s *Server) linkMonitor() *netif.LinkMonitor             { return s.linkMon }
-func (s *Server) deviceDiscovery() *enumerate.DeviceDiscovery { return s.deviceDisc }
-func (s *Server) discoveryService() *enumerate.Service        { return s.discoverySvc }
-func (s *Server) discoveryEngine() *discovery.Engine          { return s.discoveryEng }
-func (s *Server) problemDetector() *discovery.ProblemDetector { return s.problemDet }
-
-// resolveWiFiInterface picks the Wi-Fi interface for a request: an explicit query
-// override, else the configured Wi-Fi interface, else the default interface.
-func (s *Server) resolveWiFiInterface(r *http.Request) string {
-	if iface := s.getInterfaceFromRequest(r); iface != "" {
-		return iface
-	}
-	if wifi := s.config.Interface.WiFi; wifi != "" {
-		return wifi
-	}
-	return s.config.Interface.Default
-}
-
-// anomalyEngine is the shared, server-owned anomaly engine (ADR-0029), exposed so
-// the store-read adapters can re-derive the catalog-static Impact / FollowUps the
-// store does not persist. Nil when the merged catalog failed to build or no DB is
-// wired (the test harness) — enrichment then degrades to a passthrough.
-func (s *Server) anomalyEngine() *anomaly.Engine {
-	if s.anomalyCoord == nil {
-		return nil
-	}
-	return s.anomalyCoord.Engine()
-}
-
-func (s *Server) bluetoothScanner() *enumerate.BluetoothScanner { return s.bluetoothScan }
-func (s *Server) vulnScanner() *vuln.VulnerabilityScanner       { return s.vulnScan }
-func (s *Server) dnsTester() *dns.Tester                        { return s.dnsTest }
-func (s *Server) dhcpMonitor() *dhcp.Monitor                    { return s.dhcpMon }
-func (s *Server) rogueDetector() *dhcp.RogueDetector            { return s.rogueDet }
-func (s *Server) gatewayTester() *gateway.Tester                { return s.gatewayTest }
-func (s *Server) vlanManager() *vlan.Manager                    { return s.vlanMgr }
-func (s *Server) speedtestTester() *speedtest.Tester            { return s.speedtestTest }
-func (s *Server) iperfManager() *iperf.Manager                  { return s.iperf.mgr }
-func (s *Server) cableTester() *cable.Tester                    { return s.cableTest }
-func (s *Server) publicipChecker() *publicip.Checker            { return s.publicIP }
-func (s *Server) wifiManager() *wifi.Manager                    { return s.wifiMgr }
-func (s *Server) wifiScanner() *wifi.Scanner                    { return s.wifiScan }
-func (s *Server) sseHub() *SSEHub                               { return s.sse }
-func (s *Server) logBroadcaster() *logging.LogBroadcaster       { return s.logBroadcast }
-func (s *Server) eventBus() *events.Bus                         { return s.bus }
-func (s *Server) jobsRunner() *jobs.Runner                      { return s.jobRunner }
-func (s *Server) jobIdempotency() jobIdempotencyStore           { return s.jobIdemp }
-func (s *Server) persistence() *app.Persistence                 { return s.persist }
-func (s *Server) licenseManager() *license.Manager              { return s.licenseMgr }
-func (s *Server) engineRegistry() *engine.Registry              { return s.engines }
-
-// initWiFiUseCases wires the Wi-Fi troubleshooting use-cases (ADR-0020) from the
-// composition root: the visibility-read, management, and discovery use-cases over
-// the server's lazy accessors + live config. Called after initDiscovery so the
-// discovery bridge the discovery use-case captures already exists.
-func (s *Server) initWiFiUseCases() {
-	s.wifiQueries = app.NewWiFiQueries(s.wifiVisibility, s.persistence, s.anomalyEngine)
-	s.wifiManagement = app.NewWiFiManagement(s.wifiManager, s.wifiScanner, s.netManager, s.config, s.configPath)
-	s.wifiDiscovery = app.NewWiFiDiscovery(s.wifiBridge)
-	if v := s.wifiVisibility(); v != nil {
-		v.SetScanSource(app.WiFiScanSource(s.wifiManagement))
-		v.SetWiredSource(app.WiFiWiredSource(s.wiredDevices, s.persistence))
-	}
-}
-
-// wiredDevices lists discovery's wired registry, or nothing before it exists.
-func (s *Server) wiredDevices() []*enumerate.DiscoveredDevice {
-	if d := s.deviceDiscovery(); d != nil {
-		return d.GetDevices()
-	}
-	return nil
-}
-
-// rescheduleProbeEngine reschedules the running probe engine after a settings
-// save; a nil engine is a no-op (best-effort, ADR-0027).
-func (s *Server) rescheduleProbeEngine(ctx context.Context) error {
-	if s.probeEngine == nil {
-		return nil
-	}
-	return s.probeEngine.Reschedule(ctx)
-}
-
-// initEngineUseCases wires the engine-status use-case (ADR-0020) from the
-// composition root over the server's lazy accessor for the engine registry,
-// so a nil or later-set registry (the api test harness) is honored.
-func (s *Server) initEngineUseCases() {
-	s.engineStatus = app.NewEngineStatus(s.engineRegistry)
-}
-
-// initIdentityUseCases wires the identity use-cases (ADR-0020, ADR-0024) from
-// the composition root over the server's lazy accessors for the database and
-// the license manager, so a nil or later-set collaborator (the api test
-// harness) is honored.
-func (s *Server) initIdentityUseCases() {
-	s.identityUsers = app.NewIdentityUsers(s.persistence)
-	s.identityTokens = app.NewIdentityTokens(s.persistence, s.licenseManager)
-	s.identityOAuth = app.NewIdentityOAuth(s.persistence)
-	s.identityMFA = app.NewMFAStore(s.persistence)
-}
-
-// initUseCases wires the ADR-0020 application use-cases that depend on the
-// discovery components existing: troubleshooting + discovery + health +
-// identity + engine-status.
-func (s *Server) initUseCases() {
-	s.initWiFiUseCases()
-	s.initDiscoveryUseCases()
-	s.initHealthUseCases()
-	s.initEngineUseCases()
-	s.initIdentityUseCases()
-	s.initTFTP()
-}
-
-// webAuthnConfigFromServer derives the relying-party config from the exact
-// public HTTPS origin, or from the port actually bound for a local deployment.
-func webAuthnConfigFromServer(cfg *config.Config, listenerPort int) auth.WebAuthnConfig {
-	const (
-		devHost           = "localhost"
-		defaultPort       = 8443
-		standardHTTPSPort = 443
-	)
-	if listenerPort <= 0 {
-		listenerPort = defaultPort
-	}
-
-	rpid := devHost
-	originHost := devHost
-	if listenerPort != standardHTTPSPort {
-		originHost = net.JoinHostPort(devHost, strconv.Itoa(listenerPort))
-	}
-	origin := (&url.URL{Scheme: "https", Host: originHost}).String()
-	if cfg != nil && cfg.Server.PublicOrigin != "" {
-		if publicURL, err := url.Parse(cfg.Server.PublicOrigin); err == nil && publicURL.Hostname() != "" {
-			rpid = publicURL.Hostname()
-			origin = cfg.Server.PublicOrigin
-		}
-	}
-	return auth.WebAuthnConfig{
-		RPID:          rpid,
-		RPDisplayName: "Seed",
-		RPOrigins:     []string{origin},
-	}
-}
-
-func (s *Server) initWebAuthn(listenerPort int) {
-	wan, err := auth.NewWebAuthnManager(webAuthnConfigFromServer(s.config, listenerPort))
-	if err != nil {
-		logging.GetLogger().Warn("WebAuthn manager init failed; passkeys disabled", "error", err)
-		s.webAuthn = nil
-		return
-	}
-	s.webAuthn = wan
+	return s, nil
 }

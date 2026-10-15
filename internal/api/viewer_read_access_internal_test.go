@@ -39,7 +39,12 @@ func routedServer(t *testing.T, username, role string) (*Server, *database.DB) {
 
 	cfg := testutil.NewConfigBuilder().WithPort(8080).Build()
 	netMgr := netif.NewMockManager(netif.DefaultMockConfig())
-	s := NewServer(cfg, filepath.Join(dir, "seed.json"), "", netMgr, false, nil, app.NewPersistence(db), nil)
+	s := MustNewServer(t, Deps{
+		Config:      cfg,
+		ConfigPath:  filepath.Join(dir, "seed.json"),
+		NetManager:  netMgr,
+		Persistence: app.NewPersistence(db),
+	})
 	t.Cleanup(s.Close)
 
 	return s, db
