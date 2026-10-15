@@ -34,7 +34,9 @@ const (
 // alerted, what appeared on the network and how the probes did, all over one
 // window.
 type NetworkSummary struct {
-	Window     DateRange        `json:"window"`
+	Window DateRange `json:"window"`
+	// Group names the device group the summary is scoped to, if any.
+	Group      string           `json:"group,omitempty"`
 	Interfaces InterfaceSummary `json:"interfaces"`
 	Alerts     AlertVolume      `json:"alerts"`
 	Topology   TopologyChanges  `json:"topology"`
@@ -149,32 +151,41 @@ func summaryWindowEnding(now time.Time) DateRange {
 	return DateRange{Start: end.Add(-summaryWindow), End: end}
 }
 
-// Summarize reads the network summary for window.
-func (s *AggregatorService) Summarize(ctx context.Context, window DateRange) (*NetworkSummary, error) {
-	interfaces, err := s.metrics.InterfaceHealth(ctx, window)
+// Summarize reads the network summary for window, or only group's members'
+// share of it when group is not nil.
+func (s *AggregatorService) Summarize(
+	ctx context.Context,
+	window DateRange,
+	group *GroupScope,
+) (*NetworkSummary, error) {
+	interfaces, err := s.metrics.InterfaceHealth(ctx, window, group)
 	if err != nil {
 		return nil, fmt.Errorf("reading interface health: %w", err)
 	}
-	severities, open, err := s.metrics.AlertSeverityCounts(ctx, window)
+	severities, open, err := s.metrics.AlertSeverityCounts(ctx, window, group)
 	if err != nil {
 		return nil, fmt.Errorf("reading alerts: %w", err)
 	}
-	topology, err := s.metrics.TopologyChanges(ctx, window)
+	topology, err := s.metrics.TopologyChanges(ctx, window, group)
 	if err != nil {
 		return nil, fmt.Errorf("reading topology changes: %w", err)
 	}
-	probes, err := s.metrics.ProbeOutcomes(ctx, window)
+	probes, err := s.metrics.ProbeOutcomes(ctx, window, group)
 	if err != nil {
 		return nil, fmt.Errorf("reading probe results: %w", err)
 	}
 
-	return &NetworkSummary{
+	sum := &NetworkSummary{
 		Window:     window,
 		Interfaces: rankInterfaces(interfaces),
 		Alerts:     alertVolume(severities, open),
 		Topology:   topology,
 		Probes:     summarizeProbes(probes),
-	}, nil
+	}
+	if group != nil {
+		sum.Group = group.Name
+	}
+	return sum, nil
 }
 
 func rankInterfaces(all []InterfaceHealth) InterfaceSummary {
@@ -239,7 +250,7 @@ func summarizeProbes(outcomes []ProbeOutcome) ProbeSummary {
 // generateSummary renders the summary for the window generateReport stamped
 // on report.
 func (s *GeneratorService) generateSummary(ctx context.Context, report *Report) ([]byte, error) {
-	summary, err := s.aggregator.Summarize(ctx, *report.Parameters.DateRange)
+	summary, err := s.aggregator.Summarize(ctx, *report.Parameters.DateRange, report.Parameters.Group)
 	if err != nil {
 		return nil, fmt.Errorf("aggregation failed: %w", err)
 	}
@@ -284,15 +295,21 @@ func (s *GeneratorService) generateSummaryPDF(report *Report, sum *NetworkSummar
 
 	pdf.AddPage()
 	s.addPDFSectionHeader(pdf, "Network Summary")
-	addPDFMetrics(pdf, []pdfMetric{
+	metrics := []pdfMetric{
 		{"Window", sum.Window.Start.Format(summaryTimeLayout) + " to " + sum.Window.End.Format(summaryTimeLayout)},
-		{"Interfaces rated", strconv.Itoa(sum.Interfaces.Rated)},
-		{"Interfaces with errors", strconv.Itoa(sum.Interfaces.Faulty)},
-		{"Alerts raised", fmt.Sprintf("%d (%d still open)", sum.Alerts.Total, sum.Alerts.Open)},
-		{"New devices", strconv.Itoa(len(sum.Topology.NewNodes))},
-		{"New links", strconv.Itoa(len(sum.Topology.NewLinks))},
-		{"Probe checks failed", fmt.Sprintf("%d of %d", sum.Probes.Failures, sum.Probes.Checks)},
-	})
+	}
+	if sum.Group != "" {
+		metrics = append(metrics, pdfMetric{"Device group", tr(sum.Group)})
+	}
+	metrics = append(metrics,
+		pdfMetric{"Interfaces rated", strconv.Itoa(sum.Interfaces.Rated)},
+		pdfMetric{"Interfaces with errors", strconv.Itoa(sum.Interfaces.Faulty)},
+		pdfMetric{"Alerts raised", fmt.Sprintf("%d (%d still open)", sum.Alerts.Total, sum.Alerts.Open)},
+		pdfMetric{"New devices", strconv.Itoa(len(sum.Topology.NewNodes))},
+		pdfMetric{"New links", strconv.Itoa(len(sum.Topology.NewLinks))},
+		pdfMetric{"Probe checks failed", fmt.Sprintf("%d of %d", sum.Probes.Failures, sum.Probes.Checks)},
+	)
+	addPDFMetrics(pdf, metrics)
 
 	pdf.Ln(pdfSectionSpacingMed)
 	s.addPDFSectionHeader(pdf, "Interface Health")

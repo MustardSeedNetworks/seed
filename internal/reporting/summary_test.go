@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -132,7 +133,7 @@ func TestSummaryReadsCountOnlyTheWindow(t *testing.T) {
 	repo := database.NewReportMetricsRepository(db)
 	ctx := t.Context()
 
-	health, err := repo.InterfaceHealth(ctx, window)
+	health, err := repo.InterfaceHealth(ctx, window, nil)
 	require.NoError(t, err)
 	// Ordered by target_id, so the unnamed "ghost" target sorts before "tgt-…".
 	assert.Equal(t, []reporting.InterfaceHealth{
@@ -144,12 +145,12 @@ func TestSummaryReadsCountOnlyTheWindow(t *testing.T) {
 		{Target: "core-sw1", IfIndex: 4, InDiscards: 1},
 	}, health, "target %s", targetID)
 
-	severities, open, err := repo.AlertSeverityCounts(ctx, window)
+	severities, open, err := repo.AlertSeverityCounts(ctx, window, nil)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]int{"critical": 1, "warning": 2}, severities)
 	assert.Equal(t, 2, open)
 
-	changes, err := repo.TopologyChanges(ctx, window)
+	changes, err := repo.TopologyChanges(ctx, window, nil)
 	require.NoError(t, err)
 	require.Len(t, changes.NewNodes, 1)
 	assert.Equal(t, "access-sw2", changes.NewNodes[0].Name)
@@ -160,12 +161,83 @@ func TestSummaryReadsCountOnlyTheWindow(t *testing.T) {
 		Type: "lldp", FirstSeen: start.Add(2 * time.Hour),
 	}, changes.NewLinks[0])
 
-	outcomes, err := repo.ProbeOutcomes(ctx, window)
+	outcomes, err := repo.ProbeOutcomes(ctx, window, nil)
 	require.NoError(t, err)
 	assert.Equal(t, []reporting.ProbeOutcome{
 		{Name: "gateway ping", Kind: "icmp", Checks: 3, Failures: 1, AvgLatencyMs: 15},
 		{Name: "resolver", Kind: "dns", Checks: 1, AvgLatencyMs: 5},
 	}, outcomes)
+}
+
+// TestSummaryReadsScopeToTheGroup: with a group, each read keeps only what
+// its members did. Alerts count by the poller's target id or the member's
+// address with or without a port, a new link counts when a member is at
+// either end, and a probe counts when it is aimed at a member's address.
+func TestSummaryReadsScopeToTheGroup(t *testing.T) {
+	t.Parallel()
+	db := openSummaryDB(t)
+	start := time.Date(2026, 10, 3, 6, 0, 0, 0, time.UTC)
+	window := reporting.DateRange{Start: start, End: start.Add(24 * time.Hour)}
+	targetID := seedSummaryStores(t, db, window.Start, window.End)
+	ctx := t.Context()
+
+	alert := func(severity, source string, resolved bool) {
+		require.NoError(t, db.Alerts().Create(ctx, &alerts.Alert{
+			Type: "syslog", Severity: severity, Title: "t", Message: "m", Source: source,
+			Resolved: resolved, CreatedAt: start.Add(3 * time.Hour),
+		}))
+	}
+	alert(alerts.SeverityError, targetID, false)
+	alert(alerts.SeverityWarning, "10.0.0.1:514", true)
+	alert(alerts.SeverityError, "10.0.0.1", false)
+	alert(alerts.SeverityCritical, "10.0.0.9:514", false)
+
+	require.NoError(t, db.Probes().CreateProbe(ctx, &database.Probe{
+		ID: "p3", ClientID: "default", Kind: "https", DisplayName: "switch ui", Target: "https://10.0.0.1:8443/",
+	}))
+	require.NoError(t, db.Probes().RecordResult(ctx, &database.ProbeResult{
+		ProbeID: "p3", ClientID: "default", Kind: "https", Success: true, LatencyMs: 7,
+		Timestamp: start.Add(time.Hour),
+	}))
+
+	repo := database.NewReportMetricsRepository(db)
+	group := &reporting.GroupScope{ID: "g1", Name: "core", Targets: []string{targetID}, Addresses: []string{"10.0.0.1"}}
+
+	health, err := repo.InterfaceHealth(ctx, window, group)
+	require.NoError(t, err)
+	require.Len(t, health, 2, "the outsider's interface is left out")
+	for _, h := range health {
+		assert.Equal(t, "core-sw1", h.Target)
+	}
+
+	severities, open, err := repo.AlertSeverityCounts(ctx, window, group)
+	require.NoError(t, err)
+	assert.Equal(t, map[string]int{"error": 2, "warning": 1}, severities)
+	assert.Equal(t, 2, open)
+
+	changes, err := repo.TopologyChanges(ctx, window, group)
+	require.NoError(t, err)
+	assert.Empty(t, changes.NewNodes, "the new device is the member's neighbour, not a member")
+	require.Len(t, changes.NewLinks, 1)
+	assert.Equal(t, "access-sw2", changes.NewLinks[0].Target)
+
+	outcomes, err := repo.ProbeOutcomes(ctx, window, group)
+	require.NoError(t, err)
+	names := make([]string, 0, len(outcomes))
+	for _, o := range outcomes {
+		names = append(names, o.Name)
+	}
+	assert.Equal(t, []string{"gateway ping", "switch ui"}, names)
+
+	empty := &reporting.GroupScope{ID: "g2", Name: "empty"}
+	sum, err := reporting.NewAggregatorService(testConfig(), repo).Summarize(ctx, window, empty)
+	require.NoError(t, err)
+	assert.Equal(t, "empty", sum.Group)
+	assert.Zero(t, sum.Interfaces.Rated)
+	assert.Zero(t, sum.Alerts.Total)
+	assert.Empty(t, sum.Topology.NewNodes)
+	assert.Empty(t, sum.Topology.NewLinks)
+	assert.Zero(t, sum.Probes.Probes)
 }
 
 // TestSummarizeRanksTheStores checks the shaping with no database: busiest
@@ -193,7 +265,7 @@ func TestSummarizeRanksTheStores(t *testing.T) {
 			{Name: "c", Checks: 4, Failures: 1},
 		},
 	})
-	sum, err := as.Summarize(t.Context(), reporting.DateRange{})
+	sum, err := as.Summarize(t.Context(), reporting.DateRange{}, nil)
 	require.NoError(t, err)
 
 	assert.Equal(t, 12, sum.Interfaces.Rated)
@@ -257,7 +329,7 @@ func TestScheduledDailySummaryMatchesTheStores(t *testing.T) {
 	assert.Equal(t, 24*time.Hour, window.End.Sub(window.Start))
 	assert.WithinDuration(t, now, window.End, 2*time.Minute)
 
-	want, err := aggregator.Summarize(t.Context(), window)
+	want, err := aggregator.Summarize(t.Context(), window, nil)
 	require.NoError(t, err)
 	require.NotZero(t, want.Interfaces.Rated, "the seed must land in the window")
 	require.NotEmpty(t, want.Topology.NewNodes)
@@ -314,7 +386,7 @@ func TestSummaryJSONCarriesTheSummary(t *testing.T) {
 	})
 	require.Equal(t, reporting.StatusComplete, report.Status, report.Error)
 
-	want, err := aggregator.Summarize(t.Context(), *report.Parameters.DateRange)
+	want, err := aggregator.Summarize(t.Context(), *report.Parameters.DateRange, nil)
 	require.NoError(t, err)
 	raw, err := os.ReadFile(report.FilePath)
 	require.NoError(t, err)
@@ -327,6 +399,45 @@ func TestSummaryJSONCarriesTheSummary(t *testing.T) {
 	assert.Equal(t, want.Probes, got.Summary.Probes)
 	assert.Len(t, got.Summary.Topology.NewNodes, len(want.Topology.NewNodes))
 	assert.True(t, want.Window.End.Equal(got.Summary.Window.End))
+}
+
+// TestSummaryReportScopedToAGroup: a summary generated for a group renders
+// the members' share in the JSON and names the group in the PDF.
+func TestSummaryReportScopedToAGroup(t *testing.T) {
+	t.Parallel()
+	db := openSummaryDB(t)
+	now := time.Now().UTC()
+	targetID := seedSummaryStores(t, db, now.Add(-20*time.Hour), now.Add(-2*time.Hour))
+	gen, _ := newCapacityGenerator(t, db)
+	params := &reporting.ReportParams{Group: &reporting.GroupScope{
+		ID: "g1", Name: "core", Targets: []string{targetID}, Addresses: []string{"10.0.0.1"},
+	}}
+
+	generate := func(format reporting.ExportFormat) *reporting.Report {
+		t.Helper()
+		created, err := gen.Generate(t.Context(), reporting.ReportTypeSummary, format, params)
+		require.NoError(t, err)
+		require.Equal(t, created.ID, <-gen.reports.finished)
+		report, err := gen.GetReport(t.Context(), created.ID)
+		require.NoError(t, err)
+		require.Equal(t, reporting.StatusComplete, report.Status, report.Error)
+		return report
+	}
+
+	raw, err := os.ReadFile(generate(reporting.FormatJSON).FilePath)
+	require.NoError(t, err)
+	var got struct {
+		Summary reporting.NetworkSummary `json:"summary"`
+	}
+	require.NoError(t, json.Unmarshal(raw, &got))
+	assert.Equal(t, "core", got.Summary.Group)
+	assert.Equal(t, 2, got.Summary.Interfaces.Rated, "the outsider's interface is left out")
+	assert.Equal(t, 1, got.Summary.Probes.Probes)
+
+	text := pdfText(t, generate(reporting.FormatPDF).FilePath)
+	at := slices.Index(text, "Device group:")
+	require.GreaterOrEqual(t, at, 0, "no device-group line in %q", text)
+	assert.Equal(t, "core", text[at+1])
 }
 
 // TestSummaryRejectsFormatsItDoesNotRender: the template offers PDF and JSON

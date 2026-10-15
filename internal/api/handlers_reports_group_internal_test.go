@@ -34,22 +34,27 @@ func generateReport(t *testing.T, s *Server, body GenerateReportRequest) *httpte
 	return w
 }
 
-// TestReportGenerateScopesCapacityToTheCallersGroup: a capacity report that
-// names one of the caller's groups carries the group's members, resolved at
-// request time, into the generation.
-func TestReportGenerateScopesCapacityToTheCallersGroup(t *testing.T) {
+// TestReportGenerateScopesToTheCallersGroup: a capacity or summary report that
+// names one of the caller's groups carries the group's members and their
+// addresses, resolved at request time, into the generation.
+func TestReportGenerateScopesToTheCallersGroup(t *testing.T) {
 	s, _, target := newReportGroupTestServer(t)
 	g := createGroup(t, s, DeviceGroupRequest{Name: "core", Members: []string{target.ID}})
 
-	w := generateReport(t, s, GenerateReportRequest{Type: "capacity", Format: "json", GroupID: g.ID})
-	require.Equal(t, http.StatusAccepted, w.Code, w.Body.String())
-	var created ReportInfo
-	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &created))
+	for _, reportType := range []string{"capacity", "summary"} {
+		t.Run(reportType, func(t *testing.T) {
+			w := generateReport(t, s, GenerateReportRequest{Type: reportType, Format: "json", GroupID: g.ID})
+			require.Equal(t, http.StatusAccepted, w.Code, w.Body.String())
+			var created ReportInfo
+			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &created))
 
-	report, err := s.background.Reporting.Generator().GetReport(t.Context(), created.ID)
-	require.NoError(t, err)
-	require.Equal(t, &reporting.GroupScope{ID: g.ID, Name: "core", Targets: []string{target.ID}},
-		report.Parameters.Group)
+			report, err := s.background.Reporting.Generator().GetReport(t.Context(), created.ID)
+			require.NoError(t, err)
+			require.Equal(t, &reporting.GroupScope{
+				ID: g.ID, Name: "core", Targets: []string{target.ID}, Addresses: []string{"10.0.0.1"},
+			}, report.Parameters.Group)
+		})
+	}
 }
 
 func TestReportGenerateRefusesABadGroupFilter(t *testing.T) {
@@ -62,8 +67,8 @@ func TestReportGenerateRefusesABadGroupFilter(t *testing.T) {
 		want int
 	}{
 		{
-			"not a capacity report",
-			GenerateReportRequest{Type: "summary", Format: "json", GroupID: g.ID},
+			"neither a capacity nor a summary report",
+			GenerateReportRequest{Type: "executive", Format: "json", GroupID: g.ID},
 			http.StatusBadRequest,
 		},
 		{

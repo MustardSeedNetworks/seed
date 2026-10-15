@@ -16276,7 +16276,7 @@ paths:
     /api/v1/reports/generate:
         post:
             description: |
-                groupId scopes a capacity report to the interfaces of one of the caller's device groups. With any other report type it is 400; a group the caller's client does not have is 404.
+                groupId scopes a capacity or summary report to one of the caller's device groups: the capacity forecast reads only the members' interfaces, and the summary only the members' interfaces, alerts, new links and probes. With any other report type it is 400; a group the caller's client does not have is 404.
             operationId: postApiV1ReportsGenerate
             requestBody:
                 content:

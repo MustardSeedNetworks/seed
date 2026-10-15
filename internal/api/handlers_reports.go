@@ -46,7 +46,8 @@ type ReportsResponse struct {
 type GenerateReportRequest struct {
 	Type   string `json:"type"   validate:"required"`
 	Format string `json:"format" validate:"required"`
-	// GroupID scopes a capacity report to one of the caller's device groups.
+	// GroupID scopes a capacity or summary report to one of the caller's
+	// device groups.
 	GroupID string `json:"groupId,omitempty"`
 }
 
@@ -139,9 +140,9 @@ func (s *Server) handleReportGenerate(w http.ResponseWriter, r *http.Request) {
 			ErrCodeValidation, i18n.FromRequest(r).T("errors.reports.invalidRequest"), "")
 		return
 	}
-	if req.GroupID != "" && reportType != reporting.ReportTypeCapacity {
+	if req.GroupID != "" && reportType != reporting.ReportTypeCapacity && reportType != reporting.ReportTypeSummary {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, i18n.FromRequest(r).T("errors.reports.groupNeedsCapacity"), "")
+			ErrCodeValidation, i18n.FromRequest(r).T("errors.reports.groupUnsupported"), "")
 		return
 	}
 
@@ -194,12 +195,16 @@ func (s *Server) reportGroup(w http.ResponseWriter, r *http.Request, id string) 
 	if !ok {
 		return nil, false
 	}
-	g, err := s.deviceGroups.Get(r.Context(), clientID, id)
+	g, targets, err := s.deviceGroups.Members(r.Context(), clientID, id)
 	if err != nil {
 		writeDeviceGroupError(w, r, err)
 		return nil, false
 	}
-	return &reporting.GroupScope{ID: g.ID, Name: g.Name, Targets: g.Members}, true
+	scope := &reporting.GroupScope{ID: g.ID, Name: g.Name, Targets: g.Members}
+	for _, t := range targets {
+		scope.Addresses = append(scope.Addresses, t.IPAddress)
+	}
+	return scope, true
 }
 
 // handleReportByID serves GET and DELETE on /api/v1/reports/{reportId}.

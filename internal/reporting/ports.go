@@ -59,18 +59,23 @@ type MetricsRepo interface {
 	Trends(ctx context.Context, metric, period string) ([]DataPoint, error)
 
 	// The network summary reads. Each counts only what happened in
-	// [window.Start, window.End).
+	// [window.Start, window.End), and only what group's members did when group
+	// is not nil.
 
 	// InterfaceHealth returns one row per interface that was rated in the
 	// window, with its utilization and error and discard rates.
-	InterfaceHealth(ctx context.Context, window DateRange) ([]InterfaceHealth, error)
+	InterfaceHealth(ctx context.Context, window DateRange, group *GroupScope) ([]InterfaceHealth, error)
 	// AlertSeverityCounts returns severity → count of the alerts raised in the
 	// window, and how many of those are still unresolved.
-	AlertSeverityCounts(ctx context.Context, window DateRange) (counts map[string]int, open int, err error)
+	AlertSeverityCounts(
+		ctx context.Context,
+		window DateRange,
+		group *GroupScope,
+	) (counts map[string]int, open int, err error)
 	// TopologyChanges returns the nodes and links first seen in the window.
-	TopologyChanges(ctx context.Context, window DateRange) (TopologyChanges, error)
+	TopologyChanges(ctx context.Context, window DateRange, group *GroupScope) (TopologyChanges, error)
 	// ProbeOutcomes returns one row per probe that ran in the window.
-	ProbeOutcomes(ctx context.Context, window DateRange) ([]ProbeOutcome, error)
+	ProbeOutcomes(ctx context.Context, window DateRange, group *GroupScope) ([]ProbeOutcome, error)
 
 	// InterfaceUtilizationHistory returns one entry per interface rated in
 	// [window.Start, window.End), with its hourly utilization in time order.
