@@ -54,6 +54,28 @@ func TestJobsSaveInsertThenGet(t *testing.T) {
 	}
 }
 
+func TestJobsSaveKeepsTheOwningClient(t *testing.T) {
+	t.Parallel()
+	repo, ctx := setupJobsTest(t)
+
+	now := time.Now().UTC()
+	for _, rec := range []*database.JobRecord{
+		{ID: "owned", Kind: "device-config-backup", ClientID: "tenant-a", State: "queued", CreatedAt: now, UpdatedAt: now},
+		{ID: "shared", Kind: "speedtest", State: "queued", CreatedAt: now, UpdatedAt: now},
+	} {
+		if err := repo.Save(ctx, rec); err != nil {
+			t.Fatalf("save %s: %v", rec.ID, err)
+		}
+		got, err := repo.Get(ctx, rec.ID)
+		if err != nil {
+			t.Fatalf("get %s: %v", rec.ID, err)
+		}
+		if got.ClientID != rec.ClientID {
+			t.Errorf("%s: ClientID = %q, want %q", rec.ID, got.ClientID, rec.ClientID)
+		}
+	}
+}
+
 func TestJobsSaveUpsertPreservesCreatedAtAndKind(t *testing.T) {
 	t.Parallel()
 	repo, ctx := setupJobsTest(t)

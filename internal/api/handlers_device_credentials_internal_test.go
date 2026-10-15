@@ -102,8 +102,9 @@ func TestCredentialValidationIsA400WithAReason(t *testing.T) {
 	s := newDeviceCredentialsTestServer(t)
 
 	for _, tc := range []struct{ name, body, want string }{
-		{"both kinds", `{"name":"x","community":"c","snmpV3User":"u"}`, "not both"},
-		{"neither", `{"name":"x"}`, "either a community"},
+		{"both kinds", `{"name":"x","community":"c","snmpV3User":"u"}`, "not several"},
+		{"neither", `{"name":"x"}`, "provide a community"},
+		{"ssh without password", `{"name":"x","sshUser":"backup"}`, "both sshuser and sshpassword"},
 		{"no name", `{"community":"c"}`, "name is required"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

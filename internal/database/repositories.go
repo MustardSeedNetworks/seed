@@ -129,6 +129,17 @@ func (db *DB) DeviceCredentials() *DeviceCredentialRepository {
 	return db.deviceCredentials
 }
 
+// DeviceConfigs returns the device configuration backup repository (P-D1).
+func (db *DB) DeviceConfigs() *DeviceConfigRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.deviceConfigs == nil {
+		db.deviceConfigs = &DeviceConfigRepository{db: db}
+	}
+	return db.deviceConfigs
+}
+
 // SNMPObservations returns the unified SNMP observations repository
 // (Stage A3.5b). Every collector Publisher writes one row per poll;
 // Stage A4 topology + the listener pipeline read kind-filtered rows

@@ -107,6 +107,26 @@ func TestSavedCredentialSerialisesWithoutSecrets(t *testing.T) {
 	require.Contains(t, body, "netops")
 }
 
+// TestSaveEncryptsTheSSHPassword covers the configuration backup login (P-D1):
+// the password is encrypted like every SNMP secret and never serialised.
+func TestSaveEncryptsTheSSHPassword(t *testing.T) {
+	repo := &fakeRepo{}
+	svc := newService(t, repo)
+
+	got, err := svc.Save(context.Background(), credentials.Input{
+		ID: "c1", ClientID: "client-1", Name: "backup login",
+		SSHUser: " backup ", SSHPassword: "ssh-plain",
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, "backup", repo.saved.SSHUser)
+	require.Equal(t, "enc:v1:ssh-plain", repo.saved.SSHPasswordCT)
+	encoded, err := json.Marshal(got)
+	require.NoError(t, err)
+	require.NotContains(t, string(encoded), "ssh-plain")
+	require.Contains(t, string(encoded), `"sshUser":"backup"`)
+}
+
 func TestSaveRejectsAmbiguousAndEmptyCredentials(t *testing.T) {
 	svc := newService(t, &fakeRepo{})
 
@@ -115,8 +135,11 @@ func TestSaveRejectsAmbiguousAndEmptyCredentials(t *testing.T) {
 		in   credentials.Input
 		want string
 	}{
-		{"both", credentials.Input{Name: "x", Community: "c", V3User: "u"}, "not both"},
-		{"neither", credentials.Input{Name: "x"}, "either a community"},
+		{"both", credentials.Input{Name: "x", Community: "c", V3User: "u"}, "not several"},
+		{"snmp and ssh", credentials.Input{Name: "x", Community: "c", SSHUser: "u", SSHPassword: "p"}, "not several"},
+		{"neither", credentials.Input{Name: "x"}, "provide a community"},
+		{"ssh without password", credentials.Input{Name: "x", SSHUser: "u"}, "both sshUser and sshPassword"},
+		{"ssh without user", credentials.Input{Name: "x", SSHPassword: "p"}, "both sshUser and sshPassword"},
 		{"no name", credentials.Input{Community: "c"}, "name is required"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

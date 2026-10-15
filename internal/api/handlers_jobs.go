@@ -21,6 +21,7 @@ import (
 
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
 
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
@@ -115,6 +116,13 @@ func (s *Server) handleJobs(w http.ResponseWriter, r *http.Request) {
 			ErrCodeValidation, "Job kind is required", "")
 		return
 	}
+	// A configuration backup belongs to the caller's client, which this
+	// tenant-blind route cannot carry; it has its own route.
+	if req.Kind == deviceConfigJobKind {
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation,
+			"Start a configuration backup with POST "+deviceConfigRunPath, "")
+		return
+	}
 	if feature, ok := jobKindFeature(req.Kind); ok && !s.hasFeature(feature) {
 		s.sendFeatureGate(w, r, feature)
 		return
@@ -153,38 +161,57 @@ func (s *Server) handleJobs(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusCreated, toJobResponse(j))
 }
 
+// jobVisibleTo reports whether a job is the caller's to see or cancel: a job
+// no client owns is everyone's, an owned one only its client's. A caller with
+// no client claim (callerClient "") sees only unowned jobs.
+func jobVisibleTo(j jobs.Job, callerClient string) bool {
+	return j.ClientID == "" || j.ClientID == callerClient
+}
+
+// jobCallerClient is the client on the request's claim, or "" for none.
+func jobCallerClient(r *http.Request) string {
+	clientID, err := auth.ClientIDFromContext(r.Context())
+	if err != nil {
+		return ""
+	}
+	return clientID
+}
+
 // handleJobByID is the /jobs/{jobId} item handler: GET inspects, DELETE
-// cancels. DELETE is operator-gated by writeGated; GET is a safe read.
+// cancels. DELETE is operator-gated by writeGated; GET is a safe read. Another
+// client's job is answered as one that does not exist.
 func (s *Server) handleJobByID(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	id := r.PathValue("jobId")
 
-	switch r.Method {
-	case http.MethodGet:
-		j, ok := s.jobsRunner().Get(id)
-		if !ok {
-			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
-				ErrCodeNotFound, "Job not found", "")
-			return
-		}
-		sendJSONResponse(w, logger, http.StatusOK, toJobResponse(j))
-	case http.MethodDelete:
-		if err := s.jobsRunner().Cancel(id); err != nil {
-			writeJobError(w, logger, err)
-			return
-		}
-		// Cancellation is asynchronous; return the current snapshot with 202.
-		j, _ := s.jobsRunner().Get(id)
-		sendJSONResponse(w, logger, http.StatusAccepted, toJobResponse(j))
-	default:
+	if r.Method != http.MethodGet && r.Method != http.MethodDelete {
 		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
 			ErrCodeMethodNotAllowed, "Only GET and DELETE are supported on /jobs/{jobId}", "")
+		return
 	}
+	j, ok := s.jobsRunner().Get(id)
+	if !ok || !jobVisibleTo(j, jobCallerClient(r)) {
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
+			ErrCodeNotFound, "Job not found", "")
+		return
+	}
+	if r.Method == http.MethodGet {
+		sendJSONResponse(w, logger, http.StatusOK, toJobResponse(j))
+		return
+	}
+	if err := s.jobsRunner().Cancel(id); err != nil {
+		writeJobError(w, logger, err)
+		return
+	}
+	// Cancellation is asynchronous; return the current snapshot with 202.
+	j, _ = s.jobsRunner().Get(id)
+	sendJSONResponse(w, logger, http.StatusAccepted, toJobResponse(j))
 }
 
-// handleJobsEvents streams every job state change to the client as SSE, bridged
-// from the events bus. One stream covers all jobs (clients filter by id),
-// replacing the per-operation status-poll endpoints.
+// handleJobsEvents streams every job state change the caller may see (see
+// jobVisibleTo) as SSE, bridged from the events bus. One stream covers all
+// jobs (clients filter by id), replacing the per-operation status-poll
+// endpoints.
 func (s *Server) handleJobsEvents(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
@@ -207,7 +234,7 @@ func (s *Server) handleJobsEvents(w http.ResponseWriter, r *http.Request) {
 	// Per-connection backlog. The bus delivers on its own goroutine; the push
 	// handler must never block it, so a full buffer drops (re-syncable via GET).
 	ch := make(chan []byte, sseFrameBuffer)
-	unsubscribe := s.subscribeJobEvents(ch)
+	unsubscribe := s.subscribeJobEvents(ch, jobCallerClient(r))
 	defer unsubscribe()
 
 	// Signal the stream is live: subscriptions are now active, so no state
@@ -220,13 +247,13 @@ func (s *Server) handleJobsEvents(w http.ResponseWriter, r *http.Request) {
 	pumpSSE(r.Context(), w, flusher, ch, logger)
 }
 
-// subscribeJobEvents fans every job state change into ch and returns a single
-// unsubscribe func. The push never blocks the bus: a full backlog is dropped
-// (the client re-syncs with GET /jobs/{id}).
-func (s *Server) subscribeJobEvents(ch chan<- []byte) func() {
+// subscribeJobEvents fans every state change of a job callerClient may see
+// into ch and returns a single unsubscribe func. The push never blocks the
+// bus: a full backlog is dropped (the client re-syncs with GET /jobs/{id}).
+func (s *Server) subscribeJobEvents(ch chan<- []byte, callerClient string) func() {
 	push := func(_ context.Context, ev events.Event) {
 		je, isJob := ev.(jobs.JobEvent)
-		if !isJob {
+		if !isJob || !jobVisibleTo(je.Job, callerClient) {
 			return
 		}
 		data, err := json.Marshal(toJobResponse(je.Job))

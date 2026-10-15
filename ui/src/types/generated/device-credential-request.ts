@@ -13,4 +13,6 @@ export interface DeviceCredentialRequest {
   snmpV3PrivSecret?: string;
   snmpV3AuthProto?: string;
   snmpV3PrivProto?: string;
+  sshUser?: string;
+  sshPassword?: string;
 }
