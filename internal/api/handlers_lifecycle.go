@@ -187,9 +187,12 @@ func (s *Server) handleLifecycleFeed(w http.ResponseWriter, r *http.Request) {
 			lifecycleFailed(w, r, err)
 			return
 		}
+		// Update accepted only "on" or "off", so a bool records the whole answer
+		// without echoing request text into the log.
+		enabled := in.Choice == lifecycle.ChoiceOn
 		logger.InfoContext(r.Context(), "EoX feed settings changed",
-			"event", "lifecycle.feed.updated", "choice", in.Choice, "user", usernameFromContext(r))
-		if in.Choice == lifecycle.ChoiceOn && s.lifecycleRefresher != nil {
+			"event", "lifecycle.feed.updated", "enabled", enabled, "user", usernameFromContext(r))
+		if enabled && s.lifecycleRefresher != nil {
 			s.lifecycleRefresher.Wake()
 		}
 	}
