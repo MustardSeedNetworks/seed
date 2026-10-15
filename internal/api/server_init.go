@@ -490,6 +490,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.historyQueries = app.NewHistory(s.db)
 	s.vulnTriage = app.NewVulnTriage(s.db)
 	s.flows = app.NewFlows(s.db)
+	s.lifecycleEoX = app.NewLifecycleStore(s.db)
 	s.interfaceStats = app.NewInterfaceStats(s.db)
 	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
 	s.initVaultUseCases()

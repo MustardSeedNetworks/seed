@@ -1970,6 +1970,28 @@ body:
   },
   {
     "auth": true,
+    "csrf": true,
+    "maxBodyBytes": 8388608,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
+    "path": "/api/v1/lifecycle/eox",
+    "rateLimited": false,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/lifecycle/devices",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
     "csrf": false,
     "feature": "live_telemetry",
     "maxBodyBytes": 262144,
