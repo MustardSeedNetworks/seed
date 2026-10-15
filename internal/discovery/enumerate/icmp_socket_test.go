@@ -8,6 +8,7 @@ import (
 	"golang.org/x/net/icmp"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
+	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
 
 // seed#2629: the sweep used to open a raw ICMP socket and nothing else, so an
@@ -71,6 +72,7 @@ func TestPingerReachesLoopbackInWhicheverModeItOpened(t *testing.T) {
 		t.Fatalf("Ping(127.0.0.1): %v (privileged=%v)", res.Error, p.Privileged())
 	}
 	if !res.Reachable {
+		testutil.SkipIfHostDropsLoopbackICMP(t)
 		t.Fatalf("loopback unreachable (privileged=%v): the echo was sent but the reply never matched", p.Privileged())
 	}
 }
