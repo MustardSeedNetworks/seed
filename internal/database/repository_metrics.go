@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/sla"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/telemetry"
 )
 
@@ -96,6 +98,40 @@ func (r *MetricsRepository) RecordInterfaceRates(ctx context.Context, rates []if
 				if _, execErr := stmt.ExecContext(ctx, targetID, pt.Type, pt.Value, pt.Unit, at,
 					rate.ClientID, ifrate.TargetKind, targetID); execErr != nil {
 					return fmt.Errorf("insert interface rate: %w", execErr)
+				}
+			}
+		}
+		return nil
+	})
+}
+
+// RecordSLAResults stores each result's points in one transaction, keyed by
+// client and by target_id "<polling target ID>/<operation index>".
+// interface_name repeats target_id, as for interface rates, because the
+// rollups are unique on it.
+func (r *MetricsRepository) RecordSLAResults(ctx context.Context, results []sla.Result) error {
+	if len(results) == 0 {
+		return nil
+	}
+	return r.db.WithTx(ctx, func(tx *sql.Tx) error {
+		stmt, err := tx.PrepareContext(ctx, `
+			INSERT INTO metrics
+			  (interface_name, metric_type, value, unit, timestamp,
+			   client_id, target_kind, target_id)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		`)
+		if err != nil {
+			return fmt.Errorf("prepare ip-sla result insert: %w", err)
+		}
+		defer func() { _ = stmt.Close() }()
+
+		for _, result := range results {
+			targetID := result.TargetID + "/" + strconv.Itoa(result.Index)
+			at := result.At.UTC().Format(time.RFC3339)
+			for _, pt := range result.Points {
+				if _, execErr := stmt.ExecContext(ctx, targetID, pt.Type, pt.Value, pt.Unit, at,
+					result.ClientID, sla.TargetKind, targetID); execErr != nil {
+					return fmt.Errorf("insert ip-sla result: %w", execErr)
 				}
 			}
 		}

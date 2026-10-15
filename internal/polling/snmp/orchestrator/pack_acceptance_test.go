@@ -14,6 +14,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/fdb"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/hostresources"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/iftable"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/ipsla"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/lldp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/routing"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/stp"
@@ -106,6 +107,11 @@ func (r *rowRecorder) PublishBGP4(ctx context.Context, obs bgp4.Observation) err
 func (r *rowRecorder) PublishSTP(ctx context.Context, obs stp.Observation) error {
 	r.rows = len(obs.Ports)
 	return r.next.PublishSTP(ctx, obs)
+}
+
+func (r *rowRecorder) PublishIPSLA(ctx context.Context, obs ipsla.Observation) error {
+	r.rows = len(obs.Operations)
+	return r.next.PublishIPSLA(ctx, obs)
 }
 
 // packResult is one collector's outcome on one agent.

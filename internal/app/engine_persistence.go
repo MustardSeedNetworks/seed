@@ -64,7 +64,7 @@ func NewEnginePersistence(db *database.DB) EnginePersistence {
 		SNMPPoller: snmporchestrator.Config{
 			Targets:      db.PollingTargets(),
 			Observations: db.SNMPObservations(),
-			Rates:        db.Metrics(),
+			Metrics:      db.Metrics(),
 			Credentials:  db.DeviceCredentials(),
 		},
 		Topology: TopologyReconcilers{

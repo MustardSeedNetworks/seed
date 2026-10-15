@@ -1,12 +1,12 @@
-// Package orchestrator wires the eleven SNMP collectors (sys_info,
+// Package orchestrator wires the twelve SNMP collectors (sys_info,
 // if_table, lldp, cdp, fdp, arp, fdb, routing, host_resources,
-// bgp4_mib, stp) into a single [engine.Engine] that the server lifecycle
+// bgp4_mib, stp, ip_sla) into a single [engine.Engine] that the server lifecycle
 // registry starts and stops.
 //
 // Build returns a configured [*snmp.Poller] with every default
 // collector registered against a single [sink.Sink] persisting into
-// snmp_observations; if_table counters are also rated into the
-// metrics time series. The orchestrator does not own the SNMP client
+// snmp_observations; if_table counters are also rated, and new IP-SLA
+// results recorded, into the metrics time series. The orchestrator does not own the SNMP client
 // factory — callers inject one ([snmp.ClientFactory]) so production
 // can plug in a real gosnmp dialer while tests pass a fake.
 package orchestrator
@@ -25,6 +25,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/fdp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/hostresources"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/iftable"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/ipsla"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/lldp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/routing"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/stp"
@@ -32,7 +33,15 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/sink"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/sla"
 )
+
+// MetricsStore persists the time series the poller derives: interface rates
+// and IP-SLA results.
+type MetricsStore interface {
+	ifrate.Store
+	sla.Store
+}
 
 // Config holds the dependencies the orchestrator needs to build a
 // fully wired Poller. Logger and Now are optional — nil values fall
@@ -40,7 +49,7 @@ import (
 type Config struct {
 	Targets       snmp.PollerStorage
 	Observations  sink.ObservationsStore
-	Rates         ifrate.Store
+	Metrics       MetricsStore
 	Scheduler     *scheduler.Scheduler
 	ClientFactory snmp.ClientFactory
 	Logger        *slog.Logger
@@ -72,8 +81,8 @@ func Build(cfg Config) (*snmp.Poller, error) {
 	if cfg.Observations == nil {
 		return nil, errors.New("orchestrator: Observations required")
 	}
-	if cfg.Rates == nil {
-		return nil, errors.New("orchestrator: Rates required")
+	if cfg.Metrics == nil {
+		return nil, errors.New("orchestrator: Metrics required")
 	}
 	if cfg.Scheduler == nil {
 		return nil, errors.New("orchestrator: Scheduler required")
@@ -101,9 +110,10 @@ func Build(cfg Config) (*snmp.Poller, error) {
 	}
 
 	persistSink := ratingSink{
-		Sink:  sink.New(cfg.Observations, logger, now),
-		rater: ifrate.NewRater(),
-		rates: cfg.Rates,
+		Sink:    sink.New(cfg.Observations, logger, now),
+		rater:   ifrate.NewRater(),
+		tracker: sla.NewTracker(),
+		metrics: cfg.Metrics,
 	}
 	poller := snmp.NewPoller(cfg.Targets, cfg.Scheduler, logger)
 
@@ -125,6 +135,14 @@ func Build(cfg Config) (*snmp.Poller, error) {
 // Publisher receives every collector's observations. [sink.Sink] is the
 // production implementation; the NIAC acceptance suite counts them instead.
 type Publisher interface {
+	estatePublisher
+	monitoringPublisher
+}
+
+// estatePublisher receives what seed draws the estate from: each device,
+// its interfaces, its neighbours, the addresses and MACs it has learned, and
+// its routes.
+type estatePublisher interface {
 	sysinfo.Publisher
 	iftable.Publisher
 	lldp.Publisher
@@ -132,12 +150,18 @@ type Publisher interface {
 	arp.Publisher
 	fdb.Publisher
 	routing.Publisher
+}
+
+// monitoringPublisher receives what seed watches a device's health through:
+// its resources, BGP peers, spanning tree and IP-SLA operations.
+type monitoringPublisher interface {
 	hostresources.Publisher
 	bgp4.Publisher
 	stp.Publisher
+	ipsla.Publisher
 }
 
-// Collectors returns the eleven collectors a poller runs, in registration
+// Collectors returns the twelve collectors a poller runs, in registration
 // order. cdp and fdp share a Publisher (CDP), distinguished downstream by
 // Observation.TablePrefix.
 func Collectors(factory snmp.ClientFactory, publisher Publisher, now func() time.Time) []snmp.Collector {
@@ -153,5 +177,6 @@ func Collectors(factory snmp.ClientFactory, publisher Publisher, now func() time
 		hostresources.New(factory, publisher, now),
 		bgp4.New(factory, publisher, now),
 		stp.New(factory, publisher, now),
+		ipsla.New(factory, publisher, now),
 	}
 }

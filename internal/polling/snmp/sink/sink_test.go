@@ -16,6 +16,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/fdb"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/hostresources"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/iftable"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/ipsla"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/lldp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/routing"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/stp"
@@ -173,6 +174,13 @@ func TestAllPublishers_WriteCorrectKinds(t *testing.T) {
 			sink.KindSTP,
 			func(s *sink.Sink) error {
 				return s.PublishSTP(ctx, stp.Observation{TargetID: target})
+			},
+		},
+		{
+			"ip_sla",
+			sink.KindIPSLA,
+			func(s *sink.Sink) error {
+				return s.PublishIPSLA(ctx, ipsla.Observation{TargetID: target})
 			},
 		},
 	}
