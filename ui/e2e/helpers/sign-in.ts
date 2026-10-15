@@ -108,7 +108,10 @@ async function ensureSetupCompleted(context: BrowserContext): Promise<void> {
   if (!status.setupTokenFile) {
     throw new Error('sign-in: setup status reports needsSetup=true but no setupTokenFile');
   }
-  const setupToken = (await readFile(status.setupTokenFile, 'utf8')).trim();
+  // A harness that runs the daemon as root copies the root-only token file
+  // somewhere the browser run can read and names the copy here.
+  const tokenFile = process.env.SEED_E2E_SETUP_TOKEN_FILE ?? status.setupTokenFile;
+  const setupToken = (await readFile(tokenFile, 'utf8')).trim();
 
   const completeResponse = await api.post('/api/v1/setup/complete', {
     headers: { 'Content-Type': 'application/json' },
