@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.264.0](https://github.com/MustardSeedNetworks/seed/compare/v0.263.0...v0.264.0) (2026-10-15)
+
+
+### Features
+
+* **device-groups:** group dashboard summary of members' polls and open alerts (P-D10) ([#3488](https://github.com/MustardSeedNetworks/seed/issues/3488)) ([7c1e654](https://github.com/MustardSeedNetworks/seed/commit/7c1e65491b0c1569bd2a22ed007a52eb5d214298))
+* **device-groups:** group polling targets and scope alert rules to a group (P-D10) ([#3478](https://github.com/MustardSeedNetworks/seed/issues/3478)) ([9b499d6](https://github.com/MustardSeedNetworks/seed/commit/9b499d65423537b6cb86cf7e7e52ff48b4c04ee1))
+* **lifecycle:** opt-in Cisco EoX feed, off until an admin answers (P-D9) ([#3471](https://github.com/MustardSeedNetworks/seed/issues/3471)) ([44afc6e](https://github.com/MustardSeedNetworks/seed/commit/44afc6e116e9f3aac4599be1cdddba8df54de9dd))
+* **reporting:** scope the capacity report to a device group (P-D10) ([#3490](https://github.com/MustardSeedNetworks/seed/issues/3490)) ([d239b09](https://github.com/MustardSeedNetworks/seed/commit/d239b09f16d2e57f9ed26b9f7e91a5833366d72b))
+* **reporting:** scope the network summary report to a device group (P-D10) ([#3493](https://github.com/MustardSeedNetworks/seed/issues/3493)) ([6d66944](https://github.com/MustardSeedNetworks/seed/commit/6d66944200616da193951b07ffa9697ab19e9e62))
+
+
+### Bug Fixes
+
+* **e2e:** hand the root daemon's setup token to the browser run ([#3483](https://github.com/MustardSeedNetworks/seed/issues/3483)) ([3c3ceb1](https://github.com/MustardSeedNetworks/seed/commit/3c3ceb1e3a297e95a9c0edac46fd4eddeded2af5)), closes [#3482](https://github.com/MustardSeedNetworks/seed/issues/3482)
+* **install:** make the macOS launchd install path real and its setup check truthful ([#3486](https://github.com/MustardSeedNetworks/seed/issues/3486)) ([bddb085](https://github.com/MustardSeedNetworks/seed/commit/bddb0852a88cc556543af6691b30c81262aa1e0a)), closes [#3465](https://github.com/MustardSeedNetworks/seed/issues/3465)
+* **netif:** type interfaces by the platform-aware detection pass ([#3487](https://github.com/MustardSeedNetworks/seed/issues/3487)) ([7c8e9a4](https://github.com/MustardSeedNetworks/seed/commit/7c8e9a474b22d1a491b82895bae735e71958ac38))
+
+
+### Code Refactoring
+
+* **api:** build the server from a Deps struct and split server.go ([#3492](https://github.com/MustardSeedNetworks/seed/issues/3492)) ([2d9e014](https://github.com/MustardSeedNetworks/seed/commit/2d9e01489ee32fbf30955f7dc283a6af28963bf8))
+* **database:** move the reporting repositories out of internal/reporting/store ([#3481](https://github.com/MustardSeedNetworks/seed/issues/3481)) ([d2bef81](https://github.com/MustardSeedNetworks/seed/commit/d2bef814a05bb843b99b2c667f2148fdc8e60628))
+
+
+### Tests
+
+* **niac:** assert seed raises stp.topology_change from a NIAC topology change ([#3480](https://github.com/MustardSeedNetworks/seed/issues/3480)) ([e407d5a](https://github.com/MustardSeedNetworks/seed/commit/e407d5aebef2b50f6925d663142daa87993f55ac))
+
+
+### Continuous Integration
+
+* **build:** build the arm64 check in the release's goreleaser-cross image ([#3497](https://github.com/MustardSeedNetworks/seed/issues/3497)) ([d9093ab](https://github.com/MustardSeedNetworks/seed/commit/d9093abd9ed45cad132c3663c620194d7d142d6e)), closes [#3496](https://github.com/MustardSeedNetworks/seed/issues/3496)
+* **conformance:** pin ci-conformance to .github v1.14.0 ([#3495](https://github.com/MustardSeedNetworks/seed/issues/3495)) ([f3fdc03](https://github.com/MustardSeedNetworks/seed/commit/f3fdc039d7be2e23b6c9215ae0fb255a154eacea)), closes [#3494](https://github.com/MustardSeedNetworks/seed/issues/3494)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3489](https://github.com/MustardSeedNetworks/seed/issues/3489)) ([30b3f35](https://github.com/MustardSeedNetworks/seed/commit/30b3f3530d78b099759ba26f4036b7d78a072c0a))
+* **deps:** lock file maintenance ([#3491](https://github.com/MustardSeedNetworks/seed/issues/3491)) ([55097b8](https://github.com/MustardSeedNetworks/seed/commit/55097b83a4fb1ec1b7274f5f222605189b8a37e1))
+
 ## [0.263.0](https://github.com/MustardSeedNetworks/seed/compare/v0.262.0...v0.263.0) (2026-10-15)
 
 
