@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.258.0](https://github.com/MustardSeedNetworks/seed/compare/v0.257.8...v0.258.0) (2026-10-15)
+
+
+### Features
+
+* **deviceconfig:** back up switch configurations over SSH ([#3122](https://github.com/MustardSeedNetworks/seed/issues/3122)) ([8071bfd](https://github.com/MustardSeedNetworks/seed/commit/8071bfd20f8c11c57d81bb986be36303b4a58a77))
+* **tftp:** serve files to devices from an admin-started TFTP session ([#3125](https://github.com/MustardSeedNetworks/seed/issues/3125)) ([dd9c9c8](https://github.com/MustardSeedNetworks/seed/commit/dd9c9c86ce1f6113ef073dbdb2625bde22daf935))
+
+
+### Bug Fixes
+
+* **topology:** read link utilization from the interface rates ([#3432](https://github.com/MustardSeedNetworks/seed/issues/3432)) ([b70c190](https://github.com/MustardSeedNetworks/seed/commit/b70c1901dadcfb5182dfe98142383e1c96987c75)), closes [#3024](https://github.com/MustardSeedNetworks/seed/issues/3024)
+* **ui:** draw disabled controls with their own tokens, not opacity ([#3435](https://github.com/MustardSeedNetworks/seed/issues/3435)) ([ab90c93](https://github.com/MustardSeedNetworks/seed/commit/ab90c93328804814718e92129c204d36cf945cc3)), closes [#1944](https://github.com/MustardSeedNetworks/seed/issues/1944)
+
+
+### Tests
+
+* **e2e:** build the CI daemon with capture so the capture spec runs ([#3437](https://github.com/MustardSeedNetworks/seed/issues/3437)) ([6592187](https://github.com/MustardSeedNetworks/seed/commit/65921874b1ffffd6e1dee33eb94122e2591ef816))
+
+
+### Continuous Integration
+
+* **e2e:** run WebKit in the Playwright 1.64 image again ([#3430](https://github.com/MustardSeedNetworks/seed/issues/3430)) ([69dcecd](https://github.com/MustardSeedNetworks/seed/commit/69dcecd7a26b5971e5723bdaaa168fa671f37898)), closes [#2930](https://github.com/MustardSeedNetworks/seed/issues/2930)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3431](https://github.com/MustardSeedNetworks/seed/issues/3431)) ([097168d](https://github.com/MustardSeedNetworks/seed/commit/097168d0871d40fe2c5ddd2734128e2b942a598b))
+* **deps:** lock file maintenance ([#3433](https://github.com/MustardSeedNetworks/seed/issues/3433)) ([29aa993](https://github.com/MustardSeedNetworks/seed/commit/29aa9932af004b140d04814bb38990fffb1907d2))
+
 ## [0.257.8](https://github.com/MustardSeedNetworks/seed/compare/v0.257.7...v0.257.8) (2026-10-14)
 
 
