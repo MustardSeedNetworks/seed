@@ -202,7 +202,7 @@ export function ProfileEditor({
                 spacing.pad.sm,
                 'px-4',
                 radius.md,
-                'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary body-small font-medium disabled:opacity-50',
+                'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary body-small font-medium disabled:control-disabled',
               )}
             >
               {t('common.cancel')}
@@ -214,7 +214,7 @@ export function ProfileEditor({
                 spacing.pad.sm,
                 'px-4',
                 radius.md,
-                'bg-brand-primary hover:bg-brand-accent text-on-brand body-small font-medium disabled:opacity-50',
+                'bg-brand-primary hover:bg-brand-accent text-on-brand body-small font-medium disabled:control-disabled',
               )}
             >
               {getButtonLabel()}

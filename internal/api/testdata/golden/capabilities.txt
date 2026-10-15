@@ -1878,6 +1878,20 @@ body:
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
+      "POST",
+      "DELETE"
+    ],
+    "path": "/api/v1/tftp/session",
+    "rateLimited": false,
+    "scope": "admin"
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "feature": "compliance_advanced",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
       "POST"
     ],
     "path": "/api/v1/device-config-targets",

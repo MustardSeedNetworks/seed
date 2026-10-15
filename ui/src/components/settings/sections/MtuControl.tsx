@@ -92,7 +92,7 @@ export function MtuControl(): React.ReactElement {
             button.size.md,
             'bg-brand-primary text-on-brand',
             radius.md,
-            'body-small font-medium hover:bg-brand-accent disabled:opacity-50',
+            'body-small font-medium hover:bg-brand-accent disabled:control-disabled',
           )}
         >
           {loading ? t('network.applying') : t('network.mtuControl.apply')}

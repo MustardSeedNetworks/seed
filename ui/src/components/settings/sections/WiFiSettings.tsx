@@ -89,7 +89,7 @@ function SavedNetworks({
                 type="button"
                 onClick={(): void => onForget(network.ssid)}
                 disabled={!canWrite}
-                className="caption text-status-error hover:underline disabled:opacity-50 disabled:no-underline"
+                className="caption text-status-error hover:underline disabled:text-text-disabled disabled:no-underline"
               >
                 {t('wifi.forget')}
               </button>
@@ -355,7 +355,7 @@ export function WiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFi
                     spacing.chip.md,
                     radius.default,
                     'bg-surface-hover text-text-primary border border-surface-border',
-                    'hover:bg-surface-border disabled:opacity-50',
+                    'hover:bg-surface-border disabled:control-disabled',
                   )}
                 >
                   ↻ {t('wifi.refresh')}
@@ -494,7 +494,7 @@ export function WiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFi
                         spacing.chip.lg,
                         radius.default,
                         'bg-brand-primary text-on-brand',
-                        'hover:bg-brand-accent disabled:opacity-50',
+                        'hover:bg-brand-accent disabled:control-disabled',
                       )}
                     >
                       {connecting ? t('wifi.connecting') : t('wifi.connect')}
@@ -532,7 +532,7 @@ export function WiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFi
                       spacing.chip.md,
                       radius.default,
                       'bg-status-error/10 text-status-error-strong border border-status-error/20',
-                      'hover:bg-status-error/20 disabled:opacity-50',
+                      'hover:bg-status-error/20 disabled:control-disabled',
                     )}
                   >
                     {t('wifi.disconnect')}

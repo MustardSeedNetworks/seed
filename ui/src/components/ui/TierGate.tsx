@@ -56,7 +56,7 @@ export function TierGate({
 
   return (
     <span data-testid="tier-gate-locked" data-feature={feature} className="relative inline-block">
-      <span inert={true} className="pointer-events-none opacity-60">
+      <span inert={true} className="pointer-events-none grayscale">
         {children}
       </span>
       <Tooltip text={hint}>

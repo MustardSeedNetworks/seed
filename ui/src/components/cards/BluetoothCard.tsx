@@ -56,7 +56,7 @@ export function BluetoothCard(): React.ReactElement {
           className={cn(
             'p-1 text-text-muted hover:text-text-primary transition-colors',
             radius.md,
-            'hover:bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed',
+            'hover:bg-surface-hover disabled:control-disabled disabled:cursor-not-allowed',
           )}
           aria-label={t('bluetooth.viewAll')}
         >
@@ -111,7 +111,7 @@ export function BluetoothCard(): React.ReactElement {
               button.size.md,
               'bg-brand-primary text-on-brand',
               radius.md,
-              'font-medium hover:bg-brand-primary/90 disabled:opacity-50',
+              'font-medium hover:bg-brand-primary/90 disabled:control-disabled',
             )}
           >
             {t('bluetooth.scanButton')}

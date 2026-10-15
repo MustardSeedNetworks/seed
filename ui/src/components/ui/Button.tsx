@@ -32,7 +32,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const baseStyles =
-  'inline-flex-center gap-compact font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]';
+  'inline-flex-center gap-compact font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-base disabled:control-disabled disabled:cursor-not-allowed active:scale-[0.98]';
 
 const sizeStyles: Record<ButtonSize, string> = {
   xs: 'px-cell py-compact text-xs',
@@ -171,7 +171,7 @@ export function IconButton({
     <Tooltip text={title}>
       <button
         type="button"
-        className={`inline-flex-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 disabled:opacity-50 disabled:cursor-not-allowed ${iconSizeStyles[size]} ${variantBase[variant]} ${toneStyles[tone]} ${className}`}
+        className={`inline-flex-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 disabled:control-disabled disabled:cursor-not-allowed ${iconSizeStyles[size]} ${variantBase[variant]} ${toneStyles[tone]} ${className}`}
         {...props}
       >
         {icon}

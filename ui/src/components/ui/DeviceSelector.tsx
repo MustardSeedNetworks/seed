@@ -293,7 +293,7 @@ export function DeviceSelector({
           spacing.gap.tight,
           spacing.pad.sm,
           radius.md,
-          'border border-surface-border bg-surface-base hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed',
+          'border border-surface-border bg-surface-base hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:control-disabled disabled:cursor-not-allowed',
         )}
         aria-haspopup="listbox"
         aria-expanded={isOpen}

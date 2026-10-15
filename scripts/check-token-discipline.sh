@@ -12,6 +12,7 @@
 #       - text-[var(--color-X)] indirection (use text-X directly)
 #       - raw 6/8-digit hex colors in .ts/.tsx
 #       - raw hex colors in .css outside theme/ (FAMILY_RAW_HEX_CSS)
+#       - opacity-N layer dims (FAMILY_OPACITY_DIM)
 #       - undefined tokens: bg-/text-/… utilities whose --color-* is not in
 #         index.css (compiles to nothing, renders no color) — see
 #         resolve-token-refs.py
@@ -156,15 +157,20 @@ advise RAW_FLEX_CENTER 'flex items-center justify-center' 'Use flex-center'
 advise FAMILY_RAW_HEX \
   '#([0-9a-fA-F]{6}([0-9a-fA-F]{2})?|[0-9a-fA-F]{0,3}[a-fA-F][0-9a-fA-F]{0,3})\b' \
   'Raw hex outside theme/ — define it in ui/src/theme and reference the token'
-advise FAMILY_OPACITY_DIM \
-  '\bopacity-(0|5|10|20|25|30|40|50|60)\b' \
-  'Dim the colour token, not the layer — a dimmed label fails contrast while it explains itself'
 advise FAMILY_SMALL_TARGET \
   '\b(w|h)-(2|3|4|5|6|7|8|9|10)\b(?=[^"`]*(?:onClick|role="button"|<button|<input))' \
   'Interactive target under 44px — add .target or min-h-11'
 advise FAMILY_CONST_ON_BRAND \
   '\b(bg-(brand-primary|brand-accent|status-error|status-success))\b[^"`]*\btext-(white|black)\b' \
   'Constant text colour on a brand fill — use text-on-brand / text-on-danger / text-on-success'
+
+# FAMILY_OPACITY_DIM blocks at zero since the disabled dims moved onto
+# control-disabled and the bg/border/text-disabled tokens (#1944). The bounds
+# are spelled out because POSIX ERE has no \b: `group-hover:opacity-100` must
+# not match as opacity-10.
+block FAMILY_OPACITY_DIM \
+  '(^|[^-[:alnum:]_])opacity-(0|5|10|20|25|30|40|50|60)([^0-9]|$)' \
+  'Dim the colour token, not the layer: disabled:control-disabled for a disabled control, text-current/40 or stroke-current/40 for an icon'
 
 # advise() scans .ts/.tsx only, so raw hex in a stylesheet would slip past it.
 # theme/ is where colour values are allowed to exist. Blocking: the count

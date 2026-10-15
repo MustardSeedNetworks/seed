@@ -79,6 +79,14 @@
 
   /* Gauge/Progress Colors (for SVG) */
   --gauge-amber: #d97706;
+
+  /* Disabled controls (owner 2026-10-14, #1944): a fill, an edge and
+   * text-disabled (msn-shared.css), never a dimmed layer. WCAG 1.4.3 and
+   * 1.4.11 exempt inactive controls; the fill stays a step off the page so
+   * text-disabled keeps 2.7:1 on it, and the edge is lighter than
+   * surface-border so a disabled field does not read as an active one. */
+  --color-bg-disabled: #f1ede0;
+  --color-border-disabled: #c2b997;
 }
 
 .dark {
@@ -148,4 +156,9 @@
 
   /* Gauge/Progress Colors (for SVG) */
   --gauge-amber: #fbbf24;
+
+  /* Disabled controls: recessed a step below raised, so text-disabled
+   * measures 3.2:1 on the fill. */
+  --color-bg-disabled: #1e1c16;
+  --color-border-disabled: #4a4538;
 }

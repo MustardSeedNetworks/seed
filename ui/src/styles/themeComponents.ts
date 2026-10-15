@@ -8,7 +8,7 @@
  * Button variants - consistent button styling across the app
  */
 export const button = {
-  base: 'inline-flex items-center justify-center gap-2 rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed',
+  base: 'inline-flex items-center justify-center gap-2 rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary disabled:control-disabled disabled:cursor-not-allowed',
 
   variant: {
     // Seed anchor is seed-500 (#4caf50) — needs DARK text (white fails AA).
@@ -36,7 +36,7 @@ export const button = {
  * Input variants - consistent form input styling
  */
 export const input = {
-  base: 'w-full rounded border bg-surface-raised text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed',
+  base: 'w-full rounded border bg-surface-raised text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:control-disabled disabled:cursor-not-allowed',
 
   state: {
     default: 'border-surface-border',

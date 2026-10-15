@@ -510,7 +510,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.El
             spacing.chip.sm,
             'bg-brand-primary text-on-brand',
             radius.md,
-            'hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed',
+            'hover:bg-brand-primary/90 transition-colors font-medium caption disabled:control-disabled disabled:cursor-not-allowed',
           )}
         >
           {t('health.run')}

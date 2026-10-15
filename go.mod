@@ -75,6 +75,7 @@ require (
 	github.com/mdlayher/netlink v1.11.2
 	github.com/mdlayher/wifi v0.9.0
 	github.com/nicksnyder/go-i18n/v2 v2.6.1
+	github.com/pin/tftp/v3 v3.2.0
 	github.com/pquerna/otp v1.5.0
 	github.com/pressly/goose/v3 v3.28.0
 	github.com/safchain/ethtool v0.7.0

@@ -71,7 +71,7 @@ Type=simple
 User={{.User}}
 Group={{.Group}}
 WorkingDirectory={{.DataDir}}
-ExecStartPre=/sbin/setcap cap_net_raw,cap_net_admin=+ep {{.BinaryPath}}
+ExecStartPre=/sbin/setcap cap_net_raw,cap_net_admin,cap_net_bind_service=+ep {{.BinaryPath}}
 ExecStart={{.BinaryPath}} serve
 Restart=on-failure
 RestartSec=5
@@ -233,11 +233,11 @@ func installBinary(executable, destBinary string, force bool) error {
 // setSystemCapabilities sets network capabilities on the binary for system mode.
 func setSystemCapabilities(destBinary string) {
 	fmt.Fprintln(os.Stdout, "\nSetting capabilities...")
-	if err := runCommand("setcap", "cap_net_raw,cap_net_admin=+ep", destBinary); err != nil {
+	if err := runCommand("setcap", "cap_net_raw,cap_net_admin,cap_net_bind_service=+ep", destBinary); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: Failed to set capabilities: %v\n", err)
 		fmt.Fprintln(os.Stdout, "  ICMP and protocol capture features will require root")
 	} else {
-		fmt.Fprintln(os.Stdout, "  Set cap_net_raw,cap_net_admin for raw socket access")
+		fmt.Fprintln(os.Stdout, "  Set cap_net_raw,cap_net_admin,cap_net_bind_service for raw sockets and TFTP")
 	}
 }
 

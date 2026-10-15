@@ -72,7 +72,7 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
                 button.size.md,
                 'bg-brand-primary text-on-brand',
                 radius.md,
-                'font-medium hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed',
+                'font-medium hover:bg-brand-primary/90 disabled:control-disabled disabled:cursor-not-allowed',
               )}
             >
               {running

@@ -46,7 +46,7 @@ function describedChild(
     ...description,
     disabled: false,
     'aria-disabled': true,
-    className: `${child.props.className ?? ''} aria-disabled:opacity-50 aria-disabled:cursor-not-allowed`,
+    className: `${child.props.className ?? ''} aria-disabled:control-disabled aria-disabled:cursor-not-allowed`,
     onClick: (event) => {
       event.preventDefault();
       event.stopPropagation();

@@ -549,7 +549,7 @@ export function SetupWizard({
                       button.size.md,
                       'bg-status-info text-text-inverse',
                       radius.md,
-                      'font-medium hover:bg-status-info/85 focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50',
+                      'font-medium hover:bg-status-info/85 focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:control-disabled',
                     )}
                   >
                     {tCommon('buttons.signInWithGoogle')}
@@ -566,7 +566,7 @@ export function SetupWizard({
                       button.size.md,
                       'bg-surface-sunken text-text-primary',
                       radius.md,
-                      'font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50',
+                      'font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:control-disabled',
                     )}
                   >
                     {tCommon('buttons.signInWithMicrosoft')}
@@ -583,7 +583,7 @@ export function SetupWizard({
                       button.size.md,
                       'bg-surface-sunken text-text-primary',
                       radius.md,
-                      'font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50',
+                      'font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:control-disabled',
                     )}
                   >
                     {tCommon('buttons.signInWithGitHub')}

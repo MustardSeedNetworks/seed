@@ -386,7 +386,7 @@ export function RecoveryForm({
               'font-medium hover:bg-brand-accent',
               'focus:outline-none focus:ring-2 focus:ring-brand-primary',
               'focus:ring-offset-2 focus:ring-offset-surface-base',
-              'disabled:opacity-50 disabled:cursor-not-allowed',
+              'disabled:control-disabled disabled:cursor-not-allowed',
             )}
           >
             {isSubmitting ? t('recovery.submitting') : t('recovery.submit')}

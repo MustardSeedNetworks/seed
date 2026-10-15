@@ -4,7 +4,7 @@ set -e
 BINARY=/usr/bin/seed
 
 if command -v setcap >/dev/null 2>&1; then
-    setcap 'cap_net_raw,cap_net_admin=+ep' "$BINARY" || \
+    setcap 'cap_net_raw,cap_net_admin,cap_net_bind_service=+ep' "$BINARY" || \
         echo "warning: could not set capabilities on $BINARY"
 else
     echo "warning: setcap not found; install libcap/libcap2-bin for non-root diagnostics"
