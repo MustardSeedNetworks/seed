@@ -2,7 +2,7 @@ package reporting_test
 
 // The scheduler suite. It lived in internal/reporting/scheduler, a package
 // containing nothing but a doc.go — the code it exercises is here, in
-// internal/reporting and internal/reporting/store. Moved so the tests sit with
+// internal/reporting and its internal/database repositories. Moved so the tests sit with
 // what they test, and so the empty package could go.
 
 import (
@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
-	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
 )
 
 // setupSchedulerService creates all required services for scheduler testing.
@@ -32,9 +32,9 @@ func setupSchedulerService(t *testing.T) (
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
-	ss := reporting.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
+	ss := reporting.NewSchedulerService(cfg, database.NewReportScheduleRepository(db), gs)
 
 	return ss, cleanup
 }

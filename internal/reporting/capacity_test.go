@@ -15,7 +15,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
-	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/forecast"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
 )
@@ -107,9 +106,9 @@ func newCapacityGenerator(t *testing.T, db *database.DB) (capacityGenerator, *re
 	cfg := testConfig()
 	templates := reporting.NewTemplateService(cfg)
 	require.NoError(t, templates.Load())
-	aggregator := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	reports := &finishedReports{ReportRepo: store.NewReportRepo(db), finished: make(chan string, 1)}
-	gen := reporting.NewGeneratorService(cfg, reports, store.NewExportRepo(db), templates, aggregator)
+	aggregator := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	reports := &finishedReports{ReportRepo: database.NewReportRepository(db), finished: make(chan string, 1)}
+	gen := reporting.NewGeneratorService(cfg, reports, database.NewReportExportRepository(db), templates, aggregator)
 	gen.SetReportsPath(t.TempDir())
 	return capacityGenerator{GeneratorService: gen, reports: reports}, aggregator
 }
@@ -243,7 +242,7 @@ func TestCapacityPrefersTheRolledUpHour(t *testing.T) {
 	hour := day0.Add(busyHour * time.Hour)
 	_, err := database.NewMetricsRollupSource(db).RollupHour(t.Context(), hour)
 	require.NoError(t, err)
-	history, err := store.NewMetricsRepo(db).InterfaceUtilizationHistory(t.Context(),
+	history, err := database.NewReportMetricsRepository(db).InterfaceUtilizationHistory(t.Context(),
 		reporting.DateRange{Start: hour, End: hour.Add(2 * time.Hour)})
 	require.NoError(t, err)
 	require.Len(t, history, 2)
@@ -255,7 +254,7 @@ func TestCapacityPrefersTheRolledUpHour(t *testing.T) {
 		Octets: &ifrate.Octets{In: 1, Out: 1, Utilization: &ifrate.Utilization{In: 100, Out: 100}},
 	}}))
 
-	again, err := store.NewMetricsRepo(db).InterfaceUtilizationHistory(t.Context(),
+	again, err := database.NewReportMetricsRepository(db).InterfaceUtilizationHistory(t.Context(),
 		reporting.DateRange{Start: hour, End: hour.Add(2 * time.Hour)})
 	require.NoError(t, err)
 	assert.Equal(t, history, again)

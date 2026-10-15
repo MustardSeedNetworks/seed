@@ -1,4 +1,4 @@
-package store
+package database
 
 import (
 	"context"
@@ -45,7 +45,7 @@ func parseIfKey(client, targetID string) (ifKey, error) {
 // InterfaceHealth returns the rated interfaces' utilization and error and
 // discard rates in the window, named by polling target and, once the
 // topology has seen the interface, by ifName.
-func (r *MetricsRepo) InterfaceHealth(
+func (r *ReportMetricsRepository) InterfaceHealth(
 	ctx context.Context,
 	window reporting.DateRange,
 ) ([]reporting.InterfaceHealth, error) {
@@ -124,7 +124,7 @@ func (r *MetricsRepo) InterfaceHealth(
 }
 
 // targetNames maps polling target ID to its name.
-func (r *MetricsRepo) targetNames(ctx context.Context) (map[string]string, error) {
+func (r *ReportMetricsRepository) targetNames(ctx context.Context) (map[string]string, error) {
 	rows, err := r.db.Query(ctx, `SELECT id, name FROM polling_targets`)
 	if err != nil {
 		return nil, fmt.Errorf("querying polling target names: %w", err)
@@ -147,7 +147,7 @@ func (r *MetricsRepo) targetNames(ctx context.Context) (map[string]string, error
 
 // interfaceNames maps a polling target's interface to the ifName the
 // topology recorded for it on the target's node.
-func (r *MetricsRepo) interfaceNames(ctx context.Context) (map[ifKey]string, error) {
+func (r *ReportMetricsRepository) interfaceNames(ctx context.Context) (map[ifKey]string, error) {
 	rows, err := r.db.Query(ctx, `
 		SELECT tn.client_id, tn.target_id, ti.if_index, ti.if_name
 		FROM topology_target_nodes tn
@@ -176,7 +176,7 @@ func (r *MetricsRepo) interfaceNames(ctx context.Context) (map[ifKey]string, err
 
 // AlertSeverityCounts returns severity → count of the alerts raised in the
 // window, and how many of them are unresolved now.
-func (r *MetricsRepo) AlertSeverityCounts(
+func (r *ReportMetricsRepository) AlertSeverityCounts(
 	ctx context.Context,
 	window reporting.DateRange,
 ) (map[string]int, int, error) {
@@ -211,7 +211,7 @@ func (r *MetricsRepo) AlertSeverityCounts(
 
 // TopologyChanges returns the nodes and links first seen in the window, in
 // the order they appeared.
-func (r *MetricsRepo) TopologyChanges(
+func (r *ReportMetricsRepository) TopologyChanges(
 	ctx context.Context,
 	window reporting.DateRange,
 ) (reporting.TopologyChanges, error) {
@@ -277,7 +277,7 @@ func (r *MetricsRepo) TopologyChanges(
 
 // ProbeOutcomes returns each probe's checks and failures in the window, and
 // the mean latency of its successful checks.
-func (r *MetricsRepo) ProbeOutcomes(
+func (r *ReportMetricsRepository) ProbeOutcomes(
 	ctx context.Context,
 	window reporting.DateRange,
 ) ([]reporting.ProbeOutcome, error) {

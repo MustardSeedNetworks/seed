@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
-	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
 )
 
 // A run that finishes after its schedule was edited or deleted must not write
@@ -23,9 +23,9 @@ func TestRunScheduledReport_EditedOrDeletedMidRun(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
-	repo := store.NewScheduleRepo(db)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
+	repo := database.NewReportScheduleRepository(db)
 	ss := reporting.NewSchedulerService(cfg, repo, gs)
 	ctx := context.Background()
 

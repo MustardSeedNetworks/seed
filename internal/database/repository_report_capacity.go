@@ -1,4 +1,4 @@
-package store
+package database
 
 import (
 	"cmp"
@@ -24,7 +24,7 @@ const hourMiddle = 30 * time.Minute
 // utilization in the window. Hours the retention engine has rolled up come
 // from metrics_hourly, which outlives the raw rows; the rest are averaged from
 // the raw rates. Each hour's value is the busier direction's mean.
-func (r *MetricsRepo) InterfaceUtilizationHistory(
+func (r *ReportMetricsRepository) InterfaceUtilizationHistory(
 	ctx context.Context,
 	window reporting.DateRange,
 ) ([]reporting.InterfaceUtilization, error) {

@@ -1,4 +1,4 @@
-package store
+package database
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 	"github.com/MustardSeedNetworks/seed/internal/security/vulntriage"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/telemetry"
@@ -16,25 +15,25 @@ import (
 // SQLite-dialect concern, so it lives with the SQL in the adapter.
 const sqliteDateFormat = "%Y-%m-%d"
 
-// MetricsRepo implements reporting.MetricsRepo over the diagnostics tables. The
+// ReportMetricsRepository implements reporting.MetricsRepo over the diagnostics tables. The
 // SQL and scanning were lifted verbatim from the reporting package
 // (services_aggregator.go) when reporting was made I/O-free — Phase 3 slice
 // 1b-v. The repo returns raw results (e.g. severity → count); the domain owns
 // the severity-bucket and category semantics.
-type MetricsRepo struct {
-	db *database.DB
+type ReportMetricsRepository struct {
+	db *DB
 }
 
-// NewMetricsRepo constructs a MetricsRepo backed by db.
-func NewMetricsRepo(db *database.DB) *MetricsRepo {
-	return &MetricsRepo{db: db}
+// NewReportMetricsRepository constructs a ReportMetricsRepository backed by db.
+func NewReportMetricsRepository(db *DB) *ReportMetricsRepository {
+	return &ReportMetricsRepository{db: db}
 }
 
 // Compile-time assertion that the adapter satisfies reporting's port.
-var _ reporting.MetricsRepo = (*MetricsRepo)(nil)
+var _ reporting.MetricsRepo = (*ReportMetricsRepository)(nil)
 
 // CountDevices returns the total device count.
-func (r *MetricsRepo) CountDevices(ctx context.Context) (int, error) {
+func (r *ReportMetricsRepository) CountDevices(ctx context.Context) (int, error) {
 	var count int
 	row := r.db.QueryRow(ctx, "SELECT COUNT(*) FROM devices")
 	if err := row.Scan(&count); err != nil {
@@ -45,7 +44,7 @@ func (r *MetricsRepo) CountDevices(ctx context.Context) (int, error) {
 
 // VulnerabilitySeverityCounts returns severity → count of the open findings
 // discovered since `since`; resolved and ignored findings are not counted.
-func (r *MetricsRepo) VulnerabilitySeverityCounts(
+func (r *ReportMetricsRepository) VulnerabilitySeverityCounts(
 	ctx context.Context,
 	since time.Time,
 ) (map[string]int, error) {
@@ -80,7 +79,7 @@ func (r *MetricsRepo) VulnerabilitySeverityCounts(
 // uptime since `since`. Gateway figures come from the telemetry series in
 // metrics; uptime is the share of gateway samples that got a reply, 100% when
 // there are none.
-func (r *MetricsRepo) PerformanceMetrics(
+func (r *ReportMetricsRepository) PerformanceMetrics(
 	ctx context.Context,
 	since time.Time,
 ) (reporting.PerformanceMetrics, error) {
@@ -124,7 +123,7 @@ func (r *MetricsRepo) PerformanceMetrics(
 }
 
 // TopIssues returns the highest-impact open vulnerability issues.
-func (r *MetricsRepo) TopIssues(ctx context.Context) ([]reporting.IssueSummary, error) {
+func (r *ReportMetricsRepository) TopIssues(ctx context.Context) ([]reporting.IssueSummary, error) {
 	rows, err := r.db.Query(ctx, `
 		SELECT severity, COALESCE(description, cve_id), COUNT(*) as count
 		FROM device_vulnerabilities
@@ -162,7 +161,7 @@ func (r *MetricsRepo) TopIssues(ctx context.Context) ([]reporting.IssueSummary, 
 }
 
 // Trends returns time-series points for a metric over a period.
-func (r *MetricsRepo) Trends(
+func (r *ReportMetricsRepository) Trends(
 	ctx context.Context,
 	metric, period string,
 ) ([]reporting.DataPoint, error) {

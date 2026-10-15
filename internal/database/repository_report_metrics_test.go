@@ -1,4 +1,4 @@
-package store_test
+package database_test
 
 import (
 	"testing"
@@ -10,14 +10,13 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
-	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/telemetry"
 )
 
 // newPerformanceRepo returns a repo over five hourly gateway samples, written
 // as the telemetry engine writes them, and three speed tests. The oldest
 // gateway sample got no reply, so it has no latency.
-func newPerformanceRepo(t *testing.T) *store.MetricsRepo {
+func newPerformanceRepo(t *testing.T) *database.ReportMetricsRepository {
 	t.Helper()
 	db, err := database.Open(dbtest.Path(t))
 	require.NoError(t, err)
@@ -50,7 +49,7 @@ func newPerformanceRepo(t *testing.T) *store.MetricsRepo {
 			Timestamp:     now.Add(-time.Duration(i) * time.Hour).UTC(),
 		}))
 	}
-	return store.NewMetricsRepo(db)
+	return database.NewReportMetricsRepository(db)
 }
 
 // TestPerformanceMetricsReadsGatewayTelemetry is #2623's gateway half: the

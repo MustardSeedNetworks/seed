@@ -1,8 +1,8 @@
-// Package store holds the reporting persistence adapters: concrete SQLite
-// implementations of the repository ports declared by internal/reporting. The
-// store depends on reporting (importing its types and satisfying its ports),
-// never the reverse — the inward-only direction enforced by depguard.
-package store
+package database
+
+// The repository_report*.go files implement the persistence ports declared by
+// internal/reporting. The database imports reporting, never the reverse;
+// internal/app wires the two (ADR-0020, D-SEED-30).
 
 import (
 	"context"
@@ -10,28 +10,27 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 )
 
-// ReportRepo implements reporting.ReportRepo over the SQLite reports table. The
+// ReportRepository implements reporting.ReportRepo over the SQLite reports table. The
 // SQL and row scanning were lifted verbatim from the reporting package
 // (services_reports.go + services.go:saveReport) when reporting was made
 // I/O-free — Phase 3 slice 1b-iv.
-type ReportRepo struct {
-	db *database.DB
+type ReportRepository struct {
+	db *DB
 }
 
-// NewReportRepo constructs a ReportRepo backed by db.
-func NewReportRepo(db *database.DB) *ReportRepo {
-	return &ReportRepo{db: db}
+// NewReportRepository constructs a ReportRepository backed by db.
+func NewReportRepository(db *DB) *ReportRepository {
+	return &ReportRepository{db: db}
 }
 
 // Compile-time assertion that the adapter satisfies reporting's port.
-var _ reporting.ReportRepo = (*ReportRepo)(nil)
+var _ reporting.ReportRepo = (*ReportRepository)(nil)
 
 // GetReport retrieves a report by ID.
-func (r *ReportRepo) GetReport(ctx context.Context, id string) (*reporting.Report, error) {
+func (r *ReportRepository) GetReport(ctx context.Context, id string) (*reporting.Report, error) {
 	row := r.db.QueryRow(ctx, `
 		SELECT id, name, type, format, template, status, file_path, file_size, parameters_json, error, created_at, completed_at, expires_at
 		FROM reports WHERE id = ?
@@ -41,7 +40,7 @@ func (r *ReportRepo) GetReport(ctx context.Context, id string) (*reporting.Repor
 }
 
 // ListReports returns all generated reports.
-func (r *ReportRepo) ListReports(ctx context.Context) ([]reporting.Report, error) {
+func (r *ReportRepository) ListReports(ctx context.Context) ([]reporting.Report, error) {
 	rows, err := r.db.Query(ctx, `
 		SELECT id, name, type, format, template, status, file_path, file_size, parameters_json, error, created_at, completed_at, expires_at
 		FROM reports ORDER BY created_at DESC
@@ -67,7 +66,7 @@ func (r *ReportRepo) ListReports(ctx context.Context) ([]reporting.Report, error
 }
 
 // SaveReport upserts a report record.
-func (r *ReportRepo) SaveReport(ctx context.Context, report *reporting.Report) error {
+func (r *ReportRepository) SaveReport(ctx context.Context, report *reporting.Report) error {
 	paramsJSON, _ := json.Marshal(report.Parameters)
 
 	var completedAt, expiresAt *string
@@ -97,7 +96,7 @@ func (r *ReportRepo) SaveReport(ctx context.Context, report *reporting.Report) e
 // Unlike SaveReport this never inserts: the generator writes status updates
 // after Generate has returned, and an INSERT there would resurrect a report the
 // caller had already deleted.
-func (r *ReportRepo) UpdateReport(ctx context.Context, report *reporting.Report) (bool, error) {
+func (r *ReportRepository) UpdateReport(ctx context.Context, report *reporting.Report) (bool, error) {
 	paramsJSON, err := json.Marshal(report.Parameters)
 	if err != nil {
 		return false, fmt.Errorf("marshaling report parameters: %w", err)
@@ -134,7 +133,7 @@ func (r *ReportRepo) UpdateReport(ctx context.Context, report *reporting.Report)
 }
 
 // DeleteReport removes the report row (the file is removed by the service).
-func (r *ReportRepo) DeleteReport(ctx context.Context, id string) error {
+func (r *ReportRepository) DeleteReport(ctx context.Context, id string) error {
 	_, err := r.db.Exec(ctx, "DELETE FROM reports WHERE id = ?", id)
 	if err != nil {
 		return fmt.Errorf("deleting report from database: %w", err)

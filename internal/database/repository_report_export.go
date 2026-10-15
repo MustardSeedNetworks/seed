@@ -1,31 +1,30 @@
-package store
+package database
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 )
 
-// ExportRepo implements reporting.ExportRepo over the devices and
+// ReportExportRepository implements reporting.ExportRepo over the devices and
 // device_vulnerabilities tables. The SQL and scanning were lifted verbatim from
 // the reporting package (services_export.go) when reporting was made I/O-free —
 // Phase 3 slice 1b-v.
-type ExportRepo struct {
-	db *database.DB
+type ReportExportRepository struct {
+	db *DB
 }
 
-// NewExportRepo constructs an ExportRepo backed by db.
-func NewExportRepo(db *database.DB) *ExportRepo {
-	return &ExportRepo{db: db}
+// NewReportExportRepository constructs a ReportExportRepository backed by db.
+func NewReportExportRepository(db *DB) *ReportExportRepository {
+	return &ReportExportRepository{db: db}
 }
 
 // Compile-time assertion that the adapter satisfies reporting's port.
-var _ reporting.ExportRepo = (*ExportRepo)(nil)
+var _ reporting.ExportRepo = (*ReportExportRepository)(nil)
 
 // ExportDevices returns all device rows, newest-seen first.
-func (r *ExportRepo) ExportDevices(ctx context.Context) ([]map[string]any, error) {
+func (r *ReportExportRepository) ExportDevices(ctx context.Context) ([]map[string]any, error) {
 	rows, err := r.db.Query(ctx, `
 		SELECT id, ip_address, mac_address, hostname, vendor, device_type, first_seen, last_seen
 		FROM devices ORDER BY last_seen DESC
@@ -69,7 +68,7 @@ func (r *ExportRepo) ExportDevices(ctx context.Context) ([]map[string]any, error
 }
 
 // ExportVulnerabilities returns all vulnerability rows joined to device IPs.
-func (r *ExportRepo) ExportVulnerabilities(ctx context.Context) ([]map[string]any, error) {
+func (r *ReportExportRepository) ExportVulnerabilities(ctx context.Context) ([]map[string]any, error) {
 	rows, err := r.db.Query(ctx, `
 		SELECT dv.id, dv.device_id, dv.cve_id, dv.severity, dv.status, dv.notes, dv.detected_at, d.ip_address
 		FROM device_vulnerabilities dv

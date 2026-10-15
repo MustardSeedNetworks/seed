@@ -23,7 +23,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
-	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
@@ -130,7 +129,7 @@ func TestSummaryReadsCountOnlyTheWindow(t *testing.T) {
 	start := time.Date(2026, 10, 3, 6, 0, 0, 0, time.UTC)
 	window := reporting.DateRange{Start: start, End: start.Add(24 * time.Hour)}
 	targetID := seedSummaryStores(t, db, window.Start, window.End)
-	repo := store.NewMetricsRepo(db)
+	repo := database.NewReportMetricsRepository(db)
 	ctx := t.Context()
 
 	health, err := repo.InterfaceHealth(ctx, window)
@@ -225,18 +224,18 @@ func TestScheduledDailySummaryMatchesTheStores(t *testing.T) {
 	cfg := testConfig()
 	templates := reporting.NewTemplateService(cfg)
 	require.NoError(t, templates.Load())
-	metrics := store.NewMetricsRepo(db)
+	metrics := database.NewReportMetricsRepository(db)
 	aggregator := reporting.NewAggregatorService(cfg, metrics)
-	gen := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), templates, aggregator)
+	gen := newGenerator(cfg, db, templates, aggregator)
 	gen.SetReportsPath(t.TempDir())
 
 	due := now.Add(-time.Minute)
-	require.NoError(t, store.NewScheduleRepo(db).SaveSchedule(t.Context(), &reporting.ScheduledReport{
+	require.NoError(t, database.NewReportScheduleRepository(db).SaveSchedule(t.Context(), &reporting.ScheduledReport{
 		ID: "daily", Name: "Daily summary", Template: "summary", Format: reporting.FormatPDF, Enabled: true,
 		Schedule: reporting.Schedule{Frequency: reporting.FrequencyDaily, Hour: 6, Timezone: "UTC"},
 		NextRun:  &due, CreatedAt: now, UpdatedAt: now,
 	}))
-	scheduler := reporting.NewSchedulerService(cfg, store.NewScheduleRepo(db), gen,
+	scheduler := reporting.NewSchedulerService(cfg, database.NewReportScheduleRepository(db), gen,
 		reporting.WithTickInterval(5*time.Millisecond))
 	require.NoError(t, scheduler.Load(t.Context()))
 	stop := runUntilCancelled(t, scheduler.Run)
@@ -302,8 +301,8 @@ func TestSummaryJSONCarriesTheSummary(t *testing.T) {
 	cfg := testConfig()
 	templates := reporting.NewTemplateService(cfg)
 	require.NoError(t, templates.Load())
-	aggregator := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gen := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), templates, aggregator)
+	aggregator := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gen := newGenerator(cfg, db, templates, aggregator)
 	gen.SetReportsPath(t.TempDir())
 
 	created, err := gen.GenerateFromTemplate(t.Context(), "summary", reporting.FormatJSON, nil)
@@ -339,8 +338,12 @@ func TestSummaryRejectsFormatsItDoesNotRender(t *testing.T) {
 	cfg := testConfig()
 	templates := reporting.NewTemplateService(cfg)
 	require.NoError(t, templates.Load())
-	gen := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), templates,
-		reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db)))
+	gen := newGenerator(
+		cfg,
+		db,
+		templates,
+		reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db)),
+	)
 	gen.SetReportsPath(t.TempDir())
 
 	_, err := gen.GenerateFromTemplate(t.Context(), "summary", reporting.FormatHTML, nil)

@@ -15,8 +15,18 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
-	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
 )
+
+// newGenerator builds a generator over db's report repositories.
+func newGenerator(
+	cfg *config.Config,
+	db *database.DB,
+	ts *reporting.TemplateService,
+	as *reporting.AggregatorService,
+) *reporting.GeneratorService {
+	reports := database.NewReportRepository(db)
+	return reporting.NewGeneratorService(cfg, reports, database.NewReportExportRepository(db), ts, as)
+}
 
 // testDB creates a temporary database for testing.
 func testDB(t *testing.T) (*database.DB, func()) {
@@ -366,7 +376,7 @@ func TestAggregatorService_Aggregate(t *testing.T) {
 	defer cleanup()
 
 	cfg := testConfig()
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
 
 	tests := []struct {
 		name   string
@@ -415,7 +425,7 @@ func TestAggregatorService_AggregateWithData(t *testing.T) {
 	setupTestData(t, ctx, db)
 
 	cfg := testConfig()
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
 
 	data, err := as.Aggregate(ctx, reporting.PeriodWeekly, "", "")
 	require.NoError(t, err)
@@ -430,7 +440,7 @@ func TestAggregatorService_GetTrends(t *testing.T) {
 	defer cleanup()
 
 	cfg := testConfig()
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
 	ctx := context.Background()
 
 	tests := []struct {
@@ -475,9 +485,9 @@ func TestSchedulerService_Create(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
-	ss := reporting.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
+	ss := reporting.NewSchedulerService(cfg, database.NewReportScheduleRepository(db), gs)
 
 	ctx := context.Background()
 
@@ -571,9 +581,9 @@ func TestSchedulerService_Get(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
-	ss := reporting.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
+	ss := reporting.NewSchedulerService(cfg, database.NewReportScheduleRepository(db), gs)
 
 	ctx := context.Background()
 
@@ -630,9 +640,9 @@ func TestSchedulerService_List(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
-	ss := reporting.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
+	ss := reporting.NewSchedulerService(cfg, database.NewReportScheduleRepository(db), gs)
 
 	ctx := context.Background()
 
@@ -671,9 +681,9 @@ func TestSchedulerService_Update(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
-	ss := reporting.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
+	ss := reporting.NewSchedulerService(cfg, database.NewReportScheduleRepository(db), gs)
 
 	ctx := context.Background()
 
@@ -762,9 +772,9 @@ func TestSchedulerService_Delete(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
-	ss := reporting.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
+	ss := reporting.NewSchedulerService(cfg, database.NewReportScheduleRepository(db), gs)
 
 	ctx := context.Background()
 
@@ -807,9 +817,9 @@ func TestSchedulerService_RunStop(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
-	ss := reporting.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
+	ss := reporting.NewSchedulerService(cfg, database.NewReportScheduleRepository(db), gs)
 
 	stop := runUntilCancelled(t, ss.Run)
 	time.Sleep(50 * time.Millisecond) // let the scheduler tick
@@ -826,9 +836,9 @@ func TestCalculateNextRun(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
-	ss := reporting.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
+	ss := reporting.NewSchedulerService(cfg, database.NewReportScheduleRepository(db), gs)
 
 	ctx := context.Background()
 	now := time.Now()
@@ -898,8 +908,8 @@ func TestGeneratorService_Generate(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
 
 	ctx := context.Background()
 
@@ -982,8 +992,8 @@ func TestGeneratorService_GenerateFromTemplate(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
 
 	ctx := context.Background()
 
@@ -1047,10 +1057,10 @@ func TestGeneratorService_Export(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
 
 	// Create generator with a temp directory for reports
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	gs := newGenerator(cfg, db, ts, as)
 
 	ctx := context.Background()
 
@@ -1136,8 +1146,8 @@ func TestGeneratorService_ListReports(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
 
 	ctx := context.Background()
 
@@ -1163,8 +1173,8 @@ func TestGeneratorService_GetReport(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
 
 	ctx := context.Background()
 
@@ -1196,8 +1206,8 @@ func TestGeneratorService_DeleteReport(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
 
 	ctx := context.Background()
 
@@ -1227,10 +1237,10 @@ func TestModule_New(t *testing.T) {
 	module := reporting.New(
 		cfg,
 		reporting.Deps{
-			Reports:  store.NewReportRepo(db),
-			Schedule: store.NewScheduleRepo(db),
-			Metrics:  store.NewMetricsRepo(db),
-			Export:   store.NewExportRepo(db),
+			Reports:  database.NewReportRepository(db),
+			Schedule: database.NewReportScheduleRepository(db),
+			Metrics:  database.NewReportMetricsRepository(db),
+			Export:   database.NewReportExportRepository(db),
 		},
 	)
 
@@ -1249,10 +1259,10 @@ func TestModule_StartStop(t *testing.T) {
 	module := reporting.New(
 		cfg,
 		reporting.Deps{
-			Reports:  store.NewReportRepo(db),
-			Schedule: store.NewScheduleRepo(db),
-			Metrics:  store.NewMetricsRepo(db),
-			Export:   store.NewExportRepo(db),
+			Reports:  database.NewReportRepository(db),
+			Schedule: database.NewReportScheduleRepository(db),
+			Metrics:  database.NewReportMetricsRepository(db),
+			Export:   database.NewReportExportRepository(db),
 		},
 	)
 
@@ -1273,10 +1283,10 @@ func TestModule_Accessors(t *testing.T) {
 	module := reporting.New(
 		cfg,
 		reporting.Deps{
-			Reports:  store.NewReportRepo(db),
-			Schedule: store.NewScheduleRepo(db),
-			Metrics:  store.NewMetricsRepo(db),
-			Export:   store.NewExportRepo(db),
+			Reports:  database.NewReportRepository(db),
+			Schedule: database.NewReportScheduleRepository(db),
+			Metrics:  database.NewReportMetricsRepository(db),
+			Export:   database.NewReportExportRepository(db),
 		},
 	)
 
@@ -1306,10 +1316,10 @@ func TestModule_ConcurrentAccess(t *testing.T) {
 	module := reporting.New(
 		cfg,
 		reporting.Deps{
-			Reports:  store.NewReportRepo(db),
-			Schedule: store.NewScheduleRepo(db),
-			Metrics:  store.NewMetricsRepo(db),
-			Export:   store.NewExportRepo(db),
+			Reports:  database.NewReportRepository(db),
+			Schedule: database.NewReportScheduleRepository(db),
+			Metrics:  database.NewReportMetricsRepository(db),
+			Export:   database.NewReportExportRepository(db),
 		},
 	)
 
@@ -1361,8 +1371,8 @@ func TestGeneratorService_UnsupportedFormats(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
 
 	ctx := context.Background()
 
@@ -1397,7 +1407,7 @@ func TestAggregatorService_EmptyDatabase(t *testing.T) {
 	defer cleanup()
 
 	cfg := testConfig()
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
 
 	ctx := context.Background()
 	data, err := as.Aggregate(ctx, reporting.PeriodWeekly, "", "")
@@ -1441,8 +1451,8 @@ func TestReportParams_DateRangeCalculation(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
 
 	ctx := context.Background()
 
@@ -1481,8 +1491,8 @@ func TestExportResult_Fields(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
 
 	ctx := context.Background()
 
@@ -1517,8 +1527,8 @@ func TestDatabaseInteraction_Reports(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
 
 	ctx := context.Background()
 
@@ -1615,8 +1625,8 @@ func TestGeneratorService_DownloadReport(t *testing.T) {
 	ts := reporting.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	as := reporting.NewAggregatorService(cfg, database.NewReportMetricsRepository(db))
+	gs := newGenerator(cfg, db, ts, as)
 
 	ctx := context.Background()
 

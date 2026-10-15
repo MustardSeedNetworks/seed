@@ -7,11 +7,11 @@ import (
 
 // ports.go declares the infrastructure interfaces the reporting package
 // depends on. The package is persistence-free: it owns these ports, and the
-// concrete I/O lives in internal/reporting/store (inward-only — the store
-// adapter imports reporting, never the reverse).
+// concrete I/O lives in internal/database (inward-only — the database
+// imports reporting, never the reverse).
 
 // ReportRepo persists report records. The SQLite implementation lives in
-// internal/reporting/store. The service depends on this interface so report
+// internal/database. The service depends on this interface so report
 // orchestration can be unit-tested with a fake repo (no database).
 type ReportRepo interface {
 	// GetReport returns the report row with the given id.
