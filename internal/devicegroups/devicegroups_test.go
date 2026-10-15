@@ -26,6 +26,10 @@ func (m *memStore) Get(context.Context, string, string) (devicegroups.Group, err
 	return m.saved, nil
 }
 
+func (m *memStore) Lookup(context.Context, string) (devicegroups.Group, error) {
+	return m.saved, nil
+}
+
 func (m *memStore) Save(_ context.Context, g *devicegroups.Group) error {
 	if g.ID == "" {
 		g.ID = "grp-1"

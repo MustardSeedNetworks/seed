@@ -19,7 +19,6 @@ import (
 	"strconv"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts/rules"
-	"github.com/MustardSeedNetworks/seed/internal/devicegroups"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -148,7 +147,7 @@ func (s *Server) createAlertRule(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, err.Error())
 		return
 	}
-	if !s.ownRuleGroup(w, r, in.GroupID) {
+	if !s.ownGroup(w, r, in.GroupID) {
 		return
 	}
 	rule, createErr := s.alertRules.Create(r.Context(), inputToRule(in))
@@ -176,7 +175,7 @@ func (s *Server) updateAlertRule(w http.ResponseWriter, r *http.Request, id int6
 		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, err.Error())
 		return
 	}
-	if !s.ownRuleGroup(w, r, in.GroupID) {
+	if !s.ownGroup(w, r, in.GroupID) {
 		return
 	}
 	// The use-case writes the row and echoes the freshly-read record so the
@@ -214,29 +213,6 @@ func (s *Server) deleteAlertRule(w http.ResponseWriter, r *http.Request, id int6
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
-}
-
-// ownRuleGroup checks that a rule's groupId names one of the caller's device
-// groups, writing the denial and reporting false when it does not. Rules are
-// install-wide, so without this an operator could scope a rule by another
-// client's group. An empty groupId is an unscoped rule.
-func (s *Server) ownRuleGroup(w http.ResponseWriter, r *http.Request, groupID string) bool {
-	if groupID == "" {
-		return true
-	}
-	clientID, ok := s.callerClient(w, r)
-	if !ok {
-		return false
-	}
-	if _, err := s.deviceGroups.Get(r.Context(), clientID, groupID); err != nil {
-		if errors.Is(err, devicegroups.ErrNotFound) {
-			writeError(w, r, http.StatusBadRequest, ErrCodeValidation, "groupId does not name a device group")
-			return false
-		}
-		writeDeviceGroupError(w, r, err)
-		return false
-	}
-	return true
 }
 
 func decodeAlertRuleInput(r *http.Request) (*AlertRuleRequest, error) {

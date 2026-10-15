@@ -128,11 +128,14 @@ type ScheduledReport struct {
 	Schedule   Schedule     `json:"schedule"`
 	Parameters ReportParams `json:"parameters,omitzero"`
 	Recipients []Recipient  `json:"recipients,omitempty"`
-	Enabled    bool         `json:"enabled"`
-	LastRun    *time.Time   `json:"lastRun,omitempty"`
-	NextRun    *time.Time   `json:"nextRun,omitempty"`
-	CreatedAt  time.Time    `json:"createdAt"`
-	UpdatedAt  time.Time    `json:"updatedAt"`
+	// GroupID scopes a capacity or summary schedule to a device group. Each
+	// run reads the group's members as they stand then.
+	GroupID   string     `json:"groupId,omitempty"`
+	Enabled   bool       `json:"enabled"`
+	LastRun   *time.Time `json:"lastRun,omitempty"`
+	NextRun   *time.Time `json:"nextRun,omitempty"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
 }
 
 // Schedule defines when a report runs.

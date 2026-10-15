@@ -7624,6 +7624,8 @@ components:
                     type: boolean
                 format:
                     type: string
+                groupId:
+                    type: string
                 id:
                     type: string
                 lastRun:
@@ -7654,6 +7656,8 @@ components:
                 enabled:
                     type: boolean
                 format:
+                    type: string
+                groupId:
                     type: string
                 name:
                     type: string
@@ -15782,7 +15786,8 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
         post:
-            description: Requires an operator-scoped token.
+            description: |
+                Requires an operator-scoped token. groupId scopes a capacity or summary schedule to one of the caller's device groups; each run reads the group's members as they stand then. With any other template, or a group the caller's client does not have, it is 400. A group a schedule names cannot be deleted (409).
             operationId: postApiV1ReportSchedules
             requestBody:
                 content:
@@ -15905,7 +15910,8 @@ paths:
               schema:
                 type: string
         put:
-            description: Requires an operator-scoped token.
+            description: |
+                Requires an operator-scoped token. groupId scopes a capacity or summary schedule to one of the caller's device groups; each run reads the group's members as they stand then. With any other template, or a group the caller's client does not have, it is 400. A group a schedule names cannot be deleted (409).
             operationId: putApiV1ReportSchedulesScheduleId
             requestBody:
                 content:

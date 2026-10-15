@@ -24,6 +24,9 @@ type ReportScheduleRequest struct {
 	Format   string             `json:"format"   validate:"required"`
 	Schedule reporting.Schedule `json:"schedule"`
 	Enabled  *bool              `json:"enabled"  validate:"required"`
+	// GroupID scopes a capacity or summary schedule to one of the caller's
+	// device groups.
+	GroupID string `json:"groupId,omitempty"`
 }
 
 // ReportScheduleInfo is a scheduled report as the API presents it. Times are
@@ -35,6 +38,7 @@ type ReportScheduleInfo struct {
 	Format    string             `json:"format"`
 	Schedule  reporting.Schedule `json:"schedule"`
 	Enabled   bool               `json:"enabled"`
+	GroupID   string             `json:"groupId,omitempty"`
 	LastRun   string             `json:"lastRun,omitempty"`
 	NextRun   string             `json:"nextRun,omitempty"`
 	CreatedAt string             `json:"createdAt"`
@@ -54,6 +58,7 @@ func toReportScheduleInfo(sr *reporting.ScheduledReport) ReportScheduleInfo {
 		Format:    string(sr.Format),
 		Schedule:  sr.Schedule,
 		Enabled:   sr.Enabled,
+		GroupID:   sr.GroupID,
 		LastRun:   "",
 		NextRun:   "",
 		CreatedAt: sr.CreatedAt.Format(time.RFC3339),
@@ -89,7 +94,7 @@ func (s *Server) handleReportSchedules(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		var req ReportScheduleRequest
-		if !decodeScheduleRequest(w, r, &req) {
+		if !decodeScheduleRequest(w, r, &req) || !s.ownGroup(w, r, req.GroupID) {
 			return
 		}
 		sched, ok := s.reportScheduler(w, r)
@@ -138,7 +143,7 @@ func (s *Server) handleReportScheduleByID(w http.ResponseWriter, r *http.Request
 	}
 
 	var req ReportScheduleRequest
-	if r.Method == http.MethodPut && !decodeScheduleRequest(w, r, &req) {
+	if r.Method == http.MethodPut && (!decodeScheduleRequest(w, r, &req) || !s.ownGroup(w, r, req.GroupID)) {
 		return
 	}
 
@@ -189,6 +194,7 @@ func (req *ReportScheduleRequest) toScheduledReport(id string) *reporting.Schedu
 		Format:   reporting.ExportFormat(req.Format),
 		Schedule: req.Schedule,
 		Enabled:  *req.Enabled,
+		GroupID:  req.GroupID,
 	}
 }
 

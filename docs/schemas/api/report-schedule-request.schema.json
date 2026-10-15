@@ -19,6 +19,9 @@
         },
         "enabled": {
           "type": "boolean"
+        },
+        "groupId": {
+          "type": "string"
         }
       },
       "additionalProperties": false,

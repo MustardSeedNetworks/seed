@@ -1234,6 +1234,12 @@ operations:
             schema:
               $ref: '#/components/schemas/ReportSchedulesResponse'
   POST /api/v1/report-schedules:
+    description: >
+      Requires an operator-scoped token. groupId scopes a capacity or summary
+      schedule to one of the caller's device groups; each run reads the
+      group's members as they stand then. With any other template, or a group
+      the caller's client does not have, it is 400. A group a schedule names
+      cannot be deleted (409).
     requestBody:
       required: true
       content:
@@ -1256,6 +1262,12 @@ operations:
             schema:
               $ref: '#/components/schemas/ReportScheduleInfo'
   PUT /api/v1/report-schedules/{scheduleId}:
+    description: >
+      Requires an operator-scoped token. groupId scopes a capacity or summary
+      schedule to one of the caller's device groups; each run reads the
+      group's members as they stand then. With any other template, or a group
+      the caller's client does not have, it is 400. A group a schedule names
+      cannot be deleted (409).
     requestBody:
       required: true
       content:

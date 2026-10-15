@@ -57,8 +57,20 @@ func (r *DeviceGroupRepository) List(ctx context.Context, clientID string) ([]de
 
 // Get returns one group with its members; a miss is devicegroups.ErrNotFound.
 func (r *DeviceGroupRepository) Get(ctx context.Context, clientID, id string) (devicegroups.Group, error) {
-	g, err := scanDeviceGroup(r.db.QueryRow(ctx, `SELECT id, client_id, name, description, created_at, updated_at
-		FROM device_groups WHERE id = ? AND client_id = ?`, id, clientID))
+	return r.get(ctx, id, `SELECT id, client_id, name, description, created_at, updated_at
+		FROM device_groups WHERE id = ? AND client_id = ?`, id, clientID)
+}
+
+// Lookup returns one group whatever its client; a miss is
+// devicegroups.ErrNotFound. It serves install-wide references (a scheduled
+// report) that were checked against the client when they were saved.
+func (r *DeviceGroupRepository) Lookup(ctx context.Context, id string) (devicegroups.Group, error) {
+	return r.get(ctx, id, `SELECT id, client_id, name, description, created_at, updated_at
+		FROM device_groups WHERE id = ?`, id)
+}
+
+func (r *DeviceGroupRepository) get(ctx context.Context, id, query string, args ...any) (devicegroups.Group, error) {
+	g, err := scanDeviceGroup(r.db.QueryRow(ctx, query, args...))
 	if errors.Is(err, sql.ErrNoRows) {
 		return devicegroups.Group{}, devicegroups.ErrNotFound
 	}
@@ -135,8 +147,9 @@ func (r *DeviceGroupRepository) Save(ctx context.Context, g *devicegroups.Group)
 	}
 }
 
-// Delete removes a group and its memberships. A group an alert rule names is
-// devicegroups.ErrInUse (alert_rules.group_id is ON DELETE RESTRICT).
+// Delete removes a group and its memberships. A group an alert rule or a
+// scheduled report names is devicegroups.ErrInUse (alert_rules.group_id and
+// scheduled_reports.group_id are ON DELETE RESTRICT).
 func (r *DeviceGroupRepository) Delete(ctx context.Context, clientID, id string) error {
 	res, err := r.db.Exec(ctx, `DELETE FROM device_groups WHERE id = ? AND client_id = ?`, id, clientID)
 	if isForeignKeyConstraintError(err) {
