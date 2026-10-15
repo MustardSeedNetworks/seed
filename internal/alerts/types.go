@@ -72,6 +72,10 @@ const (
 	// A root change is never also reported as a topology change.
 	RuleSTPRootChange     = "stp.root_change"
 	RuleSTPTopologyChange = "stp.topology_change"
+	// RuleRouteWithdrawn is prefixes leaving a router's table between polls;
+	// RuleRouteChange is prefixes that stayed but moved to other next hops.
+	RuleRouteWithdrawn = "route.withdrawn"
+	RuleRouteChange    = "route.change"
 )
 
 // RuleFlowIndicator is the listener pipeline rule that alerts on a flow to
@@ -128,6 +132,37 @@ type BGPPeerEvidence struct {
 	RemoteAddr string `json:"remoteAddr"`
 	RemoteAS   uint32 `json:"remoteAs"`
 	State      int    `json:"state"`
+}
+
+// RouteWithdrawnEvidence is the Metadata of a RuleRouteWithdrawn alert.
+// Withdrawn counts every prefix that left the table; Routes lists at most the
+// first 50 of them by prefix.
+type RouteWithdrawnEvidence struct {
+	Withdrawn int               `json:"withdrawn"`
+	Routes    []RouteWithdrawal `json:"routes"`
+}
+
+// RouteWithdrawal is one prefix that left the table, with the next hops and
+// the RFC 2096 ipCidrRouteProto it had before it went.
+type RouteWithdrawal struct {
+	Prefix   string   `json:"prefix"`
+	NextHops []string `json:"nextHops"`
+	Proto    int      `json:"proto"`
+}
+
+// RouteChangeEvidence is the Metadata of a RuleRouteChange alert. Changed
+// counts every prefix whose next hops differ; Routes lists at most the first
+// 50 of them by prefix.
+type RouteChangeEvidence struct {
+	Changed int                  `json:"changed"`
+	Routes  []RouteNextHopChange `json:"routes"`
+}
+
+// RouteNextHopChange is one prefix whose next hops differ between polls.
+type RouteNextHopChange struct {
+	Prefix string   `json:"prefix"`
+	From   []string `json:"from"`
+	To     []string `json:"to"`
 }
 
 // StorageEvidence is the Metadata of a RuleStorageHigh or RuleStorageCritical

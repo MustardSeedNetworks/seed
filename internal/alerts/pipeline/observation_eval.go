@@ -36,6 +36,8 @@ func (p *ObservationPipeline) scanKind(
 			count += p.evaluateHostResources(ctx, obs)
 		case "stp":
 			count += p.evaluateSTP(ctx, obs)
+		case "routing":
+			count += p.evaluateRouting(ctx, obs)
 		}
 	}
 	return count, maxAt, nil

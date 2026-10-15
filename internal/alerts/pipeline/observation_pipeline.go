@@ -41,7 +41,8 @@ type observationReader interface {
 // ObservationPipeline consumes the snmp_observations stream, detects
 // per-entity state transitions (interface oper up→down, BGP peer
 // leaving established, filesystem crossing usage thresholds, spanning-tree
-// root and topology changes), and emits alerts via the existing alertWriter.
+// root and topology changes, routes withdrawn or moved), and emits alerts via
+// the existing alertWriter.
 //
 // State is tracked in memory per pipeline instance. Restarts lose
 // the prior state, so the next observation after a restart re-fires
@@ -71,10 +72,11 @@ type ObservationPipeline struct {
 	// Previous-state caches. Keyed by entity identifier
 	// ("target/ifindex" or "target/peer-ip", etc.). Updated after
 	// every observation; the diff drives the alert.
-	ifaceState   map[string]int         // (target, ifindex) -> last ifOperStatus
-	bgpState     map[string]int         // (target, peerAddr) -> last PeerState
-	storageState map[string]float64     // (target, storage_index) -> last %
-	stpState     map[string]stpSnapshot // target -> last spanning-tree view
+	ifaceState   map[string]int           // (target, ifindex) -> last ifOperStatus
+	bgpState     map[string]int           // (target, peerAddr) -> last PeerState
+	storageState map[string]float64       // (target, storage_index) -> last %
+	stpState     map[string]stpSnapshot   // target -> last spanning-tree view
+	routeState   map[string]routeSnapshot // target -> last routing table
 }
 
 // defaultReplayDepth is how many recent observations per kind get
@@ -151,6 +153,7 @@ func NewObservationPipeline(cfg ObservationConfig) (*ObservationPipeline, error)
 		bgpState:     make(map[string]int),
 		storageState: make(map[string]float64),
 		stpState:     make(map[string]stpSnapshot),
+		routeState:   make(map[string]routeSnapshot),
 	}, nil
 }
 
@@ -319,7 +322,7 @@ func (p *ObservationPipeline) scanOnceInner(ctx context.Context) error {
 // Declared as a function (not a global) for lint compatibility +
 // to keep adding kinds a one-line edit.
 func observationKinds() []string {
-	return []string{"if_table", "bgp4_mib", "host_resources", "stp"}
+	return []string{"if_table", "bgp4_mib", "host_resources", "stp", "routing"}
 }
 
 // state map accessors keep the lock surface narrow.
