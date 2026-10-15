@@ -7,11 +7,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
 )
 
-// DetectInterfaceType exposes detectInterfaceType for testing.
-func DetectInterfaceType(name string) InterfaceType {
-	return detectInterfaceType(name)
-}
-
 // HasRoutableAddress exposes hasRoutableAddress for testing.
 func HasRoutableAddress(addresses []string) bool {
 	return hasRoutableAddress(addresses)

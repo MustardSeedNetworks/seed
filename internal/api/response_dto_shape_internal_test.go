@@ -120,7 +120,7 @@ func TestWiFiStatusResponseShape(t *testing.T) {
 		{
 			name: "no adapter",
 			want: `{"status":"unavailable",` +
-				`"message":"No wireless adapter detected. Connect a WiFi adapter to perform surveys.",` +
+				`"message":"No wireless adapter detected. Connect a WiFi adapter to scan networks.",` +
 				`"currentInterface":"wlan0","isWireless":true,"availableAdapters":[],"canScan":false}`,
 		},
 	}

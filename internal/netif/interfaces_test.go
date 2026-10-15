@@ -318,52 +318,6 @@ func TestFindFirstAvailable(t *testing.T) {
 	}
 }
 
-func TestDetectInterfaceType(t *testing.T) {
-	tests := []struct {
-		name  string
-		iface string
-		want  netif.InterfaceType
-	}{
-		// Loopback
-		{"loopback lo", "lo", netif.InterfaceTypeLoopback},
-		{"loopback lo0", "lo0", netif.InterfaceTypeLoopback},
-
-		// Virtual
-		{"docker", "docker0", netif.InterfaceTypeVirtual},
-		{"bridge", "br-abc123", netif.InterfaceTypeVirtual},
-		{"veth", "veth0", netif.InterfaceTypeVirtual},
-		{"virbr", "virbr0", netif.InterfaceTypeVirtual},
-		{"tun", "tun0", netif.InterfaceTypeVirtual},
-		{"tap", "tap0", netif.InterfaceTypeVirtual},
-
-		// WiFi
-		{"wlan", "wlan0", netif.InterfaceTypeWiFi},
-		{"wlp", "wlp3s0", netif.InterfaceTypeWiFi},
-		{"wifi", "wifi0", netif.InterfaceTypeWiFi},
-		{"ath", "ath0", netif.InterfaceTypeWiFi},
-
-		// Ethernet
-		{"eth", "eth0", netif.InterfaceTypeEthernet},
-		{"enp", "enp0s3", netif.InterfaceTypeEthernet},
-		{"ens", "ens33", netif.InterfaceTypeEthernet},
-		{"eno", "eno1", netif.InterfaceTypeEthernet},
-		{"em", "em1", netif.InterfaceTypeEthernet},
-		{"en", "en0", netif.InterfaceTypeEthernet},
-
-		// Other
-		{"unknown", "xyz123", netif.InterfaceTypeOther},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := netif.DetectInterfaceType(tt.iface)
-			if got != tt.want {
-				t.Errorf("DetectInterfaceType(%v) = %v, want %v", tt.iface, got, tt.want)
-			}
-		})
-	}
-}
-
 func TestIsWireless(t *testing.T) {
 	mgr, err := netif.NewManager("")
 	if err != nil {
@@ -985,37 +939,6 @@ func TestNetmaskValidation(t *testing.T) {
 		t.Run("invalid_"+mask, func(t *testing.T) {
 			if netif.IsValidNetmask(mask) {
 				t.Errorf("IsValidNetmask(%q) = true, want false", mask)
-			}
-		})
-	}
-}
-
-func TestInterfaceTypeDetectionPriority(t *testing.T) {
-	// Test that more specific prefixes are detected correctly
-	// even if they match multiple patterns.
-
-	tests := []struct {
-		name string
-		want netif.InterfaceType
-	}{
-		// "en" matches both ethernet prefixes, but "enp" is more specific.
-		{"enp0s3", netif.InterfaceTypeEthernet},
-		{"en0", netif.InterfaceTypeEthernet},
-
-		// Virtual prefixes should match before ethernet.
-		{"docker0", netif.InterfaceTypeVirtual},
-		{"br-123abc", netif.InterfaceTypeVirtual},
-
-		// WiFi should be detected.
-		{"wlan0", netif.InterfaceTypeWiFi},
-		{"wlp3s0", netif.InterfaceTypeWiFi},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := netif.DetectInterfaceType(tt.name)
-			if got != tt.want {
-				t.Errorf("DetectInterfaceType(%q) = %v, want %v", tt.name, got, tt.want)
 			}
 		})
 	}

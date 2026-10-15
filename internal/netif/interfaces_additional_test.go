@@ -194,43 +194,6 @@ func TestCollectCandidatesWithOtherType(t *testing.T) {
 	}
 }
 
-func TestDetectInterfaceTypeEdgeCases(t *testing.T) {
-	tests := []struct {
-		name  string
-		iface string
-		want  netif.InterfaceType
-	}{
-		// Additional loopback edge cases
-		{"loopback lo1", "lo1", netif.InterfaceTypeLoopback},
-		{"loopback lo9", "lo9", netif.InterfaceTypeLoopback},
-		{"not loopback lo10", "lo10", netif.InterfaceTypeOther},
-		{"not loopback local", "local", netif.InterfaceTypeOther},
-		{"not loopback long", "long", netif.InterfaceTypeOther},
-
-		// Virtual interface variants
-		{"vnet", "vnet0", netif.InterfaceTypeVirtual},
-		{"vmnet", "vmnet1", netif.InterfaceTypeVirtual},
-		{"vboxnet", "vboxnet0", netif.InterfaceTypeVirtual},
-		{"utun", "utun0", netif.InterfaceTypeVirtual},
-
-		// WiFi interface variants
-		{"ra wifi", "ra0", netif.InterfaceTypeWiFi},
-		{"wl wifi", "wl0", netif.InterfaceTypeWiFi},
-
-		// Edge case: empty name
-		{"empty name", "", netif.InterfaceTypeOther},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := netif.DetectInterfaceType(tt.iface)
-			if got != tt.want {
-				t.Errorf("DetectInterfaceType(%q) = %v, want %v", tt.iface, got, tt.want)
-			}
-		})
-	}
-}
-
 func TestValidNetmaskDottedDecimal(t *testing.T) {
 	// Note: The isValidNetmask function's Sscanf will match the first number
 	// in dotted decimal notation (e.g., "255" from "255.255.255.0"), making

@@ -175,7 +175,7 @@ func (m *Management) Status(requestedIface string) StatusResult {
 	switch {
 	case len(adapters) == 0:
 		status = "unavailable"
-		message = "No wireless adapter detected. Connect a WiFi adapter to perform surveys."
+		message = "No wireless adapter detected. Connect a WiFi adapter to scan networks."
 	case !isWireless:
 		status = "available"
 		message = "Wireless adapter available but not selected as current interface."

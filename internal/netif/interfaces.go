@@ -138,7 +138,7 @@ func (m *Manager) RefreshInterfaces() error {
 	for _, iface := range ifaces {
 		info := &InterfaceInfo{
 			Name:         iface.Name,
-			Type:         detectInterfaceType(iface.Name),
+			Type:         interfaceType(iface, scoreMap[iface.Name]),
 			Up:           iface.Flags&net.FlagUp != 0,
 			Running:      iface.Flags&net.FlagRunning != 0,
 			HardwareAddr: iface.HardwareAddr.String(),
@@ -219,8 +219,8 @@ func (m *Manager) GetInterfaces() []*InterfaceInfo {
 // whichever type that turned out to be.
 //
 // The selected interface is included unconditionally because the alternative
-// is a listing that contradicts the daemon (seed#2692): detectInterfaceType
-// names a type from a name prefix, and [Manager.FindFirstAvailable] will
+// is a listing that contradicts the daemon (seed#2692): interfaceType names
+// such an interface InterfaceTypeOther, and [Manager.FindFirstAvailable] will
 // happily select an InterfaceTypeOther interface that carries a routable
 // address — feth0 on macOS, and equally bond0, ppp0 or usb0 — so filtering the
 // listing by type alone dropped the very interface every measurement on the
@@ -475,50 +475,27 @@ func cidrToNetmask(prefix int) string {
 	return fmt.Sprintf("%d.%d.%d.%d", mask[0], mask[1], mask[2], mask[3])
 }
 
-// detectInterfaceType determines the type of interface from its name.
-func detectInterfaceType(name string) InterfaceType {
-	// Loopback (lo, lo0, lo1, etc.)
-	if name == "lo" || strings.HasPrefix(name, "lo") && len(name) <= 3 {
-		// Check if remaining chars are digits (lo0, lo1, lo2)
-		if len(name) == 2 || (len(name) == 3 && name[2] >= '0' && name[2] <= '9') {
-			return InterfaceTypeLoopback
-		}
+// interfaceType names an interface's type. The detection pass decides for any
+// interface it scored, because it asks the platform which interfaces are Wi-Fi:
+// on macOS the Wi-Fi adapter is en0, which every name pattern reads as Ethernet
+// (#3466). Loopbacks, which the pass skips, are typed by flag, and anything
+// else it did not score (after a failed pass) by name.
+func interfaceType(iface net.Interface, score *detection.InterfaceScore) InterfaceType {
+	if iface.Flags&net.FlagLoopback != 0 {
+		return InterfaceTypeLoopback
 	}
-
-	// Virtual interfaces (docker, bridge, veth, tun, tap, virbr, etc.)
-	virtualPrefixes := []string{
-		"docker",
-		"br-",
-		"veth",
-		"virbr",
-		"tun",
-		"tap",
-		"vnet",
-		"vmnet",
-		"vboxnet",
-		"utun",
+	detected := detection.TypeByName(iface.Name)
+	if score != nil {
+		detected = score.Type
 	}
-	for _, prefix := range virtualPrefixes {
-		if strings.HasPrefix(name, prefix) {
-			return InterfaceTypeVirtual
-		}
+	switch detected {
+	case detection.TypeWifi:
+		return InterfaceTypeWiFi
+	case detection.TypeEthernet, detection.TypeFiber:
+		return InterfaceTypeEthernet
+	case detection.TypeVirtual:
+		return InterfaceTypeVirtual
+	default:
+		return InterfaceTypeOther
 	}
-
-	// WiFi interfaces
-	wifiPrefixes := []string{"wlan", "wlp", "wifi", "ath", "ra", "wl"}
-	for _, prefix := range wifiPrefixes {
-		if strings.HasPrefix(name, prefix) {
-			return InterfaceTypeWiFi
-		}
-	}
-
-	// Ethernet interfaces
-	ethPrefixes := []string{"eth", "enp", "ens", "eno", "em", "en"}
-	for _, prefix := range ethPrefixes {
-		if strings.HasPrefix(name, prefix) {
-			return InterfaceTypeEthernet
-		}
-	}
-
-	return InterfaceTypeOther
 }

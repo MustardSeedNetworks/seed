@@ -14,13 +14,13 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
-// Interface type constants.
+// Interface types, as InterfaceScore.Type reports them.
 const (
-	ifTypeEthernet = "ethernet"
-	ifTypeWifi     = "wifi"
-	ifTypeFiber    = "fiber"
-	ifTypeVirtual  = "virtual"
-	ifTypeOther    = "other"
+	TypeEthernet = "ethernet"
+	TypeWifi     = "wifi"
+	TypeFiber    = "fiber"
+	TypeVirtual  = "virtual"
+	TypeOther    = "other"
 )
 
 // Network speed thresholds in bits per second for interface classification.
@@ -225,7 +225,7 @@ func calculateSpeedBonus(speed int64) int {
 
 // calculateScore computes the ranking score for an interface.
 func (d *Detector) calculateScore(s *InterfaceScore) int {
-	if s.Type == ifTypeVirtual {
+	if s.Type == TypeVirtual {
 		return -1000
 	}
 
@@ -247,11 +247,11 @@ func (d *Detector) calculateScore(s *InterfaceScore) int {
 	score += s.ChipsetQuality
 
 	switch s.Type {
-	case ifTypeEthernet:
+	case TypeEthernet:
 		score += 100
-	case ifTypeWifi:
+	case TypeWifi:
 		score += 50
-	case ifTypeFiber:
+	case TypeFiber:
 		score += 150
 	}
 
@@ -266,17 +266,17 @@ func (d *Detector) generateFriendlyName(s *InterfaceScore) string {
 
 	// Fallback to generic name based on type and speed
 	switch s.Type {
-	case ifTypeEthernet:
+	case TypeEthernet:
 		if s.SpeedDisplay != "" {
 			return s.SpeedDisplay + " Ethernet"
 		}
 		return "Ethernet Adapter"
-	case ifTypeWifi:
+	case TypeWifi:
 		if s.Name == "" {
 			return "Wi-Fi Adapter"
 		}
 		return "Wi-Fi (" + s.Name + ")"
-	case ifTypeFiber:
+	case TypeFiber:
 		return "Fiber Adapter"
 	default:
 		return s.Name
@@ -292,11 +292,11 @@ func (d *Detector) generateDescription(s *InterfaceScore) string {
 	}
 
 	switch s.Type {
-	case ifTypeEthernet:
+	case TypeEthernet:
 		parts = append(parts, "Ethernet")
-	case ifTypeWifi:
+	case TypeWifi:
 		parts = append(parts, "WiFi")
-	case ifTypeFiber:
+	case TypeFiber:
 		parts = append(parts, "Fiber")
 	}
 
@@ -326,9 +326,9 @@ func detectTypeWithWireless(name string, wirelessNames []string) string {
 		return t
 	}
 	if slices.Contains(wirelessNames, name) {
-		return ifTypeWifi
+		return TypeWifi
 	}
-	return detectTypeByName(name)
+	return TypeByName(name)
 }
 
 // detectVirtualType names an interface the kernel synthesises, or "".
@@ -348,15 +348,15 @@ func detectVirtualType(name string) string {
 	}
 	for _, prefix := range virtualPrefixes {
 		if strings.HasPrefix(name, prefix) {
-			return ifTypeVirtual
+			return TypeVirtual
 		}
 	}
 	return ""
 }
 
-// detectTypeByName determines interface type from name patterns alone. It is
-// the whole rule off macOS, and the fallback on it.
-func detectTypeByName(name string) string {
+// TypeByName determines interface type from name patterns alone. It is the
+// whole rule off macOS, and the fallback on it.
+func TypeByName(name string) string {
 	if t := detectVirtualType(name); t != "" {
 		return t
 	}
@@ -365,24 +365,24 @@ func detectTypeByName(name string) string {
 	wifiPrefixes := []string{"wlan", "wlp", "wifi", "ath", "ra", "wl"}
 	for _, prefix := range wifiPrefixes {
 		if strings.HasPrefix(name, prefix) {
-			return ifTypeWifi
+			return TypeWifi
 		}
 	}
 
 	// Fiber patterns (often have sfp or xfp in name, or high-speed prefixes)
 	if strings.Contains(name, "sfp") || strings.Contains(name, "xfp") {
-		return ifTypeFiber
+		return TypeFiber
 	}
 
 	// Default to ethernet for physical interfaces
 	ethPrefixes := []string{"eth", "enp", "ens", "eno", "em", "en"}
 	for _, prefix := range ethPrefixes {
 		if strings.HasPrefix(name, prefix) {
-			return ifTypeEthernet
+			return TypeEthernet
 		}
 	}
 
-	return ifTypeOther
+	return TypeOther
 }
 
 // hasRoutableAddress checks if any address is routable.
@@ -413,7 +413,7 @@ func hasRoutableAddress(addresses []string) bool {
 // it down to the nearest Ethernet step reported a 228 Mbps association as
 // "100 Mbps" (#2670).
 func formatLinkSpeed(bps int64, ifType string) string {
-	if ifType == ifTypeWifi {
+	if ifType == TypeWifi {
 		return formatWirelessSpeed(bps)
 	}
 	return formatSpeed(bps)
