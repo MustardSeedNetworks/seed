@@ -1,20 +1,15 @@
 package api
 
 import (
-	"context"
 	"log/slog"
 	"net/http"
 	"net/netip"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/go-webauthn/webauthn/webauthn"
-
 	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
-	"github.com/MustardSeedNetworks/foundation/pkg/httpserver"
 
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/app"
@@ -29,13 +24,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 )
-
-// CompleteWebAuthnLoginForTest exercises finalization after protocol verification.
-func CompleteWebAuthnLoginForTest(
-	s *Server, w http.ResponseWriter, r *http.Request, username string, credential *webauthn.Credential,
-) {
-	s.completeWebAuthnLogin(w, r, username, credential)
-}
 
 // ExportSplitCIDR exposes splitCIDR for testing.
 func ExportSplitCIDR(addr string) [2]string {
@@ -312,46 +300,6 @@ func (s *Server) Config() *config.Config {
 	return s.config
 }
 
-// ExportIsAllowedOrigin exposes isAllowedOrigin for testing.
-func ExportIsAllowedOrigin(origin string) bool {
-	return isAllowedOrigin(origin)
-}
-
-// ExportIsRFC1918Origin exposes isRFC1918Origin for testing.
-func ExportIsRFC1918Origin(origin string) bool {
-	return isRFC1918Origin(origin)
-}
-
-// ExportExtractHostFromOrigin exposes extractHostFromOrigin for testing.
-func ExportExtractHostFromOrigin(origin string) (string, bool) {
-	return extractHostFromOrigin(origin)
-}
-
-// ExportIsLocalhostAddress exposes isLocalhostAddress for testing.
-func ExportIsLocalhostAddress(host string) bool {
-	return isLocalhostAddress(host)
-}
-
-// ExportIsPrivateNetworkAddress exposes isPrivateNetworkAddress for testing.
-func ExportIsPrivateNetworkAddress(host string) bool {
-	return isPrivateNetworkAddress(host)
-}
-
-// ExportIsValidClassCAddress exposes isValidClassCAddress for testing.
-func ExportIsValidClassCAddress(host string) bool {
-	return isValidClassCAddress(host)
-}
-
-// ExportIsValidClassAAddress exposes isValidClassAAddress for testing.
-func ExportIsValidClassAAddress(host string) bool {
-	return isValidClassAAddress(host)
-}
-
-// ExportIsValidClassBAddress exposes isValidClassBAddress for testing.
-func ExportIsValidClassBAddress(host string) bool {
-	return isValidClassBAddress(host)
-}
-
 // ExportReadLastLines exposes readLastLines for testing.
 func ExportReadLastLines(path string, maxBytes int64, maxLines int) ([]string, error) {
 	return readLastLines(path, maxBytes, maxLines)
@@ -365,16 +313,6 @@ func ExportNormalizeSPAPath(path string) string {
 // ExportIsAPIRoute exposes isAPIRoute for testing.
 func ExportIsAPIRoute(path string) bool {
 	return isAPIRoute(path)
-}
-
-// SetAllowedOrigins sets the allowed origins for CORS in testing.
-func SetAllowedOrigins(origins []string) {
-	getOriginState().setAllowedOrigins(origins)
-}
-
-// ClearAllowedOrigins clears the allowed origins for testing.
-func ClearAllowedOrigins() {
-	getOriginState().setAllowedOrigins(nil)
 }
 
 // ExportSendJSONResponse exposes sendJSONResponse for testing.
@@ -392,11 +330,6 @@ func ExportSendErrorResponseWithDetails(
 	sendErrorResponseWithDetails(w, logger, status, code, message, details)
 }
 
-// ExportSecurityHeadersMiddleware exposes securityHeadersMiddleware for testing.
-func ExportSecurityHeadersMiddleware(next http.Handler) http.Handler {
-	return securityHeadersMiddleware(next)
-}
-
 // ExportDecodeJSONStrict exposes decodeJSONStrict for testing.
 func ExportDecodeJSONStrict(w http.ResponseWriter, r *http.Request, dst any, maxSize int64) bool {
 	return decodeJSONStrict(w, r, dst, maxSize)
@@ -410,11 +343,6 @@ func ExportValidateStruct(
 	localizer *i18n.Localizer,
 ) bool {
 	return validateStruct(w, r, dto, localizer)
-}
-
-// ExportCORSMiddleware exposes corsMiddleware for testing.
-func ExportCORSMiddleware(next http.Handler) http.Handler {
-	return corsMiddleware(next)
 }
 
 // HandleEngineDiscovery exports handleEngineDiscovery for testing.
@@ -461,71 +389,6 @@ type ExportEngineDiscoveryResponse = EngineDiscoveryResponse
 // GetEngine returns the discovery engine for testing.
 func (s *Server) GetEngine() any {
 	return s.discoveryEng
-}
-
-// EnsureSelfSignedCert generates the self-signed pair startHTTPS would, in the
-// working directory's certs/, and returns its paths, so a test can trust the
-// certificate before the listener is up.
-func EnsureSelfSignedCert() (string, string, error) {
-	certFile := filepath.Join(selfSignedCertDir, httpserver.DefaultCertFileName)
-	keyFile := filepath.Join(selfSignedCertDir, httpserver.DefaultKeyFileName)
-	if _, err := httpserver.EnsureCertificate(nil, certFile, keyFile, selfSignedCertOptions()); err != nil {
-		return "", "", err
-	}
-	return certFile, keyFile, nil
-}
-
-// StartHTTPSForTest starts the production TLS listener with a focused handler.
-func (s *Server) StartHTTPSForTest(handler http.Handler, initialized chan<- struct{}) error {
-	s.httpServer = &http.Server{Handler: handler}
-	close(initialized)
-	return s.startHTTPS()
-}
-
-// ShutdownHTTPSForTest stops the focused production listener.
-func (s *Server) ShutdownHTTPSForTest(ctx context.Context) error {
-	return s.httpServer.Shutdown(ctx)
-}
-
-// WebAuthnEnabledForTest reports whether the bound listener initialized passkeys.
-func (s *Server) WebAuthnEnabledForTest() bool {
-	return s.webAuthn != nil
-}
-
-// SetWebAuthnManagerForTest installs the passkey manager the HTTPS listener
-// would otherwise build at bind time.
-func (s *Server) SetWebAuthnManagerForTest(m *auth.WebAuthnManager) {
-	s.webAuthn = m
-}
-
-// ExportFingerprintFromPEM exposes fingerprintFromPEM for testing.
-func ExportFingerprintFromPEM(pemData []byte) (string, error) {
-	return fingerprintFromPEM(pemData)
-}
-
-// ExportComputeCertFingerprint exposes computeCertFingerprint for testing.
-func ExportComputeCertFingerprint(path string) (string, error) {
-	return computeCertFingerprint(path)
-}
-
-// ExportFormatFingerprint exposes formatFingerprint for testing.
-func ExportFormatFingerprint(digest []byte) string {
-	return formatFingerprint(digest)
-}
-
-// ErrEmptyCertPath exposes errEmptyCertPath for testing.
-var ErrEmptyCertPath = errEmptyCertPath
-
-// ErrNoCertificateBlock exposes errNoCertificateBlock for testing.
-var ErrNoCertificateBlock = errNoCertificateBlock
-
-// TLSFingerprintCache is the exported type alias for tlsFingerprintCache,
-// used in tests that exercise the cache behaviour directly.
-type TLSFingerprintCache = tlsFingerprintCache
-
-// ExportWebAuthnConfigFromServer exposes WebAuthn origin derivation for testing.
-func ExportWebAuthnConfigFromServer(cfg *config.Config, listenerPort int) auth.WebAuthnConfig {
-	return webAuthnConfigFromServer(cfg, listenerPort)
 }
 
 // SetLicenseManagerForTest replaces the server's license manager.
