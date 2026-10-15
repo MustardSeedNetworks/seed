@@ -297,47 +297,16 @@ jobs:
 
       - name: Build a static libpcap for amd64 + arm64
         timeout-minutes: 15
-        env:
-          LIBPCAP_VERSION: "1.10.7"
-          LIBPCAP_SHA256: 0b394ac90dbc0a9838ff97468e05c9c9a3e873dec2514cd58db65d859d296e31
-        # Container run steps default to `sh` (dash), which rejects
-        # `set -o pipefail`.
+        # Container run steps default to `sh` (dash); the script needs bash.
         shell: bash
-        # One cgo binary is built here and packaged as both .deb and .rpm, and
-        # this container is Debian-family, so a dynamic link carries Debian's
-        # libpcap SONAME `libpcap.so.0.8`. Fedora's libpcap provides
-        # `libpcap.so.1`, so the rpm installed cleanly (its dependency is by
-        # package name) and seed.service then crash-looped on start (#2978).
-        #
-        # Linked statically, the binary needs libc alone and runs on both
-        # families. The apt libpcap above still provides the headers and the
-        # arm64 sysroot; only the link changes. Built from source because
-        # Debian's libpcap.a is built with RDMA, D-Bus, libnl and systemd
-        # support, and a static link drags every one of them in. seed opens
-        # captures with pcap_open_live only, so none of those backends is used.
+        # One cgo binary is built here and packaged as both .deb and .rpm, so it
+        # links libpcap statically and needs libc alone (#2978); the reasons and
+        # the pinned source are in the script. The apt libpcap above still
+        # provides the arm64 sysroot; only the link changes.
         run: |
-          set -euo pipefail
-          cd "$(mktemp -d)"
-          curl -fsSLO "https://www.tcpdump.org/release/libpcap-${LIBPCAP_VERSION}.tar.gz"
-          echo "${LIBPCAP_SHA256}  libpcap-${LIBPCAP_VERSION}.tar.gz" | sha256sum -c -
-          tar xzf "libpcap-${LIBPCAP_VERSION}.tar.gz"
-          cd "libpcap-${LIBPCAP_VERSION}"
-          common=(--disable-shared --disable-rdma --disable-dbus --without-libnl
-            --disable-bluetooth --disable-usb --disable-netmap)
-          ./configure --prefix=/opt/libpcap-static/amd64 "${common[@]}"
-          make -j"$(nproc)"
-          make install
-          make distclean
-          ./configure --prefix=/opt/libpcap-static/arm64 --host=aarch64-linux-gnu \
-            CC=aarch64-linux-gnu-gcc "${common[@]}"
-          make -j"$(nproc)"
-          make install
-          for arch in amd64 arm64; do
-            if [ ! -f "/opt/libpcap-static/${arch}/lib/libpcap.a" ]; then
-              echo "::error::no static libpcap for ${arch}"
-              exit 1
-            fi
-          done
+          ./scripts/build-static-libpcap.sh /opt/libpcap-static/amd64
+          ./scripts/build-static-libpcap.sh /opt/libpcap-static/arm64 \
+            --host=aarch64-linux-gnu CC=aarch64-linux-gnu-gcc
 
       - name: Download iperf3 artifacts (amd64 + arm64)
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2

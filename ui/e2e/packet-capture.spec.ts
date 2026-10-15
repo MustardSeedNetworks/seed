@@ -8,17 +8,16 @@ import { skipSetupWizard } from './helpers/auth';
  * The daemon runs on lo, so the capture records the browser's own traffic to
  * it and the summary has something real to tally.
  *
- * scripts/build-backend-e2e.sh builds the CI daemon CGO_ENABLED=0, whose
- * capture adapter refuses every interface. The capture test skips on exactly
- * that refusal and on nothing else, so a capture-capable daemon (a libpcap
- * build with CAP_NET_RAW) runs it in full and any other failure fails it.
+ * The daemon must be able to capture: a libpcap build with CAP_NET_RAW. CI's
+ * is (the e2e-backend job, #2986), so a daemon that cannot capture fails the
+ * capture test rather than skipping it.
  *
- * The card reads "running" from the job's acceptance, before the daemon has
- * opened the interface, so only a capture's end says whether this daemon can
- * capture. The test finds out with a one-second capture first.
+ * POST /jobs shares the daemon's 5-per-minute bucket with every other
+ * rate-limited route, so the spec starts one job. How a capture that cannot
+ * open its interface fails is covered by TestRunFailsWithoutLeavingAFile and
+ * PacketCaptureCard.test.tsx.
  */
 
-const CGO_FREE_REFUSAL = 'built without CGO/libpcap';
 // pcapgo writes the classic microsecond header, little-endian.
 const PCAP_MAGIC = 'd4c3b2a1';
 
@@ -48,29 +47,6 @@ test.describe('Packet capture card', () => {
     expect(jobPosts).toEqual([]);
   });
 
-  test('a capture on an interface that does not exist fails visibly', async ({ page }) => {
-    await openNetwork(page);
-
-    await page.getByTestId('packet-capture-interface').fill('seed-e2e-none0');
-    await page.getByTestId('packet-capture-duration').fill('5');
-    // The failure must come from the capture job, not from a refused start
-    // (a 429 or 403 also lands the card on "failed").
-    const [start] = await Promise.all([
-      page.waitForResponse(
-        (response) =>
-          response.request().method() === 'POST' && response.url().endsWith('/api/v1/jobs'),
-      ),
-      page.getByTestId('packet-capture-start').click(),
-    ]);
-    expect(start.ok(), `job start answered ${start.status()}`).toBe(true);
-
-    await expect(page.getByTestId('packet-capture')).toHaveAttribute('data-phase', 'failed');
-    await expect(page.getByTestId('packet-capture-failed')).toBeVisible();
-    await expect(page.getByTestId('packet-capture-error-detail')).not.toBeEmpty();
-    await expect(page.getByTestId('packet-capture-result')).toHaveCount(0);
-    await expect(page.getByTestId('packet-capture-start')).toBeEnabled();
-  });
-
   test('an operator captures on lo, stops, reads the summary and downloads the file', async ({
     page,
   }) => {
@@ -78,18 +54,6 @@ test.describe('Packet capture card', () => {
     const card = page.getByTestId('packet-capture');
 
     await page.getByTestId('packet-capture-interface').fill('lo');
-    await page.getByTestId('packet-capture-duration').fill('1');
-    await page.getByTestId('packet-capture-start').click();
-    await expect(card).toHaveAttribute('data-phase', /finished|failed/, { timeout: 15000 });
-    if ((await card.getAttribute('data-phase')) === 'failed') {
-      const detail = (await page.getByTestId('packet-capture-error-detail').textContent()) ?? '';
-      test.skip(
-        detail.includes(CGO_FREE_REFUSAL),
-        'this daemon is the CGO-free E2E build, which cannot capture',
-      );
-      throw new Error(`capture on lo failed: ${detail}`);
-    }
-
     await page.getByTestId('packet-capture-duration').fill('60');
     await page.getByTestId('packet-capture-start').click();
     await expect(page.getByTestId('packet-capture-running')).toContainText('lo');
@@ -98,6 +62,14 @@ test.describe('Packet capture card', () => {
       await page.request.get('/__version');
     }
     await page.getByTestId('packet-capture-stop').click();
+
+    // "running" comes from the job's acceptance, before the daemon opens the
+    // interface, so only the capture's end says whether lo opened.
+    await expect(card).toHaveAttribute('data-phase', /finished|failed/, { timeout: 15000 });
+    if ((await card.getAttribute('data-phase')) === 'failed') {
+      const detail = (await page.getByTestId('packet-capture-error-detail').textContent()) ?? '';
+      throw new Error(`capture on lo failed: ${detail}`);
+    }
 
     const result = page.getByTestId('packet-capture-result');
     await expect(result).toHaveAttribute('data-stop-reason', 'stopped', { timeout: 15000 });
