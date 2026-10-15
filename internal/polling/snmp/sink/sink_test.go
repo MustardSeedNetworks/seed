@@ -18,6 +18,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/iftable"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/lldp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/routing"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/stp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/sysinfo"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/sink"
 )
@@ -165,6 +166,13 @@ func TestAllPublishers_WriteCorrectKinds(t *testing.T) {
 			sink.KindBGP4,
 			func(s *sink.Sink) error {
 				return s.PublishBGP4(ctx, bgp4.Observation{TargetID: target})
+			},
+		},
+		{
+			"stp",
+			sink.KindSTP,
+			func(s *sink.Sink) error {
+				return s.PublishSTP(ctx, stp.Observation{TargetID: target})
 			},
 		},
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
@@ -21,7 +22,8 @@ func (p *ObservationPipeline) scanKind(
 	}
 	var maxAt time.Time
 	count := 0
-	for _, obs := range observations {
+	// List returns newest first; transitions are only meaningful oldest first.
+	for _, obs := range slices.Backward(observations) {
 		if obs.ObservedAt.After(maxAt) {
 			maxAt = obs.ObservedAt
 		}
@@ -32,6 +34,8 @@ func (p *ObservationPipeline) scanKind(
 			count += p.evaluateBGP(ctx, obs)
 		case "host_resources":
 			count += p.evaluateHostResources(ctx, obs)
+		case "stp":
+			count += p.evaluateSTP(ctx, obs)
 		}
 	}
 	return count, maxAt, nil

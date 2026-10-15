@@ -67,6 +67,11 @@ const (
 	RuleBGPFlap         = "bgp.flap"
 	RuleStorageHigh     = "storage.high"
 	RuleStorageCritical = "storage.critical"
+	// RuleSTPRootChange is a switch electing a different spanning-tree root
+	// bridge; RuleSTPTopologyChange is any other topology change it counted.
+	// A root change is never also reported as a topology change.
+	RuleSTPRootChange     = "stp.root_change"
+	RuleSTPTopologyChange = "stp.topology_change"
 )
 
 // RuleFlowIndicator is the listener pipeline rule that alerts on a flow to
@@ -117,6 +122,34 @@ type StorageEvidence struct {
 	SizeBytes   uint64  `json:"sizeBytes"`
 	UsedBytes   uint64  `json:"usedBytes"`
 	UsedPercent float64 `json:"usedPercent"`
+}
+
+// STPRootChangeEvidence is the Metadata of a RuleSTPRootChange alert. Bridges
+// are rendered priority/MAC.
+type STPRootChangeEvidence struct {
+	PreviousRoot string `json:"previousRoot"`
+	Root         string `json:"root"`
+	// RootPort is the bridge port toward the new root, 0 when this switch
+	// became the root.
+	RootPort int `json:"rootPort"`
+}
+
+// STPTopologyChangeEvidence is the Metadata of a RuleSTPTopologyChange alert:
+// how far dot1dStpTopChanges rose since the previous poll and which of this
+// switch's ports changed state meanwhile. No local port transitions means the
+// change was learned from elsewhere in the spanning tree.
+type STPTopologyChangeEvidence struct {
+	Changes         uint32              `json:"changes"`
+	TopologyChanges uint32              `json:"topologyChanges"`
+	Ports           []STPPortTransition `json:"ports"`
+}
+
+// STPPortTransition is one port whose dot1dStpPortState changed between polls.
+type STPPortTransition struct {
+	Port    int `json:"port"`
+	IfIndex int `json:"ifIndex"`
+	From    int `json:"from"`
+	To      int `json:"to"`
 }
 
 // Channel names an outbound transport. Each one records its own outcome on

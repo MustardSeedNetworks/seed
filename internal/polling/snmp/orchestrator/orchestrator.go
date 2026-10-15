@@ -1,6 +1,6 @@
-// Package orchestrator wires the ten SNMP collectors (sys_info,
+// Package orchestrator wires the eleven SNMP collectors (sys_info,
 // if_table, lldp, cdp, fdp, arp, fdb, routing, host_resources,
-// bgp4_mib) into a single [engine.Engine] that the server lifecycle
+// bgp4_mib, stp) into a single [engine.Engine] that the server lifecycle
 // registry starts and stops.
 //
 // Build returns a configured [*snmp.Poller] with every default
@@ -27,6 +27,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/iftable"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/lldp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/routing"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/stp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/sysinfo"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/sink"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
@@ -133,9 +134,10 @@ type Publisher interface {
 	routing.Publisher
 	hostresources.Publisher
 	bgp4.Publisher
+	stp.Publisher
 }
 
-// Collectors returns the ten collectors a poller runs, in registration
+// Collectors returns the eleven collectors a poller runs, in registration
 // order. cdp and fdp share a Publisher (CDP), distinguished downstream by
 // Observation.TablePrefix.
 func Collectors(factory snmp.ClientFactory, publisher Publisher, now func() time.Time) []snmp.Collector {
@@ -150,5 +152,6 @@ func Collectors(factory snmp.ClientFactory, publisher Publisher, now func() time
 		routing.New(factory, publisher, now),
 		hostresources.New(factory, publisher, now),
 		bgp4.New(factory, publisher, now),
+		stp.New(factory, publisher, now),
 	}
 }

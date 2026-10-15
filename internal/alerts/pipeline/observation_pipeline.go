@@ -40,8 +40,8 @@ type observationReader interface {
 
 // ObservationPipeline consumes the snmp_observations stream, detects
 // per-entity state transitions (interface oper up→down, BGP peer
-// leaving established, filesystem crossing usage thresholds), and
-// emits alerts via the existing alertWriter.
+// leaving established, filesystem crossing usage thresholds, spanning-tree
+// root and topology changes), and emits alerts via the existing alertWriter.
 //
 // State is tracked in memory per pipeline instance. Restarts lose
 // the prior state, so the next observation after a restart re-fires
@@ -71,9 +71,10 @@ type ObservationPipeline struct {
 	// Previous-state caches. Keyed by entity identifier
 	// ("target/ifindex" or "target/peer-ip", etc.). Updated after
 	// every observation; the diff drives the alert.
-	ifaceState   map[string]int     // (target, ifindex) -> last ifOperStatus
-	bgpState     map[string]int     // (target, peerAddr) -> last PeerState
-	storageState map[string]float64 // (target, storage_index) -> last %
+	ifaceState   map[string]int         // (target, ifindex) -> last ifOperStatus
+	bgpState     map[string]int         // (target, peerAddr) -> last PeerState
+	storageState map[string]float64     // (target, storage_index) -> last %
+	stpState     map[string]stpSnapshot // target -> last spanning-tree view
 }
 
 // defaultReplayDepth is how many recent observations per kind get
@@ -149,6 +150,7 @@ func NewObservationPipeline(cfg ObservationConfig) (*ObservationPipeline, error)
 		ifaceState:   make(map[string]int),
 		bgpState:     make(map[string]int),
 		storageState: make(map[string]float64),
+		stpState:     make(map[string]stpSnapshot),
 	}, nil
 }
 
@@ -262,8 +264,7 @@ func (p *ObservationPipeline) loop(ctx context.Context) {
 }
 
 // ScanOnce processes one batch across every observation kind that
-// has a delta signal. iftable + bgp4_mib + host_resources are the
-// V1.0 set; future kinds extend the per-kind dispatch.
+// has a delta signal; future kinds extend the per-kind dispatch.
 func (p *ObservationPipeline) ScanOnce(ctx context.Context) error {
 	err := p.scanOnceInner(ctx)
 	p.recordScan(err)
@@ -318,7 +319,7 @@ func (p *ObservationPipeline) scanOnceInner(ctx context.Context) error {
 // Declared as a function (not a global) for lint compatibility +
 // to keep adding kinds a one-line edit.
 func observationKinds() []string {
-	return []string{"if_table", "bgp4_mib", "host_resources"}
+	return []string{"if_table", "bgp4_mib", "host_resources", "stp"}
 }
 
 // state map accessors keep the lock surface narrow.
