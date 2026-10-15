@@ -3,6 +3,57 @@
   "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/ipam-subnets-response.schema.json",
   "$ref": "#/$defs/IPAMSubnetsResponse",
   "$defs": {
+    "IPAMScope": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "start": {
+          "type": "string"
+        },
+        "end": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "used": {
+          "type": "integer"
+        },
+        "free": {
+          "type": "integer"
+        },
+        "utilizationPct": {
+          "type": "number"
+        },
+        "exhaustion": {
+          "type": "string",
+          "enum": [
+            "none",
+            "near",
+            "full"
+          ]
+        },
+        "inUse": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "start",
+        "end",
+        "size",
+        "used",
+        "free",
+        "utilizationPct",
+        "exhaustion",
+        "inUse"
+      ]
+    },
     "IPAMSubnet": {
       "properties": {
         "cidr": {
@@ -57,12 +108,19 @@
             "$ref": "#/$defs/IPAMSubnet"
           },
           "type": "array"
+        },
+        "scopes": {
+          "items": {
+            "$ref": "#/$defs/IPAMScope"
+          },
+          "type": "array"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "subnets"
+        "subnets",
+        "scopes"
       ]
     }
   },

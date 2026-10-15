@@ -7,6 +7,7 @@
  */
 export interface IPAMSubnetsResponse {
   subnets: IPAMSubnet[];
+  scopes: IPAMScope[];
 }
 export interface IPAMSubnet {
   cidr: string;
@@ -16,5 +17,16 @@ export interface IPAMSubnet {
   used: number;
   free: number;
   utilizationPct: number;
+  inUse: string[];
+}
+export interface IPAMScope {
+  name?: string;
+  start: string;
+  end: string;
+  size: number;
+  used: number;
+  free: number;
+  utilizationPct: number;
+  exhaustion: 'none' | 'near' | 'full';
   inUse: string[];
 }

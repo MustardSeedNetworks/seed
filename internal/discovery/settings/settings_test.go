@@ -8,6 +8,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/learn"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/settings"
+	"github.com/MustardSeedNetworks/seed/internal/ipam"
 )
 
 // fakeStore is an in-memory settings.Store.
@@ -527,5 +528,74 @@ func TestUpdateSubnetAnswersALearnedNetwork(t *testing.T) {
 	}
 	if pending := svc.Pending(); len(pending) != 0 {
 		t.Errorf("Pending() = %+v; the operator already answered", pending)
+	}
+}
+
+func TestAddScope(t *testing.T) {
+	svc, st, sk := newService(config.NetworkDiscoveryConfig{
+		DHCPScopes: []config.DHCPScope{{Name: "Office", Start: "10.44.20.100", End: "10.44.20.199"}},
+	})
+
+	for name, tc := range map[string]struct {
+		start, end string
+		want       error
+	}{
+		"reversed":             {start: "10.44.30.9", end: "10.44.30.1", want: ipam.ErrInvalidScope},
+		"IPv6":                 {start: "2001:db8::1", end: "2001:db8::9", want: ipam.ErrInvalidScope},
+		"overlaps the office":  {start: "10.44.20.50", end: "10.44.20.100", want: settings.ErrScopeOverlaps},
+		"inside the office":    {start: "10.44.20.120", end: "10.44.20.130", want: settings.ErrScopeOverlaps},
+		"surrounds the office": {start: "10.44.20.1", end: "10.44.20.254", want: settings.ErrScopeOverlaps},
+	} {
+		if err := svc.AddScope(name, tc.start, tc.end); !errors.Is(err, tc.want) {
+			t.Errorf("%s: AddScope err = %v, want %v", name, err, tc.want)
+		}
+	}
+	if st.saved != 0 {
+		t.Fatalf("a rejected scope was saved %d times", st.saved)
+	}
+
+	if err := svc.AddScope("Lab", "10.44.20.200", "10.44.20.250"); err != nil {
+		t.Fatalf("AddScope adjacent range: %v", err)
+	}
+	want := []config.DHCPScope{
+		{Name: "Office", Start: "10.44.20.100", End: "10.44.20.199"},
+		{Name: "Lab", Start: "10.44.20.200", End: "10.44.20.250"},
+	}
+	if len(st.cfg.DHCPScopes) != len(want) || st.cfg.DHCPScopes[1] != want[1] {
+		t.Fatalf("DHCPScopes = %+v, want %+v", st.cfg.DHCPScopes, want)
+	}
+	if sk.last != nil {
+		t.Errorf("a scope is not a sweep target, but the scanner was re-synced with %v", sk.last)
+	}
+}
+
+func TestScopesSkipsAHandEditedRange(t *testing.T) {
+	svc, _, _ := newService(config.NetworkDiscoveryConfig{
+		DHCPScopes: []config.DHCPScope{
+			{Start: "10.44.20.199", End: "10.44.20.100"},
+			{Name: "Office", Start: "10.44.20.100", End: "10.44.20.199"},
+		},
+	})
+	scopes := svc.Scopes()
+	if len(scopes) != 1 || scopes[0].Name != "Office" {
+		t.Fatalf("Scopes = %+v, want only Office", scopes)
+	}
+}
+
+func TestDeleteScope(t *testing.T) {
+	svc, st, _ := newService(config.NetworkDiscoveryConfig{
+		DHCPScopes: []config.DHCPScope{
+			{Start: "10.44.20.100", End: "10.44.20.199"},
+			{Start: "10.44.30.100", End: "10.44.30.199"},
+		},
+	})
+	if err := svc.DeleteScope("10.44.40.100"); !errors.Is(err, settings.ErrScopeNotFound) {
+		t.Fatalf("DeleteScope absent err = %v, want ErrScopeNotFound", err)
+	}
+	if err := svc.DeleteScope("10.44.20.100"); err != nil {
+		t.Fatalf("DeleteScope: %v", err)
+	}
+	if len(st.cfg.DHCPScopes) != 1 || st.cfg.DHCPScopes[0].Start != "10.44.30.100" {
+		t.Fatalf("DHCPScopes = %+v, want only 10.44.30.100", st.cfg.DHCPScopes)
 	}
 }

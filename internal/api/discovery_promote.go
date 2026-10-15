@@ -140,4 +140,5 @@ func (s *Server) afterSweep(ctx context.Context, discovered []*discovery.Discove
 	s.learnTargetNetworks(ctx, discovered)
 	s.noteSweepEvidence(discovered)
 	s.promoteDiscoveredDevices(ctx, discovered)
+	s.alertExhaustedScopes(ctx, discovered)
 }

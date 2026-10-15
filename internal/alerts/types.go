@@ -92,6 +92,22 @@ type ConfigChangeEvidence struct {
 	Removed          int    `json:"removed"`
 }
 
+// RuleDHCPScopeExhaustion is the alert raised when a DHCP scope nears
+// exhaustion or runs out of addresses (P-D5).
+const RuleDHCPScopeExhaustion = "dhcp.scope.exhaustion"
+
+// DHCPScopeEvidence is the Metadata of a RuleDHCPScopeExhaustion alert: the
+// scope and how much of it was seen in use.
+type DHCPScopeEvidence struct {
+	Start       string  `json:"start"`
+	End         string  `json:"end"`
+	Size        uint64  `json:"size"`
+	Used        int     `json:"used"`
+	UsedPercent float64 `json:"usedPercent"`
+	// Exhaustion is "near" or "full".
+	Exhaustion string `json:"exhaustion"`
+}
+
 // InterfaceDownEvidence is the Metadata of a RuleInterfaceDown alert: the one
 // ifTable row that went down, not the whole table it was read from.
 type InterfaceDownEvidence struct {

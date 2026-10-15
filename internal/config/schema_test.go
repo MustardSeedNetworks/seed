@@ -246,6 +246,35 @@ func TestValidateConfig_DiscoveryProtocol(t *testing.T) {
 	}
 }
 
+func TestValidateConfig_DHCPScopes(t *testing.T) {
+	validator, err := config.NewSchemaValidator()
+	if err != nil {
+		t.Fatalf("failed to create validator: %v", err)
+	}
+
+	tests := []struct {
+		name  string
+		scope config.DHCPScope
+		want  bool // true = should have errors
+	}{
+		{"named range", config.DHCPScope{Name: "Lobby", Start: "10.44.20.100", End: "10.44.20.199"}, false},
+		{"unnamed range", config.DHCPScope{Start: "10.44.20.100", End: "10.44.20.199"}, false},
+		{"not an address", config.DHCPScope{Start: "10.44.20", End: "10.44.20.199"}, true},
+		{"IPv6", config.DHCPScope{Start: "2001:db8::1", End: "2001:db8::9"}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := config.DefaultConfig()
+			cfg.NetworkDiscovery.DHCPScopes = []config.DHCPScope{tt.scope}
+			errors := validator.ValidateConfig(cfg)
+			if hasErrors := len(errors) > 0; hasErrors != tt.want {
+				t.Errorf("scope %+v: errors = %+v, want errors %v", tt.scope, errors, tt.want)
+			}
+		})
+	}
+}
+
 func TestValidateConfig_IperfProtocol(t *testing.T) {
 	validator, err := config.NewSchemaValidator()
 	if err != nil {

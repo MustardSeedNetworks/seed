@@ -355,6 +355,13 @@
           },
           "default": []
         },
+        "dhcp_scopes": {
+          "type": "array",
+          "description": "The address pools the network's DHCP servers lease from, for IPAM utilization and exhaustion alerts",
+          "items": {
+            "$ref": "#/$defs/DHCPScope"
+          }
+        },
         "enabled": {
           "type": "boolean",
           "description": "Enable network discovery (legacy)",
@@ -534,6 +541,28 @@
           "type": "string",
           "description": "The operator's answer to a learned network; absent while it awaits one",
           "enum": ["added", "dismissed"]
+        }
+      }
+    },
+    "DHCPScope": {
+      "type": "object",
+      "description": "A DHCP server's address pool: the inclusive IPv4 range from start to end",
+      "required": ["start", "end"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name (e.g., 'Lobby Wi-Fi')"
+        },
+        "start": {
+          "type": "string",
+          "description": "First address of the pool",
+          "pattern": "^([0-9]{1,3}\\.){3}[0-9]{1,3}$"
+        },
+        "end": {
+          "type": "string",
+          "description": "Last address of the pool",
+          "pattern": "^([0-9]{1,3}\\.){3}[0-9]{1,3}$"
         }
       }
     },
