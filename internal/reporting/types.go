@@ -75,6 +75,17 @@ type ReportParams struct {
 	IncludeSections []string          `json:"includeSections,omitempty"`
 	ExcludeSections []string          `json:"excludeSections,omitempty"`
 	CustomData      map[string]any    `json:"customData,omitempty"`
+	// Group scopes a capacity forecast to a device group's members.
+	Group *GroupScope `json:"group,omitempty"`
+}
+
+// GroupScope is a device group as it stood when the report was requested,
+// resolved within the requester's client. Targets are its members' polling
+// target ids; a report that names a group reads only their interfaces.
+type GroupScope struct {
+	ID      string   `json:"id"`
+	Name    string   `json:"name"`
+	Targets []string `json:"targets"`
 }
 
 // DateRange specifies a time range for reports.

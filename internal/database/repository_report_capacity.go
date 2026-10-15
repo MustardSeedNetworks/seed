@@ -105,9 +105,10 @@ func (r *ReportMetricsRepository) InterfaceUtilizationHistory(
 	history := make([]reporting.InterfaceUtilization, 0, len(keys))
 	for _, k := range keys {
 		u := reporting.InterfaceUtilization{
-			Target:  cmp.Or(targets[k.target], k.target),
-			IfIndex: k.ifIndex,
-			IfName:  ifNames[k],
+			TargetID: k.target,
+			Target:   cmp.Or(targets[k.target], k.target),
+			IfIndex:  k.ifIndex,
+			IfName:   ifNames[k],
 		}
 		for _, hour := range slices.Sorted(maps.Keys(busiest[k])) {
 			start, parseErr := time.Parse(hourLayout, hour)

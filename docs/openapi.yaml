@@ -3406,6 +3406,8 @@ components:
             properties:
                 format:
                     type: string
+                groupId:
+                    type: string
                 type:
                     type: string
             required:
@@ -16188,7 +16190,8 @@ paths:
                 type: string
     /api/v1/reports/generate:
         post:
-            description: Requires an operator-scoped token.
+            description: |
+                groupId scopes a capacity report to the interfaces of one of the caller's device groups. With any other report type it is 400; a group the caller's client does not have is 404.
             operationId: postApiV1ReportsGenerate
             requestBody:
                 content:

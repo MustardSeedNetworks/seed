@@ -184,7 +184,7 @@ func TestCapacityPDFShowsTheEstimate(t *testing.T) {
 	gen, aggregator := newCapacityGenerator(t, db)
 
 	report := generateCapacity(t, gen, reporting.FormatPDF)
-	want, err := aggregator.Forecast(t.Context(), *report.Parameters.DateRange)
+	want, err := aggregator.Forecast(t.Context(), *report.Parameters.DateRange, nil)
 	require.NoError(t, err)
 	rising := want.Interfaces[0]
 	require.Equal(t, forecast.Rising, rising.Outlook)
@@ -215,7 +215,7 @@ func TestCapacityHistoryOutlivesTheRawPurge(t *testing.T) {
 	_, aggregator := newCapacityGenerator(t, db)
 	window := reporting.DateRange{Start: day0.AddDate(0, 0, -62), End: day0.AddDate(0, 0, trendDays)}
 
-	before, err := aggregator.Forecast(t.Context(), window)
+	before, err := aggregator.Forecast(t.Context(), window, nil)
 	require.NoError(t, err)
 
 	rollup := database.NewMetricsRollupSource(db)
@@ -227,7 +227,7 @@ func TestCapacityHistoryOutlivesTheRawPurge(t *testing.T) {
 	require.NoError(t, err)
 	require.NotZero(t, purged)
 
-	after, err := aggregator.Forecast(t.Context(), window)
+	after, err := aggregator.Forecast(t.Context(), window, nil)
 	require.NoError(t, err)
 	assert.Equal(t, before, after)
 }
@@ -290,7 +290,7 @@ func TestForecastOrdersMostPressingFirst(t *testing.T) {
 		{Target: "fast", IfIndex: 1, Hours: hours(line(60, 1.2))},
 		{Target: "short", IfIndex: 1, Hours: hours(line(60, 1))[:4]},
 	}})
-	fc, err := as.Forecast(t.Context(), reporting.DateRange{})
+	fc, err := as.Forecast(t.Context(), reporting.DateRange{}, nil)
 	require.NoError(t, err)
 
 	var order []string
@@ -301,6 +301,122 @@ func TestForecastOrdersMostPressingFirst(t *testing.T) {
 	assert.Equal(t, 1, fc.ShortHistory)
 	assert.Equal(t, 14, fc.Interfaces[0].Days)
 	assert.InDelta(t, 88.0, fc.Interfaces[0].BusyHour, 1e-9, "the last day's busy hour, not its quiet one")
+}
+
+// TestForecastScopedToAGroup checks the group scope with no database: only
+// the members' interfaces are forecast or counted as short of history.
+func TestForecastScopedToAGroup(t *testing.T) {
+	t.Parallel()
+	start := time.Date(2026, 8, 1, 14, 30, 0, 0, time.UTC)
+	days := func(n int) []forecast.Point {
+		points := make([]forecast.Point, n)
+		for d := range points {
+			points[d] = forecast.Point{At: start.AddDate(0, 0, d), Value: 50}
+		}
+		return points
+	}
+	as := reporting.NewAggregatorService(testConfig(), &fakeMetricsRepo{history: []reporting.InterfaceUtilization{
+		{TargetID: "t-core", Target: "core", IfIndex: 1, Hours: days(14)},
+		{TargetID: "t-core", Target: "core", IfIndex: 2, Hours: days(3)},
+		{TargetID: "t-edge", Target: "edge", IfIndex: 1, Hours: days(14)},
+		{TargetID: "t-edge", Target: "edge", IfIndex: 2, Hours: days(3)},
+	}})
+
+	tests := []struct {
+		name      string
+		group     *reporting.GroupScope
+		wantGroup string
+		want      []string
+		wantShort int
+	}{
+		{"no group", nil, "", []string{"core", "edge"}, 2},
+		{"one member", &reporting.GroupScope{Name: "core", Targets: []string{"t-core"}}, "core", []string{"core"}, 1},
+		{"no members", &reporting.GroupScope{Name: "empty"}, "empty", nil, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			fc, err := as.Forecast(t.Context(), reporting.DateRange{}, tt.group)
+			require.NoError(t, err)
+			var got []string
+			for _, f := range fc.Interfaces {
+				got = append(got, f.Target)
+			}
+			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantShort, fc.ShortHistory)
+			assert.Equal(t, tt.wantGroup, fc.Group)
+			assert.NotNil(t, fc.Interfaces, "an empty forecast is [], not null")
+		})
+	}
+}
+
+// TestCapacityReportScopedToAGroup is P-D10's report filter over the real
+// store: with a second switch trending beside core-sw1, a report scoped to a
+// group of core-sw1 forecasts only core-sw1's interfaces and names the group.
+func TestCapacityReportScopedToAGroup(t *testing.T) {
+	t.Parallel()
+	db := openSummaryDB(t)
+	day0, coreID := seedTrend(t, db)
+	edge := &polling.Target{ClientID: "default", Name: "edge-sw1", IPAddress: "10.0.0.2"}
+	require.NoError(t, db.PollingTargets().Create(t.Context(), edge))
+	var rates []ifrate.Rate
+	for h := range trendDays * 24 {
+		rates = append(rates, ifrate.Rate{
+			ClientID: "default", TargetID: edge.ID, IfIndex: 1, At: day0.Add(time.Duration(h) * time.Hour),
+			Octets: &ifrate.Octets{In: 1, Out: 1, Utilization: &ifrate.Utilization{In: 60, Out: 60}},
+		})
+	}
+	require.NoError(t, db.Metrics().RecordInterfaceRates(t.Context(), rates))
+	gen, _ := newCapacityGenerator(t, db)
+
+	read := func(params *reporting.ReportParams) reporting.CapacityForecast {
+		t.Helper()
+		created, err := gen.Generate(t.Context(), reporting.ReportTypeCapacity, reporting.FormatJSON, params)
+		require.NoError(t, err)
+		require.Equal(t, created.ID, <-gen.reports.finished)
+		report, err := gen.GetReport(t.Context(), created.ID)
+		require.NoError(t, err)
+		require.Equal(t, reporting.StatusComplete, report.Status, report.Error)
+		raw, err := os.ReadFile(report.FilePath)
+		require.NoError(t, err)
+		var got struct {
+			Forecast reporting.CapacityForecast `json:"forecast"`
+		}
+		require.NoError(t, json.Unmarshal(raw, &got))
+		return got.Forecast
+	}
+	targets := func(fc reporting.CapacityForecast) []string {
+		var out []string
+		for _, f := range fc.Interfaces {
+			out = append(out, f.Target)
+		}
+		slices.Sort(out)
+		return slices.Compact(out)
+	}
+
+	all := read(nil)
+	require.Equal(t, []string{"core-sw1", "edge-sw1"}, targets(all), "both switches have the history to forecast")
+	assert.Empty(t, all.Group)
+
+	scoped := read(&reporting.ReportParams{Group: &reporting.GroupScope{
+		ID: "g1", Name: "core", Targets: []string{coreID},
+	}})
+	assert.Equal(t, []string{"core-sw1"}, targets(scoped))
+	assert.Len(t, scoped.Interfaces, 2)
+	assert.Equal(t, 1, scoped.ShortHistory)
+	assert.Equal(t, "core", scoped.Group)
+
+	created, err := gen.Generate(t.Context(), reporting.ReportTypeCapacity, reporting.FormatPDF,
+		&reporting.ReportParams{Group: &reporting.GroupScope{ID: "g1", Name: "core", Targets: []string{coreID}}})
+	require.NoError(t, err)
+	require.Equal(t, created.ID, <-gen.reports.finished)
+	report, err := gen.GetReport(t.Context(), created.ID)
+	require.NoError(t, err)
+	text := pdfText(t, report.FilePath)
+	at := slices.Index(text, "Device group:")
+	require.GreaterOrEqual(t, at, 0, "no device-group line in %q", text)
+	assert.Equal(t, "core", text[at+1])
+	assert.NotContains(t, text, "edge-sw1 ifIndex 1")
 }
 
 // TestCapacityRejectsFormatsItDoesNotRender: like the summary, the forecast
