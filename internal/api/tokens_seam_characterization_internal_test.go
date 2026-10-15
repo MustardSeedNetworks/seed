@@ -22,8 +22,8 @@ func patRequest(plaintext string) *http.Request {
 
 func TestAPITokenSeamStampsLastUsed(t *testing.T) {
 	t.Parallel()
-	s, _ := apiTokenTestSetup(t)
-	plaintext := insertPAT(t, s, "carol")
+	s, _, db := apiTokenTestSetup(t)
+	plaintext := insertPAT(t, db, "carol")
 
 	w := httptest.NewRecorder()
 	apiTokenMiddleware(s.identityTokens, s.resolveClientID,
@@ -38,8 +38,8 @@ func TestAPITokenSeamStampsLastUsed(t *testing.T) {
 
 func TestAPITokenSeamRejectsRevoked(t *testing.T) {
 	t.Parallel()
-	s, _ := apiTokenTestSetup(t)
-	plaintext := insertPAT(t, s, "alice")
+	s, _, db := apiTokenTestSetup(t)
+	plaintext := insertPAT(t, db, "alice")
 	listed, err := s.identityTokens.List(t.Context(), "alice")
 	require.NoError(t, err)
 	require.Len(t, listed, 1)
@@ -60,9 +60,9 @@ func TestAPITokenSeamRejectsRevoked(t *testing.T) {
 
 func TestAPITokenSeamRejectsWithoutStore(t *testing.T) {
 	t.Parallel()
-	s, _ := apiTokenTestSetup(t)
-	plaintext := insertPAT(t, s, "bob")
-	s.dbConn = nil
+	s, _, db := apiTokenTestSetup(t)
+	plaintext := insertPAT(t, db, "bob")
+	s.persist = nil
 
 	called := false
 	w := httptest.NewRecorder()

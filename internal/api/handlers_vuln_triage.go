@@ -89,7 +89,7 @@ type VulnFindingStatusRequest struct {
 func (s *Server) handleVulnFindings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-	if s.db() == nil {
+	if s.persistence() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.vulnerability.storeUnavailable"), "")
 		return
@@ -153,7 +153,7 @@ func (s *Server) vulnFindingID(w http.ResponseWriter, r *http.Request) (int64, b
 			ErrCodeNotFound, localizer.T("errors.vulnerability.findingNotFound"), "")
 		return 0, false
 	}
-	if s.db() == nil {
+	if s.persistence() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.vulnerability.storeUnavailable"), "")
 		return 0, false

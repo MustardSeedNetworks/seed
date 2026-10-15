@@ -13,6 +13,7 @@ package app
 
 import (
 	"context"
+	"errors"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
@@ -26,8 +27,8 @@ import (
 // NewIdentityUsers builds the user-management use-case (ADR-0020) over a
 // lazy accessor for the database. A nil database makes every method degrade
 // to users.ErrUnavailable (the pre-strangle 503 path).
-func NewIdentityUsers(db func() *database.DB) *users.Service {
-	return users.NewService(dbUsersAdapter{db: db})
+func NewIdentityUsers(persist func() *Persistence) *users.Service {
+	return users.NewService(dbUsersAdapter{db: lazyHandle(persist)})
 }
 
 // NewIdentityTokens builds the PAT use-case (ADR-0020) over lazy accessors
@@ -35,11 +36,11 @@ func NewIdentityUsers(db func() *database.DB) *users.Service {
 // database degrades every method to tokens.ErrUnavailable; a nil license manager permits minting
 // (the pre-strangle dev/test behavior: builds without a license manager).
 func NewIdentityTokens(
-	db func() *database.DB,
+	persist func() *Persistence,
 	mgr func() *license.Manager,
 ) *tokens.Service {
 	return tokens.NewService(
-		dbTokensAdapter{repo: lazyRepo(db, database.NewAPITokenRepository)},
+		dbTokensAdapter{repo: lazyRepo(lazyHandle(persist), database.NewAPITokenRepository)},
 		licenseTokenGate{mgr: mgr},
 	)
 }
@@ -47,15 +48,26 @@ func NewIdentityTokens(
 // NewIdentityOAuth builds the SSO identity-sync use-case (ADR-0020) over a
 // lazy accessor for the database. A nil database degrades to ssosync.ErrUnavailable
 // (the pre-strangle "User store unavailable" redirect path).
-func NewIdentityOAuth(db func() *database.DB) *ssosync.Service {
-	return ssosync.NewService(dbSSOAdapter{db: db})
+func NewIdentityOAuth(persist func() *Persistence) *ssosync.Service {
+	return ssosync.NewService(dbSSOAdapter{db: lazyHandle(persist)})
 }
 
 // NewMFAStore builds the second-factor store the MFA handlers enrol and verify
 // through, over a lazy accessor for the database. It reports unavailable while
 // no database is wired.
-func NewMFAStore(db func() *database.DB) mfa.Store {
-	return dbMFAAdapter{db: db}
+func NewMFAStore(persist func() *Persistence) mfa.Store {
+	return dbMFAAdapter{db: lazyHandle(persist)}
+}
+
+// ResolveClientID answers which client owns a user, for the PAT seam. It fails
+// closed when there is no database: a request that cannot be attributed to a
+// tenant is unauthenticated, not a request belonging to the default tenant.
+func ResolveClientID(ctx context.Context, persist *Persistence, username string) (string, error) {
+	db := persist.handle()
+	if db == nil {
+		return "", errors.New("client identity unavailable: no database")
+	}
+	return db.GetClientID(ctx, username)
 }
 
 // AuthUserStore is the login-path user store, plus the startup migration of the
@@ -65,9 +77,9 @@ type AuthUserStore interface {
 	MigrateUserFromConfig(ctx context.Context, username, passwordHash string) error
 }
 
-// NewAuthUserStore builds the auth manager's user store over db.
-func NewAuthUserStore(db *database.DB) AuthUserStore {
-	return database.NewUserStoreAdapter(db)
+// NewAuthUserStore builds the auth manager's user store over persist.
+func NewAuthUserStore(persist *Persistence) AuthUserStore {
+	return database.NewUserStoreAdapter(persist.handle())
 }
 
 // ── users adapter ────────────────────────────────────────────────────────────

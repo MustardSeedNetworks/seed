@@ -14,8 +14,8 @@ import (
 )
 
 // NewIPSLA builds the IP-SLA read use-case over a lazy database accessor.
-func NewIPSLA(db func() *database.DB) *sla.Service {
-	return sla.NewService(ipslaReader{db: db})
+func NewIPSLA(persist func() *Persistence) *sla.Service {
+	return sla.NewService(ipslaReader{db: lazyHandle(persist)})
 }
 
 type ipslaReader struct {

@@ -20,8 +20,8 @@ import (
 // accessor, assembling the rules.Store adapter over the database repository.
 // The database is resolved through db on each call so the api test harness's
 // later-set DB is honored; handlers gate on db() != nil first.
-func NewAlertRules(db func() *database.DB) *rules.Service {
-	return rules.NewService(alertRuleStore{db: db})
+func NewAlertRules(persist func() *Persistence) *rules.Service {
+	return rules.NewService(alertRuleStore{db: lazyHandle(persist)})
 }
 
 // alertRuleStore implements rules.Store over the database repository. The

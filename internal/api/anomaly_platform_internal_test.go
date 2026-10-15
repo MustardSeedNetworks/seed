@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
 )
@@ -27,7 +28,7 @@ func TestInitDatabaseDependentServices_RestoresPersistedAnomalies(t *testing.T) 
 		t.Fatalf("Observe: %v", obsErr)
 	}
 
-	s := &Server{engines: engine.NewRegistry(nil), licenseDir: t.TempDir(), dbConn: db}
+	s := &Server{engines: engine.NewRegistry(nil), licenseDir: t.TempDir(), persist: app.NewPersistence(db)}
 	s.initDatabaseDependentServices()
 
 	if s.anomalyCoord == nil {

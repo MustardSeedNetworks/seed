@@ -16,6 +16,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
@@ -24,11 +25,11 @@ import (
 
 // newTriageServer scans one device carrying the fixture CVE and returns the
 // server, the device (to rescan) and the finding's id.
-func newTriageServer(t *testing.T) (*Server, func(osGuess string), int64) {
+func newTriageServer(t *testing.T) (*Server, func(osGuess string), int64, *database.DB) {
 	t.Helper()
 	db := newTestDB(t)
-	s := &Server{dbConn: db}
-	s.vulnTriage = app.NewVulnTriage(s.db)
+	s := &Server{persist: app.NewPersistence(db)}
+	s.vulnTriage = app.NewVulnTriage(s.persistence)
 	scanner := newStoredVulnScanner(t, db)
 	device := &discovery.DiscoveredDevice{
 		IP: "10.20.30.50", MAC: "02:00:00:00:00:05", Vendor: "Linux", OSGuess: "Linux 5.4",
@@ -43,7 +44,7 @@ func newTriageServer(t *testing.T) (*Server, func(osGuess string), int64) {
 	findings, err := db.Vulnerabilities().ListFindings(context.Background(), vulntriage.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, findings, 1)
-	return s, rescan, findings[0].ID
+	return s, rescan, findings[0].ID, db
 }
 
 func triage(t *testing.T, s *Server, id int64, body string) *httptest.ResponseRecorder {
@@ -87,15 +88,15 @@ func findingHistory(t *testing.T, s *Server, id int64) []VulnStatusChangeRespons
 // state, and every step is in the history with who made it.
 func TestVulnTriageLifecycle(t *testing.T) {
 	ctx := context.Background()
-	s, rescan, id := newTriageServer(t)
-	metrics := store.NewMetricsRepo(s.db())
+	s, rescan, id, db := newTriageServer(t)
+	metrics := store.NewMetricsRepo(db)
 	openCritical := func() int {
 		counts, err := metrics.VulnerabilitySeverityCounts(ctx, time.Now().Add(-time.Hour))
 		require.NoError(t, err)
 		return counts["critical"]
 	}
 	status := func() vulntriage.Status {
-		findings, err := s.db().Vulnerabilities().ListFindings(ctx, vulntriage.ListOptions{})
+		findings, err := db.Vulnerabilities().ListFindings(ctx, vulntriage.ListOptions{})
 		require.NoError(t, err)
 		require.Len(t, findings, 1)
 		return findings[0].Status
@@ -165,7 +166,7 @@ func TestVulnTriageRefusals(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			s, rescan, id := newTriageServer(t)
+			s, rescan, id, _ := newTriageServer(t)
 			if tc.setup != nil {
 				tc.setup(t, s, rescan, id)
 			}
@@ -181,7 +182,7 @@ func TestVulnTriageRefusals(t *testing.T) {
 }
 
 func TestVulnFindingsList(t *testing.T) {
-	s, _, id := newTriageServer(t)
+	s, _, id, _ := newTriageServer(t)
 	list := func(query string) (int, []VulnFindingResponse) {
 		w := httptest.NewRecorder()
 		s.handleVulnFindings(w, httptest.NewRequest(http.MethodGet, vulnFindingsPath+query, http.NoBody))
@@ -247,7 +248,7 @@ func TestVulnTriageRequiresOperator(t *testing.T) {
 // TestVulnFindingActionBodies pins the triage and history bodies key by key,
 // so typing them cannot move the wire.
 func TestVulnFindingActionBodies(t *testing.T) {
-	s, rescan, id := newTriageServer(t)
+	s, rescan, id, _ := newTriageServer(t)
 	keys := func(raw []byte) []string {
 		t.Helper()
 		var m map[string]json.RawMessage

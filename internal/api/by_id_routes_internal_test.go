@@ -10,38 +10,39 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/app"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
 
 // routedCRUDServer serves the by-id routes through the daemon's own route
 // table, with an admin for Mux's session.
-func routedCRUDServer(t *testing.T) *Server {
+func routedCRUDServer(t *testing.T) (*Server, *database.DB) {
 	t.Helper()
-	s := newDeviceCredentialsTestServer(t)
-	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
-	s.alertRules = app.NewAlertRules(s.db)
-	s.historyQueries = app.NewHistory(s.db)
-	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
+	s, db := newDeviceCredentialsTestServer(t)
+	s.pollingTargets = app.NewPollingTargets(s.persistence, s.pollingTargetLimit)
+	s.alertRules = app.NewAlertRules(s.persistence)
+	s.historyQueries = app.NewHistory(s.persistence)
+	s.topologyQueries = app.NewTopologyQueries(s.persistence, topologyMaxLimit)
 	s.discoveryDevices = app.NewDiscoveryDevices(s.discoveryEngine)
-	s.alertInbox = app.NewAlertInbox(s.db)
-	s.vulnTriage = app.NewVulnTriage(s.db)
+	s.alertInbox = app.NewAlertInbox(s.persistence)
+	s.vulnTriage = app.NewVulnTriage(s.persistence)
 	s.initIdentityUseCases()
-	if _, err := s.db().CreateUser(t.Context(), "admin", "$2a$10$x", roles.Admin); err != nil {
+	if _, err := db.CreateUser(t.Context(), "admin", "$2a$10$x", roles.Admin); err != nil {
 		t.Fatalf("seed admin: %v", err)
 	}
 	s.withRouteDeps(t)
 	s.setupRoutes()
-	return s
+	return s, db
 }
 
 // Each by-id route reaches its handler through its {id} pattern, and a path
 // with a segment past the id is not a resource.
 func TestByIDRoutesThroughTheRouter(t *testing.T) {
 	t.Parallel()
-	s := routedCRUDServer(t)
+	s, db := routedCRUDServer(t)
 
-	target := pollingTargetsPath + "/" + seedTarget(t, s.db(), "router-1").ID
-	rule := alertRulesPath + "/" + strconv.FormatInt(seedAlertRule(t, s.db(), "cpu", true).ID, 10)
+	target := pollingTargetsPath + "/" + seedTarget(t, db, "router-1").ID
+	rule := alertRulesPath + "/" + strconv.FormatInt(seedAlertRule(t, db, "cpu", true).ID, 10)
 	created := postCredential(t, s, `{"name":"core","community":"public"}`)
 	var cred struct {
 		ID string `json:"id"`
@@ -50,7 +51,7 @@ func TestByIDRoutesThroughTheRouter(t *testing.T) {
 		t.Fatalf("create credential: %d %s", created.Code, created.Body.String())
 	}
 	credential := deviceCredentialsPath + "/" + cred.ID
-	alert := alertsPath + "/" + strconv.FormatInt(seedAlert(t, s.db(), alerts.SeverityWarning), 10)
+	alert := alertsPath + "/" + strconv.FormatInt(seedAlert(t, db, alerts.SeverityWarning), 10)
 
 	for _, tc := range []struct {
 		method string

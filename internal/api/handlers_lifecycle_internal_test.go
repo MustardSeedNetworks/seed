@@ -19,8 +19,8 @@ import (
 func newLifecycleServer(t *testing.T) *Server {
 	t.Helper()
 	s := &Server{}
-	s.dbConn = newTestDB(t)
-	s.lifecycleEoX = app.NewLifecycleStore(s.db)
+	s.persist = app.NewPersistence(newTestDB(t))
+	s.lifecycleEoX = app.NewLifecycleStore(s.persistence)
 	return s
 }
 

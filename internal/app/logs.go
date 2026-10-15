@@ -16,8 +16,8 @@ import (
 
 // NewLogQuery builds the log-query use-case over the database log store and the
 // in-memory broadcaster buffer.
-func NewLogQuery(db func() *database.DB) *logquery.Service {
-	return logquery.NewService(logStore{db: db}, logBuffer{})
+func NewLogQuery(persist func() *Persistence) *logquery.Service {
+	return logquery.NewService(logStore{db: lazyHandle(persist)}, logBuffer{})
 }
 
 // logStore implements logquery.Store over the database log repository, resolving
@@ -82,8 +82,8 @@ func (logBuffer) All() []*logging.LogEntry {
 }
 
 // NewLogWriter returns the log broadcaster's database writer.
-func NewLogWriter(db *database.DB) logging.DBLogWriter {
-	return logWriter{db: db}
+func NewLogWriter(persist *Persistence) logging.DBLogWriter {
+	return logWriter{db: persist.handle()}
 }
 
 type logWriter struct {

@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
@@ -50,7 +51,7 @@ func newPersistenceServer(t *testing.T, state string) (*api.Server, *database.DB
 		_, err = db.CreateUser(t.Context(), username, "$2a$10$stale", "operator")
 		require.NoError(t, err)
 	}
-	api.SetTestDB(server, db)
+	api.SetTestPersistence(server, app.NewPersistence(db))
 	return server, db, username
 }
 

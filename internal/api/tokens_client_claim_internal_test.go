@@ -18,7 +18,7 @@ import (
 )
 
 // insertPAT mints a token owned by owner and returns its plaintext.
-func insertPAT(t *testing.T, s *Server, owner string) string {
+func insertPAT(t *testing.T, db *database.DB, owner string) string {
 	t.Helper()
 
 	id, secret, err := mintTokenMaterial()
@@ -31,7 +31,7 @@ func insertPAT(t *testing.T, s *Server, owner string) string {
 		TokenHash: hashAPIToken(plaintext),
 		Prefix:    plaintext[:apiTokenDisplayPrefix],
 	}
-	if insErr := database.NewAPITokenRepository(s.dbConn).Insert(context.Background(), rec); insErr != nil {
+	if insErr := database.NewAPITokenRepository(db).Insert(context.Background(), rec); insErr != nil {
 		t.Fatalf("insert token: %v", insErr)
 	}
 	return plaintext
@@ -39,10 +39,9 @@ func insertPAT(t *testing.T, s *Server, owner string) string {
 
 func TestAPITokenMiddlewareCarriesOwnersClient(t *testing.T) {
 	t.Parallel()
-	s, mgr := apiTokenTestSetup(t)
+	s, mgr, db := apiTokenTestSetup(t)
 	mgr.StartTrial()
 
-	db := s.db()
 	if _, err := db.Exec(context.Background(),
 		`INSERT INTO clients (id, name, slug, created_at, updated_at)
 		 VALUES ('acme', 'Acme', 'acme', '2026-08-20T00:00:00Z', '2026-08-20T00:00:00Z')`,
@@ -55,7 +54,7 @@ func TestAPITokenMiddlewareCarriesOwnersClient(t *testing.T) {
 		t.Fatalf("assign client: %v", err)
 	}
 
-	plaintext := insertPAT(t, s, "carol")
+	plaintext := insertPAT(t, db, "carol")
 
 	var got string
 	var gotErr error
@@ -78,10 +77,10 @@ func TestAPITokenMiddlewareCarriesOwnersClient(t *testing.T) {
 
 func TestAPITokenMiddlewareRejectsUnresolvableClient(t *testing.T) {
 	t.Parallel()
-	s, mgr := apiTokenTestSetup(t)
+	s, mgr, db := apiTokenTestSetup(t)
 	mgr.StartTrial()
 
-	plaintext := insertPAT(t, s, "carol")
+	plaintext := insertPAT(t, db, "carol")
 
 	called := false
 	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called = true })

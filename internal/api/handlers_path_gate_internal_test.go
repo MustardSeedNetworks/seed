@@ -18,7 +18,7 @@ import (
 // proof that PR-B5's requireFeature wiring works end-to-end.
 func TestRootsPathRequiresPro(t *testing.T) {
 	t.Parallel()
-	s, mgr := apiTokenTestSetup(t)
+	s, mgr, _ := apiTokenTestSetup(t)
 	// setupRoutes is normally called by NewServer; the test helper
 	// skips it (the helper builds a Server directly). Invoke it here
 	// so the /path/path mux entry exists.

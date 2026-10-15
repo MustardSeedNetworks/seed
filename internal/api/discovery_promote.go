@@ -25,7 +25,7 @@ import (
 func (s *Server) promoteDiscoveredDevices(
 	ctx context.Context, discovered []*discovery.DiscoveredDevice,
 ) {
-	if s.pollingTargets == nil || s.db() == nil {
+	if s.pollingTargets == nil || s.persistence() == nil {
 		return
 	}
 
@@ -36,7 +36,7 @@ func (s *Server) promoteDiscoveredDevices(
 
 	logger := logging.FromContext(ctx)
 
-	clientID, err := discovery.SingleClientID(ctx, app.NewClientIDLister(s.db()))
+	clientID, err := discovery.SingleClientID(ctx, app.NewClientIDLister(s.persistence()))
 	if err != nil {
 		logger.WarnContext(ctx, "Discovered devices not promoted to polling targets",
 			"error", err)

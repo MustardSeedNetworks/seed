@@ -2,7 +2,8 @@
 
 Domain-meaningful use-case packages, adapters in the composition root.
 
-**Status:** Accepted — 2026-06-09
+**Status:** Accepted — 2026-06-09; amended 2026-10-15 (the database handle
+leaves `internal/api`; see "Amendment" below)
 
 **Refines:** ADR-0016 (strangle `internal/api` into use-cases). ADR-0016 set the
 thin-handler → use-case → encode direction; ADR-0020 locks the package layout,
@@ -140,3 +141,17 @@ intended, never blindly re-baselined to lock in cruft.
   ports.
 - **D1 — terminal:** when no handler reaches `ServiceContainer`, delete it and the
   god accessors; mark ADR-0016 Completed and this ADR remains Accepted.
+
+## Amendment — 2026-10-15: the delivery layer holds an opaque store
+
+`internal/api` no longer names the database (seed#2750). `cmd/seed` wraps the
+opened database in `app.Persistence`, whose handle is unexported, and passes it
+to `NewServer`. The server holds that value and hands it, or a lazy accessor for
+it, to every `app.New*` use-case; only `internal/app` reaches the database
+behind it. A nil `*app.Persistence` is the no-database mode the use-cases
+already degrade under. A type alias (`type DB = database.DB`) was rejected: it
+would hide the dependency without removing it.
+
+The file-count ratchet that tracked the migration reached zero and is replaced
+by the `api-no-persistence` depguard rule, which denies `internal/database` to
+every production file under `internal/api`.

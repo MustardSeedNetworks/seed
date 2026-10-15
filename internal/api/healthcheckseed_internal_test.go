@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/health/probemap"
@@ -21,7 +22,7 @@ import (
 // table because nothing populated it outside the settings-PUT path.
 func TestSeedDefaultHealthCheckProbes_FreshInstall(t *testing.T) {
 	db := newTestDB(t)
-	s := &Server{config: &config.Config{}, dbConn: db}
+	s := &Server{config: &config.Config{}, persist: app.NewPersistence(db)}
 	wireHealthSettings(s)
 	ctx := context.Background()
 
@@ -50,7 +51,7 @@ func TestSeedDefaultHealthCheckProbes_FreshInstall(t *testing.T) {
 // the second call.
 func TestSeedDefaultHealthCheckProbes_Idempotent(t *testing.T) {
 	db := newTestDB(t)
-	s := &Server{config: &config.Config{}, dbConn: db}
+	s := &Server{config: &config.Config{}, persist: app.NewPersistence(db)}
 	wireHealthSettings(s)
 	ctx := context.Background()
 
@@ -71,7 +72,7 @@ func TestSeedDefaultHealthCheckProbes_Idempotent(t *testing.T) {
 // factory set silently reappear.
 func TestSeedDefaultHealthCheckProbes_NoReseedAfterDeleteAll(t *testing.T) {
 	db := newTestDB(t)
-	s := &Server{config: &config.Config{}, dbConn: db}
+	s := &Server{config: &config.Config{}, persist: app.NewPersistence(db)}
 	wireHealthSettings(s)
 	ctx := context.Background()
 
@@ -95,7 +96,7 @@ func TestSeedDefaultHealthCheckProbes_NoReseedAfterDeleteAll(t *testing.T) {
 // the operator's set is never overwritten with factory defaults.
 func TestSeedDefaultHealthCheckProbes_PreservesExistingProbes(t *testing.T) {
 	db := newTestDB(t)
-	s := &Server{config: &config.Config{}, dbConn: db}
+	s := &Server{config: &config.Config{}, persist: app.NewPersistence(db)}
 	wireHealthSettings(s)
 	ctx := context.Background()
 
@@ -132,7 +133,7 @@ func TestSeedDefaultHealthCheckProbes_PreservesExistingProbes(t *testing.T) {
 
 func TestSeedDefaultHealthCheckProbes_HonorsEmptyConfiguredSet(t *testing.T) {
 	db := newTestDB(t)
-	s := &Server{config: &config.Config{}, dbConn: db}
+	s := &Server{config: &config.Config{}, persist: app.NewPersistence(db)}
 	wireHealthSettings(s)
 	ctx := context.Background()
 

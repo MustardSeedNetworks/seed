@@ -32,8 +32,8 @@ func TestSettingsUseCasePersistsToDefaultProfile(t *testing.T) {
 	s := &Server{
 		config: cfg,
 	}
-	s.dbConn = db
-	s.settingsStore = app.NewSettings(s.db, s.config)
+	s.persist = app.NewPersistence(db)
+	s.settingsStore = app.NewSettings(s.persistence, s.config)
 	// Wire the identity use-cases (ADR-0024) so any callerRole path resolves
 	// through the repository port instead of nil-panicking on a bare server.
 	s.initIdentityUseCases()
@@ -65,7 +65,7 @@ func TestSettingsUseCaseNoDatabaseIsNoOp(t *testing.T) {
 	s := &Server{
 		config: config.DefaultConfig(),
 	}
-	s.settingsStore = app.NewSettings(s.db, s.config)
+	s.settingsStore = app.NewSettings(s.persistence, s.config)
 
 	if err := s.settingsStore.SaveToActiveProfile(t.Context()); err != nil {
 		t.Fatalf("expected no-op without a db, got %v", err)

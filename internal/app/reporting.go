@@ -7,13 +7,13 @@ package app
 
 import (
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
 )
 
 // NewReporting builds the reporting component backed by the SQLite store adapters.
-func NewReporting(cfg *config.Config, db *database.DB) *reporting.Service {
+func NewReporting(cfg *config.Config, persist *Persistence) *reporting.Service {
+	db := persist.handle()
 	return reporting.New(cfg, reporting.Deps{
 		Reports:  store.NewReportRepo(db),
 		Schedule: store.NewScheduleRepo(db),

@@ -25,9 +25,9 @@ import (
 // database accessor and the live config. The database is resolved through db on
 // each call so a nil or later-assigned db is tolerated, preserving the handlers'
 // historic "no db -> persist to config file only" behavior.
-func NewSettings(db func() *database.DB, cfg *config.Config) *persistence.Service {
+func NewSettings(persist func() *Persistence, cfg *config.Config) *persistence.Service {
 	return persistence.NewService(
-		settingsProfileStore{db: db},
+		settingsProfileStore{db: lazyHandle(persist)},
 		settingsConfigSource{cfg: cfg},
 	)
 }

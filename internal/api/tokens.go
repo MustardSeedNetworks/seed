@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
@@ -351,7 +352,7 @@ func hashAPIToken(plaintext string) string {
 
 // clientResolver answers which client owns a user. It is a function rather
 // than an interface because the server's database handle is created after the
-// middleware chain is built, and a nil *database.DB boxed in an interface is
+// middleware chain is built, and a nil pointer boxed in an interface is
 // a non-nil interface that panics on call.
 type clientResolver func(ctx context.Context, username string) (string, error)
 
@@ -430,13 +431,7 @@ func apiTokenMiddleware(
 	})
 }
 
-// resolveClientID answers which client owns a user, for the PAT seam. It fails
-// closed when the database is absent: a request that cannot be attributed to a
-// tenant is unauthenticated, not a request belonging to the default tenant.
+// resolveClientID answers which client owns a user, for the PAT seam.
 func (s *Server) resolveClientID(ctx context.Context, username string) (string, error) {
-	db := s.db()
-	if db == nil {
-		return "", errors.New("client identity unavailable: no database")
-	}
-	return db.GetClientID(ctx, username)
+	return app.ResolveClientID(ctx, s.persist, username)
 }

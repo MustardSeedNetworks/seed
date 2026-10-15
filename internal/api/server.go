@@ -28,7 +28,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/config/backups"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/deviceconfig"
 	"github.com/MustardSeedNetworks/seed/internal/dhcp"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/cable"
@@ -250,7 +249,7 @@ type Server struct {
 	tftp         tftpService             // admin-started TFTP session (P-D4)
 
 	// --- Database ---
-	dbConn          *database.DB
+	persist         *app.Persistence
 	mibDB           *mibdb.DB // MIB database for SNMP OID resolution
 	retentionStopCh chan struct{}
 
@@ -312,7 +311,7 @@ func NewServer(
 	netMgr *netif.Manager,
 	icmpAvailable bool,
 	trustedProxies *TrustedProxies,
-	db *database.DB,
+	persist *app.Persistence,
 	background *BackgroundComponents,
 ) *Server {
 	s := &Server{
@@ -348,7 +347,7 @@ func NewServer(
 	s.initTelemetryAndWiFiServices(cfg)
 
 	// Initialize database services
-	s.dbConn = db
+	s.persist = persist
 
 	// Discovery and the trap listener read SNMP credentials from the vault;
 	// the listener is built in initDatabaseDependentServices.
@@ -390,7 +389,7 @@ func NewServer(
 	// without this a fresh install comes up with an empty health-check card.
 	// Gated by a persistent marker, so a later delete-all is not re-seeded.
 	// Non-fatal: a failure degrades to the empty card rather than aborting startup.
-	if db != nil {
+	if persist != nil {
 		if err := s.seedDefaultHealthCheckProbes(context.Background(), cfg.HealthChecks); err != nil {
 			logging.GetLogger().Error("Failed to seed default health-check probes", "error", err)
 		}
@@ -598,7 +597,7 @@ func (s *Server) initAlertPipelines(
 	observation alertpipeline.ObservationConfig,
 ) {
 	logger := logging.GetLogger()
-	alerts := s.useAlertDelivery(app.NewAlertDelivery(s.dbConn, s.config, logger))
+	alerts := s.useAlertDelivery(app.NewAlertDelivery(s.persist, s.config, logger))
 	listener.Alerts, listener.Logger = alerts, logger
 	observation.Alerts, observation.Logger = alerts, logger
 
@@ -614,7 +613,7 @@ func (s *Server) initAlertPipelines(
 		logger.Warn("observation alert pipeline registry registration failed", "error", regErr)
 	}
 
-	s.registerAlertEscalator(app.NewAlertEscalator(s.dbConn, s.alertDelivery, logger))
+	s.registerAlertEscalator(app.NewAlertEscalator(s.persist, s.alertDelivery, logger))
 }
 
 // Service accessors — the in-package read interface and the lazy method
@@ -698,9 +697,6 @@ func (s *Server) SSEHub() *SSEHub { return s.sse }
 // LogBroadcaster returns the log broadcaster.
 func (s *Server) LogBroadcaster() *logging.LogBroadcaster { return s.logBroadcast }
 
-// DB returns the database connection.
-func (s *Server) DB() *database.DB { return s.dbConn }
-
 // MibDB returns the MIB database for SNMP OID resolution.
 func (s *Server) MibDB() *mibdb.DB { return s.mibDB }
 
@@ -767,7 +763,7 @@ func (s *Server) logBroadcaster() *logging.LogBroadcaster       { return s.logBr
 func (s *Server) eventBus() *events.Bus                         { return s.bus }
 func (s *Server) jobsRunner() *jobs.Runner                      { return s.jobRunner }
 func (s *Server) jobIdempotency() jobIdempotencyStore           { return s.jobIdemp }
-func (s *Server) db() *database.DB                              { return s.dbConn }
+func (s *Server) persistence() *app.Persistence                 { return s.persist }
 func (s *Server) licenseManager() *license.Manager              { return s.licenseMgr }
 func (s *Server) engineRegistry() *engine.Registry              { return s.engines }
 
@@ -776,12 +772,12 @@ func (s *Server) engineRegistry() *engine.Registry              { return s.engin
 // the server's lazy accessors + live config. Called after initDiscovery so the
 // discovery bridge the discovery use-case captures already exists.
 func (s *Server) initWiFiUseCases() {
-	s.wifiQueries = app.NewWiFiQueries(s.wifiVisibility, s.db, s.anomalyEngine)
+	s.wifiQueries = app.NewWiFiQueries(s.wifiVisibility, s.persistence, s.anomalyEngine)
 	s.wifiManagement = app.NewWiFiManagement(s.wifiManager, s.wifiScanner, s.netManager, s.config, s.configPath)
 	s.wifiDiscovery = app.NewWiFiDiscovery(s.wifiBridge)
 	if v := s.wifiVisibility(); v != nil {
 		v.SetScanSource(app.WiFiScanSource(s.wifiManagement))
-		v.SetWiredSource(app.WiFiWiredSource(s.wiredDevices, s.db))
+		v.SetWiredSource(app.WiFiWiredSource(s.wiredDevices, s.persistence))
 	}
 }
 
@@ -814,10 +810,10 @@ func (s *Server) initEngineUseCases() {
 // the license manager, so a nil or later-set collaborator (the api test
 // harness) is honored.
 func (s *Server) initIdentityUseCases() {
-	s.identityUsers = app.NewIdentityUsers(s.db)
-	s.identityTokens = app.NewIdentityTokens(s.db, s.licenseManager)
-	s.identityOAuth = app.NewIdentityOAuth(s.db)
-	s.identityMFA = app.NewMFAStore(s.db)
+	s.identityUsers = app.NewIdentityUsers(s.persistence)
+	s.identityTokens = app.NewIdentityTokens(s.persistence, s.licenseManager)
+	s.identityOAuth = app.NewIdentityOAuth(s.persistence)
+	s.identityMFA = app.NewMFAStore(s.persistence)
 }
 
 // initUseCases wires the ADR-0020 application use-cases that depend on the

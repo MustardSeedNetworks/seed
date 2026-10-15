@@ -32,6 +32,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
@@ -239,7 +240,7 @@ func newTLSSession(t *testing.T) *tlsSession {
 	// into the settings use-case and wires the database-backed user store, both
 	// of which this test relies on.
 	netMgr := netif.NewMockManager(netif.DefaultMockConfig())
-	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, db, nil)
+	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, app.NewPersistence(db), nil)
 	t.Cleanup(server.Close)
 
 	if _, _, certErr := api.EnsureSelfSignedCert(); certErr != nil {

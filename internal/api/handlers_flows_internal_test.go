@@ -49,7 +49,8 @@ func TestFlowTopRejectsBadParameters(t *testing.T) {
 		t.Run(query, func(t *testing.T) {
 			t.Parallel()
 			rec := httptest.NewRecorder()
-			newHistoryServer(t).handleFlowTopTalkers(rec, historyRequest(t, "/api/v1/flows/top-talkers?"+query))
+			s, _ := newHistoryServer(t)
+			s.handleFlowTopTalkers(rec, historyRequest(t, "/api/v1/flows/top-talkers?"+query))
 			require.Equal(t, http.StatusBadRequest, rec.Code)
 		})
 	}
@@ -59,7 +60,8 @@ func TestFlowTopRefusesARequestWithNoClientClaim(t *testing.T) {
 	t.Parallel()
 
 	rec := httptest.NewRecorder()
-	newHistoryServer(t).handleFlowTopConversations(rec,
+	s, _ := newHistoryServer(t)
+	s.handleFlowTopConversations(rec,
 		httptest.NewRequest(http.MethodGet, "/api/v1/flows/top-conversations", nil))
 	require.Equal(t, http.StatusUnauthorized, rec.Code)
 }
@@ -67,7 +69,7 @@ func TestFlowTopRefusesARequestWithNoClientClaim(t *testing.T) {
 func TestFlowTopServesTheRankedLists(t *testing.T) {
 	t.Parallel()
 
-	s := newHistoryServer(t)
+	s, db := newHistoryServer(t)
 	end := time.Now().UTC().Add(-10 * time.Minute)
 	rec := func(src, dst string, proto uint8, bytes, pkts uint64) flow.Record {
 		return flow.Record{
@@ -77,7 +79,7 @@ func TestFlowTopServesTheRankedLists(t *testing.T) {
 			Protocol: proto, Bytes: bytes, Packets: pkts,
 		}
 	}
-	require.NoError(t, s.db().FlowRecords().InsertFlows(t.Context(), []flow.Record{
+	require.NoError(t, db.FlowRecords().InsertFlows(t.Context(), []flow.Record{
 		rec("10.0.0.1", "10.0.0.2", 6, 900, 3),
 		rec("10.0.0.2", "10.0.0.1", 6, 100, 7),
 		rec("10.0.0.3", "10.0.0.1", 17, 50, 1),

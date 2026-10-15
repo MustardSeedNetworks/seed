@@ -90,12 +90,12 @@ func (p *seedProgram) run() {
 	}
 
 	// Initialize database
-	db := initializeDatabaseForService(cfg)
+	persist := initializeDatabaseForService(cfg)
 
 	// Initialize components
-	p.components = initializeBackgroundComponentsForService(cfg, db)
+	p.components = initializeBackgroundComponentsForService(cfg, persist)
 
-	p.server = api.NewServer(cfg, configPath, logPath, netMgr, true, proxies, db, p.components)
+	p.server = api.NewServer(cfg, configPath, logPath, netMgr, true, proxies, persist, p.components)
 
 	// Start components
 	ctx := context.Background()
@@ -198,7 +198,7 @@ func setupNetworkInterfaceForService(cfg *config.Config, configPath string) *net
 }
 
 // initializeDatabaseForService initializes database for service mode.
-func initializeDatabaseForService(cfg *config.Config) *database.DB {
+func initializeDatabaseForService(cfg *config.Config) *app.Persistence {
 	dbPath := cfg.Database.Path
 	if dbPath == "" {
 		dbPath = "data/seed.db"
@@ -211,14 +211,14 @@ func initializeDatabaseForService(cfg *config.Config) *database.DB {
 	}
 
 	logging.GetLogger().Info("Database initialized", "path", dbPath)
-	return db
+	return app.NewPersistence(db)
 }
 
 // initializeBackgroundComponentsForService creates all application components.
-func initializeBackgroundComponentsForService(cfg *config.Config, db *database.DB) *api.BackgroundComponents {
+func initializeBackgroundComponentsForService(cfg *config.Config, persist *app.Persistence) *api.BackgroundComponents {
 	components := &api.BackgroundComponents{}
 
-	components.Reporting = app.NewReporting(cfg, db)
+	components.Reporting = app.NewReporting(cfg, persist)
 
 	return components
 }

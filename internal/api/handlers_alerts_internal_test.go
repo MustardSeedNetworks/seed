@@ -19,13 +19,13 @@ import (
 
 // newAlertsTestServer mirrors newTopologyTestServer but exists as
 // its own helper so the per-handler test file stays self-contained.
-func newAlertsTestServer(t *testing.T) *Server {
+func newAlertsTestServer(t *testing.T) (*Server, *database.DB) {
 	t.Helper()
 	db := newTestDB(t)
 	s := &Server{}
-	s.dbConn = db
-	s.alertInbox = app.NewAlertInbox(s.db)
-	return s
+	s.persist = app.NewPersistence(db)
+	s.alertInbox = app.NewAlertInbox(s.persistence)
+	return s, db
 }
 
 // seedAlert inserts one alert via the repository and returns its
@@ -46,9 +46,9 @@ func seedAlert(t *testing.T, db *database.DB, severity string) int64 {
 }
 
 func TestHandleAlerts_ReturnsList(t *testing.T) {
-	s := newAlertsTestServer(t)
-	seedAlert(t, s.db(), alerts.SeverityWarning)
-	seedAlert(t, s.db(), alerts.SeverityError)
+	s, db := newAlertsTestServer(t)
+	seedAlert(t, db, alerts.SeverityWarning)
+	seedAlert(t, db, alerts.SeverityError)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alerts", http.NoBody)
 	w := httptest.NewRecorder()
@@ -69,9 +69,9 @@ func TestHandleAlerts_ReturnsList(t *testing.T) {
 }
 
 func TestHandleAlerts_SeverityFilter(t *testing.T) {
-	s := newAlertsTestServer(t)
-	seedAlert(t, s.db(), alerts.SeverityWarning)
-	seedAlert(t, s.db(), alerts.SeverityError)
+	s, db := newAlertsTestServer(t)
+	seedAlert(t, db, alerts.SeverityWarning)
+	seedAlert(t, db, alerts.SeverityError)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alerts?severity=error", http.NoBody)
 	w := httptest.NewRecorder()
@@ -89,7 +89,7 @@ func TestHandleAlerts_SeverityFilter(t *testing.T) {
 }
 
 func TestHandleAlerts_InvalidSinceReturns400(t *testing.T) {
-	s := newAlertsTestServer(t)
+	s, _ := newAlertsTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alerts?since=not-a-date", http.NoBody)
 	w := httptest.NewRecorder()
 	s.handleAlerts(w, req)
@@ -99,8 +99,8 @@ func TestHandleAlerts_InvalidSinceReturns400(t *testing.T) {
 }
 
 func TestHandleAlertAction_Acknowledge(t *testing.T) {
-	s := newAlertsTestServer(t)
-	id := seedAlert(t, s.db(), alerts.SeverityWarning)
+	s, db := newAlertsTestServer(t)
+	id := seedAlert(t, db, alerts.SeverityWarning)
 
 	url := APIVersionPrefix + "/alerts/" + strconv.FormatInt(id, 10) + "/acknowledge"
 	req := httptest.NewRequest(http.MethodPost, url, http.NoBody)
@@ -112,7 +112,7 @@ func TestHandleAlertAction_Acknowledge(t *testing.T) {
 	}
 
 	// Verify the row actually flipped via the repo.
-	alert, err := s.db().Alerts().Get(context.Background(), id)
+	alert, err := db.Alerts().Get(context.Background(), id)
 	if err != nil {
 		t.Fatalf("get alert: %v", err)
 	}
@@ -125,8 +125,8 @@ func TestHandleAlertAction_Acknowledge(t *testing.T) {
 }
 
 func TestHandleAlertAction_Resolve(t *testing.T) {
-	s := newAlertsTestServer(t)
-	id := seedAlert(t, s.db(), alerts.SeverityWarning)
+	s, db := newAlertsTestServer(t)
+	id := seedAlert(t, db, alerts.SeverityWarning)
 
 	url := APIVersionPrefix + "/alerts/" + strconv.FormatInt(id, 10) + "/resolve"
 	req := httptest.NewRequest(http.MethodPost, url, http.NoBody)
@@ -136,14 +136,14 @@ func TestHandleAlertAction_Resolve(t *testing.T) {
 		t.Fatalf("status = %d, want 200", w.Code)
 	}
 
-	alert, _ := s.db().Alerts().Get(context.Background(), id)
+	alert, _ := db.Alerts().Get(context.Background(), id)
 	if !alert.Resolved {
 		t.Error("alert should be resolved in DB")
 	}
 }
 
 func TestHandleAlertAction_BadIDReturns400(t *testing.T) {
-	s := newAlertsTestServer(t)
+	s, _ := newAlertsTestServer(t)
 	for _, id := range []string{"abc", "0", "-1"} {
 		t.Run(id, func(t *testing.T) {
 			for pattern, h := range map[string]http.HandlerFunc{
@@ -162,9 +162,9 @@ func TestHandleAlertAction_BadIDReturns400(t *testing.T) {
 }
 
 func TestHandleAlerts_PaginationLimitClamped(t *testing.T) {
-	s := newAlertsTestServer(t)
+	s, db := newAlertsTestServer(t)
 	for range 5 {
-		seedAlert(t, s.db(), alerts.SeverityInfo)
+		seedAlert(t, db, alerts.SeverityInfo)
 	}
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alerts?limit=2", http.NoBody)
 	w := httptest.NewRecorder()
@@ -191,9 +191,9 @@ func TestUsernameFromRequest_FallsBackToSystem(t *testing.T) {
 // the JSON encoder serializing a zero time and clients seeing
 // "0001-01-01T00:00:00Z" instead of "".
 func TestSeedAlert_HasNonZeroCreatedAt(t *testing.T) {
-	s := newAlertsTestServer(t)
-	id := seedAlert(t, s.db(), alerts.SeverityWarning)
-	alert, _ := s.db().Alerts().Get(context.Background(), id)
+	_, db := newAlertsTestServer(t)
+	id := seedAlert(t, db, alerts.SeverityWarning)
+	alert, _ := db.Alerts().Get(context.Background(), id)
 	if alert.CreatedAt.IsZero() {
 		t.Error("CreatedAt should be auto-populated by repo")
 	}
@@ -206,13 +206,13 @@ func TestSeedAlert_HasNonZeroCreatedAt(t *testing.T) {
 // serves each channel's outcome (#2606, #2997); an alert never offered to a
 // receiver carries no deliveries key at all.
 func TestHandleAlerts_ServesEachChannelsDelivery(t *testing.T) {
-	s := newAlertsTestServer(t)
+	s, db := newAlertsTestServer(t)
 	ctx := context.Background()
-	offered := seedAlert(t, s.db(), alerts.SeverityError)
-	seedAlert(t, s.db(), alerts.SeverityWarning)
+	offered := seedAlert(t, db, alerts.SeverityError)
+	seedAlert(t, db, alerts.SeverityWarning)
 	attemptedAt := time.Date(2026, 10, 4, 1, 0, 0, 0, time.UTC)
 	const reason = "AUTH: 535 5.7.8 authentication credentials invalid"
-	if err := s.db().Alerts().RecordDelivery(ctx, offered, alerts.ChannelEmail,
+	if err := db.Alerts().RecordDelivery(ctx, offered, alerts.ChannelEmail,
 		alerts.DeliveryFailed, attemptedAt, reason); err != nil {
 		t.Fatalf("record delivery: %v", err)
 	}
@@ -250,18 +250,18 @@ func TestHandleAlerts_ServesEachChannelsDelivery(t *testing.T) {
 // rule, and the stage the alert was last escalated to (P-B2). An alert that
 // was never escalated carries neither escalation key.
 func TestHandleAlerts_ServesRuleAndEscalation(t *testing.T) {
-	s := newAlertsTestServer(t)
+	s, db := newAlertsTestServer(t)
 	ctx := context.Background()
 	escalated := &alerts.Alert{
 		Type: alerts.TypeConnectivity, Severity: alerts.SeverityError,
 		Title: "Interface eth0 down", Source: "t-1", Rule: "iface.down",
 	}
-	if err := s.db().Alerts().Create(ctx, escalated); err != nil {
+	if err := db.Alerts().Create(ctx, escalated); err != nil {
 		t.Fatalf("create: %v", err)
 	}
-	quiet := seedAlert(t, s.db(), alerts.SeverityWarning)
+	quiet := seedAlert(t, db, alerts.SeverityWarning)
 	at := time.Date(2026, 10, 4, 7, 16, 47, 0, time.UTC)
-	if moved, err := s.db().Alerts().AdvanceEscalation(ctx, escalated.ID, 0, nil, 2, at); err != nil || !moved {
+	if moved, err := db.Alerts().AdvanceEscalation(ctx, escalated.ID, 0, nil, 2, at); err != nil || !moved {
 		t.Fatalf("advance: %v, %v", moved, err)
 	}
 

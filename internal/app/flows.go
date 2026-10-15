@@ -15,8 +15,8 @@ import (
 )
 
 // NewFlows builds the flow use-case over a lazy database accessor.
-func NewFlows(db func() *database.DB) *flows.Service {
-	return flows.NewService(flowStore{db: db})
+func NewFlows(persist func() *Persistence) *flows.Service {
+	return flows.NewService(flowStore{db: lazyHandle(persist)})
 }
 
 type flowStore struct {

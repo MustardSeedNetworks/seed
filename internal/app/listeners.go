@@ -5,7 +5,6 @@ package app
 // listeners against their own ports and never names a repository (ADR-0020).
 
 import (
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/listener"
 	"github.com/MustardSeedNetworks/seed/internal/listener/flow"
 	"github.com/MustardSeedNetworks/seed/internal/listener/microburst"
@@ -25,8 +24,9 @@ type ListenerPersistence struct {
 	VoIP           voip.Store
 }
 
-// NewListenerPersistence binds the listener ports to db.
-func NewListenerPersistence(db *database.DB) ListenerPersistence {
+// NewListenerPersistence binds the listener ports to persist.
+func NewListenerPersistence(persist *Persistence) ListenerPersistence {
+	db := persist.handle()
 	return ListenerPersistence{
 		Events:         listenersink.New(db.ListenerEvents(), logging.GetLogger(), nil),
 		Flows:          db.FlowRecords(),

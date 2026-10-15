@@ -24,11 +24,11 @@ type ProbeStorage struct {
 	repo *database.ProbeRepository
 }
 
-// NewProbeStorage builds the probe-engine persistence adapter over db's probe
+// NewProbeStorage builds the probe-engine persistence adapter over persist's probe
 // repository. The result satisfies the probe engine's persistence port, so it
 // is passed to Engine.WithStorage in the composition root.
-func NewProbeStorage(db *database.DB) *ProbeStorage {
-	return &ProbeStorage{repo: db.Probes()}
+func NewProbeStorage(persist *Persistence) *ProbeStorage {
+	return &ProbeStorage{repo: persist.handle().Probes()}
 }
 
 // GetProbe loads one probe by ID and translates it to the domain type.

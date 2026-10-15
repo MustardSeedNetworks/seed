@@ -28,7 +28,7 @@ func getIPSLA(path string, handler http.HandlerFunc) *httptest.ResponseRecorder 
 func TestHandleIPSLAWithoutDatabase(t *testing.T) {
 	t.Parallel()
 	s := &Server{}
-	s.ipSLA = app.NewIPSLA(s.db)
+	s.ipSLA = app.NewIPSLA(s.persistence)
 
 	w := getIPSLA("/ip-sla/operations", s.handleIPSLAOperations)
 	require.Equal(t, http.StatusServiceUnavailable, w.Code, w.Body.String())
@@ -51,8 +51,8 @@ func storeIPSLAObservation(t *testing.T, db *database.DB, targetID string, at ti
 func TestHandleIPSLAOperations(t *testing.T) {
 	t.Parallel()
 	db := newTestDB(t)
-	s := &Server{dbConn: db}
-	s.ipSLA = app.NewIPSLA(s.db)
+	s := &Server{persist: app.NewPersistence(db)}
+	s.ipSLA = app.NewIPSLA(s.persistence)
 	ctx := context.Background()
 
 	w := getIPSLA("/ip-sla/operations", s.handleIPSLAOperations)
@@ -114,8 +114,8 @@ func TestHandleIPSLAOperations(t *testing.T) {
 
 func TestHandleIPSLAHistoryRejectsBadQuery(t *testing.T) {
 	t.Parallel()
-	s := &Server{dbConn: newTestDB(t)}
-	s.ipSLA = app.NewIPSLA(s.db)
+	s := &Server{persist: app.NewPersistence(newTestDB(t))}
+	s.ipSLA = app.NewIPSLA(s.persistence)
 	for _, query := range []string{
 		"index=10", "target=t1", "target=t1&index=0", "target=t1&index=-1",
 		"target=t1&index=ten", "target=t1&index=10&range=30d",
@@ -128,8 +128,8 @@ func TestHandleIPSLAHistoryRejectsBadQuery(t *testing.T) {
 func TestHandleIPSLAHistory(t *testing.T) {
 	t.Parallel()
 	db := newTestDB(t)
-	s := &Server{dbConn: db}
-	s.ipSLA = app.NewIPSLA(s.db)
+	s := &Server{persist: app.NewPersistence(db)}
+	s.ipSLA = app.NewIPSLA(s.persistence)
 	history := func(query string) IPSLAHistoryResponse {
 		t.Helper()
 		w := getIPSLA("/ip-sla/operations/history?"+query, s.handleIPSLAHistory)

@@ -17,8 +17,8 @@ import (
 const settingKeyLifecycleEoX = "lifecycle_eox"
 
 // NewLifecycleStore builds the EoX table store over a lazy database accessor.
-func NewLifecycleStore(db func() *database.DB) lifecycle.Store {
-	return lifecycleStore{db: db}
+func NewLifecycleStore(persist func() *Persistence) lifecycle.Store {
+	return lifecycleStore{db: lazyHandle(persist)}
 }
 
 type lifecycleStore struct {

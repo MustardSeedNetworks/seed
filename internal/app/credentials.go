@@ -24,10 +24,10 @@ import (
 // NewDeviceCredentials builds the device-credential CRUD use-case over a lazy
 // database accessor and the keyring that owns the DEK.
 func NewDeviceCredentials(
-	db func() *database.DB,
+	persist func() *Persistence,
 	encrypter credentials.Encrypter,
 ) (*credentials.Service, error) {
-	return credentials.NewService(deviceCredentialRepo{db: db}, encrypter)
+	return credentials.NewService(deviceCredentialRepo{db: lazyHandle(persist)}, encrypter)
 }
 
 // deviceCredentialRepo implements credentials.Repository over the

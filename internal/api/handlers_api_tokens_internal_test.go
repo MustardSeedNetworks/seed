@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
@@ -22,7 +23,7 @@ import (
 // apiTokenTestSetup wires up the minimum surface needed by the
 // token handlers: a temp SQLite DB + license manager rooted at a
 // tmpdir so test runs don't touch the developer's real license.
-func apiTokenTestSetup(t *testing.T) (*Server, *license.Manager) {
+func apiTokenTestSetup(t *testing.T) (*Server, *license.Manager, *database.DB) {
 	t.Helper()
 	db, openErr := database.Open(dbtest.Path(t))
 	if openErr != nil {
@@ -49,7 +50,7 @@ func apiTokenTestSetup(t *testing.T) (*Server, *license.Manager) {
 
 	s := &Server{}
 	s.withRouteDeps(t)
-	s.dbConn = db
+	s.persist = app.NewPersistence(db)
 	s.licenseMgr = mgr
 	// Wire the discovery use-cases so routed handlers (e.g. the
 	// /discovery/engine/events SSE policy test) have a non-nil use-case; the
@@ -58,7 +59,7 @@ func apiTokenTestSetup(t *testing.T) (*Server, *license.Manager) {
 	// Wire the identity use-cases (ADR-0024) so the token handlers and
 	// callerRole resolve through the repository ports against the seeded store.
 	s.initIdentityUseCases()
-	return s, mgr
+	return s, mgr, db
 }
 
 func newAuthedRequest(method, path string, body []byte, username string) *http.Request {
@@ -81,7 +82,7 @@ func newAuthedRequest(method, path string, body []byte, username string) *http.R
 
 func TestMintRequiresPro_NoLicense(t *testing.T) {
 	t.Parallel()
-	s, _ := apiTokenTestSetup(t)
+	s, _, _ := apiTokenTestSetup(t)
 	// No StartTrial → license state is nil → the tokens use-case LicenseGate
 	// (HasFeature "rest_api") returns false → mint is rejected with 402.
 
@@ -97,7 +98,7 @@ func TestMintRequiresPro_NoLicense(t *testing.T) {
 
 func TestMintRequiresPro_TrialAllowed(t *testing.T) {
 	t.Parallel()
-	s, mgr := apiTokenTestSetup(t)
+	s, mgr, _ := apiTokenTestSetup(t)
 	if res := mgr.StartTrial(); !res.Success {
 		t.Fatalf("StartTrial: %s", res.Message)
 	}
@@ -124,7 +125,7 @@ func TestMintRequiresPro_TrialAllowed(t *testing.T) {
 
 func TestMintRejectsEmptyName(t *testing.T) {
 	t.Parallel()
-	s, mgr := apiTokenTestSetup(t)
+	s, mgr, _ := apiTokenTestSetup(t)
 	mgr.StartTrial()
 
 	body, _ := json.Marshal(MintTokenRequest{Name: "   "})
@@ -138,7 +139,7 @@ func TestMintRejectsEmptyName(t *testing.T) {
 
 func TestMintRequiresAuthentication(t *testing.T) {
 	t.Parallel()
-	s, mgr := apiTokenTestSetup(t)
+	s, mgr, _ := apiTokenTestSetup(t)
 	mgr.StartTrial()
 
 	body, _ := json.Marshal(MintTokenRequest{Name: "no-user"})
@@ -152,7 +153,7 @@ func TestMintRequiresAuthentication(t *testing.T) {
 
 func TestListAndRevokeRoundTrip(t *testing.T) {
 	t.Parallel()
-	s, mgr := apiTokenTestSetup(t)
+	s, mgr, _ := apiTokenTestSetup(t)
 	mgr.StartTrial()
 
 	// Mint.
@@ -198,7 +199,7 @@ func TestListAndRevokeRoundTrip(t *testing.T) {
 
 func TestRevokeForeignTokenFails(t *testing.T) {
 	t.Parallel()
-	s, mgr := apiTokenTestSetup(t)
+	s, mgr, _ := apiTokenTestSetup(t)
 	mgr.StartTrial()
 
 	// Alice mints.
@@ -219,7 +220,7 @@ func TestRevokeForeignTokenFails(t *testing.T) {
 
 func TestAPITokenMiddlewareResolvesValidToken(t *testing.T) {
 	t.Parallel()
-	s, mgr := apiTokenTestSetup(t)
+	s, mgr, db := apiTokenTestSetup(t)
 	mgr.StartTrial()
 
 	// Mint a token directly via the repo so we have the plaintext.
@@ -233,7 +234,7 @@ func TestAPITokenMiddlewareResolvesValidToken(t *testing.T) {
 		TokenHash: hashAPIToken(plaintext),
 		Prefix:    plaintext[:apiTokenDisplayPrefix],
 	}
-	if insErr := database.NewAPITokenRepository(s.dbConn).Insert(context.Background(), rec); insErr != nil {
+	if insErr := database.NewAPITokenRepository(db).Insert(context.Background(), rec); insErr != nil {
 		t.Fatalf("insert: %v", insErr)
 	}
 
@@ -255,7 +256,7 @@ func TestAPITokenMiddlewareResolvesValidToken(t *testing.T) {
 
 func TestAPITokenMiddlewareRejectsBadToken(t *testing.T) {
 	t.Parallel()
-	s, _ := apiTokenTestSetup(t)
+	s, _, _ := apiTokenTestSetup(t)
 
 	called := false
 	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called = true })
@@ -276,7 +277,7 @@ func TestAPITokenMiddlewareRejectsBadToken(t *testing.T) {
 
 func TestAPITokenMiddlewareFallsThroughForJWT(t *testing.T) {
 	t.Parallel()
-	s, _ := apiTokenTestSetup(t)
+	s, _, _ := apiTokenTestSetup(t)
 
 	called := false
 	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called = true })
@@ -294,7 +295,7 @@ func TestAPITokenMiddlewareFallsThroughForJWT(t *testing.T) {
 
 func TestAPITokenMiddlewareSkipsNonAPI(t *testing.T) {
 	t.Parallel()
-	s, _ := apiTokenTestSetup(t)
+	s, _, _ := apiTokenTestSetup(t)
 
 	called := false
 	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called = true })

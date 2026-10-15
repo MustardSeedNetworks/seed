@@ -79,7 +79,7 @@ func scanBSSView(n *wifi.ScannedNetwork) airspace.BSSView {
 // SNMP target reported. A nil database contributes no polled MACs.
 func WiFiWiredSource(
 	devices func() []*discovery.DiscoveredDevice,
-	db func() *database.DB,
+	persist func() *Persistence,
 ) visibility.WiredSource {
 	return func(ctx context.Context) ([]string, error) {
 		var macs []string
@@ -88,7 +88,7 @@ func WiFiWiredSource(
 				macs = append(macs, d.MAC)
 			}
 		}
-		conn := db()
+		conn := lazyHandle(persist)()
 		if conn == nil {
 			return macs, nil
 		}

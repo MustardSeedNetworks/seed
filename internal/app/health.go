@@ -24,11 +24,11 @@ import (
 // ADR-0029). A nil store makes Anomalies degrade to monitoring.ErrUnavailable
 // (the golden-pinned 503 path).
 func NewHealthMonitoring(
-	db func() *database.DB,
+	persist func() *Persistence,
 	anomalyEngine func() *anomaly.Engine,
 ) *monitoring.Service {
 	return monitoring.NewService(healthAnomaly{
-		store:  lazyRepo(db, (*database.DB).Anomalies),
+		store:  lazyRepo(lazyHandle(persist), (*database.DB).Anomalies),
 		engine: anomalyEngine,
 	})
 }

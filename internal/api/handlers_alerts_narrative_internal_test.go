@@ -112,8 +112,7 @@ func seedLinkFault(t *testing.T, db *database.DB, alerts alertdelivery.Writer) {
 // interface, the evidence and the next check, with the BGP alert pointing at
 // it.
 func TestHandleAlerts_SeededLinkFaultReadsAsOneNarrative(t *testing.T) {
-	s := newAlertsTestServer(t)
-	db := s.db()
+	s, db := newAlertsTestServer(t)
 	seedLinkFault(t, db, alertcorrelation.WrapWriter(db.Alerts(), alertcorrelation.Config{}))
 
 	byRule := listNarrativeRows(t, s, "")
@@ -192,9 +191,8 @@ func TestAlertStore_DeliversTheNarrativeToAReceiver(t *testing.T) {
 	}))
 	defer receiver.Close()
 
-	s := newAlertsTestServer(t)
-	db := s.db()
-	store := s.useAlertDelivery(app.NewAlertDelivery(db, s.config, logging.GetLogger()))
+	s, db := newAlertsTestServer(t)
+	store := s.useAlertDelivery(app.NewAlertDelivery(s.persist, s.config, logging.GetLogger()))
 	defer s.alertDelivery.Stop(context.Background())
 	s.alertDelivery.ApplyWebhook(alertdelivery.WebhookConfig{URL: receiver.URL, Secret: "test-signing-material"})
 	seedLinkFault(t, db, store)

@@ -24,9 +24,9 @@ const (
 // the current tier; the caller resolves it per pass so an in-place license
 // upgrade takes effect on the next one (ADR-0028 §4).
 func RunDataRetention(
-	ctx context.Context, db *database.DB, retentionDays, rollupDailyDays int,
+	ctx context.Context, persist *Persistence, retentionDays, rollupDailyDays int,
 ) (*database.CleanupResult, error) {
-	return db.RunCleanup(ctx, database.RetentionPolicy{
+	return persist.handle().RunCleanup(ctx, database.RetentionPolicy{
 		MetricsDays:        retentionDays,
 		AlertsDays:         retentionDays * retentionAlertsMultiplier,
 		SpeedTestDays:      retentionDays,

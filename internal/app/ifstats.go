@@ -15,8 +15,8 @@ import (
 
 // NewInterfaceStats builds the interface statistics read use-case over a lazy
 // database accessor.
-func NewInterfaceStats(db func() *database.DB) *ifstats.Service {
-	return ifstats.NewService(interfaceStatsStore{db: db})
+func NewInterfaceStats(persist func() *Persistence) *ifstats.Service {
+	return ifstats.NewService(interfaceStatsStore{db: lazyHandle(persist)})
 }
 
 type interfaceStatsStore struct {

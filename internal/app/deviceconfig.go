@@ -24,11 +24,12 @@ import (
 // (deviceconfig.SSHFetcher in production), and a lazy accessor for the alert
 // write chain a configuration change is raised through.
 func NewDeviceConfigBackups(
-	db func() *database.DB,
+	persist func() *Persistence,
 	cipher deviceconfig.Cipher,
 	fetcher deviceconfig.Fetcher,
 	alertWriter func() deviceconfig.AlertWriter,
 ) (*deviceconfig.Service, error) {
+	db := lazyHandle(persist)
 	return deviceconfig.NewService(deviceConfigRepo{db: db}, deviceConfigCreds{db: db}, cipher, fetcher,
 		deviceConfigAlerts{writer: alertWriter})
 }

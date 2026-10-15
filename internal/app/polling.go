@@ -15,8 +15,8 @@ import (
 
 // NewPollingTargets builds the polling-targets CRUD use-case over a lazy database
 // accessor and the licence's target limit (0 is unlimited).
-func NewPollingTargets(db func() *database.DB, limit func() int) *targets.Service {
-	return targets.NewService(pollingTargetRepo{db: db}, limit)
+func NewPollingTargets(persist func() *Persistence, limit func() int) *targets.Service {
+	return targets.NewService(pollingTargetRepo{db: lazyHandle(persist)}, limit)
 }
 
 // pollingTargetRepo implements targets.Repository over the polling-target

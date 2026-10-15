@@ -19,7 +19,7 @@ func TestListenerEventsPersist(t *testing.T) {
 	ctx := context.Background()
 	db := dbtest.Open(t)
 
-	require.NoError(t, app.NewListenerPersistence(db).Events.Publish(ctx, listener.Event{
+	require.NoError(t, app.NewListenerPersistence(app.NewPersistence(db)).Events.Publish(ctx, listener.Event{
 		Kind:       "syslog",
 		ClientID:   "default",
 		SourceAddr: "192.0.2.7:514",

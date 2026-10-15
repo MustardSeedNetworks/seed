@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
@@ -163,7 +164,8 @@ func TestSpeedtestKindKeepsResult(t *testing.T) {
 	t.Parallel()
 
 	srv, runner := newJobsTestServer(t, jobs.Config{})
-	srv.dbConn = newTestDB(t)
+	db := newTestDB(t)
+	srv.persist = app.NewPersistence(db)
 	fake := &fakeSpeedTester{
 		result:   &speedtest.Result{Download: 200, Upload: 40, Latency: 7, Server: "s1", Timestamp: time.Now()},
 		progress: 100,
@@ -181,7 +183,7 @@ func TestSpeedtestKindKeepsResult(t *testing.T) {
 
 	var download, upload float64
 	var server string
-	row := srv.db().QueryRow(t.Context(),
+	row := db.QueryRow(t.Context(),
 		"SELECT download_mbps, upload_mbps, server_name FROM speedtest_results")
 	if scanErr := row.Scan(&download, &upload, &server); scanErr != nil {
 		t.Fatalf("speedtest_results row: %v", scanErr)

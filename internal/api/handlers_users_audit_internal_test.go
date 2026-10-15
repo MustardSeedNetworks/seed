@@ -49,8 +49,8 @@ func captureLogs(t *testing.T, fn func()) []map[string]any {
 // record with event=auth.forbidden plus the SIEM-essential fields
 // (required_role, actual_role, username, path, method, client_ip).
 func TestRequireRole_EmitsForbiddenEvent(t *testing.T) {
-	s, _ := usersTestSetup(t)
-	seedRoledUser(t, s, "viewer1", roles.Viewer)
+	s, _, db := usersTestSetup(t)
+	seedRoledUser(t, db, "viewer1", roles.Viewer)
 
 	records := captureLogs(t, func() {
 		req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/profiles", []byte(`{}`), "viewer1")
@@ -100,7 +100,7 @@ func TestRequireRole_EmitsForbiddenEvent(t *testing.T) {
 // endpoints — distinct event name so the two failure modes are
 // filterable independently.
 func TestRequireRole_EmitsUnauthorizedEvent(t *testing.T) {
-	s, _ := usersTestSetup(t)
+	s, _, _ := usersTestSetup(t)
 
 	records := captureLogs(t, func() {
 		req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/profiles", []byte(`{}`), "")

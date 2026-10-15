@@ -37,16 +37,16 @@ func loopbackName(t *testing.T) string {
 // newTFTPTestServer registers the TFTP route through the real registry, so a
 // request meets the same role and licence gates as in the daemon. The manager
 // binds an ephemeral port: tests cannot bind 69.
-func newTFTPTestServer(t *testing.T, trial bool) *Server {
+func newTFTPTestServer(t *testing.T, trial bool) (*Server, *database.DB) {
 	t.Helper()
-	s, mgr := usersTestSetup(t)
+	s, mgr, db := usersTestSetup(t)
 	if trial {
 		if r := mgr.StartTrial(); !r.Success {
 			t.Fatalf("StartTrial: %s", r.Message)
 		}
 	}
-	seedRoledUser(t, s, "operator1", roles.Operator)
-	seedRoledUser(t, s, "viewer1", roles.Viewer)
+	seedRoledUser(t, db, "operator1", roles.Operator)
+	seedRoledUser(t, db, "viewer1", roles.Viewer)
 
 	probe, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1)})
 	if err != nil {
@@ -56,7 +56,7 @@ func newTFTPTestServer(t *testing.T, trial bool) *Server {
 	_ = probe.Close()
 
 	dir := t.TempDir()
-	s.tftp.audit = app.NewTFTPAudit(s.db)
+	s.tftp.audit = app.NewTFTPAudit(s.persistence)
 	s.tftp.sessions = tftp.NewManager(tftp.Config{
 		Dir:        filepath.Join(dir, "tftp"),
 		UploadDir:  filepath.Join(dir, "tftp-incoming"),
@@ -67,7 +67,7 @@ func newTFTPTestServer(t *testing.T, trial bool) *Server {
 	t.Cleanup(s.tftp.sessions.Close)
 	s.routes = s.newRegistrar()
 	s.routes.RegisterAll(s.tftpRoutes())
-	return s
+	return s, db
 }
 
 func tftpCall(s *Server, method, user, body string) *httptest.ResponseRecorder {
@@ -95,12 +95,12 @@ func TestTFTPSessionGates(t *testing.T) {
 	t.Parallel()
 	start := `{"interface":"` + loopbackName(t) + `"}`
 
-	free := newTFTPTestServer(t, false)
+	free, _ := newTFTPTestServer(t, false)
 	if rec := tftpCall(free, http.MethodPost, "admin", start); rec.Code != http.StatusPaymentRequired {
 		t.Errorf("admin POST on Free: %d, want 402 (%s)", rec.Code, rec.Body.String())
 	}
 
-	pro := newTFTPTestServer(t, true)
+	pro, _ := newTFTPTestServer(t, true)
 	cases := []struct {
 		method, user, body string
 		want               int
@@ -195,7 +195,7 @@ func TestParseTFTPAllowFrom(t *testing.T) {
 // tftpMaxFailureRows times, however many sources a flood spoofs.
 func TestTFTPFailureAudit(t *testing.T) {
 	t.Parallel()
-	s := newTFTPTestServer(t, true)
+	s, db := newTFTPTestServer(t, true)
 	fail := errors.New("file not found")
 
 	for range 50 {
@@ -209,7 +209,7 @@ func TestTFTPFailureAudit(t *testing.T) {
 		s.auditTFTPTransfer(tftp.Transfer{Direction: tftp.Download, Filename: "ok", Remote: "192.0.2.1", Bytes: 5})
 	}
 
-	logs, err := s.dbConn.GetAuditLogs(t.Context(), database.AuditLogOptions{ResourceType: tftp.AuditResource})
+	logs, err := db.GetAuditLogs(t.Context(), database.AuditLogOptions{ResourceType: tftp.AuditResource})
 	if err != nil {
 		t.Fatalf("audit logs: %v", err)
 	}
@@ -245,7 +245,7 @@ func TestTFTPFailureAudit(t *testing.T) {
 // start and stop are audited with the admin's name.
 func TestTFTPSessionLifecycle(t *testing.T) {
 	t.Parallel()
-	s := newTFTPTestServer(t, true)
+	s, db := newTFTPTestServer(t, true)
 
 	if st := tftpStatusOf(t, tftpCall(s, http.MethodGet, "admin", "")); st.Running {
 		t.Fatalf("a session is running before any start: %+v", st)
@@ -275,7 +275,7 @@ func TestTFTPSessionLifecycle(t *testing.T) {
 		t.Fatalf("DELETE: %d %s, want 200 and not running", rec.Code, rec.Body.String())
 	}
 
-	logs, err := s.dbConn.GetAuditLogs(t.Context(), database.AuditLogOptions{ResourceType: tftp.AuditResource})
+	logs, err := db.GetAuditLogs(t.Context(), database.AuditLogOptions{ResourceType: tftp.AuditResource})
 	if err != nil {
 		t.Fatalf("audit logs: %v", err)
 	}

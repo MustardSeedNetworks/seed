@@ -14,8 +14,8 @@ import (
 )
 
 // NewHistory builds the history read use-case over a lazy database accessor.
-func NewHistory(db func() *database.DB) *history.Service {
-	return history.NewService(historyStore{db: db})
+func NewHistory(persist func() *Persistence) *history.Service {
+	return history.NewService(historyStore{db: lazyHandle(persist)})
 }
 
 type historyStore struct {

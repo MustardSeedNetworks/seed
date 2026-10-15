@@ -222,9 +222,9 @@ func (s *Server) stopServices(ctx context.Context) {
 	}
 
 	// Close database connection (#755)
-	if s.db() != nil {
+	if s.persistence() != nil {
 		logging.GetLogger().InfoContext(ctx, "Closing database connection...")
-		if err := s.db().Close(); err != nil {
+		if err := s.persist.Close(); err != nil {
 			logging.GetLogger().ErrorContext(ctx, "Error closing database", "error", err)
 		}
 	}
@@ -279,8 +279,8 @@ func (s *Server) startMaintenance(retentionDays int) {
 			// policy: the in-memory runner map and the durable jobs table both
 			// grow with every completed job (Phase 5c).
 			var jobStore *app.JobStore
-			if s.db() != nil {
-				jobStore = app.NewJobStore(s.db())
+			if s.persistence() != nil {
+				jobStore = app.NewJobStore(s.persistence())
 			}
 			sweepJobs(context.Background(), s.jobsRunner(), jobStore,
 				time.Now().UTC().Add(-jobsRetention), logging.GetLogger())
@@ -291,14 +291,14 @@ func (s *Server) startMaintenance(retentionDays int) {
 
 			// Data-retention policy (metrics/alerts/etc.) is only applied when
 			// enabled; a zero window must never be interpreted as "delete all".
-			if retentionDays <= 0 || s.db() == nil {
+			if retentionDays <= 0 || s.persistence() == nil {
 				continue
 			}
 			// Resolve the anomaly daily-rollup horizon per tick so an in-place
 			// license upgrade takes effect on the next pass (ADR-0028 §4 reuses the
 			// probe DailyDays horizon, same as the retention engine).
 			tier := licenseTierAdapter{lm: s.licenseMgr}.GetTier()
-			result, err := app.RunDataRetention(context.Background(), s.db(),
+			result, err := app.RunDataRetention(context.Background(), s.persistence(),
 				retentionDays, retention.HorizonsFor(tier).DailyDays)
 			if err != nil {
 				logging.GetLogger().Error("Data retention cleanup failed", "error", err)

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/license/licensetest"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
@@ -28,11 +29,11 @@ func licenseManagerAt(t *testing.T, tier license.Tier) *license.Manager {
 }
 
 // pollingServerAt is the polling-targets test server under a licence of tier.
-func pollingServerAt(t *testing.T, tier license.Tier) *Server {
+func pollingServerAt(t *testing.T, tier license.Tier) (*Server, *database.DB) {
 	t.Helper()
-	s := newPollingTargetsTestServer(t)
+	s, db := newPollingTargetsTestServer(t)
 	s.licenseMgr = licenseManagerAt(t, tier)
-	return s
+	return s, db
 }
 
 // postTarget creates one polling target through the handler.
@@ -70,7 +71,7 @@ func TestPollingTargetCreateCappedByTier(t *testing.T) {
 		{license.TierPro, 0},
 	} {
 		t.Run(tt.tier.String(), func(t *testing.T) {
-			s := pollingServerAt(t, tt.tier)
+			s, db := pollingServerAt(t, tt.tier)
 			creates := tt.limit
 			if creates == 0 {
 				creates = starterPollingTargets + 1
@@ -88,7 +89,7 @@ func TestPollingTargetCreateCappedByTier(t *testing.T) {
 			}
 			w := postTarget(t, s, map[string]any{"name": "one-too-many", "ipAddress": "10.0.1.1"})
 			requireFeatureGate(t, w, "estate_polling")
-			list, err := s.db().PollingTargets().ListAll(context.Background(), testClientID)
+			list, err := db.PollingTargets().ListAll(context.Background(), testClientID)
 			if err != nil || len(list) != tt.limit {
 				t.Errorf("stored %d targets (err %v), want the limit %d", len(list), err, tt.limit)
 			}
@@ -110,12 +111,12 @@ func TestPollingTargetProCollectorsGated(t *testing.T) {
 		t.Run(tt.collector, func(t *testing.T) {
 			chain := []string{"sys_info", tt.collector}
 
-			starter := pollingServerAt(t, license.TierStarter)
+			starter, db := pollingServerAt(t, license.TierStarter)
 			requireFeatureGate(t, postTarget(t, starter, map[string]any{
 				"name": "server-1", "ipAddress": "10.0.0.1", "collectorChain": chain,
 			}), tt.feature)
 
-			existing := seedTarget(t, starter.db(), "router-1")
+			existing := seedTarget(t, db, "router-1")
 			req := postJSON(t, map[string]any{
 				"name": "router-1", "ipAddress": "10.0.0.1", "collectorChain": chain,
 			})
@@ -131,7 +132,7 @@ func TestPollingTargetProCollectorsGated(t *testing.T) {
 					defaultChain.Code, defaultChain.Body.String())
 			}
 
-			pro := pollingServerAt(t, license.TierPro)
+			pro, _ := pollingServerAt(t, license.TierPro)
 			atPro := postTarget(t, pro, map[string]any{
 				"name": "server-1", "ipAddress": "10.0.0.1", "collectorChain": chain,
 			})
@@ -169,7 +170,7 @@ func TestLicensedPollerTargetsStopAtLimit(t *testing.T) {
 		{license.TierPro, len(all)},
 	} {
 		t.Run(tt.tier.String(), func(t *testing.T) {
-			s := pollingServerAt(t, tt.tier)
+			s, _ := pollingServerAt(t, tt.tier)
 			got, err := licensedPollerTargets{
 				PollerStorage: fixedPollerTargets{targets: all},
 				limit:         s.pollingTargetLimit,

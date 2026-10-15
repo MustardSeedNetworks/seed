@@ -36,7 +36,7 @@ func TestSweepJobsDurable(t *testing.T) {
 		t.Fatalf("save recent: %v", err)
 	}
 
-	sweepJobs(ctx, nil, app.NewJobStore(db), now.Add(-time.Hour), slog.New(slog.DiscardHandler))
+	sweepJobs(ctx, nil, app.NewJobStore(app.NewPersistence(db)), now.Add(-time.Hour), slog.New(slog.DiscardHandler))
 
 	if _, err := repo.Get(ctx, "old"); !errors.Is(err, database.ErrJobNotFound) {
 		t.Errorf("old terminal job not evicted (err=%v)", err)

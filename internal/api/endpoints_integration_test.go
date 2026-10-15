@@ -13,6 +13,7 @@ import (
 	"time"
 
 	api "github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
@@ -433,7 +434,7 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 	defer func() { _ = db.Close() }()
 
 	netMgr, _ := netif.NewManager("")
-	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, db, nil)
+	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, app.NewPersistence(db), nil)
 	defer server.Close()
 
 	ts := httptest.NewServer(server.Mux())

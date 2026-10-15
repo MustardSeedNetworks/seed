@@ -14,13 +14,13 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
-func newAlertRulesTestServer(t *testing.T) *Server {
+func newAlertRulesTestServer(t *testing.T) (*Server, *database.DB) {
 	t.Helper()
 	db := newTestDB(t)
 	s := &Server{}
-	s.dbConn = db
-	s.alertRules = app.NewAlertRules(s.db)
-	return s
+	s.persist = app.NewPersistence(db)
+	s.alertRules = app.NewAlertRules(s.persistence)
+	return s, db
 }
 
 func seedAlertRule(t *testing.T, db *database.DB, name string, enabled bool) *alerts.Rule {
@@ -42,9 +42,9 @@ func seedAlertRule(t *testing.T, db *database.DB, name string, enabled bool) *al
 }
 
 func TestHandleAlertRules_GETReturnsList(t *testing.T) {
-	s := newAlertRulesTestServer(t)
-	seedAlertRule(t, s.db(), "rule-1", true)
-	seedAlertRule(t, s.db(), "rule-2", false)
+	s, db := newAlertRulesTestServer(t)
+	seedAlertRule(t, db, "rule-1", true)
+	seedAlertRule(t, db, "rule-2", false)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alert-rules", http.NoBody)
 	w := httptest.NewRecorder()
@@ -66,9 +66,9 @@ func TestHandleAlertRules_GETReturnsList(t *testing.T) {
 }
 
 func TestHandleAlertRules_EnabledOnlyFilter(t *testing.T) {
-	s := newAlertRulesTestServer(t)
-	seedAlertRule(t, s.db(), "rule-enabled", true)
-	seedAlertRule(t, s.db(), "rule-disabled", false)
+	s, db := newAlertRulesTestServer(t)
+	seedAlertRule(t, db, "rule-enabled", true)
+	seedAlertRule(t, db, "rule-disabled", false)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alert-rules?enabled_only=true", http.NoBody)
 	w := httptest.NewRecorder()
@@ -83,7 +83,7 @@ func TestHandleAlertRules_EnabledOnlyFilter(t *testing.T) {
 }
 
 func TestHandleAlertRules_POSTCreates(t *testing.T) {
-	s := newAlertRulesTestServer(t)
+	s, db := newAlertRulesTestServer(t)
 	buf := &bytes.Buffer{}
 	_ = json.NewEncoder(buf).Encode(map[string]any{
 		"name":          "new-rule",
@@ -106,14 +106,14 @@ func TestHandleAlertRules_POSTCreates(t *testing.T) {
 	if w.Header().Get("Location") == "" {
 		t.Error("missing Location header")
 	}
-	list, _ := s.db().AlertRules().List(context.Background(), false)
+	list, _ := db.AlertRules().List(context.Background(), false)
 	if len(list) != 1 {
 		t.Errorf("db rows = %d, want 1", len(list))
 	}
 }
 
 func TestHandleAlertRules_POSTMissingFieldsReturns400(t *testing.T) {
-	s := newAlertRulesTestServer(t)
+	s, _ := newAlertRulesTestServer(t)
 	tests := []struct {
 		name string
 		body map[string]any
@@ -139,8 +139,8 @@ func TestHandleAlertRules_POSTMissingFieldsReturns400(t *testing.T) {
 }
 
 func TestHandleAlertRuleByID_GET(t *testing.T) {
-	s := newAlertRulesTestServer(t)
-	rule := seedAlertRule(t, s.db(), "rule-detail", true)
+	s, db := newAlertRulesTestServer(t)
+	rule := seedAlertRule(t, db, "rule-detail", true)
 
 	url := APIVersionPrefix + "/alert-rules/" + strconv.FormatInt(rule.ID, 10)
 	req := httptest.NewRequest(http.MethodGet, url, http.NoBody)
@@ -157,7 +157,7 @@ func TestHandleAlertRuleByID_GET(t *testing.T) {
 }
 
 func TestHandleAlertRuleByID_GETUnknownReturns404(t *testing.T) {
-	s := newAlertRulesTestServer(t)
+	s, _ := newAlertRulesTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alert-rules/9999", http.NoBody)
 	w := httptest.NewRecorder()
 	routed(alertRulePath, s.handleAlertRuleByID)(w, req)
@@ -167,8 +167,8 @@ func TestHandleAlertRuleByID_GETUnknownReturns404(t *testing.T) {
 }
 
 func TestHandleAlertRuleByID_PUTUpdates(t *testing.T) {
-	s := newAlertRulesTestServer(t)
-	rule := seedAlertRule(t, s.db(), "to-update", true)
+	s, db := newAlertRulesTestServer(t)
+	rule := seedAlertRule(t, db, "to-update", true)
 
 	buf := &bytes.Buffer{}
 	_ = json.NewEncoder(buf).Encode(map[string]any{
@@ -188,15 +188,15 @@ func TestHandleAlertRuleByID_PUTUpdates(t *testing.T) {
 		t.Fatalf("status = %d, body=%s", w.Code, w.Body.String())
 	}
 
-	got, _ := s.db().AlertRules().Get(context.Background(), rule.ID)
+	got, _ := db.AlertRules().Get(context.Background(), rule.ID)
 	if got.Name != "updated-name" || got.Enabled {
 		t.Errorf("update didn't persist: %+v", got)
 	}
 }
 
 func TestHandleAlertRuleByID_DELETERemoves(t *testing.T) {
-	s := newAlertRulesTestServer(t)
-	rule := seedAlertRule(t, s.db(), "to-delete", true)
+	s, db := newAlertRulesTestServer(t)
+	rule := seedAlertRule(t, db, "to-delete", true)
 
 	url := APIVersionPrefix + "/alert-rules/" + strconv.FormatInt(rule.ID, 10)
 	req := httptest.NewRequest(http.MethodDelete, url, http.NoBody)
@@ -205,13 +205,13 @@ func TestHandleAlertRuleByID_DELETERemoves(t *testing.T) {
 	if w.Code != http.StatusNoContent {
 		t.Errorf("status = %d, want 204", w.Code)
 	}
-	if _, err := s.db().AlertRules().Get(context.Background(), rule.ID); err == nil {
+	if _, err := db.AlertRules().Get(context.Background(), rule.ID); err == nil {
 		t.Error("rule should be deleted")
 	}
 }
 
 func TestHandleAlertRuleByID_NonIntIDReturns400(t *testing.T) {
-	s := newAlertRulesTestServer(t)
+	s, _ := newAlertRulesTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alert-rules/abc", http.NoBody)
 	w := httptest.NewRecorder()
 	routed(alertRulePath, s.handleAlertRuleByID)(w, req)
@@ -221,7 +221,7 @@ func TestHandleAlertRuleByID_NonIntIDReturns400(t *testing.T) {
 }
 
 func TestHandleAlertRules_UnknownMethodReturns405(t *testing.T) {
-	s := newAlertRulesTestServer(t)
+	s, _ := newAlertRulesTestServer(t)
 	req := httptest.NewRequest(http.MethodPatch, APIVersionPrefix+"/alert-rules", http.NoBody)
 	w := httptest.NewRecorder()
 	s.handleAlertRules(w, req)

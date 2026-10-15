@@ -23,7 +23,7 @@ func nopHandler(seen *bool) http.HandlerFunc {
 
 func TestRequireFeature_AllowsWhenLicenseDisabled(t *testing.T) {
 	t.Parallel()
-	s, _ := apiTokenTestSetup(t)
+	s, _, _ := apiTokenTestSetup(t)
 	s.licenseMgr = nil // simulate dev build
 
 	called := false
@@ -42,7 +42,7 @@ func TestRequireFeature_AllowsWhenLicenseDisabled(t *testing.T) {
 
 func TestRequireFeature_AllowsWhenFeaturePresent(t *testing.T) {
 	t.Parallel()
-	s, mgr := apiTokenTestSetup(t)
+	s, mgr, _ := apiTokenTestSetup(t)
 	if res := mgr.StartTrial(); !res.Success {
 		t.Fatalf("StartTrial: %s", res.Message)
 	}
@@ -60,7 +60,7 @@ func TestRequireFeature_AllowsWhenFeaturePresent(t *testing.T) {
 
 func TestRequireFeature_Blocks402WhenFeatureAbsent(t *testing.T) {
 	t.Parallel()
-	s, mgr := apiTokenTestSetup(t)
+	s, mgr, _ := apiTokenTestSetup(t)
 	if res := mgr.StartTrial(); !res.Success {
 		t.Fatalf("StartTrial: %s", res.Message)
 	}
@@ -95,7 +95,7 @@ func TestRequireFeature_Blocks402WhenFeatureAbsent(t *testing.T) {
 
 func TestRequireFeature_NoLicenseReturnsFreeTier(t *testing.T) {
 	t.Parallel()
-	s, _ := apiTokenTestSetup(t)
+	s, _, _ := apiTokenTestSetup(t)
 	// No StartTrial / Activate — state stays nil ⇒ Free tier.
 
 	h := s.requireFeature("scheduled_reports", nopHandler(new(bool)))

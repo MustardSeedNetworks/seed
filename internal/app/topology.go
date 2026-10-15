@@ -14,8 +14,8 @@ import (
 
 // NewTopologyQueries builds the topology read use-case over a lazy database
 // accessor. maxLimit caps the node scan used for single-node lookups.
-func NewTopologyQueries(db func() *database.DB, maxLimit int) *topology.Queries {
-	return topology.NewQueries(topologyReader{db: db}, maxLimit)
+func NewTopologyQueries(persist func() *Persistence, maxLimit int) *topology.Queries {
+	return topology.NewQueries(topologyReader{db: lazyHandle(persist)}, maxLimit)
 }
 
 // topologyReader implements topology.Reader over the topology repository. A nil

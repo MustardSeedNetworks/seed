@@ -7,13 +7,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
 
 // seedRoledUser adds a user with the given role to the test server's DB.
-func seedRoledUser(t *testing.T, s *Server, username, role string) {
+func seedRoledUser(t *testing.T, db *database.DB, username, role string) {
 	t.Helper()
-	if _, err := s.dbConn.CreateUser(t.Context(), username, "$2a$10$x", role); err != nil {
+	if _, err := db.CreateUser(t.Context(), username, "$2a$10$x", role); err != nil {
 		t.Fatalf("seed %s (%s): %v", username, role, err)
 	}
 }
@@ -22,9 +23,9 @@ func seedRoledUser(t *testing.T, s *Server, username, role string) {
 // reads pass through for every role; non-safe methods require operator+.
 func TestWriteGate_MethodAndRoleMatrix(t *testing.T) {
 	t.Parallel()
-	s, _ := usersTestSetup(t) // seeds "admin" (roles.Admin)
-	seedRoledUser(t, s, "viewer1", roles.Viewer)
-	seedRoledUser(t, s, "operator1", roles.Operator)
+	s, _, db := usersTestSetup(t) // seeds "admin" (roles.Admin)
+	seedRoledUser(t, db, "viewer1", roles.Viewer)
+	seedRoledUser(t, db, "operator1", roles.Operator)
 
 	called := false
 	probe := func(w http.ResponseWriter, _ *http.Request) {
@@ -82,9 +83,9 @@ func TestWriteGate_MethodAndRoleMatrix(t *testing.T) {
 // viewer<operator<admin ordering can't silently regress.
 func TestRequireRole_Hierarchy(t *testing.T) {
 	t.Parallel()
-	s, _ := usersTestSetup(t)
-	seedRoledUser(t, s, "viewer1", roles.Viewer)
-	seedRoledUser(t, s, "operator1", roles.Operator)
+	s, _, db := usersTestSetup(t)
+	seedRoledUser(t, db, "viewer1", roles.Viewer)
+	seedRoledUser(t, db, "operator1", roles.Operator)
 
 	cases := []struct {
 		user    string
@@ -134,8 +135,8 @@ func TestCallerRole_NoDBIsImplicitAdmin(t *testing.T) {
 // regression of the policy.
 func TestWriteGate_WiredOnSettingsRoute(t *testing.T) {
 	t.Parallel()
-	s, _ := usersTestSetup(t)
-	seedRoledUser(t, s, "viewer1", roles.Viewer)
+	s, _, db := usersTestSetup(t)
+	seedRoledUser(t, db, "viewer1", roles.Viewer)
 	s.setupRoutes()
 
 	req := newAuthedRequest(http.MethodPut, APIVersionPrefix+"/settings", []byte(`{}`), "viewer1")

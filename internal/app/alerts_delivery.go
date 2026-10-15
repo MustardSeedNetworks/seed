@@ -11,7 +11,6 @@ import (
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/escalation"
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 // NewAlertDelivery returns the delivery Manager and the writer the alert
@@ -33,11 +32,12 @@ import (
 // session is live from the first alert. A nil cfg (the hand-assembled Server
 // several api tests use) has no stored receiver to apply.
 func NewAlertDelivery(
-	db *database.DB,
+	persist *Persistence,
 	cfg *config.Config,
 	logger *slog.Logger,
 ) (*alertdelivery.Manager, alertdelivery.Writer) {
-	manager := alertdelivery.NewManager(db.Alerts(), NewAlertNarrator(db), logger)
+	db := persist.handle()
+	manager := alertdelivery.NewManager(db.Alerts(), NewAlertNarrator(persist), logger)
 	if cfg != nil {
 		ApplyAlertReceivers(cfg, manager)
 	}
@@ -48,12 +48,12 @@ func NewAlertDelivery(
 // NewAlertEscalator builds the escalator that re-sends an alert nobody
 // acknowledged (P-B2), through manager and on the ladders it holds.
 func NewAlertEscalator(
-	db *database.DB,
+	persist *Persistence,
 	manager *alertdelivery.Manager,
 	logger *slog.Logger,
 ) (*escalation.Escalator, error) {
 	return escalation.New(escalation.Config{
-		Store:   db.Alerts(),
+		Store:   persist.handle().Alerts(),
 		Sender:  manager,
 		Ladders: manager.Escalations,
 		Logger:  logger,

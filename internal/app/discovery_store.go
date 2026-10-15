@@ -16,13 +16,14 @@ import (
 )
 
 // NewDeviceWriter returns discovery's database writer.
-func NewDeviceWriter(db *database.DB) discovery.DBDeviceWriter {
-	return deviceWriter{db: db}
+func NewDeviceWriter(persist *Persistence) discovery.DBDeviceWriter {
+	return deviceWriter{db: persist.handle()}
 }
 
 // NewVulnStore returns the vulnerability scanner's store. It persists the
 // device first, so a finding never waits on the next discovery flush.
-func NewVulnStore(db *database.DB) vuln.Store {
+func NewVulnStore(persist *Persistence) vuln.Store {
+	db := persist.handle()
 	return vulnStore{devices: deviceWriter{db: db}, db: db}
 }
 

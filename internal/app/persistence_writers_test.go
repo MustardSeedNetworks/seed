@@ -21,7 +21,7 @@ func TestLogWriterPersistsEntries(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	db := dbtest.Open(t)
-	w := app.NewLogWriter(db)
+	w := app.NewLogWriter(app.NewPersistence(db))
 	ts := time.Date(2026, 10, 8, 2, 30, 0, 0, time.UTC)
 
 	require.NoError(t, w.WriteLog(ctx, &logging.LogEntry{
@@ -64,7 +64,7 @@ func TestDeviceWriterKeysOnMAC(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	db := dbtest.Open(t)
-	w := app.NewDeviceWriter(db)
+	w := app.NewDeviceWriter(app.NewPersistence(db))
 	seen := time.Date(2026, 10, 8, 2, 30, 0, 0, time.UTC)
 	const mac = "02:00:00:00:00:05"
 
@@ -109,7 +109,7 @@ func TestDeviceWriterFlushSurvivesOneFailure(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	db := dbtest.Open(t)
-	w := app.NewDeviceWriter(db)
+	w := app.NewDeviceWriter(app.NewPersistence(db))
 
 	// A row whose id is one MAC but whose address column holds another, as
 	// the IP-keyed writer left behind. Persisting the first MAC collides on id.

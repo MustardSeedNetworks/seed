@@ -31,12 +31,12 @@ import (
 // use-case that degrades to empty-but-valid results rather than erroring.
 func NewWiFiQueries(
 	src func() *visibility.Service,
-	db func() *database.DB,
+	persist func() *Persistence,
 	anomalyEngine func() *anomaly.Engine,
 ) *troubleshooting.Queries {
 	return troubleshooting.NewQueries(
 		wifiVisibilitySource(src),
-		wifiAnomalyStore{store: lazyRepo(db, (*database.DB).Anomalies), engine: anomalyEngine},
+		wifiAnomalyStore{store: lazyRepo(lazyHandle(persist), (*database.DB).Anomalies), engine: anomalyEngine},
 	)
 }
 

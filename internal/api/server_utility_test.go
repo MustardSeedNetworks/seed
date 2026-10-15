@@ -356,15 +356,3 @@ func TestServerSSEHub(t *testing.T) {
 		t.Skip("SSEHub not initialized in test server")
 	}
 }
-
-// TestServerDB tests the DB accessor.
-func TestServerDB(t *testing.T) {
-	server := api.NewTestServer()
-	defer server.Close()
-
-	// DB is nil in test server, but accessor should not panic
-	db := server.DB()
-	if db != nil {
-		t.Error("Expected DB to be nil in test server")
-	}
-}

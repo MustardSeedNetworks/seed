@@ -72,7 +72,7 @@ type tftpStartInput struct {
 // received into <data dir>/tftp-incoming. It starts nothing.
 func (s *Server) initTFTP() {
 	dataDir := paths.Resolve(paths.ModeAuto).DataDir
-	s.tftp.audit = app.NewTFTPAudit(s.db)
+	s.tftp.audit = app.NewTFTPAudit(s.persistence)
 	s.tftp.sessions = tftp.NewManager(tftp.Config{
 		Dir:        filepath.Join(dataDir, "tftp"),
 		UploadDir:  filepath.Join(dataDir, "tftp-incoming"),

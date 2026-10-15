@@ -46,15 +46,16 @@ type TopologyReconcilers struct {
 	ARP     topology.ARPConfig
 }
 
-// NewEnginePersistence binds the engine ports to db.
-func NewEnginePersistence(db *database.DB) EnginePersistence {
+// NewEnginePersistence binds the engine ports to persist.
+func NewEnginePersistence(persist *Persistence) EnginePersistence {
+	db := persist.handle()
 	obs := db.SNMPObservations()
 	topo := db.Topology()
 	settings := db.Settings()
 	suppressions := alertpipeline.NewDBSuppressionStore(db.AlertSuppressions())
 	return EnginePersistence{
 		Anomalies: db.Anomalies(),
-		Probes:    NewProbeStorage(db),
+		Probes:    NewProbeStorage(persist),
 		Telemetry: db.Metrics(),
 		Rollups: []retention.RollupSource{
 			database.NewProbeRollupSource(db),
@@ -99,10 +100,10 @@ func lazyRepo[R any](db func() *database.DB, repo func(*database.DB) *R) func() 
 	}
 }
 
-// NewClientIDLister lists the deployment's client ids from db, the only part
+// NewClientIDLister lists the deployment's client ids from persist, the only part
 // of a client record discovery needs to decide whose credentials it may use.
-func NewClientIDLister(db *database.DB) discovery.ClientLister {
-	return clientIDLister{repo: db.Clients()}
+func NewClientIDLister(persist *Persistence) discovery.ClientLister {
+	return clientIDLister{repo: persist.handle().Clients()}
 }
 
 type clientIDLister struct {
@@ -122,11 +123,12 @@ func (l clientIDLister) ListClientIDs(ctx context.Context) ([]string, error) {
 }
 
 // NewDiscoverySNMPCredentials builds discovery's vault-backed SNMP credential
-// source (#2118) over db's clients and device credentials.
+// source (#2118) over persist's clients and device credentials.
 func NewDiscoverySNMPCredentials(
-	db *database.DB,
+	persist *Persistence,
 	keyring discovery.SecretDecrypter,
 	transport *config.SNMPConfig,
 ) (*discovery.VaultSNMPCredentials, error) {
-	return discovery.NewVaultSNMPCredentials(NewClientIDLister(db), db.DeviceCredentials(), keyring, transport)
+	db := persist.handle()
+	return discovery.NewVaultSNMPCredentials(NewClientIDLister(persist), db.DeviceCredentials(), keyring, transport)
 }

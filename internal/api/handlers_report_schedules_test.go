@@ -136,7 +136,7 @@ func TestReportSchedules_SurviveRestart(t *testing.T) {
 
 	created := createSchedule(t, s, nightlyInventory)
 
-	restarted := app.NewReporting(cfg, db)
+	restarted := app.NewReporting(cfg, app.NewPersistence(db))
 	require.NoError(t, restarted.Load(t.Context()))
 	got, err := restarted.Scheduler().Get(t.Context(), created.ID)
 	require.NoError(t, err)

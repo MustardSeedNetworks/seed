@@ -15,8 +15,8 @@ import (
 
 // NewVulnTriage builds the vulnerability-triage use-case over a lazy database
 // accessor.
-func NewVulnTriage(db func() *database.DB) *vulntriage.Service {
-	return vulntriage.NewService(vulnTriageStore{db: db})
+func NewVulnTriage(persist func() *Persistence) *vulntriage.Service {
+	return vulntriage.NewService(vulnTriageStore{db: lazyHandle(persist)})
 }
 
 type vulnTriageStore struct {

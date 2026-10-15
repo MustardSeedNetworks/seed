@@ -455,6 +455,17 @@ linters:
           deny:
             - pkg: github.com/MustardSeedNetworks/seed/internal/database
               desc: "identity is persistence-free — its entities and port inputs live in internal/identity; the database implements the ports over them; wire it in internal/app"
+        # The delivery layer holds the store, never the database (seed#2750,
+        # ADR-0020 amendment 2026-10-15): cmd/seed wraps the opened database
+        # in an opaque app.Persistence and internal/api passes it to the
+        # internal/app use-cases. Production-only (api tests seed rows directly).
+        "api-no-persistence":
+          files:
+            - "**/internal/api/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "internal/api reaches persistence only through internal/app: hold and pass the *app.Persistence, and put the query behind an app use-case"
         # Phase 6 capture port: libpcap (via gopacket/pcap) carries the CGO
         # taint that re-links libpcap into every dependent test binary. It is
         # confined to the single adapter package internal/capture/pcap; every

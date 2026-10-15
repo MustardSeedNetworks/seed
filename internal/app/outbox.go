@@ -22,9 +22,9 @@ type dbOutboxStore struct {
 	repo *database.OutboxRepository
 }
 
-// NewOutboxStore builds the relay's store over db's outbox repository.
-func NewOutboxStore(db *database.DB) outbox.Store {
-	return &dbOutboxStore{repo: db.Outbox()}
+// NewOutboxStore builds the relay's store over persist's outbox repository.
+func NewOutboxStore(persist *Persistence) outbox.Store {
+	return &dbOutboxStore{repo: persist.handle().Outbox()}
 }
 
 // FetchUnpublished returns pending rows as relay records, stringifying the id.

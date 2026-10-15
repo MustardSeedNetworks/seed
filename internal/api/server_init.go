@@ -82,12 +82,12 @@ func (s *Server) collectEnabledSubnets(cfg *config.Config) []string {
 // initDatabaseServices configures database-backed services if a database is
 // wired.
 func (s *Server) initDatabaseServices(cfg *config.Config) {
-	if s.dbConn == nil {
+	if s.persist == nil {
 		return
 	}
 
 	// Set up database-backed user store for authentication
-	userStore := app.NewAuthUserStore(s.dbConn)
+	userStore := app.NewAuthUserStore(s.persist)
 	s.authManager().SetUserStore(userStore)
 
 	// Migrate admin user from config to database if needed
@@ -108,7 +108,7 @@ func (s *Server) initDatabaseServices(cfg *config.Config) {
 	// Initialize MIB database for SNMP OID resolution
 	s.initMibDatabase()
 
-	// Start the background maintenance loop (fixes #848). s.dbConn is non-nil here
+	// Start the background maintenance loop (fixes #848). s.persist is non-nil here
 	// (the function returns early otherwise), so it always runs: it sweeps jobs
 	// retention every tick (the runner map + jobs table always grow) and applies
 	// the data-retention policy when a positive window is configured.
@@ -117,11 +117,11 @@ func (s *Server) initDatabaseServices(cfg *config.Config) {
 }
 
 // initDatabaseDependentServices wires every service that needs a
-// live database connection. Called from NewServer after s.dbConn
+// live database connection. Called from NewServer after s.persist
 // is populated. Splits into per-concern helpers to keep each scope
 // focused and to keep NewServer under the funlen limit.
 func (s *Server) initDatabaseDependentServices() {
-	db := s.dbConn
+	db := s.persist
 	if db == nil {
 		// Tests construct a Server without a DB; skip the
 		// database-dependent wiring entirely rather than crash.
@@ -141,7 +141,7 @@ func (s *Server) initDatabaseDependentServices() {
 
 // initMibDatabase initializes the MIB database and loads built-in OID definitions.
 func (s *Server) initMibDatabase() {
-	mibDB := app.NewMIBDatabase(s.dbConn)
+	mibDB := app.NewMIBDatabase(s.persist)
 	s.mibDB = mibDB
 
 	// Load built-in OID definitions (918+ standard OIDs from RFC MIBs)
@@ -163,7 +163,7 @@ func (s *Server) initMibDatabase() {
 
 // initSSEAndLogging initializes the SSE hub and log broadcaster.
 func (s *Server) initSSEAndLogging() {
-	db := s.dbConn
+	db := s.persist
 	// Initialize SSE hub for real-time updates
 	s.sse = NewSSEHub()
 	go s.sseHub().Run()
@@ -297,8 +297,8 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 		logging.GetLogger().Warn("Failed to initialize vulnerability scanner", "error", err)
 		return
 	}
-	if s.dbConn != nil {
-		vulnScanner.SetStore(app.NewVulnStore(s.dbConn))
+	if s.persist != nil {
+		vulnScanner.SetStore(app.NewVulnStore(s.persist))
 	}
 	s.vulnScan = vulnScanner
 	logging.GetLogger().Info("Vulnerability scanner initialized",
@@ -407,7 +407,7 @@ func (s *Server) logWildcardOriginWarning(cfg *config.Config) {
 // other way to answer an SNMP probe would be the plaintext file-config
 // communities #1799 removed.
 func (s *Server) newDiscoverySNMPCredentials(cfg *config.Config) discovery.SNMPCredentialProvider {
-	if cfg == nil || s.dbConn == nil {
+	if cfg == nil || s.persist == nil {
 		logging.GetLogger().Warn("SNMP discovery disabled: no credential vault available")
 		return nil
 	}
@@ -416,7 +416,7 @@ func (s *Server) newDiscoverySNMPCredentials(cfg *config.Config) discovery.SNMPC
 		logging.GetLogger().Warn("SNMP discovery disabled: no credential keyring", "error", err)
 		return nil
 	}
-	creds, err := app.NewDiscoverySNMPCredentials(s.dbConn, keyring, &cfg.SNMP)
+	creds, err := app.NewDiscoverySNMPCredentials(s.persist, keyring, &cfg.SNMP)
 	if err != nil {
 		logging.GetLogger().Warn("SNMP discovery disabled", "error", err)
 		return nil
@@ -466,9 +466,9 @@ func (a licenseTierAdapter) GetTier() license.Tier {
 // health_check_results read-path was deleted (ADR-0026), so a nil or later-set
 // database (the test harness) is honored.
 func (s *Server) initHealthUseCases() {
-	s.healthMonitoring = app.NewHealthMonitoring(s.db, s.anomalyEngine)
+	s.healthMonitoring = app.NewHealthMonitoring(s.persistence, s.anomalyEngine)
 	s.healthSettings = app.NewHealthSettings(
-		s.db, s.rescheduleProbeEngine,
+		s.persistence, s.rescheduleProbeEngine,
 		s.config, s.configPath, s.dnsTester, s.speedtestTester,
 	)
 }
@@ -484,18 +484,18 @@ func (s *Server) initDiscoveryUseCases() {
 		s.config, s.configPath, s.deviceDiscovery, s.discoveryService,
 	)
 	s.networkProblems = app.NewProblems(s.problemDetector, s.discoveryService)
-	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
+	s.topologyQueries = app.NewTopologyQueries(s.persistence, topologyMaxLimit)
 	s.exportService = export.NewService(serverExportSources{s: s})
-	s.logQuery = app.NewLogQuery(s.db)
-	s.historyQueries = app.NewHistory(s.db)
-	s.vulnTriage = app.NewVulnTriage(s.db)
-	s.flows = app.NewFlows(s.db)
-	s.lifecycleEoX = app.NewLifecycleStore(s.db)
-	s.interfaceStats = app.NewInterfaceStats(s.db)
-	s.ipSLA = app.NewIPSLA(s.db)
-	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
+	s.logQuery = app.NewLogQuery(s.persistence)
+	s.historyQueries = app.NewHistory(s.persistence)
+	s.vulnTriage = app.NewVulnTriage(s.persistence)
+	s.flows = app.NewFlows(s.persistence)
+	s.lifecycleEoX = app.NewLifecycleStore(s.persistence)
+	s.interfaceStats = app.NewInterfaceStats(s.persistence)
+	s.ipSLA = app.NewIPSLA(s.persistence)
+	s.pollingTargets = app.NewPollingTargets(s.persistence, s.pollingTargetLimit)
 	s.initVaultUseCases()
-	s.alertInbox = app.NewAlertInbox(s.db)
+	s.alertInbox = app.NewAlertInbox(s.persistence)
 }
 
 // initSettingsUseCases wires the ADR-0020 settings, profiles, network-IP, and
@@ -503,15 +503,15 @@ func (s *Server) initDiscoveryUseCases() {
 // its lazy db/manager accessors + live config. Split out of NewServer to
 // keep it under the funlen limit.
 func (s *Server) initSettingsUseCases() {
-	s.settingsStore = app.NewSettings(s.db, s.config)
+	s.settingsStore = app.NewSettings(s.persistence, s.config)
 	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath,
 		func() *alertdelivery.Manager { return s.alertDelivery })
 	s.configBackups = app.NewConfigBackups(s.config, s.configPath,
 		func() *alertdelivery.Manager { return s.alertDelivery })
 	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, s.rogueDetector)
-	s.profiles = app.NewProfiles(s.db, s.config, s.configPath)
+	s.profiles = app.NewProfiles(s.persistence, s.config, s.configPath)
 	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
-	s.alertRules = app.NewAlertRules(s.db)
+	s.alertRules = app.NewAlertRules(s.persistence)
 }
 
 // initTopologyReconcilers wires the four Stage A4 reconcilers

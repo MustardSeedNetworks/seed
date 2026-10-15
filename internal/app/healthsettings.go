@@ -28,13 +28,14 @@ import (
 // probe-engine reschedule (best-effort, nil-safe); dnsTester/speedTester are lazy
 // accessors.
 func NewHealthSettings(
-	db func() *database.DB,
+	persist func() *Persistence,
 	reschedule func(context.Context) error,
 	cfg *config.Config,
 	path string,
 	dnsTester func() *dns.Tester,
 	speedTester func() *speedtest.Tester,
 ) *healthsettings.Service {
+	db := lazyHandle(persist)
 	return healthsettings.NewService(
 		healthProbeStore{probes: lazyRepo(db, (*database.DB).Probes), reschedule: reschedule},
 		healthConfigStore{cfg: cfg, path: path},

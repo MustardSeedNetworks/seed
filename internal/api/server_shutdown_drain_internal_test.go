@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 )
@@ -62,7 +63,8 @@ func get(ctx context.Context, url string) (*http.Response, error) {
 func TestShutdownCompletesInFlightRequestBeforeClosingTheDatabase(t *testing.T) {
 	s := NewTestServer()
 	t.Cleanup(s.Close)
-	SetTestDB(s, newShutdownTestDB(t))
+	db := newShutdownTestDB(t)
+	SetTestPersistence(s, app.NewPersistence(db))
 
 	entered := make(chan struct{})
 	release := make(chan struct{})
@@ -72,7 +74,7 @@ func TestShutdownCompletesInFlightRequestBeforeClosingTheDatabase(t *testing.T) 
 	mux.HandleFunc("/inflight", func(w http.ResponseWriter, r *http.Request) {
 		close(entered)
 		<-release
-		dbErr <- s.db().Ping(r.Context())
+		dbErr <- db.Ping(r.Context())
 		w.WriteHeader(http.StatusOK)
 	})
 	baseURL := serveOnLoopback(t, s, mux)
@@ -227,7 +229,7 @@ func TestShutdownTearsDownEvenWhenTheDrainTimesOut(t *testing.T) {
 	s := NewTestServer()
 	t.Cleanup(s.Close)
 	db := newShutdownTestDB(t)
-	SetTestDB(s, db)
+	SetTestPersistence(s, app.NewPersistence(db))
 
 	entered := make(chan struct{})
 	wedged := make(chan struct{})
