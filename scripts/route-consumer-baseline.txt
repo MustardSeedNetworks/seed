@@ -34,6 +34,8 @@
 /api/v1/health                            # non-UI: tests/smoke/run_smoke_tests.sh asserts it is authenticated
 /api/v1/history/anomalies                 # scheduled: S6-2 #325 is the UI half of #175; the backend read surface landed first
 /api/v1/history/probes/{probeId}          # scheduled: S6-2 #325, see /history/anomalies
+/api/v1/ip-sla/operations                 # scheduled: UI #3464; P-D8 backend (#3463) landed first, API-driven until then
+/api/v1/ip-sla/operations/history         # scheduled: UI #3464, see /ip-sla/operations
 /api/v1/ipam/subnets                      # scheduled: UI #3440; P-D5 backend (#3439) landed first, API-driven until then
 /api/v1/ipam/scopes                       # scheduled: UI #3440 enters scopes; P-D5 slice 2 (#3439) backend landed first
 /api/v1/lifecycle/devices                 # scheduled: UI #3460; P-D9 backend (#3459) landed first, API-driven until then

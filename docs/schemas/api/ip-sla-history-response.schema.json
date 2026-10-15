@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/ip-sla-history-response.schema.json",
+  "$ref": "#/$defs/IPSLAHistoryResponse",
+  "$defs": {
+    "IPSLAHistoryResponse": {
+      "properties": {
+        "targetId": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer"
+        },
+        "range": {
+          "type": "string",
+          "enum": [
+            "1h",
+            "24h",
+            "7d"
+          ]
+        },
+        "from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "to": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "bucketSeconds": {
+          "type": "number"
+        },
+        "points": {
+          "items": {
+            "$ref": "#/$defs/IPSLARunResponse"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "targetId",
+        "index",
+        "range",
+        "from",
+        "to",
+        "bucketSeconds",
+        "points"
+      ]
+    },
+    "IPSLARunResponse": {
+      "properties": {
+        "sampledAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "runs": {
+          "type": "integer"
+        },
+        "completedPct": {
+          "type": "number"
+        },
+        "rttMs": {
+          "type": "number"
+        },
+        "jitterMs": {
+          "type": "number"
+        },
+        "lossPct": {
+          "type": "number"
+        },
+        "mos": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "sampledAt",
+        "runs",
+        "completedPct"
+      ]
+    }
+  },
+  "title": "IPSLAHistoryResponse",
+  "description": "IPSLAHistoryResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

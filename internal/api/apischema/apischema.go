@@ -274,6 +274,8 @@ func Targets() []Target {
 		{&api.AnomalyHistoryResponse{}, "anomaly-history-response.schema.json"},
 		{&api.InterfaceStatsListResponse{}, "interface-stats-list-response.schema.json"},
 		{&api.InterfaceHistoryResponse{}, "interface-history-response.schema.json"},
+		{&api.IPSLAOperationsResponse{}, "ip-sla-operations-response.schema.json"},
+		{&api.IPSLAHistoryResponse{}, "ip-sla-history-response.schema.json"},
 
 		// Top-N reads over collected flows (P-C3, P-C4), consumed by the flow
 		// explorer (UI-SEED-23).

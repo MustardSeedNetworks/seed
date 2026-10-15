@@ -492,6 +492,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.flows = app.NewFlows(s.db)
 	s.lifecycleEoX = app.NewLifecycleStore(s.db)
 	s.interfaceStats = app.NewInterfaceStats(s.db)
+	s.ipSLA = app.NewIPSLA(s.db)
 	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
 	s.initVaultUseCases()
 	s.alertInbox = app.NewAlertInbox(s.db)

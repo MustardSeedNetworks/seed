@@ -569,6 +569,29 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/CategorizedInterfacesResponse'
+  GET /api/v1/ip-sla/operations:
+    responses:
+      "200":
+        description: >
+          Every Cisco IP-SLA operation the polling targets run, from each
+          target's latest ip_sla poll, with its most recent run. Failed
+          operations come first, then those over their threshold, then the
+          healthy ones, then those that have not run.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IPSLAOperationsResponse'
+  GET /api/v1/ip-sla/operations/history:
+    responses:
+      "200":
+        description: >
+          One IP-SLA operation's runs over the last 1h, 24h or 7d: per bucket,
+          the share of runs that completed and the mean RTT, jitter, loss and
+          MOS they measured.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IPSLAHistoryResponse'
   GET /api/v1/ipam/subnets:
     responses:
       "200":

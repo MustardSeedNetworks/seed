@@ -38,6 +38,8 @@ func (p *ObservationPipeline) scanKind(
 			count += p.evaluateSTP(ctx, obs)
 		case "routing":
 			count += p.evaluateRouting(ctx, obs)
+		case "ip_sla":
+			count += p.evaluateIPSLA(ctx, obs)
 		}
 	}
 	return count, maxAt, nil

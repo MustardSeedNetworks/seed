@@ -84,6 +84,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/history"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifstats"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/sla"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
@@ -293,6 +294,7 @@ type Server struct {
 	flows              *flows.Service              // Flow top-N reads and flow settings use-case (ADR-0020)
 	lifecycleEoX       lifecycle.Store             // Imported EoX data for the lifecycle report (P-D9)
 	interfaceStats     *ifstats.Service            // Interface rates read use-case (UI-SEED-21, #3191)
+	ipSLA              *sla.Service                // IP-SLA operations and trend read use-case (P-D8, #3463)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)
 	engineStatus       *enginestatus.Service       // Engine-status use-case (ADR-0020)

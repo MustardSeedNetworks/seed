@@ -1993,6 +1993,26 @@ body:
   {
     "auth": true,
     "csrf": false,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/ip-sla/operations",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/ip-sla/operations/history",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": false,
     "feature": "live_telemetry",
     "maxBodyBytes": 262144,
     "methods": [

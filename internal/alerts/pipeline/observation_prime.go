@@ -47,6 +47,8 @@ func (p *ObservationPipeline) primeOne(kind string, obs *observation.SNMPObserva
 		p.primeSTP(obs)
 	case "routing":
 		p.primeRouting(obs)
+	case "ip_sla":
+		p.primeIPSLA(obs)
 	}
 }
 

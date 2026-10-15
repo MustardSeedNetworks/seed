@@ -274,6 +274,11 @@
     "readFailed": "No se pudieron leer las estadísticas de interfaces",
     "invalidHistoryQuery": "Indique un destino de sondeo, un ifIndex y un intervalo de 1h, 24h o 7d"
   },
+  "ipSla": {
+    "storeUnavailable": "Los resultados de IP SLA no están disponibles: la base de datos no está abierta",
+    "readFailed": "No se pudieron leer los resultados de IP SLA",
+    "invalidHistoryQuery": "Indique un destino de sondeo, un índice de operación y un intervalo de 1h, 24h o 7d"
+  },
   "dashboard": {
     "storeUnavailable": "Los paneles no están disponibles: la base de datos no está abierta",
     "invalidLayout": "No se puede guardar esa disposición del panel",

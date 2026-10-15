@@ -76,6 +76,11 @@ const (
 	// RuleRouteChange is prefixes that stayed but moved to other next hops.
 	RuleRouteWithdrawn = "route.withdrawn"
 	RuleRouteChange    = "route.change"
+	// RuleIPSLAFailed is a Cisco IP-SLA operation's run failing after one that
+	// completed; RuleIPSLAOverThreshold is a completed run over the threshold
+	// configured on the device after one within it.
+	RuleIPSLAFailed        = "ip_sla.failed"
+	RuleIPSLAOverThreshold = "ip_sla.over_threshold"
 )
 
 // RuleFlowIndicator is the listener pipeline rule that alerts on a flow to
@@ -163,6 +168,19 @@ type RouteNextHopChange struct {
 	Prefix string   `json:"prefix"`
 	From   []string `json:"from"`
 	To     []string `json:"to"`
+}
+
+// IPSLAEvidence is the Metadata of a RuleIPSLAFailed or RuleIPSLAOverThreshold
+// alert: the operation and the run that raised it. Sense is the
+// CISCO-RTTMON-MIB rttMonLatestRttOperSense; RTTMs is meaningful only for a
+// completed run, and ThresholdMs is the device's rttMonCtrlAdminThreshold.
+type IPSLAEvidence struct {
+	Index       int    `json:"index"`
+	Tag         string `json:"tag,omitempty"`
+	Target      string `json:"target,omitempty"`
+	Sense       int    `json:"sense"`
+	RTTMs       uint32 `json:"rttMs"`
+	ThresholdMs int    `json:"thresholdMs"`
 }
 
 // StorageEvidence is the Metadata of a RuleStorageHigh or RuleStorageCritical
