@@ -171,13 +171,18 @@ func (r *DeviceConfigRepository) InsertBackup(ctx context.Context, b *deviceconf
 }
 
 // PruneBackups deletes all but the target's newest keep attempts, in the
-// order ListBackups returns them.
+// order ListBackups returns them, and its newest keep stored configurations:
+// a run of failures must not take the configurations later ones are compared
+// with.
 func (r *DeviceConfigRepository) PruneBackups(ctx context.Context, clientID, targetID string, keep int) error {
 	_, err := r.db.Exec(ctx, `DELETE FROM device_config_backups
 		WHERE client_id = ? AND target_id = ? AND id NOT IN (
 			SELECT id FROM device_config_backups WHERE client_id = ? AND target_id = ?
+			ORDER BY taken_at DESC, id LIMIT ?)
+		AND id NOT IN (
+			SELECT id FROM device_config_backups WHERE client_id = ? AND target_id = ? AND status = ?
 			ORDER BY taken_at DESC, id LIMIT ?)`,
-		clientID, targetID, clientID, targetID, keep)
+		clientID, targetID, clientID, targetID, keep, clientID, targetID, string(deviceconfig.StatusOK), keep)
 	if err != nil {
 		return fmt.Errorf("prune device_config_backups: %w", err)
 	}
@@ -219,17 +224,34 @@ func (r *DeviceConfigRepository) ListBackups(
 	return out, nil
 }
 
+const deviceConfigBackupColumns = `id, client_id, target_id, taken_at, status, error, config_enc, sha256`
+
 // GetBackup returns one attempt with its configuration's ciphertext.
 func (r *DeviceConfigRepository) GetBackup(ctx context.Context, clientID, id string) (deviceconfig.Backup, error) {
+	return scanDeviceConfigBackup(r.db.QueryRow(ctx, `SELECT `+deviceConfigBackupColumns+`
+		FROM device_config_backups WHERE id = ? AND client_id = ?`, id, clientID))
+}
+
+// LatestConfig returns the target's newest successful attempt taken before
+// the given time, with its configuration's ciphertext.
+func (r *DeviceConfigRepository) LatestConfig(
+	ctx context.Context, clientID, targetID string, before time.Time,
+) (deviceconfig.Backup, error) {
+	return scanDeviceConfigBackup(r.db.QueryRow(ctx, `SELECT `+deviceConfigBackupColumns+`
+		FROM device_config_backups
+		WHERE client_id = ? AND target_id = ? AND status = ? AND taken_at < ?
+		ORDER BY taken_at DESC, id LIMIT 1`,
+		clientID, targetID, string(deviceconfig.StatusOK), before.UTC().Format(time.RFC3339Nano)))
+}
+
+func scanDeviceConfigBackup(row *sql.Row) (deviceconfig.Backup, error) {
 	var (
 		b               deviceconfig.Backup
 		takenAt, status string
 		msg, digest     sql.NullString
 		config          []byte
 	)
-	err := r.db.QueryRow(ctx, `SELECT id, client_id, target_id, taken_at, status, error, config_enc, sha256
-		FROM device_config_backups WHERE id = ? AND client_id = ?`, id, clientID).
-		Scan(&b.ID, &b.ClientID, &b.TargetID, &takenAt, &status, &msg, &config, &digest)
+	err := row.Scan(&b.ID, &b.ClientID, &b.TargetID, &takenAt, &status, &msg, &config, &digest)
 	if errors.Is(err, sql.ErrNoRows) {
 		return deviceconfig.Backup{}, deviceconfig.ErrNotFound
 	}

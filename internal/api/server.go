@@ -214,6 +214,10 @@ type Server struct {
 
 	// alertDelivery is the outbound alert webhook (#368); nil unless configured.
 	alertDelivery *alertdelivery.Manager
+	// alertWriter is the alert write chain (store, correlation, delivery)
+	// the pipelines emit through, kept for use-cases that raise alerts of
+	// their own; nil until initAlertPipelines runs.
+	alertWriter alertdelivery.Writer
 
 	// anomalyCoord is the single, server-owned anomaly Coordinator every producer
 	// shares (ADR-0029): one engine over the merged catalog + the unified store.

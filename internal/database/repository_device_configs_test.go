@@ -229,3 +229,55 @@ func TestDeviceConfigBackupsPruneToTheNewest(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, list, 1, "pruning one target leaves another's history alone")
 }
+
+// TestDeviceConfigLatestConfigSkipsFailuresAndPruneKeepsIt: the configuration
+// a new one is compared with is the newest stored before it, whatever failed
+// since, and pruning failed attempts never removes it.
+func TestDeviceConfigLatestConfigSkipsFailuresAndPruneKeepsIt(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+	ctx := context.Background()
+	repo := db.DeviceConfigs()
+	client := database.DefaultClientID
+
+	tgt := newDeviceConfigTarget(saveSSHCredential(t, db, client), "10.0.0.1")
+	require.NoError(t, repo.SaveTarget(ctx, tgt))
+	_, err := repo.LatestConfig(ctx, client, tgt.ID, time.Now())
+	require.ErrorIs(t, err, deviceconfig.ErrNotFound)
+
+	t0 := time.Date(2026, 10, 15, 3, 0, 0, 0, time.UTC)
+	insert := func(hour int, status deviceconfig.Status) string {
+		b := &deviceconfig.Backup{
+			ClientID: client, TargetID: tgt.ID, TakenAt: t0.Add(time.Duration(hour) * time.Hour),
+			Status: status,
+		}
+		if status == deviceconfig.StatusOK {
+			b.ConfigCT, b.SHA256 = "enc:v1:hour", "digest"
+		} else {
+			b.Error = "unreachable"
+		}
+		require.NoError(t, repo.InsertBackup(ctx, b))
+		return b.ID
+	}
+	older := insert(0, deviceconfig.StatusOK)
+	newer := insert(1, deviceconfig.StatusOK)
+	for hour := 2; hour < 6; hour++ {
+		insert(hour, deviceconfig.StatusUnreachable)
+	}
+
+	got, err := repo.LatestConfig(ctx, client, tgt.ID, t0.Add(10*time.Hour))
+	require.NoError(t, err)
+	require.Equal(t, newer, got.ID, "failed attempts since are skipped")
+	require.Equal(t, "enc:v1:hour", got.ConfigCT)
+	got, err = repo.LatestConfig(ctx, client, tgt.ID, t0.Add(time.Hour))
+	require.NoError(t, err)
+	require.Equal(t, older, got.ID, "strictly before: a backup is not its own predecessor")
+	_, err = repo.LatestConfig(ctx, "tenant-other", tgt.ID, t0.Add(10*time.Hour))
+	require.ErrorIs(t, err, deviceconfig.ErrNotFound)
+
+	require.NoError(t, repo.PruneBackups(ctx, client, tgt.ID, 1))
+	list, err := repo.ListBackups(ctx, client, tgt.ID, 10)
+	require.NoError(t, err)
+	require.Len(t, list, 2, "the newest attempt and the newest stored configuration")
+	require.Equal(t, newer, list[1].ID)
+}

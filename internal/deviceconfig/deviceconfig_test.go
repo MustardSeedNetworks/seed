@@ -3,14 +3,17 @@ package deviceconfig_test
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/deviceconfig"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
 )
@@ -114,9 +117,14 @@ func (r *memRepo) targetBackups(targetID string) []deviceconfig.Backup {
 func (r *memRepo) PruneBackups(_ context.Context, _, targetID string, keep int) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	kept := r.targetBackups(targetID)
-	if len(kept) > keep {
-		kept = kept[:keep]
+	all := r.targetBackups(targetID)
+	kept := slices.Clone(all[:min(keep, len(all))])
+	stored := 0
+	for _, b := range all {
+		if b.Status == deviceconfig.StatusOK && stored < keep {
+			stored++
+			kept = append(kept, b)
+		}
 	}
 	r.backups = slices.DeleteFunc(r.backups, func(b deviceconfig.Backup) bool {
 		return b.TargetID == targetID && !slices.ContainsFunc(kept, func(k deviceconfig.Backup) bool {
@@ -145,6 +153,36 @@ func (r *memRepo) GetBackup(_ context.Context, _, id string) (deviceconfig.Backu
 		}
 	}
 	return deviceconfig.Backup{}, deviceconfig.ErrNotFound
+}
+
+func (r *memRepo) LatestConfig(
+	_ context.Context, _, targetID string, before time.Time,
+) (deviceconfig.Backup, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, b := range r.targetBackups(targetID) {
+		if b.Status == deviceconfig.StatusOK && b.TakenAt.Before(before) {
+			return b, nil
+		}
+	}
+	return deviceconfig.Backup{}, deviceconfig.ErrNotFound
+}
+
+// memAlerts records the alerts raised, or refuses them all with err.
+type memAlerts struct {
+	mu     sync.Mutex
+	raised []alerts.Alert
+	err    error
+}
+
+func (m *memAlerts) Create(_ context.Context, a *alerts.Alert) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.err != nil {
+		return m.err
+	}
+	m.raised = append(m.raised, *a)
+	return nil
 }
 
 type memCreds map[string]*polling.Credentials
@@ -246,7 +284,7 @@ func TestRunReportsEachDeviceWithoutFailingTheRun(t *testing.T) {
 			return deviceconfig.FetchResult{}, fmt.Errorf("%w: connection refused", deviceconfig.ErrUnreachable)
 		},
 	}}
-	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch)
+	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch, &memAlerts{})
 	require.NoError(t, err)
 
 	var progress []float64
@@ -302,7 +340,7 @@ func TestRunPassesThePinAndTreatsEmptyOutputAsFailure(t *testing.T) {
 	fetch := &scriptedFetcher{answers: map[string]func(deviceconfig.FetchRequest) (deviceconfig.FetchResult, error){
 		"10.0.0.1": answer(" \r\n"),
 	}}
-	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch)
+	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch, &memAlerts{})
 	require.NoError(t, err)
 
 	res, err := svc.Run(context.Background(), client, []string{"dct-1"}, func(float64) {})
@@ -312,7 +350,7 @@ func TestRunPassesThePinAndTreatsEmptyOutputAsFailure(t *testing.T) {
 
 func TestRunRefusesAnUnknownTarget(t *testing.T) {
 	t.Parallel()
-	svc, err := deviceconfig.NewService(newMemRepo(), sshCreds(), prefixCipher{}, &scriptedFetcher{})
+	svc, err := deviceconfig.NewService(newMemRepo(), sshCreds(), prefixCipher{}, &scriptedFetcher{}, &memAlerts{})
 	require.NoError(t, err)
 
 	_, err = svc.Run(context.Background(), client, []string{"dct-404"}, func(float64) {})
@@ -322,7 +360,7 @@ func TestRunRefusesAnUnknownTarget(t *testing.T) {
 
 func TestSaveTargetValidates(t *testing.T) {
 	t.Parallel()
-	svc, err := deviceconfig.NewService(newMemRepo(), sshCreds(), prefixCipher{}, &scriptedFetcher{})
+	svc, err := deviceconfig.NewService(newMemRepo(), sshCreds(), prefixCipher{}, &scriptedFetcher{}, &memAlerts{})
 	require.NoError(t, err)
 
 	valid := deviceconfig.TargetInput{
@@ -354,7 +392,7 @@ func TestSaveTargetKeepsThePinUnlessTheAddressMoves(t *testing.T) {
 	pinned := target("dct-1", "10.0.0.1", deviceconfig.PlatformCiscoIOS)
 	pinned.PendingHostKeySHA256 = "SHA256:next"
 	repo := newMemRepo(pinned)
-	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, &scriptedFetcher{})
+	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, &scriptedFetcher{}, &memAlerts{})
 	require.NoError(t, err)
 
 	in := deviceconfig.TargetInput{
@@ -384,7 +422,7 @@ func TestHostKeyIsConfirmedBeforeTheDeviceIsTrusted(t *testing.T) {
 	fetch := &scriptedFetcher{answers: map[string]func(deviceconfig.FetchRequest) (deviceconfig.FetchResult, error){
 		"10.0.0.1": answer("hostname core\n"),
 	}}
-	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch)
+	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch, &memAlerts{})
 	require.NoError(t, err)
 	ctx := context.Background()
 
@@ -419,7 +457,7 @@ func TestMismatchedHostKeyIsNotQueuedForConfirmation(t *testing.T) {
 	fetch := &scriptedFetcher{answers: map[string]func(deviceconfig.FetchRequest) (deviceconfig.FetchResult, error){
 		"10.0.0.1": answer("hostname core\n"),
 	}}
-	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch)
+	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch, &memAlerts{})
 	require.NoError(t, err)
 
 	res, err := svc.Run(context.Background(), client, nil, func(float64) {})
@@ -438,7 +476,7 @@ func TestUnchangedConfigurationIsNotStoredAgain(t *testing.T) {
 			return answer(output)(req)
 		},
 	}}
-	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch)
+	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch, &memAlerts{})
 	require.NoError(t, err)
 	run := func() deviceconfig.DeviceResult {
 		res, runErr := svc.Run(context.Background(), client, nil, func(float64) {})
@@ -466,7 +504,7 @@ func TestBackupHistoryIsCapped(t *testing.T) {
 			return deviceconfig.FetchResult{}, fmt.Errorf("%w: refused", deviceconfig.ErrUnreachable)
 		},
 	}}
-	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch)
+	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch, &memAlerts{})
 	require.NoError(t, err)
 
 	var last string
@@ -487,7 +525,7 @@ func TestOutputShapedLikeCiphertextIsRefused(t *testing.T) {
 	fetch := &scriptedFetcher{answers: map[string]func(deviceconfig.FetchRequest) (deviceconfig.FetchResult, error){
 		"10.0.0.1": answer(ctPrefix + "hostname core\n"),
 	}}
-	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch)
+	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch, &memAlerts{})
 	require.NoError(t, err)
 
 	res, err := svc.Run(context.Background(), client, nil, func(float64) {})
@@ -502,7 +540,7 @@ func TestNETCONFTargetUsesPort830AndTheNETCONFTransport(t *testing.T) {
 	fetch := &scriptedFetcher{answers: map[string]func(deviceconfig.FetchRequest) (deviceconfig.FetchResult, error){
 		"10.0.0.9": answer("<native><hostname>core</hostname></native>\n"),
 	}}
-	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch)
+	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, fetch, &memAlerts{})
 	require.NoError(t, err)
 
 	got, err := svc.SaveTarget(context.Background(), deviceconfig.TargetInput{
@@ -521,4 +559,122 @@ func TestNETCONFTargetUsesPort830AndTheNETCONFTransport(t *testing.T) {
 	require.True(t, fetch.requests[0].NETCONF)
 	require.Empty(t, fetch.requests[0].Command)
 	require.Equal(t, 830, fetch.requests[0].Port)
+}
+
+// switchFetcher answers 10.0.0.1 with *config, or as unreachable when it is
+// empty.
+func switchFetcher(config *string) *scriptedFetcher {
+	return &scriptedFetcher{answers: map[string]func(deviceconfig.FetchRequest) (deviceconfig.FetchResult, error){
+		"10.0.0.1": func(req deviceconfig.FetchRequest) (deviceconfig.FetchResult, error) {
+			if *config == "" {
+				return deviceconfig.FetchResult{}, fmt.Errorf("%w: refused", deviceconfig.ErrUnreachable)
+			}
+			return answer(*config)(req)
+		},
+	}}
+}
+
+// TestChangedConfigurationIsAlertedAndDiffed is P-D2's acceptance at the unit
+// level: a changed configuration produces a diff and an alert, an unchanged one
+// neither, and the first configuration is a baseline rather than a change.
+func TestChangedConfigurationIsAlertedAndDiffed(t *testing.T) {
+	t.Parallel()
+	repo := newMemRepo(target("dct-1", "10.0.0.1", deviceconfig.PlatformCiscoIOS))
+	config := "hostname core\n!\ninterface Gi0/1\n description uplink\n!\nsnmp-server community s3cret RO\n"
+	raised := &memAlerts{}
+	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, switchFetcher(&config), raised)
+	require.NoError(t, err)
+	ctx := context.Background()
+	run := func() deviceconfig.DeviceResult {
+		res, runErr := svc.Run(ctx, client, nil, func(float64) {})
+		require.NoError(t, runErr)
+		return res.Results[0]
+	}
+
+	first := run()
+	require.Equal(t, first.BackupID, run().BackupID)
+	require.Empty(t, raised.raised, "neither the first nor an unchanged configuration is a change")
+	_, err = svc.Diff(ctx, client, first.BackupID)
+	require.ErrorIs(t, err, deviceconfig.ErrNotFound, "the first configuration has nothing to compare with")
+
+	config = strings.Replace(config, " description uplink\n", " description uplink to dist-1\n shutdown\n", 1)
+	second := run()
+	require.NotEqual(t, first.BackupID, second.BackupID)
+	require.Len(t, raised.raised, 1)
+	alert := raised.raised[0]
+	require.Equal(t, alerts.RuleConfigChange, alert.Rule)
+	require.Equal(t, "dct-1", alert.Source)
+	require.Contains(t, alert.Message, "2 lines added, 1 removed")
+	require.JSONEq(t, `{"targetId":"dct-1","backupId":"`+second.BackupID+`","previousBackupId":"`+
+		first.BackupID+`","added":2,"removed":1}`, alert.Metadata)
+	require.NotContains(t, alert.Title+alert.Message+alert.Metadata, "s3cret",
+		"alerts leave Seed; configuration text must not ride along")
+
+	d, err := svc.Diff(ctx, client, second.BackupID)
+	require.NoError(t, err)
+	require.Equal(t, first.BackupID, d.PreviousBackupID)
+	require.Equal(t, 2, d.Added)
+	require.Equal(t, 1, d.Removed)
+	require.Contains(t, d.Unified, "--- "+first.BackupID)
+	require.Contains(t, d.Unified, "+++ "+second.BackupID)
+	require.Contains(t, d.Unified, "\n- description uplink\n+ description uplink to dist-1\n+ shutdown\n")
+	require.Contains(t, d.Unified, "\n interface Gi0/1\n", "changes come with their context")
+}
+
+// TestChangeIsComparedWithTheLastStoredConfiguration: failed attempts in
+// between, even more of them than the history keeps, neither hide a change nor
+// make an unchanged configuration look new.
+func TestChangeIsComparedWithTheLastStoredConfiguration(t *testing.T) {
+	t.Parallel()
+	repo := newMemRepo(target("dct-1", "10.0.0.1", deviceconfig.PlatformCiscoIOS))
+	config := "hostname core\n"
+	raised := &memAlerts{}
+	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, switchFetcher(&config), raised)
+	require.NoError(t, err)
+	ctx := context.Background()
+	run := func() deviceconfig.DeviceResult {
+		res, runErr := svc.Run(ctx, client, nil, func(float64) {})
+		require.NoError(t, runErr)
+		return res.Results[0]
+	}
+
+	stored := run().BackupID
+	config = ""
+	failed := run()
+	require.Equal(t, deviceconfig.StatusUnreachable, failed.Status)
+	config = "hostname core\n"
+	require.Equal(t, stored, run().BackupID, "an outage in between does not make the configuration new")
+	require.Empty(t, raised.raised)
+	_, err = svc.Diff(ctx, client, failed.BackupID)
+	var ve deviceconfig.ValidationError
+	require.ErrorAs(t, err, &ve, "a failed attempt has no configuration to diff")
+
+	config = ""
+	for range 55 {
+		run()
+	}
+	require.Len(t, repo.backups, 51, "failed attempts do not push stored configurations out")
+	config = "hostname core-2\n"
+	changed := run()
+	require.Len(t, raised.raised, 1, "a change after a long outage is still a change")
+	d, err := svc.Diff(ctx, client, changed.BackupID)
+	require.NoError(t, err)
+	require.Equal(t, stored, d.PreviousBackupID)
+}
+
+// TestUnrecordedChangeAlertFailsTheRun: the alert is part of recording the
+// result, so losing it is the run's failure, not a silent success.
+func TestUnrecordedChangeAlertFailsTheRun(t *testing.T) {
+	t.Parallel()
+	repo := newMemRepo(target("dct-1", "10.0.0.1", deviceconfig.PlatformCiscoIOS))
+	config := "hostname core\n"
+	raised := &memAlerts{err: errors.New("database is locked")}
+	svc, err := deviceconfig.NewService(repo, sshCreds(), prefixCipher{}, switchFetcher(&config), raised)
+	require.NoError(t, err)
+
+	_, err = svc.Run(context.Background(), client, nil, func(float64) {})
+	require.NoError(t, err)
+	config = "hostname core-2\n"
+	_, err = svc.Run(context.Background(), client, nil, func(float64) {})
+	require.ErrorContains(t, err, "database is locked")
 }

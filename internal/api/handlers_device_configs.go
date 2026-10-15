@@ -12,6 +12,7 @@ package api
 //   POST   /api/v1/device-configs/run                    start a run (a job)
 //   GET    /api/v1/device-configs?targetId=&limit=       a target's attempts
 //   GET    /api/v1/device-configs/{id}                   one attempt, with config
+//   GET    /api/v1/device-configs/{id}/diff              its change from the previous config (P-D2)
 //
 // Every route is Pro (compliance_advanced, the feature #348 was filed under),
 // operator+ on its mutating methods, and scoped to the client on the caller's
@@ -47,6 +48,7 @@ const (
 	deviceConfigsPathPrefix       = deviceConfigsPath + "/"
 	deviceConfigRunPath           = deviceConfigsPath + "/run"
 	hostKeySuffix                 = "/host-key"
+	diffSuffix                    = "/diff"
 
 	deviceConfigJobKind = "device-config-backup"
 	deviceConfigFeature = "compliance_advanced"
@@ -303,13 +305,24 @@ func (s *Server) handleDeviceConfigBackupByID(w http.ResponseWriter, r *http.Req
 	if !s.requireRole(w, r, roles.Operator) {
 		return
 	}
-	id := strings.TrimPrefix(r.URL.Path, deviceConfigsPathPrefix)
+	id, diff := strings.CutSuffix(strings.TrimPrefix(r.URL.Path, deviceConfigsPathPrefix), diffSuffix)
 	if !deviceConfigBackupIDPattern.MatchString(id) {
 		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Missing or invalid backup id")
 		return
 	}
 	clientID, ok := s.deviceConfigCaller(w, r)
 	if !ok {
+		return
+	}
+	if diff {
+		d, err := s.deviceConfigs.Diff(r.Context(), clientID, id)
+		if err != nil {
+			writeDeviceConfigError(w, r, err)
+			return
+		}
+		s.auditDeviceConfig(r, "device_config.diff", "Configuration backup diff read",
+			"backup_id", id, "previous_backup_id", d.PreviousBackupID, "target_id", d.TargetID)
+		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, d)
 		return
 	}
 	b, err := s.deviceConfigs.GetBackup(r.Context(), clientID, id)
