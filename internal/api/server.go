@@ -571,45 +571,6 @@ const probeSchedulerTick = 5 * time.Second
 // cadence operators typically use on high-priority devices.
 const snmpPollerSchedulerTick = 5 * time.Second
 
-// initTopologyReconcilers wires the four Stage A4 reconcilers
-// (sysinfo, iftable, edge, arp) into the engine registry. They
-// consume snmp_observations on a tick and maintain the fat-Node
-// topology graph in topology_nodes / topology_interfaces /
-// topology_links / topology_arp_bindings.
-//
-// V1.0 NMS expansion — Stage A4 wire-up.
-func (s *Server) initTopologyReconcilers(cfg app.TopologyReconcilers) {
-	logger := logging.GetLogger()
-	cfg.SysInfo.Logger = logger
-	cfg.IfTable.Logger = logger
-	cfg.Edge.Logger = logger
-	cfg.ARP.Logger = logger
-
-	if r, err := topology.NewSysInfoReconciler(cfg.SysInfo); err != nil {
-		logger.Warn("sysinfo reconciler init failed", "error", err)
-	} else if regErr := s.registerEngineIfLicensed(r); regErr != nil {
-		logger.Warn("sysinfo reconciler registry registration failed", "error", regErr)
-	}
-
-	if r, err := topology.NewIfTableReconciler(cfg.IfTable); err != nil {
-		logger.Warn("iftable reconciler init failed", "error", err)
-	} else if regErr := s.registerEngineIfLicensed(r); regErr != nil {
-		logger.Warn("iftable reconciler registry registration failed", "error", regErr)
-	}
-
-	if r, err := topology.NewEdgeReconciler(cfg.Edge); err != nil {
-		logger.Warn("edge reconciler init failed", "error", err)
-	} else if regErr := s.registerEngineIfLicensed(r); regErr != nil {
-		logger.Warn("edge reconciler registry registration failed", "error", regErr)
-	}
-
-	if r, err := topology.NewARPReconciler(cfg.ARP); err != nil {
-		logger.Warn("arp reconciler init failed", "error", err)
-	} else if regErr := s.registerEngineIfLicensed(r); regErr != nil {
-		logger.Warn("arp reconciler registry registration failed", "error", regErr)
-	}
-}
-
 // initAlertPipelines wires the two Stage A4.5 / A4.6 alert
 // pipelines into the engine registry. The listener pipeline scans
 // listener_events for severe syslog + traps; the observation

@@ -27,6 +27,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 	"github.com/MustardSeedNetworks/seed/internal/platform/outbox"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
+	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
 
 // initNetworkServices initializes DNS servers and device discovery subnets.
@@ -509,4 +510,43 @@ func (s *Server) initSettingsUseCases() {
 	s.profiles = app.NewProfiles(s.db, s.config, s.configPath)
 	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
 	s.alertRules = app.NewAlertRules(s.db)
+}
+
+// initTopologyReconcilers wires the four Stage A4 reconcilers
+// (sysinfo, iftable, edge, arp) into the engine registry. They
+// consume snmp_observations on a tick and maintain the fat-Node
+// topology graph in topology_nodes / topology_interfaces /
+// topology_links / topology_arp_bindings.
+//
+// V1.0 NMS expansion — Stage A4 wire-up.
+func (s *Server) initTopologyReconcilers(cfg app.TopologyReconcilers) {
+	logger := logging.GetLogger()
+	cfg.SysInfo.Logger = logger
+	cfg.IfTable.Logger = logger
+	cfg.Edge.Logger = logger
+	cfg.ARP.Logger = logger
+
+	if r, err := topology.NewSysInfoReconciler(cfg.SysInfo); err != nil {
+		logger.Warn("sysinfo reconciler init failed", "error", err)
+	} else if regErr := s.registerEngineIfLicensed(r); regErr != nil {
+		logger.Warn("sysinfo reconciler registry registration failed", "error", regErr)
+	}
+
+	if r, err := topology.NewIfTableReconciler(cfg.IfTable); err != nil {
+		logger.Warn("iftable reconciler init failed", "error", err)
+	} else if regErr := s.registerEngineIfLicensed(r); regErr != nil {
+		logger.Warn("iftable reconciler registry registration failed", "error", regErr)
+	}
+
+	if r, err := topology.NewEdgeReconciler(cfg.Edge); err != nil {
+		logger.Warn("edge reconciler init failed", "error", err)
+	} else if regErr := s.registerEngineIfLicensed(r); regErr != nil {
+		logger.Warn("edge reconciler registry registration failed", "error", regErr)
+	}
+
+	if r, err := topology.NewARPReconciler(cfg.ARP); err != nil {
+		logger.Warn("arp reconciler init failed", "error", err)
+	} else if regErr := s.registerEngineIfLicensed(r); regErr != nil {
+		logger.Warn("arp reconciler registry registration failed", "error", regErr)
+	}
 }
