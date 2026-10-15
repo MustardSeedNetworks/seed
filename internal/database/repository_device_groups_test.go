@@ -133,3 +133,46 @@ func TestAlertRuleRefusesAnUnknownGroup(t *testing.T) {
 	err := db.AlertRules().Create(ctx, rule)
 	require.ErrorContains(t, err, "alert_rules: groupId does not name a device group")
 }
+
+func TestDeviceGroupMemberTargetsCarryTheirLastPoll(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+	ctx := context.Background()
+	b := newGroupTarget(t, db, database.DefaultClientID, "10.0.0.2")
+	a := newGroupTarget(t, db, database.DefaultClientID, "10.0.0.1")
+	newGroupTarget(t, db, database.DefaultClientID, "10.0.0.3") // not a member
+	require.NoError(t, db.PollingTargets().UpdateLastPoll(ctx, a, "error", "timeout"))
+	g := &devicegroups.Group{ClientID: database.DefaultClientID, Name: "core", Members: []string{b, a}}
+	require.NoError(t, db.DeviceGroups().Save(ctx, g))
+
+	got, err := db.DeviceGroups().MemberTargets(ctx, g.ID)
+	require.NoError(t, err)
+	require.Len(t, got, 2)
+	require.Equal(t, a, got[0].ID, "members are ordered by name")
+	require.Equal(t, "error", got[0].LastStatus)
+	require.Equal(t, "timeout", got[0].LastError)
+	require.False(t, got[0].LastPolledAt.IsZero())
+	require.Equal(t, b, got[1].ID)
+	require.Empty(t, got[1].LastStatus, "never polled")
+}
+
+func TestOpenAlertSourcesSkipResolvedAlerts(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+	ctx := context.Background()
+	raise := func(source, severity string) int64 {
+		a := &alerts.Alert{Type: "syslog", Severity: severity, Title: "t", Message: "m", Source: source}
+		require.NoError(t, db.Alerts().Create(ctx, a))
+		return a.ID
+	}
+	raise("10.0.0.1:514", alerts.SeverityCritical)
+	raise("", alerts.SeverityInfo)
+	require.NoError(t, db.Alerts().Resolve(ctx, raise("10.0.0.2:514", alerts.SeverityError)))
+
+	got, err := db.Alerts().OpenSources(ctx)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []devicegroups.OpenAlert{
+		{Source: "10.0.0.1:514", Severity: alerts.SeverityCritical},
+		{Source: "", Severity: alerts.SeverityInfo},
+	}, got)
+}

@@ -952,6 +952,14 @@ operations:
     responses:
       "204":
         description: The group was deleted. A group an alert rule is scoped to is a 409 until the rule is changed or deleted.
+  GET /api/v1/device-groups/{groupId}/summary:
+    responses:
+      "200":
+        description: The group's dashboard read. Each member's last poll, ordered by name, and the members' unresolved alerts by severity. An alert is a member's when its source is the member's polling target id or names its address (host:port for syslog and traps, in any IPv6 spelling); an alert two members share counts once in openAlerts. Alerts are not stored per client, so an address two clients both poll counts for both.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceGroupSummaryResponse'
   GET /api/v1/polling-targets:
     responses:
       "200":

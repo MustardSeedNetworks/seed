@@ -10,10 +10,15 @@ package devicegroups
 import (
 	"context"
 	"errors"
+	"net"
+	"net/netip"
 	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	"github.com/MustardSeedNetworks/seed/internal/polling"
 )
 
 // Field limits. A name is a label in a picker; a description is a sentence.
@@ -52,8 +57,45 @@ type Group struct {
 	UpdatedAt   time.Time
 }
 
-// Store is the persistence the use-case needs. Every call is scoped to the
-// client, so another client's group is indistinguishable from a missing one.
+// Summary is a group's dashboard read: each member's last poll and the
+// unresolved alerts the members raised.
+//
+// An alert is a member's when its source is the member's polling target id
+// (the poller's own observations: interface down, BGP, STP, routes) or names
+// the member's address (syslog and traps record "host:port"). Alerts are not
+// stored per client, so an address two clients both poll counts for both.
+type Summary struct {
+	Group      Group
+	Members    []MemberStatus
+	OpenAlerts AlertCounts
+}
+
+// MemberStatus is one member, its last poll included, and how many unresolved
+// alerts are its own.
+type MemberStatus struct {
+	Target     polling.Target
+	OpenAlerts int
+}
+
+// AlertCounts is the members' unresolved alerts by severity. Total counts each
+// alert once, including one of a severity not named here.
+type AlertCounts struct {
+	Total    int
+	Critical int
+	Error    int
+	Warning  int
+	Info     int
+}
+
+// OpenAlert is an unresolved alert's source and severity, all a summary reads.
+type OpenAlert struct {
+	Source   string
+	Severity string
+}
+
+// Store is the persistence the use-case needs. Every call that takes a client
+// is scoped to it, so another client's group is indistinguishable from a
+// missing one.
 type Store interface {
 	List(ctx context.Context, clientID string) ([]Group, error)
 	Get(ctx context.Context, clientID, id string) (Group, error)
@@ -61,6 +103,12 @@ type Store interface {
 	// replaces the group's name, description and members.
 	Save(ctx context.Context, g *Group) error
 	Delete(ctx context.Context, clientID, id string) error
+	// MemberTargets returns the members of a group the caller has already
+	// resolved within its client, ordered by name.
+	MemberTargets(ctx context.Context, groupID string) ([]polling.Target, error)
+	// OpenAlerts returns every unresolved alert, across clients; the summary
+	// keeps only its members'.
+	OpenAlerts(ctx context.Context) ([]OpenAlert, error)
 }
 
 // Service is the device-group use-case.
@@ -81,6 +129,23 @@ func (s *Service) List(ctx context.Context, clientID string) ([]Group, error) {
 // Get returns one group.
 func (s *Service) Get(ctx context.Context, clientID, id string) (Group, error) {
 	return s.store.Get(ctx, clientID, id)
+}
+
+// Summary returns the group's dashboard read.
+func (s *Service) Summary(ctx context.Context, clientID, id string) (Summary, error) {
+	g, err := s.store.Get(ctx, clientID, id)
+	if err != nil {
+		return Summary{}, err
+	}
+	targets, err := s.store.MemberTargets(ctx, g.ID)
+	if err != nil {
+		return Summary{}, err
+	}
+	open, err := s.store.OpenAlerts(ctx)
+	if err != nil {
+		return Summary{}, err
+	}
+	return summarize(g, targets, open), nil
 }
 
 // Create stores a new group and returns it as stored.
@@ -133,4 +198,58 @@ func normalize(g *Group) error {
 	slices.Sort(members)
 	g.Members = slices.Compact(members)
 	return nil
+}
+
+// summarize attributes each open alert to the members it names. An alert two
+// members share (one address polled as two targets) counts for each member and
+// once in the group's totals.
+func summarize(g Group, targets []polling.Target, open []OpenAlert) Summary {
+	sum := Summary{Group: g, Members: make([]MemberStatus, len(targets))}
+	byID := make(map[string]int, len(targets))
+	byHost := make(map[string][]int, len(targets))
+	for i, t := range targets {
+		sum.Members[i].Target = t
+		byID[t.ID] = i
+		host := Host(t.IPAddress)
+		byHost[host] = append(byHost[host], i)
+	}
+	for _, a := range open {
+		owners := byHost[Host(a.Source)]
+		if i, ok := byID[a.Source]; ok {
+			owners = []int{i}
+		}
+		if len(owners) == 0 {
+			continue
+		}
+		for _, i := range owners {
+			sum.Members[i].OpenAlerts++
+		}
+		sum.OpenAlerts.Total++
+		switch a.Severity {
+		case alerts.SeverityCritical:
+			sum.OpenAlerts.Critical++
+		case alerts.SeverityError:
+			sum.OpenAlerts.Error++
+		case alerts.SeverityWarning:
+			sum.OpenAlerts.Warning++
+		case alerts.SeverityInfo:
+			sum.OpenAlerts.Info++
+		}
+	}
+	return sum
+}
+
+// Host reduces an address ("10.0.0.1:514", "[fe80::1]:162") or a target
+// address to the host in one spelling, so a member's "2001:db8::1" and an
+// event from "[2001:DB8:0::1]:514" compare equal. It is what makes an event or
+// an alert a member's.
+func Host(addr string) string {
+	host := addr
+	if h, _, err := net.SplitHostPort(addr); err == nil {
+		host = h
+	}
+	if ip, err := netip.ParseAddr(host); err == nil {
+		return ip.Unmap().WithZone("").String()
+	}
+	return strings.ToLower(host)
 }

@@ -7,6 +7,7 @@ package api
 //   GET    /api/v1/device-groups/{groupId}    fetch one
 //   PUT    /api/v1/device-groups/{groupId}    full update, members included
 //   DELETE /api/v1/device-groups/{groupId}    delete (409 while an alert rule names it)
+//   GET    /api/v1/device-groups/{groupId}/summary  the group's dashboard read
 //
 // A group is a set of the caller's polling targets, scoped to the client on the
 // session claim as /polling-targets is. Mutations are operator+, the same as
@@ -44,6 +45,34 @@ type DeviceGroupResponse struct {
 	UpdatedAt   string   `json:"updatedAt"`
 }
 
+// DeviceGroupSummaryResponse is the group dashboard read: each member's last
+// poll and the members' unresolved alerts. An alert is a member's when its
+// source is the member's polling target id or names its address ("host:port"
+// for syslog and traps).
+type DeviceGroupSummaryResponse struct {
+	ID         string                      `json:"id"`
+	Name       string                      `json:"name"`
+	Members    []DeviceGroupMemberResponse `json:"members"`
+	OpenAlerts DeviceGroupAlertCounts      `json:"openAlerts"`
+}
+
+// DeviceGroupMemberResponse is one member and how many unresolved alerts are
+// its own. Members are ordered by name.
+type DeviceGroupMemberResponse struct {
+	Target     PollingTargetResponse `json:"target"`
+	OpenAlerts int                   `json:"openAlerts"`
+}
+
+// DeviceGroupAlertCounts is the members' unresolved alerts by severity. Total
+// counts each alert once, including one of a severity not named here.
+type DeviceGroupAlertCounts struct {
+	Total    int `json:"total"`
+	Critical int `json:"critical"`
+	Error    int `json:"error"`
+	Warning  int `json:"warning"`
+	Info     int `json:"info"`
+}
+
 // DeviceGroupListResponse is the GET /device-groups envelope.
 type DeviceGroupListResponse struct {
 	Count  int                   `json:"count"`
@@ -67,6 +96,12 @@ func (s *Server) deviceGroupRoutes() []route.Route {
 			Scope:   roles.Operator,
 			Auth:    true,
 			CSRF:    true,
+		},
+		{
+			Path:    APIVersionPrefix + "/device-groups/{groupId}/summary",
+			Handler: s.handleDeviceGroupSummary,
+			Methods: []string{http.MethodGet},
+			Auth:    true,
 		},
 	}
 }
@@ -116,6 +151,31 @@ func (s *Server) handleDeviceGroupByID(w http.ResponseWriter, r *http.Request) {
 		}
 		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, encodeDeviceGroup(g))
 	}
+}
+
+func (s *Server) handleDeviceGroupSummary(w http.ResponseWriter, r *http.Request) {
+	clientID, ok := s.callerClient(w, r)
+	if !ok {
+		return
+	}
+	sum, err := s.deviceGroups.Summary(r.Context(), clientID, r.PathValue("groupId"))
+	if err != nil {
+		writeDeviceGroupError(w, r, err)
+		return
+	}
+	members := make([]DeviceGroupMemberResponse, 0, len(sum.Members))
+	for _, m := range sum.Members {
+		members = append(members, DeviceGroupMemberResponse{
+			Target:     encodePollingTarget(&m.Target),
+			OpenAlerts: m.OpenAlerts,
+		})
+	}
+	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, DeviceGroupSummaryResponse{
+		ID:         sum.Group.ID,
+		Name:       sum.Group.Name,
+		Members:    members,
+		OpenAlerts: DeviceGroupAlertCounts(sum.OpenAlerts),
+	})
 }
 
 // saveDeviceGroup creates the group when id is blank and replaces it otherwise.
