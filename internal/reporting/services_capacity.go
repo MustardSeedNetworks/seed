@@ -35,10 +35,12 @@ const (
 // an hour's mean in whichever direction ran busier, timed at the middle of
 // the hour.
 type InterfaceUtilization struct {
-	Target  string
-	IfIndex uint32
-	IfName  string
-	Hours   []forecast.Point
+	// TargetID is the polling target's id; Target is its name.
+	TargetID string
+	Target   string
+	IfIndex  uint32
+	IfName   string
+	Hours    []forecast.Point
 }
 
 // CapacityForecast is the forecast for every interface with enough history.
@@ -46,6 +48,8 @@ type InterfaceUtilization struct {
 // reaching it soonest, then rising past the horizon, then the rest by trend.
 type CapacityForecast struct {
 	Window DateRange `json:"window"`
+	// Group names the device group the forecast is scoped to, if any.
+	Group string `json:"group,omitempty"`
 	// Threshold is CapacityThreshold, carried so the JSON reads alone.
 	Threshold  float64             `json:"threshold"`
 	Interfaces []InterfaceForecast `json:"interfaces"`
@@ -84,15 +88,25 @@ func capacityWindowEnding(now time.Time) DateRange {
 }
 
 // Forecast reads the window's interface utilization and forecasts each
-// interface.
-func (s *AggregatorService) Forecast(ctx context.Context, window DateRange) (*CapacityForecast, error) {
+// interface, or only the group's members' interfaces when group is not nil.
+func (s *AggregatorService) Forecast(
+	ctx context.Context,
+	window DateRange,
+	group *GroupScope,
+) (*CapacityForecast, error) {
 	history, err := s.metrics.InterfaceUtilizationHistory(ctx, window)
 	if err != nil {
 		return nil, fmt.Errorf("reading interface utilization: %w", err)
 	}
 
 	out := &CapacityForecast{Window: window, Threshold: CapacityThreshold, Interfaces: []InterfaceForecast{}}
+	if group != nil {
+		out.Group = group.Name
+	}
 	for _, u := range history {
+		if group != nil && !slices.Contains(group.Targets, u.TargetID) {
+			continue
+		}
 		days := busyHours(u.Hours)
 		trend, fitErr := forecast.Fit(days)
 		if fitErr != nil {
@@ -157,7 +171,7 @@ func comparePressing(a, b InterfaceForecast) int {
 // generateCapacity renders the forecast for the window generateReport stamped
 // on report.
 func (s *GeneratorService) generateCapacity(ctx context.Context, report *Report) ([]byte, error) {
-	fc, err := s.aggregator.Forecast(ctx, *report.Parameters.DateRange)
+	fc, err := s.aggregator.Forecast(ctx, *report.Parameters.DateRange, report.Parameters.Group)
 	if err != nil {
 		return nil, fmt.Errorf("forecast failed: %w", err)
 	}
@@ -184,16 +198,22 @@ func (s *GeneratorService) generateCapacityPDF(report *Report, fc *CapacityForec
 	for _, f := range fc.Interfaces {
 		counts[f.Outlook]++
 	}
+	metrics := []pdfMetric{
+		{"History", fc.Window.Start.Format(capacityDateLayout) + " to " + fc.Window.End.Format(capacityDateLayout)},
+	}
+	if fc.Group != "" {
+		metrics = append(metrics, pdfMetric{"Device group", tr(fc.Group)})
+	}
+	metrics = append(metrics,
+		pdfMetric{"Threshold", percent(fc.Threshold) + " of line rate in the busy hour"},
+		pdfMetric{"Interfaces forecast", strconv.Itoa(len(fc.Interfaces))},
+		pdfMetric{"Already over", strconv.Itoa(counts[forecast.Above])},
+		pdfMetric{"Reaching it", strconv.Itoa(counts[forecast.Rising])},
+		pdfMetric{"Too little history", strconv.Itoa(fc.ShortHistory)},
+	)
 	pdf.AddPage()
 	s.addPDFSectionHeader(pdf, "Capacity Forecast")
-	addPDFMetrics(pdf, []pdfMetric{
-		{"History", fc.Window.Start.Format(capacityDateLayout) + " to " + fc.Window.End.Format(capacityDateLayout)},
-		{"Threshold", percent(fc.Threshold) + " of line rate in the busy hour"},
-		{"Interfaces forecast", strconv.Itoa(len(fc.Interfaces))},
-		{"Already over", strconv.Itoa(counts[forecast.Above])},
-		{"Reaching it", strconv.Itoa(counts[forecast.Rising])},
-		{"Too little history", strconv.Itoa(fc.ShortHistory)},
-	})
+	addPDFMetrics(pdf, metrics)
 
 	addPDFSubsection(pdf, "Interfaces, most pressing first")
 	rows := make([][]string, 0, summaryListLimit)

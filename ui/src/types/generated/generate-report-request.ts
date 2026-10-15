@@ -8,4 +8,5 @@
 export interface GenerateReportRequest {
   type: string;
   format: string;
+  groupId?: string;
 }

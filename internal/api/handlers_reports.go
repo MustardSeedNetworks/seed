@@ -46,6 +46,8 @@ type ReportsResponse struct {
 type GenerateReportRequest struct {
 	Type   string `json:"type"   validate:"required"`
 	Format string `json:"format" validate:"required"`
+	// GroupID scopes a capacity report to one of the caller's device groups.
+	GroupID string `json:"groupId,omitempty"`
 }
 
 func toReportInfo(r *reporting.Report) ReportInfo {
@@ -137,6 +139,11 @@ func (s *Server) handleReportGenerate(w http.ResponseWriter, r *http.Request) {
 			ErrCodeValidation, i18n.FromRequest(r).T("errors.reports.invalidRequest"), "")
 		return
 	}
+	if req.GroupID != "" && reportType != reporting.ReportTypeCapacity {
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+			ErrCodeValidation, i18n.FromRequest(r).T("errors.reports.groupNeedsCapacity"), "")
+		return
+	}
 
 	// The route is gated on export_csv_json, which is Starter. The PDF audit
 	// report is sold as Pro (audit_pdf), and PDF is a value of `format` rather
@@ -155,7 +162,16 @@ func (s *Server) handleReportGenerate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	report, err := gen.Generate(r.Context(), reportType, format, nil)
+	var params *reporting.ReportParams
+	if req.GroupID != "" {
+		group, resolved := s.reportGroup(w, r, req.GroupID)
+		if !resolved {
+			return
+		}
+		params = &reporting.ReportParams{Group: group}
+	}
+
+	report, err := gen.Generate(r.Context(), reportType, format, params)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "generating report failed",
 			"event", "report.generate.failed",
@@ -168,6 +184,22 @@ func (s *Server) handleReportGenerate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, logger, http.StatusAccepted, toReportInfo(report))
+}
+
+// reportGroup resolves the caller's device group into the scope a report
+// reads, or writes the error and reports false. A group of another client is
+// not found, as it is on the device-group routes.
+func (s *Server) reportGroup(w http.ResponseWriter, r *http.Request, id string) (*reporting.GroupScope, bool) {
+	clientID, ok := s.callerClient(w, r)
+	if !ok {
+		return nil, false
+	}
+	g, err := s.deviceGroups.Get(r.Context(), clientID, id)
+	if err != nil {
+		writeDeviceGroupError(w, r, err)
+		return nil, false
+	}
+	return &reporting.GroupScope{ID: g.ID, Name: g.Name, Targets: g.Members}, true
 }
 
 // handleReportByID serves GET and DELETE on /api/v1/reports/{reportId}.
