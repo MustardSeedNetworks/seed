@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
+	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/lifecycle"
 )
@@ -137,4 +140,83 @@ func TestHandleLifecycleDevicesWithoutDiscovery(t *testing.T) {
 	s.handleLifecycleDevices(w, httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/lifecycle/devices", http.NoBody))
 	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
 	require.JSONEq(t, `{"records":0,"devices":[]}`, w.Body.String())
+}
+
+func newLifecycleFeedServer(t *testing.T) (*Server, *config.Config, string) {
+	t.Helper()
+	cfg := &config.Config{}
+	require.NoError(t, cfg.InitCredentialKeyring(t.TempDir()))
+	path := filepath.Join(t.TempDir(), "config.json")
+	s := &Server{}
+	s.lifecycleFeed = app.NewLifecycleFeed(cfg, path)
+	return s, cfg, path
+}
+
+func serveLifecycleFeed(t *testing.T, s *Server, method, body string) *httptest.ResponseRecorder {
+	t.Helper()
+	w := httptest.NewRecorder()
+	s.handleLifecycleFeed(w, httptest.NewRequest(method, APIVersionPrefix+"/lifecycle/feed", strings.NewReader(body)))
+	return w
+}
+
+func TestHandleLifecycleFeed(t *testing.T) {
+	t.Parallel()
+	s, cfg, path := newLifecycleFeedServer(t)
+
+	w := serveLifecycleFeed(t, s, http.MethodGet, "")
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	require.JSONEq(t, `{"choice":"unanswered","endpoint":"`+lifecycle.DefaultEndpoint+
+		`","tokenUrl":"`+lifecycle.DefaultOAuthURL+`","clientId":"","hasClientSecret":false,"fetched":0}`,
+		w.Body.String(), "a fresh install has not been asked and is off")
+
+	w = serveLifecycleFeed(t, s, http.MethodPut, `{"choice":"on"}`)
+	require.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+	require.Contains(t, w.Body.String(), "needs a client ID and secret")
+
+	w = serveLifecycleFeed(t, s, http.MethodPut,
+		`{"choice":"on","clientId":"seed-eox","clientSecret":"hunter22"}`)
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	require.NotContains(t, w.Body.String(), "hunter22")
+	var resp LifecycleFeedResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	require.Equal(t, lifecycle.ChoiceOn, resp.Choice)
+	require.True(t, resp.HasClientSecret)
+
+	saved, err := os.ReadFile(path)
+	require.NoError(t, err)
+	require.NotContains(t, string(saved), "hunter22", "the secret is stored as keyring ciphertext")
+	feed := cfg.Lifecycle.EoXFeed
+	require.True(t, config.IsEncrypted(feed.ClientSecret))
+	require.Empty(t, feed.Endpoint, "Cisco's endpoint is stored as the default, not copied")
+
+	// Answering off keeps the stored secret when none is re-typed.
+	w = serveLifecycleFeed(t, s, http.MethodPut, `{"choice":"off","clientId":"seed-eox"}`)
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	require.Equal(t, lifecycle.ChoiceOff, resp.Choice)
+	require.True(t, resp.HasClientSecret)
+
+	w = serveLifecycleFeed(t, s, http.MethodPut, `{"choice":"unanswered"}`)
+	require.Equal(t, http.StatusBadRequest, w.Code, "the question cannot be un-asked")
+}
+
+func TestLifecycleFeedCredentials(t *testing.T) {
+	t.Parallel()
+	_, cfg, path := newLifecycleFeedServer(t)
+	feed := app.NewLifecycleFeed(cfg, path)
+
+	_, on, err := feed.Credentials(context.Background())
+	require.NoError(t, err)
+	require.False(t, on, "unanswered is off")
+
+	require.NoError(t, feed.Update(lifecycle.FeedUpdate{
+		Choice: lifecycle.ChoiceOn, ClientID: "seed-eox", ClientSecret: "hunter22",
+	}))
+	creds, on, err := feed.Credentials(context.Background())
+	require.NoError(t, err)
+	require.True(t, on)
+	require.Equal(t, lifecycle.Credentials{
+		Endpoint: lifecycle.DefaultEndpoint, TokenURL: lifecycle.DefaultOAuthURL,
+		ClientID: "seed-eox", ClientSecret: "hunter22",
+	}, creds)
 }

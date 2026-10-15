@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/lifecycle-feed-response.schema.json",
+  "$ref": "#/$defs/LifecycleFeedResponse",
+  "$defs": {
+    "LifecycleFeedResponse": {
+      "properties": {
+        "choice": {
+          "type": "string",
+          "enum": [
+            "unanswered",
+            "off",
+            "on"
+          ]
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "tokenUrl": {
+          "type": "string"
+        },
+        "clientId": {
+          "type": "string"
+        },
+        "hasClientSecret": {
+          "type": "boolean"
+        },
+        "lastAttempt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastSuccess": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastError": {
+          "type": "string"
+        },
+        "fetched": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "choice",
+        "endpoint",
+        "tokenUrl",
+        "clientId",
+        "hasClientSecret",
+        "fetched"
+      ]
+    }
+  },
+  "title": "LifecycleFeedResponse",
+  "description": "LifecycleFeedResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

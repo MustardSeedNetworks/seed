@@ -491,6 +491,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.vulnTriage = app.NewVulnTriage(s.persistence)
 	s.flows = app.NewFlows(s.persistence)
 	s.lifecycleEoX = app.NewLifecycleStore(s.persistence)
+	s.initLifecycleFeed()
 	s.interfaceStats = app.NewInterfaceStats(s.persistence)
 	s.ipSLA = app.NewIPSLA(s.persistence)
 	s.pollingTargets = app.NewPollingTargets(s.persistence, s.pollingTargetLimit)

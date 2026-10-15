@@ -2,9 +2,10 @@
 // Seed has inventoried (P-D9): when a product stops being sold, stops getting
 // software fixes, stops getting security fixes, and stops being supported.
 //
-// Seed ships no lifecycle data and fetches none. The operator imports Cisco's
-// EoX data as a file, in the shape the Cisco EoX API returns, so an
-// air-gapped install never reaches out because of this package.
+// Seed ships no lifecycle data. The operator imports Cisco's EoX data as a
+// file, in the shape the Cisco EoX API returns, or opts in to [Refresher]
+// fetching it from that API. The feed is off until the operator turns it on,
+// so an air-gapped install never reaches out because of this package.
 package lifecycle
 
 import (
@@ -177,7 +178,11 @@ var ErrNotEoX = errors.New("not a Cisco EoX response: no EOXRecord array")
 
 // ciscoResponse is the part of a Cisco EoX API v5 response Seed reads.
 type ciscoResponse struct {
-	EOXRecord *[]ciscoRecord `json:"EOXRecord"`
+	EOXRecord  *[]ciscoRecord `json:"EOXRecord"`
+	Pagination struct {
+		PageIndex int `json:"PageIndex"`
+		LastIndex int `json:"LastIndex"`
+	} `json:"PaginationResponseRecord"`
 }
 
 type ciscoRecord struct {
@@ -219,6 +224,12 @@ func ParseCiscoEoX(data []byte) (*Table, error) {
 		pages = []ciscoResponse{page}
 	}
 
+	return tableFromPages(pages)
+}
+
+// tableFromPages builds a table from EoX API responses, skipping placeholders
+// and keeping a product ID in more than one response once.
+func tableFromPages(pages []ciscoResponse) (*Table, error) {
 	var records []EoXRecord
 	seen := map[string]bool{}
 	for _, page := range pages {
@@ -246,9 +257,25 @@ func ParseCiscoEoX(data []byte) (*Table, error) {
 	return New(records)
 }
 
+// Merge returns a table holding t's records with newer's in place of any
+// with the same product ID, so a fetch updates what it covered and keeps the
+// rest of an imported file.
+func (t *Table) Merge(newer *Table) (*Table, error) {
+	records := slices.Clone(newer.records)
+	for _, rec := range t.records {
+		if _, replaced := newer.byID[normalizeID(rec.ProductID)]; !replaced {
+			records = append(records, rec)
+		}
+	}
+	return New(records)
+}
+
 // Store keeps the imported table. An install with nothing imported has an
 // empty table.
 type Store interface {
 	EoX(ctx context.Context) (*Table, error)
 	SetEoX(ctx context.Context, table *Table) error
+	// MergeEoX replaces the stored records newer covers and keeps the rest,
+	// atomically with respect to SetEoX.
+	MergeEoX(ctx context.Context, newer *Table) error
 }

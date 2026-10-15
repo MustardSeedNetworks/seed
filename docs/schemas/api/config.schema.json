@@ -271,6 +271,9 @@
         },
         "cableTest": {
           "$ref": "#/$defs/CableTestConfig"
+        },
+        "lifecycle": {
+          "$ref": "#/$defs/LifecycleConfig"
         }
       },
       "additionalProperties": false,
@@ -540,6 +543,27 @@
         "show_public_ip",
         "unit_system"
       ]
+    },
+    "EoXFeedConfig": {
+      "properties": {
+        "choice": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "token_url": {
+          "type": "string"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "client_secret": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
     },
     "FABOptionsConfig": {
       "properties": {
@@ -1183,6 +1207,15 @@
         "launch_url",
         "enabled"
       ]
+    },
+    "LifecycleConfig": {
+      "properties": {
+        "eox_feed": {
+          "$ref": "#/$defs/EoXFeedConfig"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
     },
     "LinkConfig": {
       "properties": {
