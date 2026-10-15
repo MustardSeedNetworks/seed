@@ -4,7 +4,7 @@ import "context"
 
 // Collector executes one OID-tree gathering pass against a Target.
 // One Collector per logical OID surface (sys_info, if_table, lldp,
-// arp, fdb, routing, host_resources, bgp4_mib).
+// arp, fdb, routing, host_resources, bgp4_mib, stp).
 // Implementations live in internal/polling/snmp/collectors/.
 //
 // Collectors may emit any combination of:

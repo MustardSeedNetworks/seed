@@ -1,6 +1,6 @@
-// Package sink wires the eleven Stage A3 collector Publisher
-// interfaces (sysinfo, iftable, lldp, cdp, fdp, arp, fdb, routing,
-// hostresources, bgp4) to a single concrete sink that persists
+// Package sink wires the Stage A3 collector Publisher interfaces
+// (sysinfo, iftable, lldp, cdp, fdp, arp, fdb, routing, hostresources,
+// bgp4, stp) to a single concrete sink that persists
 // every observation into the snmp_observations table.
 //
 // One Sink instance implements every Publisher interface — that
@@ -31,6 +31,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/iftable"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/lldp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/routing"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/stp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/sysinfo"
 )
 
@@ -48,6 +49,7 @@ const (
 	KindRouting       = "routing"
 	KindHostResources = "host_resources"
 	KindBGP4          = "bgp4_mib"
+	KindSTP           = "stp"
 )
 
 // ObservationsStore is the narrowed surface the Sink needs from the
@@ -158,4 +160,9 @@ func (s *Sink) PublishHostResources(ctx context.Context, obs hostresources.Obser
 // PublishBGP4 implements [bgp4.Publisher].
 func (s *Sink) PublishBGP4(ctx context.Context, obs bgp4.Observation) error {
 	return s.persist(ctx, KindBGP4, obs.ClientID, obs.TargetID, obs.ObservedAt, obs)
+}
+
+// PublishSTP implements [stp.Publisher].
+func (s *Sink) PublishSTP(ctx context.Context, obs stp.Observation) error {
+	return s.persist(ctx, KindSTP, obs.ClientID, obs.TargetID, obs.ObservedAt, obs)
 }

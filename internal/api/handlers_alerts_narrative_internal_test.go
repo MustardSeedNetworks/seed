@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -23,6 +24,8 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 )
 
+// scriptedObservations lists newest first, as the snmp_observations
+// repository does.
 type scriptedObservations []*observation.SNMPObservation
 
 func (o scriptedObservations) List(
@@ -34,6 +37,9 @@ func (o scriptedObservations) List(
 			out = append(out, obs)
 		}
 	}
+	slices.SortStableFunc(out, func(a, b *observation.SNMPObservation) int {
+		return b.ObservedAt.Compare(a.ObservedAt)
+	})
 	return out, nil
 }
 

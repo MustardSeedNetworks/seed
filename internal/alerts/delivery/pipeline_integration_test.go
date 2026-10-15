@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -44,6 +45,8 @@ func (r *recordingStore) Create(_ context.Context, a *alerts.Alert) error {
 	return nil
 }
 
+// staticObservations returns rows newest first, as the snmp_observations
+// repository does.
 type staticObservations struct {
 	rows []*observation.SNMPObservation
 }
@@ -59,6 +62,9 @@ func (s *staticObservations) List(
 		}
 		out = append(out, row)
 	}
+	slices.SortStableFunc(out, func(a, b *observation.SNMPObservation) int {
+		return b.ObservedAt.Compare(a.ObservedAt)
+	})
 	return out, nil
 }
 

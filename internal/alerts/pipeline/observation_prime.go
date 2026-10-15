@@ -43,6 +43,8 @@ func (p *ObservationPipeline) primeOne(kind string, obs *observation.SNMPObserva
 		p.primeBGP(obs)
 	case "host_resources":
 		p.primeHostResources(obs)
+	case "stp":
+		p.primeSTP(obs)
 	}
 }
 

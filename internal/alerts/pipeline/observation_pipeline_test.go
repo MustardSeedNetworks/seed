@@ -3,6 +3,7 @@ package pipeline_test
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +13,8 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 )
 
+// fakeObservations returns rows newest first, as the snmp_observations
+// repository does (ORDER BY observed_at DESC). Tests list them oldest first.
 type fakeObservations struct {
 	rows []*observation.SNMPObservation
 }
@@ -27,6 +30,9 @@ func (f *fakeObservations) List(
 		}
 		out = append(out, row)
 	}
+	slices.SortStableFunc(out, func(a, b *observation.SNMPObservation) int {
+		return b.ObservedAt.Compare(a.ObservedAt)
+	})
 	return out, nil
 }
 
@@ -193,6 +199,30 @@ func TestObservationScanOnce_BGPStillEstablishedNoAlert(t *testing.T) {
 	_ = p.ScanOnce(context.Background())
 	if len(alerts.created) != 0 {
 		t.Errorf("steady BGP shouldn't alert, got %d", len(alerts.created))
+	}
+}
+
+// Two polls of one peer in a single scan batch: the repository lists them
+// newest first, and reading them in that order turns a peer coming up into a
+// peer leaving Established.
+func TestObservationScanOnce_BGPPeerComingUpIsNotAFlap(t *testing.T) {
+	t.Parallel()
+	alerts := &fakeAlerts{}
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
+		bgpObs(at().Add(-time.Minute), []map[string]any{
+			{"RemoteAddr": "192.0.2.1", "State": 3, "RemoteAS": 65001},
+		}),
+		bgpObs(at(), []map[string]any{
+			{"RemoteAddr": "192.0.2.1", "State": 6, "RemoteAS": 65001},
+		}),
+	}}
+	p, _ := pipeline.NewObservationPipeline(pipeline.ObservationConfig{
+		Observations: o, Alerts: alerts, Settings: newFakeSettings(),
+		Logger: silentLogger(), Now: at,
+	})
+	_ = p.ScanOnce(context.Background())
+	if len(alerts.created) != 0 {
+		t.Errorf("Active -> Established raised %d alerts, want 0", len(alerts.created))
 	}
 }
 
