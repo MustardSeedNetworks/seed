@@ -190,11 +190,11 @@ func readChunkHeader(r *bufio.Reader) (int, error) {
 		case b == '#' && len(digits) == 0:
 			return 0, expect(r, "\n")
 		case b == '\n' && len(digits) > 0:
-			n, parseErr := strconv.ParseUint(string(digits), 10, 32)
+			n, parseErr := strconv.Atoi(string(digits))
 			if parseErr != nil || n == 0 || digits[0] == '0' {
 				return 0, fmt.Errorf("%w: chunk size %q", errNetconfFraming, digits)
 			}
-			return int(n), nil
+			return n, nil
 		case b >= '0' && b <= '9' && len(digits) < maxChunkHeaderDigits:
 			digits = append(digits, b)
 		default:
