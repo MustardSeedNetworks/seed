@@ -1,6 +1,6 @@
 package database_test
 
-// 00028 rebuilds device_credentials to admit the SSH kind and adds the
+// 00029 rebuilds device_credentials to admit the SSH kind and adds the
 // configuration backup tables, and gives jobs an owning client. Existing SNMP
 // credentials, and the polling targets bound to them, survive the rebuild in
 // both directions.
@@ -17,10 +17,10 @@ const credentialRows = `SELECT group_concat(row, ';') FROM (
 	       coalesce(CAST(snmp_community_enc AS TEXT), '-') || ',' || coalesce(snmp_v3_user, '-') AS row
 	FROM device_credentials ORDER BY id)`
 
-func TestMigration00028AddsSSHCredentialsAndKeepsSNMPOnes(t *testing.T) {
+func TestMigration00029AddsSSHCredentialsAndKeepsSNMPOnes(t *testing.T) {
 	t.Parallel()
 
-	db := migrateTo(t, 27)
+	db := migrateTo(t, 28)
 	ctx := context.Background()
 
 	if _, err := db.ExecContext(ctx, `
@@ -34,7 +34,7 @@ func TestMigration00028AddsSSHCredentialsAndKeepsSNMPOnes(t *testing.T) {
 	}
 	want := "cred-a,default,v2c,-,enc:v1:x,-;cred-b,default,v3,noAuthNoPriv,-,ops"
 
-	upTo(t, db, 28)
+	upTo(t, db, 29)
 
 	if got := scanString(t, db, credentialRows); got != want {
 		t.Errorf("credentials after up = %q, want %q", got, want)
