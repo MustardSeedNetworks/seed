@@ -1592,6 +1592,19 @@ components:
                 - responseTimeMs
                 - testedAt
             type: object
+        DHCPScope:
+            additionalProperties: false
+            properties:
+                end:
+                    type: string
+                name:
+                    type: string
+                start:
+                    type: string
+            required:
+                - start
+                - end
+            type: object
         DHCPThresholds:
             additionalProperties: false
             properties:
@@ -3906,6 +3919,56 @@ components:
                 - avgRtt
                 - jitter
             type: object
+        IPAMScope:
+            additionalProperties: false
+            properties:
+                end:
+                    type: string
+                exhaustion:
+                    enum:
+                        - none
+                        - near
+                        - full
+                    type: string
+                free:
+                    type: integer
+                inUse:
+                    items:
+                        type: string
+                    type: array
+                name:
+                    type: string
+                size:
+                    type: integer
+                start:
+                    type: string
+                used:
+                    type: integer
+                utilizationPct:
+                    type: number
+            required:
+                - start
+                - end
+                - size
+                - used
+                - free
+                - utilizationPct
+                - exhaustion
+                - inUse
+            type: object
+        IPAMScopeRequest:
+            additionalProperties: false
+            properties:
+                end:
+                    type: string
+                name:
+                    type: string
+                start:
+                    type: string
+            required:
+                - start
+                - end
+            type: object
         IPAMSubnet:
             additionalProperties: false
             properties:
@@ -3943,12 +4006,17 @@ components:
         IPAMSubnetsResponse:
             additionalProperties: false
             properties:
+                scopes:
+                    items:
+                        $ref: '#/components/schemas/IPAMScope'
+                    type: array
                 subnets:
                     items:
                         $ref: '#/components/schemas/IPAMSubnet'
                     type: array
             required:
                 - subnets
+                - scopes
             type: object
         IPConfig:
             additionalProperties: false
@@ -5633,6 +5701,10 @@ components:
         NetworkDiscoveryConfig:
             additionalProperties: false
             properties:
+                dhcp_scopes:
+                    items:
+                        $ref: '#/components/schemas/DHCPScope'
+                    type: array
                 enabled:
                     type: boolean
                 fingerprinting:
@@ -13478,6 +13550,100 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
+    /api/v1/ipam/scopes:
+        delete:
+            description: Requires an operator-scoped token.
+            operationId: deleteApiV1IpamScopes
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The DHCP scope starting at the start query parameter was removed.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+        post:
+            description: Requires an operator-scoped token.
+            operationId: postApiV1IpamScopes
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/IPAMScopeRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: |
+                        The DHCP scope was added. A scope is two IPv4 addresses, start first (400 otherwise), and may not share an address with another scope (409).
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
     /api/v1/ipam/subnets:
         get:
             operationId: getApiV1IpamSubnets
@@ -13488,7 +13654,7 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/IPAMSubnetsResponse'
                     description: |
-                        The address utilization of the active interface's subnet and of every target network an operator has not dismissed. An address counts as in use when the last sweep found it or a router's ARP table held it in the last 24 hours. IPv6 networks are not listed.
+                        The address utilization of the active interface's subnet, of every target network an operator has not dismissed, and of every DHCP scope. An address counts as in use when the last sweep found it or a router's ARP table held it in the last 24 hours. IPv6 networks are not listed. A scope is near exhaustion at 90% in use and full with no address left; each climb raises a dhcp.scope.exhaustion alert.
                 "401":
                     content:
                         application/json:

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/ipam-scope-request.schema.json",
+  "$ref": "#/$defs/IPAMScopeRequest",
+  "$defs": {
+    "IPAMScopeRequest": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "start": {
+          "type": "string"
+        },
+        "end": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "start",
+        "end"
+      ]
+    }
+  },
+  "title": "IPAMScopeRequest",
+  "description": "IPAMScopeRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

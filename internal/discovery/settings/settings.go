@@ -10,10 +10,12 @@ package settings
 import (
 	"errors"
 	"net"
+	"slices"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/learn"
+	"github.com/MustardSeedNetworks/seed/internal/ipam"
 )
 
 // Sentinel errors the transport layer maps to HTTP status codes.
@@ -31,6 +33,11 @@ var (
 	ErrNotLearned = errors.New("settings: subnet was not learned")
 	// ErrInvalidDecision is returned for an answer other than added or dismissed.
 	ErrInvalidDecision = errors.New("settings: invalid learned-network decision")
+	// ErrScopeOverlaps is returned when adding a DHCP scope that shares an
+	// address with one already listed.
+	ErrScopeOverlaps = errors.New("settings: DHCP scope overlaps another")
+	// ErrScopeNotFound is returned when deleting an absent DHCP scope.
+	ErrScopeNotFound = errors.New("settings: DHCP scope not found")
 )
 
 // Store reads and persists the network-discovery configuration. Discovery
@@ -278,6 +285,54 @@ func (s *Service) DeleteSubnet(cidr string) error {
 	}
 	cur.TargetNetworks = kept
 	return s.saveAndSync(cur)
+}
+
+// Scopes returns the DHCP scopes that parse, in the order they were added.
+// The API validates every scope it adds, so one that does not parse was
+// edited into the file by hand and is left out rather than counted wrong.
+func (s *Service) Scopes() []ipam.Scope {
+	var scopes []ipam.Scope
+	for _, in := range s.store.Discovery().DHCPScopes {
+		if scope, err := ipam.ParseScope(in.Name, in.Start, in.End); err == nil {
+			scopes = append(scopes, scope)
+		}
+	}
+	return scopes
+}
+
+// AddScope validates and appends a DHCP scope. Returns ipam.ErrInvalidScope
+// for a malformed range or ErrScopeOverlaps when it shares an address with a
+// listed scope, which would count that address twice.
+func (s *Service) AddScope(name, start, end string) error {
+	scope, err := ipam.ParseScope(name, start, end)
+	if err != nil {
+		return err
+	}
+	if slices.ContainsFunc(s.Scopes(), scope.Overlaps) {
+		return ErrScopeOverlaps
+	}
+	cur := s.store.Discovery()
+	cur.DHCPScopes = append(cur.DHCPScopes, config.DHCPScope{
+		Name: name, Start: scope.Start.String(), End: scope.End.String(),
+	})
+	return s.store.SaveDiscovery(cur)
+}
+
+// DeleteScope removes the DHCP scope that starts at start. Returns
+// ErrScopeNotFound if none does.
+func (s *Service) DeleteScope(start string) error {
+	cur := s.store.Discovery()
+	kept := make([]config.DHCPScope, 0, len(cur.DHCPScopes))
+	for _, existing := range cur.DHCPScopes {
+		if existing.Start != start {
+			kept = append(kept, existing)
+		}
+	}
+	if len(kept) == len(cur.DHCPScopes) {
+		return ErrScopeNotFound
+	}
+	cur.DHCPScopes = kept
+	return s.store.SaveDiscovery(cur)
 }
 
 // saveAndSync persists the config and pushes the enabled subnet set to the live

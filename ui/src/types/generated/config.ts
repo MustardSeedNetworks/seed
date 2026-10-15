@@ -68,6 +68,7 @@ export interface NetworkDiscoveryConfig {
   options: DiscoveryOptions;
   timing: DiscoveryTiming;
   target_networks: SubnetConfig[];
+  dhcp_scopes?: DHCPScope[];
   enabled: boolean;
   scan_timeout: number;
   oui_file_path: string;
@@ -103,6 +104,11 @@ export interface SubnetConfig {
   enabled: boolean;
   learned?: boolean;
   decision?: 'added' | 'dismissed';
+}
+export interface DHCPScope {
+  name?: string;
+  start: string;
+  end: string;
 }
 export interface FingerprintingConfig {
   enabled: boolean;

@@ -573,14 +573,42 @@ operations:
     responses:
       "200":
         description: >
-          The address utilization of the active interface's subnet and of
-          every target network an operator has not dismissed. An address
-          counts as in use when the last sweep found it or a router's ARP
-          table held it in the last 24 hours. IPv6 networks are not listed.
+          The address utilization of the active interface's subnet, of
+          every target network an operator has not dismissed, and of every
+          DHCP scope. An address counts as in use when the last sweep found
+          it or a router's ARP table held it in the last 24 hours. IPv6
+          networks are not listed. A scope is near exhaustion at 90% in use
+          and full with no address left; each climb raises a
+          dhcp.scope.exhaustion alert.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/IPAMSubnetsResponse'
+  POST /api/v1/ipam/scopes:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IPAMScopeRequest'
+    responses:
+      "200":
+        description: >
+          The DHCP scope was added. A scope is two IPv4 addresses, start
+          first (400 otherwise), and may not share an address with another
+          scope (409).
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  DELETE /api/v1/ipam/scopes:
+    responses:
+      "200":
+        description: The DHCP scope starting at the start query parameter was removed.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
   POST /api/v1/jobs:
     requestBody:
       required: true

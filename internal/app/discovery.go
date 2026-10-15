@@ -69,9 +69,10 @@ func (s discoverySettingsStore) Discovery() config.NetworkDiscoveryConfig {
 	s.cfg.RLock()
 	defer s.cfg.RUnlock()
 	nd := s.cfg.NetworkDiscovery
-	// Copy the subnet slice so the service can mutate its working copy without
-	// touching the live config's backing array before SaveDiscovery commits.
+	// Copy the slices so the service can mutate its working copy without
+	// touching the live config's backing arrays before SaveDiscovery commits.
 	nd.TargetNetworks = append([]config.SubnetConfig(nil), nd.TargetNetworks...)
+	nd.DHCPScopes = append([]config.DHCPScope(nil), nd.DHCPScopes...)
 	return nd
 }
 

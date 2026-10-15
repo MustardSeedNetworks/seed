@@ -55,6 +55,7 @@ import (
 	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
 	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
+	"github.com/MustardSeedNetworks/seed/internal/ipam"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	logquery "github.com/MustardSeedNetworks/seed/internal/logs/query"
@@ -218,6 +219,9 @@ type Server struct {
 	// the pipelines emit through, kept for use-cases that raise alerts of
 	// their own; nil until initAlertPipelines runs.
 	alertWriter alertdelivery.Writer
+	// dhcpScopeWatch remembers each DHCP scope's exhaustion level between
+	// sweeps, so a scope alerts once per climb (P-D5).
+	dhcpScopeWatch ipam.Watch
 
 	// anomalyCoord is the single, server-owned anomaly Coordinator every producer
 	// shares (ADR-0029): one engine over the merged catalog + the unified store.

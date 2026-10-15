@@ -1958,6 +1958,18 @@ body:
   },
   {
     "auth": true,
+    "csrf": true,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST",
+      "DELETE"
+    ],
+    "path": "/api/v1/ipam/scopes",
+    "rateLimited": false,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
     "csrf": false,
     "feature": "live_telemetry",
     "maxBodyBytes": 262144,

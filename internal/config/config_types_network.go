@@ -173,6 +173,11 @@ type NetworkDiscoveryConfig struct {
 	// TargetNetworks to scan in full_scan or custom mode.
 	TargetNetworks []SubnetConfig `json:"target_networks"`
 
+	// DHCPScopes are the address pools the network's DHCP servers lease from
+	// (P-D5). IPAM counts each one's addresses in use and alerts as it runs
+	// out.
+	DHCPScopes []DHCPScope `json:"dhcp_scopes,omitempty"`
+
 	Enabled     bool          `json:"enabled"`       // Enable network discovery
 	ScanTimeout time.Duration `json:"scan_timeout"`  // Total scan timeout
 	OUIFilePath string        `json:"oui_file_path"` // Path to IEEE OUI file
@@ -283,6 +288,15 @@ type SubnetConfig struct {
 	// Until there is one, the network is offered for review; a dismissed one
 	// stays in the list so the learner never offers it again.
 	Decision LearnedDecision `json:"decision,omitempty" jsonschema:"enum=added,enum=dismissed"`
+}
+
+// DHCPScope is a DHCP server's address pool: the inclusive IPv4 range from
+// Start to End. Seed cannot read a pool out of an arbitrary DHCP server, so an
+// operator enters it.
+type DHCPScope struct {
+	Name  string `json:"name,omitempty"`
+	Start string `json:"start"`
+	End   string `json:"end"`
 }
 
 // LearnedDecision is the operator's answer to a learned target network. The
