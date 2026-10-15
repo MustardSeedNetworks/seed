@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.263.0](https://github.com/MustardSeedNetworks/seed/compare/v0.262.0...v0.263.0) (2026-10-15)
+
+
+### Features
+
+* **ip-sla:** trend read path and failure alerts for IP-SLA operations (P-D8) ([#3467](https://github.com/MustardSeedNetworks/seed/issues/3467)) ([23d0c53](https://github.com/MustardSeedNetworks/seed/commit/23d0c536315e3a67f14f5fc963686453c9d09f24)), closes [#3463](https://github.com/MustardSeedNetworks/seed/issues/3463)
+
+
+### Bug Fixes
+
+* **setup:** read the first-run setup token from a host file ([#3469](https://github.com/MustardSeedNetworks/seed/issues/3469)) ([3619be1](https://github.com/MustardSeedNetworks/seed/commit/3619be1bb92509af93c7b34c554c27a8fb9a68ef))
+
+
+### Code Refactoring
+
+* **api:** hold an opaque app.Persistence instead of the database ([#3474](https://github.com/MustardSeedNetworks/seed/issues/3474)) ([332b722](https://github.com/MustardSeedNetworks/seed/commit/332b7227d7536cbb9f22d7b16e4e51ca16dfbff3))
+
+
+### Tests
+
+* **discovery:** skip loopback ICMP round trips when the host drops them ([#3477](https://github.com/MustardSeedNetworks/seed/issues/3477)) ([0a8117b](https://github.com/MustardSeedNetworks/seed/commit/0a8117ba1e08e59d5983af51a81883335f6d205d)), closes [#2905](https://github.com/MustardSeedNetworks/seed/issues/2905)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3473](https://github.com/MustardSeedNetworks/seed/issues/3473)) ([a07f68c](https://github.com/MustardSeedNetworks/seed/commit/a07f68c9692c554ae81c8b39a37db8a8d74144fd))
+* **deps:** lock file maintenance ([#3476](https://github.com/MustardSeedNetworks/seed/issues/3476)) ([4e3a8ea](https://github.com/MustardSeedNetworks/seed/commit/4e3a8ea6692ebb3c0c99821f5aaca6f695af5ebd))
+* **deps:** update github/codeql-action action to v4.38.3 ([#3470](https://github.com/MustardSeedNetworks/seed/issues/3470)) ([becbf84](https://github.com/MustardSeedNetworks/seed/commit/becbf843bb389e84a9d86c0851c25b138b7c796b))
+
 ## [0.262.0](https://github.com/MustardSeedNetworks/seed/compare/v0.261.0...v0.262.0) (2026-10-15)
 
 
