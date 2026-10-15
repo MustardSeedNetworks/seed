@@ -47,10 +47,14 @@ on:
   # CI succeeds on main, with write access, which pull_request cannot give.
   # The usual workflow_run hazard is checking out the triggering run's
   # untrusted head — this workflow performs no checkout at all, and is gated
-  # on branches:[main] + conclusion == 'success'.
+  # on conclusion == 'success' from this repository (never a fork).
+  #
+  # The release branch is listed so the release PR's own CI completing runs
+  # the enqueue step: the PR can only enter the queue once its checks are
+  # green, and nothing else fires at that moment (G-18).
   workflow_run:
     workflows: ["CI"]
-    branches: [main]
+    branches: [main, release-please--branches--main]
     types: [completed]
   # Offset from the hour so the fleet's four repos do not all fire at :00.
   schedule:
@@ -77,7 +81,9 @@ jobs:
   release-please:
     # Only run if CI succeeded — or if this is the reconciling schedule or a
     # manual dispatch, neither of which carries a workflow_run to gate on.
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    # A fork PR can name its branch release-please--branches--main too; its CI
+    # run must not drive this workflow.
+    if: ${{ github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository) }}
     name: Release Please
     runs-on: ubuntu-latest
     permissions:
@@ -169,26 +175,39 @@ jobs:
       # whether someone happens to look. Nothing about merging it is
       # a judgement call -- release-please generates the changelog and the
       # version bump from the commits already on main, and CI Complete still
-      # has to go green before the queue takes it. Arming auto-merge makes a
-      # release land on its own within one schedule tick.
+      # has to go green before the queue takes it. Enqueuing it here makes a
+      # release land on its own.
       #
-      # Not the same as merging blind: auto-merge waits for every required
-      # check exactly as a human clicking merge would. What it removes is the
-      # clicking, which is the part that was silently not happening.
+      # It goes to the FRONT of the merge queue (`jump: true`), and only once
+      # its required checks have passed. Auto-merge enqueued it at the back
+      # when its checks went green, so PRs already queued merged ahead of it;
+      # its merge group then held commits its changelog never lists, `Release
+      # Notes` ejected it, release-please regenerated it, and the loop repeated
+      # (seed#3484 was ejected three times on 2026-10-15; G-18). At the front,
+      # its merge group is main plus the release, and the freshness check
+      # below has just confirmed that is the main the changelog describes. A
+      # group already merging when the jump lands can still beat it once;
+      # that costs one regeneration, not a loop.
+      #
+      # Not the same as merging blind: the queue still runs every required
+      # check on the merge group, exactly as for any other PR.
       #
       # To hold a release deliberately, label the PR `release: hold` -- this
       # step then leaves it alone and it stays a manual merge.
       #
-      # `--auto` with no method on purpose: the merge queue owns the strategy
-      # and `--auto --squash` is refused outright.
+      # No merge method is passed: the merge queue owns the strategy.
       # This job performs no checkout (see the workflow_run note at the top), so
       # gh has no repository to infer: without --repo both calls died with
       # "failed to run git: fatal: not a git repository" on every scheduled
       # tick after this step landed, and the job went red fleet-wide.
-      - name: Arm auto-merge on the release PR
+      - name: Enqueue the release PR at the front of the merge queue
         if: steps.queue.outputs.queued != 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ENQUEUE: >-
+            mutation($id: ID!) {
+              enqueuePullRequest(input: {pullRequestId: $id, jump: true}) { mergeQueueEntry { position } }
+            }
         run: |
           set -euo pipefail
           # `.[0] | select(...)` looked right and failed on the common case:
@@ -222,8 +241,8 @@ jobs:
             fi
           fi
           pr="$(gh pr list --repo "${GITHUB_REPOSITORY}" --head release-please--branches--main --state open \
-                  --json number,labels \
-                  --jq '[.[] | select((.labels | map(.name) | index("release: hold")) | not) | .number] | first // empty')"
+                  --json number,labels,isCrossRepository \
+                  --jq '[.[] | select(.isCrossRepository | not) | select((.labels | map(.name) | index("release: hold")) | not) | .number] | first // empty')"
           if [ -z "${pr}" ]; then
             echo "No open release PR to arm, or it carries release: hold."
             exit 0
@@ -261,12 +280,17 @@ jobs:
             echo "It does not yet describe main; leaving it unarmed for this tick."
             exit 0
           fi
-          echo "Arming auto-merge on #${pr}"
-          # Already queued is the steady state on the second and later ticks,
-          # and is not a failure.
-          gh pr merge --repo "${GITHUB_REPOSITORY}" "${pr}" --auto 2>&1 | tee /tmp/arm.log || {
-            grep -q "already queued to merge" /tmp/arm.log || exit 1
-          }
+          # Pending or failed checks wait: the release PR's own CI completing
+          # runs this workflow again (see the workflow_run trigger).
+          if ! gh pr checks --repo "${GITHUB_REPOSITORY}" "${pr}" --required; then
+            echo "Release PR #${pr}'s required checks have not all passed; not enqueuing yet."
+            exit 0
+          fi
+          echo "Enqueuing #${pr} at the front of the merge queue"
+          gh api graphql \
+            -f id="$(gh pr view --repo "${GITHUB_REPOSITORY}" "${pr}" --json id --jq .id)" \
+            -f query="${ENQUEUE}" \
+            --jq '"queued at position \(.data.enqueuePullRequest.mergeQueueEntry.position)"'
 
       - name: Output release info
         if: steps.release.outputs.release_created
