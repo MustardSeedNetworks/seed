@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.261.0](https://github.com/MustardSeedNetworks/seed/compare/v0.260.0...v0.261.0) (2026-10-15)
+
+
+### Features
+
+* **alerts:** alert on withdrawn and re-routed prefixes (P-D7) ([#3453](https://github.com/MustardSeedNetworks/seed/issues/3453)) ([56390cd](https://github.com/MustardSeedNetworks/seed/commit/56390cd60ed6d29cb2fda7c178e51f089301b53e)), closes [#3451](https://github.com/MustardSeedNetworks/seed/issues/3451)
+
 ## [0.260.0](https://github.com/MustardSeedNetworks/seed/compare/v0.259.0...v0.260.0) (2026-10-15)
 
 
