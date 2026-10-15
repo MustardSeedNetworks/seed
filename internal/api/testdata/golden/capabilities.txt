@@ -2012,6 +2012,31 @@ body:
   },
   {
     "auth": true,
+    "csrf": true,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "path": "/api/v1/device-groups",
+    "rateLimited": false,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT",
+      "DELETE"
+    ],
+    "path": "/api/v1/device-groups/{groupId}",
+    "rateLimited": false,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
     "csrf": false,
     "feature": "live_telemetry",
     "maxBodyBytes": 262144,

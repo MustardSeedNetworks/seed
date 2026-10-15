@@ -18,7 +18,7 @@ func TestCompileRulesFromDB_LiteralTitlePassesThrough(t *testing.T) {
 		AlertTitle:   "Static title with no template syntax",
 		AlertMessage: "Static message",
 	}
-	rule := pipeline.CompileRulesFromDB([]*alerts.Rule{row})[0]
+	rule := pipeline.CompileRulesFromDB([]*alerts.Rule{row}, nil)[0]
 	alert := rule.Build(&listener.EventRecord{SourceAddr: "10.0.0.1"})
 	if alert.Title != "Static title with no template syntax" {
 		t.Errorf("literal title was mutated: %q", alert.Title)
@@ -33,7 +33,7 @@ func TestCompileRulesFromDB_TemplateRendersSourceAddr(t *testing.T) {
 		AlertTitle:   "{{.SourceAddr}} reported {{.Severity}}",
 		AlertMessage: "Event arrived from {{.SourceAddr}}",
 	}
-	rule := pipeline.CompileRulesFromDB([]*alerts.Rule{row})[0]
+	rule := pipeline.CompileRulesFromDB([]*alerts.Rule{row}, nil)[0]
 	alert := rule.Build(&listener.EventRecord{
 		SourceAddr:  "10.0.0.1:514",
 		Severity:    "error",
@@ -55,7 +55,7 @@ func TestCompileRulesFromDB_TemplateAccessesPayload(t *testing.T) {
 		AlertType: alerts.TypeSystem, AlertSeverity: alerts.SeverityError,
 		AlertTitle: "Saw {{.Payload.message}}",
 	}
-	rule := pipeline.CompileRulesFromDB([]*alerts.Rule{row})[0]
+	rule := pipeline.CompileRulesFromDB([]*alerts.Rule{row}, nil)[0]
 	payload, _ := json.Marshal(map[string]any{"message": "interface eth0 down"})
 	alert := rule.Build(&listener.EventRecord{
 		SourceAddr:  "10.0.0.1",
@@ -75,7 +75,7 @@ func TestCompileRulesFromDB_BrokenTemplateFallsBackToLiteral(t *testing.T) {
 		AlertTitle: "Unclosed {{ template",
 	}
 	// Should not panic + rule should still load.
-	rules := pipeline.CompileRulesFromDB([]*alerts.Rule{row})
+	rules := pipeline.CompileRulesFromDB([]*alerts.Rule{row}, nil)
 	if len(rules) != 1 {
 		t.Fatalf("got %d rules, want 1 (broken template should not drop the rule)", len(rules))
 	}
@@ -95,7 +95,7 @@ func TestCompileRulesFromDB_MissingPayloadFieldRendersZero(t *testing.T) {
 		AlertType: alerts.TypeSystem, AlertSeverity: alerts.SeverityError,
 		AlertTitle: "Saw {{.Payload.nonexistent}}",
 	}
-	rule := pipeline.CompileRulesFromDB([]*alerts.Rule{row})[0]
+	rule := pipeline.CompileRulesFromDB([]*alerts.Rule{row}, nil)[0]
 	alert := rule.Build(&listener.EventRecord{
 		SourceAddr:  "10.0.0.1",
 		PayloadJSON: `{"message":"hello"}`,
@@ -115,7 +115,7 @@ func TestCompileRulesFromDB_PayloadDecodeFailureRendersEmptyMap(t *testing.T) {
 		AlertType: alerts.TypeSystem, AlertSeverity: alerts.SeverityError,
 		AlertTitle: "Got {{.Kind}}",
 	}
-	rule := pipeline.CompileRulesFromDB([]*alerts.Rule{row})[0]
+	rule := pipeline.CompileRulesFromDB([]*alerts.Rule{row}, nil)[0]
 	alert := rule.Build(&listener.EventRecord{
 		SourceAddr:  "10.0.0.1",
 		Kind:        "syslog-udp",
@@ -133,7 +133,7 @@ func TestCompileRulesFromDB_TemplateAccessesMatchedRuleName(t *testing.T) {
 		AlertType: alerts.TypeSystem, AlertSeverity: alerts.SeverityError,
 		AlertTitle: "Rule {{.MatchedRuleName}} fired",
 	}
-	rule := pipeline.CompileRulesFromDB([]*alerts.Rule{row})[0]
+	rule := pipeline.CompileRulesFromDB([]*alerts.Rule{row}, nil)[0]
 	alert := rule.Build(&listener.EventRecord{SourceAddr: "10.0.0.1"})
 	if alert.Title != "Rule my-rule fired" {
 		t.Errorf("title = %q, want \"Rule my-rule fired\"", alert.Title)

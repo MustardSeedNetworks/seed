@@ -37,8 +37,11 @@ type Rule struct {
 	AlertMessage         string
 	WindowSeconds        int
 	ThresholdCount       int
-	CreatedAt            time.Time
-	UpdatedAt            time.Time
+	// GroupID scopes the rule to a device group's members (P-D10); empty
+	// matches every source.
+	GroupID   string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // Store is the persistence surface the rule use-case needs, defined at the

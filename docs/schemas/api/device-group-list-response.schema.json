@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/device-group-list-response.schema.json",
+  "$ref": "#/$defs/DeviceGroupListResponse",
+  "$defs": {
+    "DeviceGroupListResponse": {
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "groups": {
+          "items": {
+            "$ref": "#/$defs/DeviceGroupResponse"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "count",
+        "groups"
+      ]
+    },
+    "DeviceGroupResponse": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "members": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "description",
+        "members",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "title": "DeviceGroupListResponse",
+  "description": "DeviceGroupListResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

@@ -41,6 +41,9 @@
         "thresholdCount": {
           "type": "integer"
         },
+        "groupId": {
+          "type": "string"
+        },
         "createdAt": {
           "type": "string"
         },
@@ -63,6 +66,7 @@
         "alertMessage",
         "windowSeconds",
         "thresholdCount",
+        "groupId",
         "createdAt",
         "updatedAt"
       ]

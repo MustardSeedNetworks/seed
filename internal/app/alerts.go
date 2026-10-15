@@ -46,6 +46,7 @@ func toAppRule(r *alerts.Rule) rules.Rule {
 		AlertMessage:         r.AlertMessage,
 		WindowSeconds:        r.WindowSeconds,
 		ThresholdCount:       r.ThresholdCount,
+		GroupID:              r.GroupID,
 		CreatedAt:            r.CreatedAt,
 		UpdatedAt:            r.UpdatedAt,
 	}
@@ -65,6 +66,7 @@ func toDBRule(r rules.Rule) *alerts.Rule {
 		AlertMessage:         r.AlertMessage,
 		WindowSeconds:        r.WindowSeconds,
 		ThresholdCount:       r.ThresholdCount,
+		GroupID:              r.GroupID,
 		CreatedAt:            r.CreatedAt,
 		UpdatedAt:            r.UpdatedAt,
 	}
@@ -73,6 +75,11 @@ func toDBRule(r rules.Rule) *alerts.Rule {
 func mapAlertRuleErr(err error) error {
 	if errors.Is(err, alerts.ErrRuleNotFound) {
 		return rules.ErrNotFound
+	}
+	// The repo signals validation failures with an "alert_rules:" prefix;
+	// surface them verbatim so the handler returns a 400 with the message.
+	if err != nil && strings.HasPrefix(err.Error(), "alert_rules:") {
+		return &rules.ValidationError{Msg: err.Error()}
 	}
 	return err
 }
@@ -100,12 +107,7 @@ func (a alertRuleStore) Get(ctx context.Context, id int64) (rules.Rule, error) {
 func (a alertRuleStore) Create(ctx context.Context, r rules.Rule) (rules.Rule, error) {
 	row := toDBRule(r)
 	if err := a.db().AlertRules().Create(ctx, row); err != nil {
-		// The repo signals validation failures with an "alert_rules:" prefix;
-		// surface them verbatim so the handler returns a 400 with the message.
-		if strings.HasPrefix(err.Error(), "alert_rules:") {
-			return rules.Rule{}, &rules.ValidationError{Msg: err.Error()}
-		}
-		return rules.Rule{}, err
+		return rules.Rule{}, mapAlertRuleErr(err)
 	}
 	return toAppRule(row), nil
 }

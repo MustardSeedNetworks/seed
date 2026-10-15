@@ -62,7 +62,7 @@ func dbRule(name, kind, severity, contains string, enabled bool) *alertmodel.Rul
 
 func TestCompileRulesFromDB_EmptySliceReturnsEmpty(t *testing.T) {
 	t.Parallel()
-	got := pipeline.CompileRulesFromDB(nil)
+	got := pipeline.CompileRulesFromDB(nil, nil)
 	if len(got) != 0 {
 		t.Errorf("nil input -> %d rules, want 0 (caller falls back to defaults)", len(got))
 	}
@@ -74,7 +74,7 @@ func TestCompileRulesFromDB_DisabledRowsSkipped(t *testing.T) {
 		dbRule("active", "syslog-udp", "error", "", true),
 		dbRule("inactive", "syslog-udp", "error", "", false),
 	}
-	got := pipeline.CompileRulesFromDB(rows)
+	got := pipeline.CompileRulesFromDB(rows, nil)
 	if len(got) != 1 {
 		t.Fatalf("got %d compiled rules, want 1 (disabled row should be filtered)", len(got))
 	}
@@ -88,7 +88,7 @@ func TestCompileRulesFromDB_MatchKindFilter(t *testing.T) {
 	rows := []*alertmodel.Rule{
 		dbRule("syslog-only", "syslog-udp", "", "", true),
 	}
-	rules := pipeline.CompileRulesFromDB(rows)
+	rules := pipeline.CompileRulesFromDB(rows, nil)
 	if len(rules) != 1 {
 		t.Fatalf("got %d rules, want 1", len(rules))
 	}
@@ -110,7 +110,7 @@ func TestCompileRulesFromDB_MatchKindEmptyMatchesAll(t *testing.T) {
 	rows := []*alertmodel.Rule{
 		dbRule("any-kind", "", "", "", true),
 	}
-	rule := pipeline.CompileRulesFromDB(rows)[0]
+	rule := pipeline.CompileRulesFromDB(rows, nil)[0]
 	if !rule.Match(&listener.EventRecord{Kind: "syslog-udp"}) {
 		t.Error("empty match_kind should match syslog-udp")
 	}
@@ -124,7 +124,7 @@ func TestCompileRulesFromDB_MatchSeverityFilter(t *testing.T) {
 	rows := []*alertmodel.Rule{
 		dbRule("error-only", "syslog-udp", "error", "", true),
 	}
-	rule := pipeline.CompileRulesFromDB(rows)[0]
+	rule := pipeline.CompileRulesFromDB(rows, nil)[0]
 	if !rule.Match(&listener.EventRecord{Kind: "syslog-udp", Severity: "error"}) {
 		t.Error("severity=error should match")
 	}
@@ -138,7 +138,7 @@ func TestCompileRulesFromDB_MatchPayloadContainsSubstring(t *testing.T) {
 	rows := []*alertmodel.Rule{
 		dbRule("link-state", "syslog-udp", "", "link state", true),
 	}
-	rule := pipeline.CompileRulesFromDB(rows)[0]
+	rule := pipeline.CompileRulesFromDB(rows, nil)[0]
 
 	payload, _ := json.Marshal(map[string]string{"message": "interface eth0 link state changed to down"})
 	matching := &listener.EventRecord{Kind: "syslog-udp", PayloadJSON: string(payload)}
@@ -164,7 +164,7 @@ func TestCompileRulesFromDB_BuildPopulatesAlertFields(t *testing.T) {
 			AlertMessage:  "Saw an interface-down event",
 		},
 	}
-	rule := pipeline.CompileRulesFromDB(rows)[0]
+	rule := pipeline.CompileRulesFromDB(rows, nil)[0]
 	alert := rule.Build(&listener.EventRecord{
 		Kind: "syslog-udp", SourceAddr: "10.0.0.1:514",
 		PayloadJSON: `{"message":"eth0 down"}`,
@@ -199,7 +199,7 @@ func TestCompileRulesFromDB_StableFingerprintID(t *testing.T) {
 		AlertType: alertmodel.TypeSystem, AlertSeverity: alertmodel.SeverityInfo,
 		AlertTitle: "x",
 	}}
-	rule := pipeline.CompileRulesFromDB(rows)[0]
+	rule := pipeline.CompileRulesFromDB(rows, nil)[0]
 	if rule.ID != "db.7" {
 		t.Errorf("rule.ID = %q, want db.7 (used in suppression fingerprint)", rule.ID)
 	}

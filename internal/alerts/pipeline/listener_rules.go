@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
@@ -76,7 +77,16 @@ func (p *ListenerPipeline) ReloadRules(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	compiled := CompileRulesFromDB(rows)
+	// Group membership is read only when a rule is scoped to a group. A
+	// failed read fails the reload, so the previous ruleset stays in force
+	// rather than compiling scoped rules against nothing.
+	var groups map[string][]string
+	if p.groups != nil && slices.ContainsFunc(rows, func(r *alerts.Rule) bool { return r.GroupID != "" }) {
+		if groups, err = p.groups.MemberAddresses(ctx); err != nil {
+			return err
+		}
+	}
+	compiled := CompileRulesFromDB(rows, groups)
 	var next []Rule
 	var usingDefaults bool
 	if len(compiled) == 0 {

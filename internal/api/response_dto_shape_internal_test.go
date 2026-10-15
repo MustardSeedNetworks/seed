@@ -401,7 +401,7 @@ func TestAlertRuleResponseShape(t *testing.T) {
 
 	// Every key is always sent, empty match filters included.
 	require.Equal(t, []string{
-		"alertMessage", "alertSeverity", "alertTitle", "alertType", "createdAt", "enabled",
+		"alertMessage", "alertSeverity", "alertTitle", "alertType", "createdAt", "enabled", "groupId",
 		"id", "matchKind", "matchPayloadContains", "matchSeverity", "name",
 		"thresholdCount", "updatedAt", "windowSeconds",
 	}, topLevelKeys(t, one.Body.Bytes()))

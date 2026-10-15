@@ -10,6 +10,10 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
 )
 
+// errUnknownRuleGroup is a rule naming a device group that does not exist. Its
+// "alert_rules:" prefix makes it a validation error at the use-case boundary.
+var errUnknownRuleGroup = errors.New("alert_rules: groupId does not name a device group")
+
 // AlertRulesRepository owns CRUD over alert_rules.
 type AlertRulesRepository struct {
 	db *DB
@@ -61,9 +65,9 @@ func (r *AlertRulesRepository) Create(ctx context.Context, rule *alerts.Rule) er
 		INSERT INTO alert_rules
 		  (name, enabled, match_kind, match_severity, match_payload_contains,
 		   alert_type, alert_severity, alert_title, alert_message,
-		   window_seconds, threshold_count,
+		   window_seconds, threshold_count, group_id,
 		   created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`,
 		rule.Name, enabled,
 		toNullString(rule.MatchKind),
@@ -71,9 +75,12 @@ func (r *AlertRulesRepository) Create(ctx context.Context, rule *alerts.Rule) er
 		toNullString(rule.MatchPayloadContains),
 		rule.AlertType, rule.AlertSeverity,
 		rule.AlertTitle, rule.AlertMessage,
-		rule.WindowSeconds, rule.ThresholdCount,
+		rule.WindowSeconds, rule.ThresholdCount, toNullString(rule.GroupID),
 		now.Format(time.RFC3339Nano), now.Format(time.RFC3339Nano),
 	)
+	if isForeignKeyConstraintError(err) {
+		return errUnknownRuleGroup
+	}
 	if err != nil {
 		return fmt.Errorf("create alert_rule: %w", err)
 	}
@@ -88,7 +95,7 @@ func (r *AlertRulesRepository) Get(ctx context.Context, id int64) (*alerts.Rule,
 	row := r.db.QueryRow(ctx, `
 		SELECT id, name, enabled, match_kind, match_severity, match_payload_contains,
 		       alert_type, alert_severity, alert_title, alert_message,
-		       window_seconds, threshold_count,
+		       window_seconds, threshold_count, group_id,
 		       created_at, updated_at
 		FROM alert_rules WHERE id = ?
 	`, id)
@@ -102,7 +109,7 @@ func (r *AlertRulesRepository) List(ctx context.Context, enabledOnly bool) ([]*a
 	query := `
 		SELECT id, name, enabled, match_kind, match_severity, match_payload_contains,
 		       alert_type, alert_severity, alert_title, alert_message,
-		       window_seconds, threshold_count,
+		       window_seconds, threshold_count, group_id,
 		       created_at, updated_at
 		FROM alert_rules
 	`
@@ -132,7 +139,7 @@ func (r *AlertRulesRepository) Update(ctx context.Context, rule *alerts.Rule) er
 			name = ?, enabled = ?,
 			match_kind = ?, match_severity = ?, match_payload_contains = ?,
 			alert_type = ?, alert_severity = ?, alert_title = ?, alert_message = ?,
-			window_seconds = ?, threshold_count = ?,
+			window_seconds = ?, threshold_count = ?, group_id = ?,
 			updated_at = ?
 		WHERE id = ?
 	`,
@@ -142,10 +149,13 @@ func (r *AlertRulesRepository) Update(ctx context.Context, rule *alerts.Rule) er
 		toNullString(rule.MatchPayloadContains),
 		rule.AlertType, rule.AlertSeverity,
 		rule.AlertTitle, rule.AlertMessage,
-		rule.WindowSeconds, rule.ThresholdCount,
+		rule.WindowSeconds, rule.ThresholdCount, toNullString(rule.GroupID),
 		time.Now().UTC().Format(time.RFC3339Nano),
 		rule.ID,
 	)
+	if isForeignKeyConstraintError(err) {
+		return errUnknownRuleGroup
+	}
 	if err != nil {
 		return fmt.Errorf("update alert_rule: %w", err)
 	}
@@ -176,6 +186,7 @@ func scanAlertRule(scan func(...any) error) (*alerts.Rule, error) {
 		matchKind    sql.NullString
 		matchSev     sql.NullString
 		matchPayload sql.NullString
+		groupID      sql.NullString
 		createdStr   string
 		updatedStr   string
 	)
@@ -184,7 +195,7 @@ func scanAlertRule(scan func(...any) error) (*alerts.Rule, error) {
 		&matchKind, &matchSev, &matchPayload,
 		&rule.AlertType, &rule.AlertSeverity,
 		&rule.AlertTitle, &rule.AlertMessage,
-		&rule.WindowSeconds, &rule.ThresholdCount,
+		&rule.WindowSeconds, &rule.ThresholdCount, &groupID,
 		&createdStr, &updatedStr,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -203,6 +214,7 @@ func scanAlertRule(scan func(...any) error) (*alerts.Rule, error) {
 	if matchPayload.Valid {
 		rule.MatchPayloadContains = matchPayload.String
 	}
+	rule.GroupID = groupID.String
 	if parsed, perr := time.Parse(time.RFC3339Nano, createdStr); perr == nil {
 		rule.CreatedAt = parsed
 	}

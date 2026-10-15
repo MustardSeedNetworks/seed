@@ -37,7 +37,7 @@ func runScanWithEvents(
 	// Now func.
 	fakeEv := &fakeEvents{}
 	alerts := &fakeAlerts{}
-	rules := pipeline.CompileRulesFromDB([]*alertmodel.Rule{rule})
+	rules := pipeline.CompileRulesFromDB([]*alertmodel.Rule{rule}, nil)
 	currentNow := events[0].ObservedAt
 	p, _ := pipeline.NewListenerPipeline(pipeline.ListenerConfig{
 		Events:   fakeEv,

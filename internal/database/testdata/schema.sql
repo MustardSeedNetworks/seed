@@ -105,6 +105,9 @@ CREATE INDEX idx_device_credentials_name   ON device_credentials(name);
 -- index: idx_device_device_config_backups_target
 CREATE INDEX idx_device_device_config_backups_target ON device_config_backups(client_id, target_id, taken_at);
 
+-- index: idx_device_group_members_target
+CREATE INDEX idx_device_group_members_target ON device_group_members(target_id);
+
 -- index: idx_device_vulns_cve
 CREATE INDEX idx_device_vulns_cve ON device_vulnerabilities(cve_id);
 
@@ -440,7 +443,7 @@ CREATE TABLE alert_rules (
 				alert_message TEXT NOT NULL,
 				created_at TEXT NOT NULL,
 				updated_at TEXT NOT NULL
-			, window_seconds INTEGER NOT NULL DEFAULT 0, threshold_count INTEGER NOT NULL DEFAULT 1) STRICT;
+			, window_seconds INTEGER NOT NULL DEFAULT 0, threshold_count INTEGER NOT NULL DEFAULT 1, group_id TEXT REFERENCES device_groups(id) ON DELETE RESTRICT) STRICT;
 
 -- table: alert_suppressions
 CREATE TABLE alert_suppressions (
@@ -653,6 +656,24 @@ CREATE TABLE "device_credentials" (
 					snmp_v3_auth_enc IS NOT NULL AND snmp_v3_auth_proto IS NOT NULL
 					AND snmp_v3_priv_enc IS NOT NULL AND snmp_v3_priv_proto IS NOT NULL
 				))
+			) STRICT;
+
+-- table: device_group_members
+CREATE TABLE device_group_members (
+				group_id  TEXT NOT NULL REFERENCES device_groups(id) ON DELETE CASCADE,
+				target_id TEXT NOT NULL REFERENCES polling_targets(id) ON DELETE CASCADE,
+				PRIMARY KEY (group_id, target_id)
+			) STRICT;
+
+-- table: device_groups
+CREATE TABLE device_groups (
+				id          TEXT NOT NULL PRIMARY KEY,
+				client_id   TEXT NOT NULL REFERENCES clients(id),
+				name        TEXT NOT NULL CHECK (name <> ''),
+				description TEXT NOT NULL DEFAULT '',
+				created_at  TEXT NOT NULL,
+				updated_at  TEXT NOT NULL,
+				UNIQUE (client_id, name)
 			) STRICT;
 
 -- table: device_vulnerabilities

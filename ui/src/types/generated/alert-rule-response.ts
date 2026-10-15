@@ -18,6 +18,7 @@ export interface AlertRuleResponse {
   alertMessage: string;
   windowSeconds: number;
   thresholdCount: number;
+  groupId: string;
   createdAt: string;
   updatedAt: string;
 }

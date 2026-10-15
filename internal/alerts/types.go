@@ -287,8 +287,11 @@ type Rule struct {
 	AlertMessage         string
 	WindowSeconds        int
 	ThresholdCount       int
-	CreatedAt            time.Time
-	UpdatedAt            time.Time
+	// GroupID names a device group (P-D10); the rule then matches only events
+	// from the group's members. Empty matches every source.
+	GroupID   string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // ListOptions narrows an alert list query — empty values disable that filter.
