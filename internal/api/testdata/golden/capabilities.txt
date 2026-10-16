@@ -2133,6 +2133,49 @@ body:
   },
   {
     "auth": true,
+    "csrf": false,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/autotest/results",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "feature": "export_csv_json",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/autotest/results/import",
+    "rateLimited": false,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/autotest/results/{resultId}",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "feature": "export_csv_json",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/autotest/results/{resultId}/export",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
     "csrf": true,
     "maxBodyBytes": 65536,
     "methods": [

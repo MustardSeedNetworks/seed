@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/autotest-result-list-response.schema.json",
+  "$ref": "#/$defs/AutotestResultListResponse",
+  "$defs": {
+    "AutotestResultListResponse": {
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "results": {
+          "items": {
+            "$ref": "#/$defs/Report"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "count",
+        "results"
+      ]
+    },
+    "Reading": {
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "label",
+        "value"
+      ]
+    },
+    "Report": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "interface": {
+          "type": "string"
+        },
+        "jackLabel": {
+          "type": "string"
+        },
+        "assetTag": {
+          "type": "string"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "warn",
+            "fail"
+          ]
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "durationMs": {
+          "type": "integer"
+        },
+        "stages": {
+          "items": {
+            "$ref": "#/$defs/StageReport"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "interface",
+        "verdict",
+        "startedAt",
+        "durationMs",
+        "stages"
+      ]
+    },
+    "StageReport": {
+      "properties": {
+        "stage": {
+          "type": "string",
+          "enum": [
+            "link",
+            "cable",
+            "dhcp",
+            "dns",
+            "gateway",
+            "vlan",
+            "internet"
+          ]
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "warn",
+            "fail",
+            "skipped"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "noCarrier",
+            "halfDuplex",
+            "linkUp",
+            "unsupported",
+            "cableFault",
+            "incompleteLease",
+            "noAddress",
+            "leaseExpired",
+            "noLeaseFound",
+            "slow",
+            "noResolvers",
+            "noAnswer",
+            "lossy",
+            "noGateway",
+            "unreachable",
+            "notAdvertised",
+            "vlanMismatch",
+            "partial",
+            "noTargets",
+            "cancelled",
+            "error"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "readings": {
+          "items": {
+            "$ref": "#/$defs/Reading"
+          },
+          "type": "array"
+        },
+        "durationMs": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "stage",
+        "outcome",
+        "reason",
+        "durationMs"
+      ]
+    }
+  },
+  "title": "AutotestResultListResponse",
+  "description": "AutotestResultListResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

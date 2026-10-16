@@ -994,6 +994,59 @@ operations:
     responses:
       "204":
         description: The rule was deleted.
+  GET /api/v1/autotest/results:
+    responses:
+      "200":
+        description: Every kept AutoTest run, newest first. Each completed autotest job keeps its run, with the jack label and asset tag it was given.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutotestResultListResponse'
+  POST /api/v1/autotest/results/import:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Report'
+    responses:
+      "201":
+        description: The record a JSON export describes, stored under its own id; Location names it. A body that is not an AutoTest JSON export is a 400, and an id already stored is a 409.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Report'
+  GET /api/v1/autotest/results/{resultId}:
+    responses:
+      "200":
+        description: One kept AutoTest run.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Report'
+  GET /api/v1/autotest/results/{resultId}/export:
+    parameters:
+      - name: format
+        in: query
+        required: true
+        description: json (the record, which the import route reads back), csv (one row per stage) or pdf (a printable sheet; needs audit_pdf).
+        schema:
+          type: string
+          enum: [json, csv, pdf]
+    responses:
+      "200":
+        description: The record as an attachment named autotest-<resultId>.<format>.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Report'
+          text/csv:
+            schema:
+              type: string
+          application/pdf:
+            schema:
+              type: string
+              contentMediaType: application/pdf
   GET /api/v1/device-groups:
     responses:
       "200":

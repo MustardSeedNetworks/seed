@@ -311,6 +311,9 @@ func Targets() []Target {
 		// result is the job's result, registered as the package's own types.
 		{&autotest.Spec{}, "autotest-request.schema.json"},
 		{&autotest.Report{}, "autotest-response.schema.json"},
+		// P-E2's stored records: the list envelope; one record and its JSON
+		// export are the Report above, and an import's body is that export.
+		{&api.AutotestResultListResponse{}, "autotest-result-list-response.schema.json"},
 
 		// #399's multicast listen and observation, jobs-spine kinds: the request is
 		// the kind's params and the result is the job's result. Registered as the
