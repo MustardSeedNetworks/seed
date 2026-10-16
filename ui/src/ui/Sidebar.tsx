@@ -10,6 +10,7 @@
  * via callback props so the actual drawer components stay mounted at
  * AppShell level alongside the existing test/state plumbing.
  */
+
 import {
   ChevronLeft,
   ChevronRight,
@@ -25,6 +26,7 @@ import { useLocation } from 'wouter';
 import { SeedLogo } from '../components/app/SeedLogo';
 import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
+import { accessibleNameIncluding } from '../lib/accessibleName';
 import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';
 import { MobileTopBar } from './MobileTopBar';
@@ -118,7 +120,10 @@ function NavItemButton({ item, active, collapsed, onNavigate }: NavItemButtonPro
     <Tooltip text={collapsed ? item.label : undefined}>
       <button
         data-testid={`sidebar-nav-${item.path.slice(1)}`}
-        aria-label={item.label}
+        aria-label={accessibleNameIncluding(
+          item.label,
+          [item.label, !collapsed ? item.badge : undefined].filter(Boolean).join(' '),
+        )}
         type="button"
         onClick={() => onNavigate(item.path)}
         onMouseEnter={() => prefetchRoute(item.path)}
@@ -191,7 +196,7 @@ function FooterIconButton({
         className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
           collapsed ? 'justify-center' : 'gap-compact'
         } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
-        aria-label={title}
+        aria-label={accessibleNameIncluding(title, collapsed ? '' : label)}
       >
         {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
         {!collapsed ? <span>{label}</span> : null}
@@ -316,7 +321,7 @@ function FullWidthDrawerButton({ onClick, icon, label, title }: FullWidthDrawerB
         type="button"
         onClick={onClick}
         className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
-        aria-label={title}
+        aria-label={accessibleNameIncluding(title, label)}
       >
         {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
         <span>{label}</span>

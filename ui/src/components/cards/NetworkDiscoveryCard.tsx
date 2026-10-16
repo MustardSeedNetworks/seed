@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useEnginePhase } from '../../hooks/useEnginePhase';
 import { useEngineScan } from '../../hooks/useEngineScan';
 import { useNetworkDiscoveryAutoScan } from '../../hooks/useNetworkDiscoveryAutoScan';
+import { accessibleNameIncluding } from '../../lib/accessibleName';
 import {
   button,
   cn,
@@ -152,7 +153,10 @@ export function NetworkDiscoveryCard({
               radius.md,
               'hover:bg-brand-primary/90 transition-colors font-medium body-small',
             )}
-            aria-label={t('discovery.startScanAria')}
+            aria-label={accessibleNameIncluding(
+              t('discovery.startScanAria'),
+              t('discovery.startScan'),
+            )}
             data-testid="discovery-scan-button"
           >
             {t('discovery.startScan')}
@@ -233,11 +237,12 @@ export function NetworkDiscoveryCard({
               'hover:bg-brand-primary/90 transition-colors font-medium caption disabled:control-disabled disabled:cursor-not-allowed flex items-center',
               spacing.inline.sm,
             )}
-            aria-label={
+            aria-label={accessibleNameIncluding(
               status.scanning || running
                 ? t('discovery.scanningNetwork')
-                : t('discovery.startNetworkScan')
-            }
+                : t('discovery.startNetworkScan'),
+              t('discovery.scan'),
+            )}
             data-testid="discovery-scan-button"
           >
             {status.scanning || running ? (
