@@ -227,6 +227,13 @@ func TestJobsRouteRefusesWMIRuns(t *testing.T) {
 	require.Contains(t, rec.Body.String(), wmiRunsPath)
 }
 
+func TestSingleLogLineStripsNewlines(t *testing.T) {
+	got := singleLogLine("alice\nFAKE level=ERROR\rroot")
+	require.NotContains(t, got, "\n")
+	require.NotContains(t, got, "\r")
+	require.Equal(t, "alice FAKE level=ERROR root", got)
+}
+
 func TestWMIRoutesAnswer503WithoutAKeyring(t *testing.T) {
 	s := &Server{}
 	rec := httptest.NewRecorder()

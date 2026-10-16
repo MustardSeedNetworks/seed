@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
@@ -340,11 +341,18 @@ func wmiTargetID(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return id, true
 }
 
+// singleLogLine replaces CR and LF so a value taken from a request cannot
+// break into a second log record. CodeQL go/log-injection treats that
+// replacement as sanitizing the value.
+func singleLogLine(s string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(s, "\n", " "), "\r", " ")
+}
+
 // auditWMI writes the security audit line for a Windows inventory action.
 func (s *Server) auditWMI(r *http.Request, event, msg string, attrs ...any) {
 	attrs = append(attrs,
-		"username", usernameFromContext(r),
-		"client_ip", s.getClientIP(r),
+		"username", singleLogLine(usernameFromContext(r)),
+		"client_ip", singleLogLine(s.getClientIP(r)),
 		"event", event)
 	logging.FromContext(r.Context()).InfoContext(r.Context(), msg, attrs...)
 }
@@ -375,7 +383,7 @@ func writeWMIError(w http.ResponseWriter, r *http.Request, err error) {
 			"Windows inventory store unavailable")
 	default:
 		logging.FromContext(r.Context()).ErrorContext(r.Context(),
-			"Windows inventory request failed", "error", err)
+			"Windows inventory request failed", "error", singleLogLine(err.Error()))
 		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal,
 			"Failed to process Windows inventory request")
 	}

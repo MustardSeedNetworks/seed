@@ -128,6 +128,7 @@ func NewClient(e Endpoint) *Client {
 			ServerName: e.Host,
 			// The chain is not verified against any CA: VerifyConnection
 			// accepts exactly the pinned leaf and nothing else.
+			// codeql[go/disabled-certificate-check] -- leaf pinned in VerifyConnection (ADR-0034)
 			InsecureSkipVerify: true, //nolint:gosec // G402: the certificate is pinned in VerifyConnection (ADR-0034)
 			VerifyConnection: func(cs tls.ConnectionState) error {
 				return checkPin(cs, e.PinnedCert)
@@ -149,15 +150,20 @@ func NewClient(e Endpoint) *Client {
 // Close drops the client's connection.
 func (c *Client) Close() { c.http.CloseIdleConnections() }
 
+// checkPin accepts the leaf only when pinned is that leaf's fingerprint.
+// An empty pin, and a missing one (the zero Endpoint field), are refused:
+// VerifyConnection then aborts the handshake, so InsecureSkipVerify cannot
+// accept an unpinned host (ADR-0034).
 func checkPin(cs tls.ConnectionState, pinned string) error {
 	if len(cs.PeerCertificates) == 0 {
 		return fmt.Errorf("%w: host presented no certificate", ErrProtocol)
 	}
 	presented := Fingerprint(cs.PeerCertificates[0].Raw)
-	switch {
-	case pinned == "":
+	// Missing and empty are the same string. Both must fail closed.
+	if pinned == "" {
 		return &CertUnconfirmedError{Fingerprint: presented}
-	case presented != pinned:
+	}
+	if presented != pinned {
 		return fmt.Errorf("%w: host presented %s, pinned %s", ErrCertMismatch, presented, pinned)
 	}
 	return nil
