@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.265.0](https://github.com/MustardSeedNetworks/seed/compare/v0.264.0...v0.265.0) (2026-10-16)
+
+
+### Features
+
+* **reporting:** scope a scheduled report to a device group (P-D10) ([#3498](https://github.com/MustardSeedNetworks/seed/issues/3498)) ([5a2faa8](https://github.com/MustardSeedNetworks/seed/commit/5a2faa84cc357dc92f067431d4d6a5908af08b76)), closes [#3475](https://github.com/MustardSeedNetworks/seed/issues/3475)
+* **ui:** manage device groups from a Device groups page ([#3511](https://github.com/MustardSeedNetworks/seed/issues/3511)) ([5666a50](https://github.com/MustardSeedNetworks/seed/commit/5666a5099c4dfceee419385d6cd2342c39f15266))
+
+
+### Bug Fixes
+
+* **ci:** enqueue the release PR at the front of the merge queue ([#3501](https://github.com/MustardSeedNetworks/seed/issues/3501)) ([25067aa](https://github.com/MustardSeedNetworks/seed/commit/25067aafe37a7ee65885ef54d29ea1801d904c51))
+
+
+### Code Refactoring
+
+* **api:** split the seven handler and route files over 600 lines ([#3503](https://github.com/MustardSeedNetworks/seed/issues/3503)) ([1ef332e](https://github.com/MustardSeedNetworks/seed/commit/1ef332e74ad157b554c6d5d35af7c6865060b14c))
+* **api:** split the six handler test files over 600 lines ([#3505](https://github.com/MustardSeedNetworks/seed/issues/3505)) ([edac584](https://github.com/MustardSeedNetworks/seed/commit/edac58405334b44f1b7ae2055b20f41d9094e882))
+
+
+### Documentation
+
+* **adr:** record the Windows inventory transport decision (ADR-0034) ([#3507](https://github.com/MustardSeedNetworks/seed/issues/3507)) ([37ea9d8](https://github.com/MustardSeedNetworks/seed/commit/37ea9d824733f7687143ab78b43e83cee21fc3b7))
+
+
+### Continuous Integration
+
+* **license:** scan PRs only when a dependency manifest changes ([#3509](https://github.com/MustardSeedNetworks/seed/issues/3509)) ([3c34b10](https://github.com/MustardSeedNetworks/seed/commit/3c34b106da37bdba9ebd0c9026e10c99eabd294f)), closes [#3508](https://github.com/MustardSeedNetworks/seed/issues/3508)
+* **workflows:** stop PRs the merge queue keeps ejecting ([#3513](https://github.com/MustardSeedNetworks/seed/issues/3513)) ([3aeb84d](https://github.com/MustardSeedNetworks/seed/commit/3aeb84dcb06418b81664281517ef7c5efb1930e7)), closes [#3512](https://github.com/MustardSeedNetworks/seed/issues/3512)
+
 ## [0.264.0](https://github.com/MustardSeedNetworks/seed/compare/v0.263.0...v0.264.0) (2026-10-15)
 
 
