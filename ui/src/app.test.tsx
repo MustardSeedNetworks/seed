@@ -27,11 +27,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type React from 'react';
 import type { JSX, ReactNode } from 'react';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './app';
+// App's lazy gates: compiled while the file is collected, outside any timeout.
+import './app/AppShell';
+import './app/LoginForm';
 import { ProfileProvider } from './contexts/profileContext';
 
-// Mock localStorage
 const mockLocalStorage: Storage = (() => {
   let store: Record<string, string> = {};
   return {
@@ -194,8 +196,6 @@ function renderWithProviders(ui: React.ReactElement): ReturnType<typeof render> 
   return render(ui, { wrapper: createWrapper() });
 }
 
-// App's lazy gates, pre-imported: a cold compile outlasts waitFor's timeout.
-beforeAll(() => Promise.all([import('./app/LoginForm'), import('./app/AppShell')]));
 describe('App', () => {
   let originalWebSocket: typeof WebSocket;
 

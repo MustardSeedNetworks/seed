@@ -33,11 +33,23 @@ function renderWizard(overrides: { onComplete?: () => void } = {}) {
   return { onComplete, onLogin };
 }
 
+type User = ReturnType<typeof userEvent.setup>;
+
+/**
+ * Enters a value as one paste. Nothing here asserts on individual keystrokes,
+ * and typing them re-renders the wizard per character, which on a loaded host
+ * is enough to run a test past its timeout (#3502).
+ */
+async function fill(user: User, field: HTMLElement, value: string): Promise<void> {
+  await user.click(field);
+  await user.paste(value);
+}
+
 /** Fills the password step and submits it; leaves the wizard wherever it lands. */
-async function completePasswordStep(user: ReturnType<typeof userEvent.setup>): Promise<void> {
-  await user.type(screen.getByLabelText('Setup token'), 't-1');
-  await user.type(screen.getByLabelText('Password'), PASSWORD);
-  await user.type(screen.getByLabelText('Confirm Password'), PASSWORD);
+async function completePasswordStep(user: User): Promise<void> {
+  await fill(user, screen.getByLabelText('Setup token'), 't-1');
+  await fill(user, screen.getByLabelText('Password'), PASSWORD);
+  await fill(user, screen.getByLabelText('Confirm Password'), PASSWORD);
   await user.click(screen.getByRole('button', { name: 'Complete Setup' }));
 }
 
@@ -87,7 +99,7 @@ describe('SetupWizard — first-run SNMP community', () => {
     const { onComplete } = renderWizard();
 
     await completePasswordStep(user);
-    await user.type(await screen.findByLabelText('SNMP community string'), 's3cret-ro');
+    await fill(user, await screen.findByLabelText('SNMP community string'), 's3cret-ro');
     await user.click(screen.getByRole('button', { name: 'Save and continue' }));
 
     await waitFor(() => {
@@ -118,9 +130,9 @@ describe('SetupWizard — first-run SNMP community', () => {
     const user = userEvent.setup();
     renderWizard();
 
-    await user.type(screen.getByLabelText('Token de configuración'), 't-1');
-    await user.type(screen.getByLabelText('Contraseña'), PASSWORD);
-    await user.type(screen.getByLabelText('Confirmar Contraseña'), PASSWORD);
+    await fill(user, screen.getByLabelText('Token de configuración'), 't-1');
+    await fill(user, screen.getByLabelText('Contraseña'), PASSWORD);
+    await fill(user, screen.getByLabelText('Confirmar Contraseña'), PASSWORD);
     await user.click(screen.getByRole('button', { name: 'Completar Configuración' }));
 
     expect(await screen.findByLabelText('Cadena de comunidad SNMP')).toBeInTheDocument();
@@ -135,7 +147,7 @@ describe('SetupWizard — first-run SNMP community', () => {
     const { onComplete } = renderWizard();
 
     await completePasswordStep(user);
-    await user.type(await screen.findByLabelText('SNMP community string'), 's3cret-ro');
+    await fill(user, await screen.findByLabelText('SNMP community string'), 's3cret-ro');
     await user.click(screen.getByRole('button', { name: 'Save and continue' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/credential/i);
