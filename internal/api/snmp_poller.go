@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	snmppoller "github.com/MustardSeedNetworks/seed/internal/polling/snmp"
 	snmporchestrator "github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/snmpclient"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
@@ -22,6 +23,9 @@ import (
 //     no work.
 //  3. The scheduler needs a tick interval; snmpPollerSchedulerTick
 //     defaults to 5s — see the doc comment for the rationale.
+//
+// The MIB browser's walker shares the factory and the keyring, but not the
+// licence gate: browsing one target is not estate polling.
 //
 // stores carries the orchestrator's storage ports (Targets, Observations,
 // Rates, Credentials); the rest of the config is filled in here.
@@ -42,6 +46,13 @@ func (s *Server) initSNMPPoller(stores snmporchestrator.Config) {
 		logger.Warn("snmp poller init failed: credential keyring unavailable", "error", err)
 		return
 	}
+
+	resolver, err := snmppoller.NewCredentialResolver(stores.Credentials, keyring)
+	if err != nil {
+		logger.Warn("snmp poller init failed: credential resolver", "error", err)
+		return
+	}
+	s.snmpBrowser = snmppoller.NewBrowser(factory, resolver)
 
 	cfg := stores
 	cfg.Targets = licensedPollerTargets{PollerStorage: stores.Targets, limit: s.pollingTargetLimit}

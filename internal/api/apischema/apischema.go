@@ -391,6 +391,9 @@ func Targets() []Target {
 		{&api.PollingTargetRequest{}, "polling-target-request.schema.json"},
 		{&api.PollingTargetResponse{}, "polling-target-response.schema.json"},
 		{&api.PollingTargetListResponse{}, "polling-target-list-response.schema.json"},
+		// The MIB browser walk (P-E5).
+		{&api.SNMPWalkRequest{}, "snmp-walk-request.schema.json"},
+		{&api.SNMPWalkResponse{}, "snmp-walk-response.schema.json"},
 		{&api.DeviceCredentialRequest{}, "device-credential-request.schema.json"},
 		{&polling.Credentials{}, "device-credential.schema.json"},
 		{&api.DeviceCredentialListResponse{}, "device-credential-list-response.schema.json"},

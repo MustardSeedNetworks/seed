@@ -8536,6 +8536,50 @@ components:
             required:
                 - id
             type: object
+        SNMPWalkRequest:
+            additionalProperties: false
+            properties:
+                limit:
+                    type: integer
+                oid:
+                    type: string
+            required:
+                - oid
+            type: object
+        SNMPWalkResponse:
+            additionalProperties: false
+            properties:
+                oid:
+                    type: string
+                rows:
+                    items:
+                        $ref: '#/components/schemas/SNMPWalkRow'
+                    type: array
+                targetId:
+                    type: string
+                truncated:
+                    type: boolean
+            required:
+                - targetId
+                - oid
+                - rows
+                - truncated
+            type: object
+        SNMPWalkRow:
+            additionalProperties: false
+            properties:
+                instance:
+                    type: string
+                name:
+                    type: string
+                oid:
+                    type: string
+                value:
+                    type: string
+            required:
+                - oid
+                - value
+            type: object
         SQLEndpoint:
             additionalProperties: false
             properties:
@@ -15891,6 +15935,70 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/PollingTargetResponse'
                     description: The target after one poll run now, enabled or not; lastStatus and lastError carry the outcome. 503 when the SNMP poller is not running (below Starter, or no credential keyring).
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "429":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Rate limit exceeded for this route class.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/polling-targets/{targetId}/walk:
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: targetId
+              required: true
+              schema:
+                type: string
+        post:
+            description: Requires an operator-scoped token.
+            operationId: postApiV1PollingTargetsTargetIdWalk
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SNMPWalkRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SNMPWalkResponse'
+                    description: |
+                        Every varbind under the OID, walked with the target's stored credentials, each with the MIB object it belongs to and its instance. truncated says the subtree held more rows than the limit. 400 for an OID that is neither numeric nor a known object name, 409 when the target's credentials cannot be resolved, 502 when the device does not complete the walk, 503 without a credential keyring.
                 "401":
                     content:
                         application/json:

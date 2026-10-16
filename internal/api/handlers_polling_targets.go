@@ -11,6 +11,7 @@ package api
 //   PUT    /api/v1/polling-targets/{id}    full update
 //   DELETE /api/v1/polling-targets/{id}    delete
 //   POST   /api/v1/polling-targets/{id}/poll  poll once now ("Test target")
+//   POST   /api/v1/polling-targets/{id}/walk  walk one subtree (handlers_polling_target_walk.go)
 //
 // List is read-only; the mutating routes go through writeGated so
 // only operator+ roles can add/edit/remove devices to poll. A create past
