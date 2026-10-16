@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.266.0](https://github.com/MustardSeedNetworks/seed/compare/v0.265.0...v0.266.0) (2026-10-16)
+
+
+### Features
+
+* **integrations:** read Meraki device state, off until an admin answers (P-D12) ([#3520](https://github.com/MustardSeedNetworks/seed/issues/3520)) ([ad5f859](https://github.com/MustardSeedNetworks/seed/commit/ad5f8597ac9592f0c36e07836ff4da0c05b311b8))
+
+
+### Continuous Integration
+
+* **workflows:** fold the PR hygiene workflows into one ([#3522](https://github.com/MustardSeedNetworks/seed/issues/3522)) ([40b98d7](https://github.com/MustardSeedNetworks/seed/commit/40b98d74149fa0e6b6f48a6043d5d8481fc84201)), closes [#3521](https://github.com/MustardSeedNetworks/seed/issues/3521)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3517](https://github.com/MustardSeedNetworks/seed/issues/3517)) ([6e698fb](https://github.com/MustardSeedNetworks/seed/commit/6e698fb7dab35f2b8d35a8989cd36288995eb8a1))
+
 ## [0.265.0](https://github.com/MustardSeedNetworks/seed/compare/v0.264.0...v0.265.0) (2026-10-16)
 
 
