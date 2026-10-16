@@ -20,62 +20,6 @@ import (
 
 const testKey = "0123456789abcdef0123456789abcdef01234567"
 
-func TestUpdateValidate(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		name    string
-		update  meraki.Update
-		hasKey  bool
-		wantErr string
-	}{
-		{name: "answer off", update: meraki.Update{Choice: outbound.ChoiceOff}},
-		{name: "on with a key", update: meraki.Update{Choice: outbound.ChoiceOn, APIKey: "k"}},
-		{name: "on keeping the stored key", update: meraki.Update{Choice: outbound.ChoiceOn}, hasKey: true},
-		{
-			name:   "regional endpoint",
-			update: meraki.Update{Choice: outbound.ChoiceOn, APIKey: "k", Endpoint: "https://api.meraki.ca/api/v1"},
-		},
-		{
-			name:    "un-asking",
-			update:  meraki.Update{Choice: outbound.ChoiceUnanswered},
-			wantErr: `choice must be "on" or "off"`,
-		},
-		{
-			name:    "on without a key",
-			update:  meraki.Update{Choice: outbound.ChoiceOn},
-			wantErr: "needs an API key",
-		},
-		{
-			name:    "on while clearing the stored key",
-			update:  meraki.Update{Choice: outbound.ChoiceOn, ClearAPIKey: true},
-			hasKey:  true,
-			wantErr: "needs an API key",
-		},
-		{
-			name:    "plain http",
-			update:  meraki.Update{Choice: outbound.ChoiceOff, Endpoint: "http://api.meraki.com/api/v1"},
-			wantErr: "endpoint: must be https",
-		},
-		{
-			name:    "key and clear",
-			update:  meraki.Update{Choice: outbound.ChoiceOff, APIKey: "k", ClearAPIKey: true},
-			wantErr: "exclusive",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			err := tt.update.Validate(tt.hasKey)
-			if tt.wantErr == "" {
-				require.NoError(t, err)
-				return
-			}
-			require.ErrorIs(t, err, meraki.ErrInvalidSettings)
-			require.ErrorContains(t, err, tt.wantErr)
-		})
-	}
-}
-
 // fakeDashboard serves two organizations; org 1's devices come in two pages.
 type fakeDashboard struct {
 	requests atomic.Int64
@@ -142,7 +86,7 @@ func TestClientDevices(t *testing.T) {
 	client := meraki.NewClient(srv.Client())
 
 	devices, err := client.Devices(context.Background(),
-		meraki.Credentials{Endpoint: srv.URL + "/api/v1/", APIKey: testKey})
+		outbound.Credentials{Endpoint: srv.URL + "/api/v1/", APIKey: testKey})
 	require.NoError(t, err)
 	assert.Equal(t, []meraki.Device{
 		{
@@ -165,7 +109,7 @@ func TestClientRefusesForeignNextLink(t *testing.T) {
 	api.nextHost = "https://collector.example.net"
 
 	_, err := meraki.NewClient(srv.Client()).Devices(context.Background(),
-		meraki.Credentials{Endpoint: srv.URL + "/api/v1", APIKey: testKey})
+		outbound.Credentials{Endpoint: srv.URL + "/api/v1", APIKey: testKey})
 	require.ErrorContains(t, err, "next page link leaves the configured endpoint")
 }
 
@@ -174,7 +118,7 @@ func TestClientErrorOmitsBody(t *testing.T) {
 	_, srv := newFakeDashboard(t)
 
 	_, err := meraki.NewClient(srv.Client()).Devices(context.Background(),
-		meraki.Credentials{Endpoint: srv.URL + "/api/v1", APIKey: "wrong-key"})
+		outbound.Credentials{Endpoint: srv.URL + "/api/v1", APIKey: "wrong-key"})
 	require.ErrorContains(t, err, "HTTP 401")
 	assert.NotContains(t, err.Error(), "wrong-key", "the body echoes the key and is never quoted")
 }
@@ -185,9 +129,13 @@ type switchSource struct {
 	endpoint string
 }
 
-func (s *switchSource) Credentials(context.Context) (meraki.Credentials, bool, error) {
+func (s *switchSource) Credentials(context.Context) (outbound.Credentials, bool, error) {
 	s.asked.Add(1)
-	return meraki.Credentials{Endpoint: s.endpoint, APIKey: testKey}, s.on.Load(), nil
+	return outbound.Credentials{Endpoint: s.endpoint, APIKey: testKey}, s.on.Load(), nil
+}
+
+func newReader(source outbound.Source, client *meraki.Client) *outbound.Reader[meraki.Device] {
+	return outbound.NewReader("meraki", source, client.Devices, time.Hour, slog.New(slog.DiscardHandler))
 }
 
 // TestRefresherOffMakesNoRequest is the acceptance's zero-outbound half: with
@@ -197,8 +145,7 @@ func TestRefresherOffMakesNoRequest(t *testing.T) {
 	t.Parallel()
 	api, srv := newFakeDashboard(t)
 	source := &switchSource{endpoint: srv.URL + "/api/v1"}
-	refresher := meraki.NewRefresher(source, meraki.NewClient(srv.Client()), time.Hour,
-		slog.New(slog.DiscardHandler))
+	refresher := newReader(source, meraki.NewClient(srv.Client()))
 
 	require.NoError(t, refresher.Start(context.Background()))
 	t.Cleanup(func() { require.NoError(t, refresher.Stop(context.Background())) })
@@ -209,20 +156,19 @@ func TestRefresherOffMakesNoRequest(t *testing.T) {
 		runtime.Gosched()
 	}
 	assert.Zero(t, api.requests.Load(), "an integration that is not on makes no request")
-	assert.True(t, refresher.Snapshot().LastAttempt.IsZero())
+	assert.True(t, refresher.Status().LastAttempt.IsZero())
 
 	source.on.Store(true)
 	refresher.Wake()
-	require.Eventually(t, func() bool { return !refresher.Snapshot().LastSuccess.IsZero() },
+	require.Eventually(t, func() bool { return !refresher.Status().LastSuccess.IsZero() },
 		5*time.Second, 10*time.Millisecond)
-	snapshot := refresher.Snapshot()
-	assert.Empty(t, snapshot.LastError)
-	assert.Len(t, snapshot.Devices, 3)
+	assert.Empty(t, refresher.Status().LastError)
+	assert.Len(t, refresher.Items(), 3)
 
 	source.on.Store(false)
 	asked := source.asked.Load()
 	refresher.Wake()
-	require.Eventually(t, func() bool { return source.asked.Load() > asked && refresher.Snapshot().Devices == nil },
+	require.Eventually(t, func() bool { return source.asked.Load() > asked && refresher.Items() == nil },
 		5*time.Second, 10*time.Millisecond, "turning it off drops the device state")
 }
 
@@ -231,14 +177,13 @@ func TestRefresherRecordsFailure(t *testing.T) {
 	_, srv := newFakeDashboard(t)
 	source := &switchSource{endpoint: srv.URL + "/api/v1/missing"}
 	source.on.Store(true)
-	refresher := meraki.NewRefresher(source, meraki.NewClient(srv.Client()), time.Hour,
-		slog.New(slog.DiscardHandler))
+	refresher := newReader(source, meraki.NewClient(srv.Client()))
 
 	require.NoError(t, refresher.Start(context.Background()))
 	t.Cleanup(func() { require.NoError(t, refresher.Stop(context.Background())) })
-	require.Eventually(t, func() bool { return !refresher.Snapshot().LastAttempt.IsZero() },
+	require.Eventually(t, func() bool { return !refresher.Status().LastAttempt.IsZero() },
 		5*time.Second, 10*time.Millisecond)
-	snapshot := refresher.Snapshot()
-	assert.Contains(t, snapshot.LastError, "HTTP 404")
-	assert.True(t, snapshot.LastSuccess.IsZero())
+	status := refresher.Status()
+	assert.Contains(t, status.LastError, "HTTP 404")
+	assert.True(t, status.LastSuccess.IsZero())
 }

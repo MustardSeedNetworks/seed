@@ -495,7 +495,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.flows = app.NewFlows(s.persistence)
 	s.lifecycleEoX = app.NewLifecycleStore(s.persistence)
 	s.initLifecycleFeed()
-	s.initMeraki()
+	s.initIntegrations()
 	s.interfaceStats = app.NewInterfaceStats(s.persistence)
 	s.ipSLA = app.NewIPSLA(s.persistence)
 	s.pollingTargets = app.NewPollingTargets(s.persistence, s.pollingTargetLimit)

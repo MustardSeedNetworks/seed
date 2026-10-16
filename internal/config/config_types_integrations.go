@@ -18,13 +18,15 @@ const (
 // IntegrationsConfig holds the vendor API integrations. Each is absent until
 // the operator answers its question.
 type IntegrationsConfig struct {
-	Meraki MerakiConfig `json:"meraki,omitzero"`
+	Meraki   VendorAPIConfig `json:"meraki,omitzero"`
+	PaloAlto VendorAPIConfig `json:"paloAlto,omitzero"`
 }
 
-// MerakiConfig is the opt-in Cisco Meraki Dashboard API integration. An empty
-// Endpoint means Meraki's own; APIKey is keyring ciphertext (ADR-0015, the
-// `enc:` prefix), never stored or served in plaintext.
-type MerakiConfig struct {
+// VendorAPIConfig is one opt-in vendor management API integration. An empty
+// Endpoint means the vendor's own, where it has one; APIKey is keyring
+// ciphertext (ADR-0015, the `enc:` prefix), never stored or served in
+// plaintext.
+type VendorAPIConfig struct {
 	Choice   OptInChoice `json:"choice,omitempty"`
 	Endpoint string      `json:"endpoint,omitempty"`
 	APIKey   string      `json:"api_key,omitempty"`
