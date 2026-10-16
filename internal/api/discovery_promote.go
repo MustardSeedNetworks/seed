@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
@@ -133,10 +134,20 @@ func deviceName(device *discovery.DiscoveredDevice) string {
 	return device.Hostname
 }
 
+// afterSweepTimeout bounds the work the sweep observer does with a sweep's
+// result: target-list reads and writes, ARP-binding reads, alert writes.
+const afterSweepTimeout = 30 * time.Second
+
 // afterSweep is the one observer the discovery service calls when a sweep
 // finishes. Every consumer reads the same result, and the service holds a
 // single observer.
-func (s *Server) afterSweep(ctx context.Context, discovered []*discovery.DiscoveredDevice) {
+//
+// A sweep runs until its own deadline on any real network, so the context it
+// hands over has usually expired. The consumers get a budget of their own,
+// keeping only the sweep's logging values (seed#3540).
+func (s *Server) afterSweep(sweepCtx context.Context, discovered []*discovery.DiscoveredDevice) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(sweepCtx), afterSweepTimeout)
+	defer cancel()
 	s.learnTargetNetworks(ctx, discovered)
 	s.noteSweepEvidence(discovered)
 	s.promoteDiscoveredDevices(ctx, discovered)

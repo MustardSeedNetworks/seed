@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/config"
@@ -201,6 +202,26 @@ func TestAfterSweepBothLearnsAndPromotes(t *testing.T) {
 	learned := store.cfg.TargetNetworks
 	if len(learned) != 1 || learned[0].CIDR != "10.44.10.0/24" {
 		t.Errorf("learning did not run from the sweep observer: %+v", learned)
+	}
+}
+
+// A sweep runs until its own deadline on a real network, so the observer is
+// handed a context that has already expired. Promotion must still write
+// (seed#3540): on CT313 every sweep logged "not promoted" and wrote nothing.
+func TestAfterSweepOutlivesTheSweepDeadline(t *testing.T) {
+	s, db := newPromotionTestServer(t)
+	seedCredential(t, db, "cred-v2c", polling.CredentialKindV2c)
+	s.discoverySettings = discoverysettings.NewService(&fakeDiscoveryStore{}, noopSink{}, noopApplier{})
+	s.deviceDisc = enumerate.NewDeviceDiscovery("")
+
+	spent, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+	defer cancel()
+	s.afterSweep(spent, []*discovery.DiscoveredDevice{
+		answered("10.44.40.1", "edge-rtr", "cred-v2c", snmp.VersionV2c),
+	})
+
+	if got := listTargets(t, s); len(got) != 1 || got[0].IPAddress != "10.44.40.1" {
+		t.Errorf("promotion did not survive the spent sweep deadline: %+v", got)
 	}
 }
 
