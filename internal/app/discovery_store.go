@@ -1,8 +1,9 @@
 package app
 
 // discovery_store.go supplies the database writers discovery and the
-// vulnerability scanner persist through: devices keyed by MAC, and each scan
-// pass's findings under the device's persisted id.
+// vulnerability scanner persist through: devices keyed by MAC, each scan
+// pass's findings under the device's persisted id, and Bluetooth devices keyed
+// by address.
 
 import (
 	"context"
@@ -12,12 +13,19 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 )
 
 // NewDeviceWriter returns discovery's database writer.
 func NewDeviceWriter(persist *Persistence) discovery.DBDeviceWriter {
 	return deviceWriter{db: persist.handle()}
+}
+
+// NewBluetoothStore returns the store every Bluetooth scan remembers its
+// devices in.
+func NewBluetoothStore(persist *Persistence) enumerate.BluetoothStore {
+	return persist.handle().BluetoothDevices()
 }
 
 // NewVulnStore returns the vulnerability scanner's store. It persists the

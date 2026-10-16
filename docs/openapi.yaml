@@ -661,6 +661,8 @@ components:
             properties:
                 address:
                     type: string
+                addressType:
+                    type: string
                 alias:
                     type: string
                 appearance:

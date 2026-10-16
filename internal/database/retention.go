@@ -132,6 +132,7 @@ type CleanupResult struct {
 	VoIPStreamsDeleted       int64
 	SNMPObservationsDeleted  int64
 	ListenerEventsDeleted    int64
+	BluetoothDevicesDeleted  int64
 	Duration                 time.Duration
 }
 
@@ -186,6 +187,7 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 		{policy.VoIPDays, db.VoIPStreams().DeleteOlderThan, "voip streams"},
 		{policy.SNMPObservationDays, db.SNMPObservations().DeleteOlderThan, "snmp observations"},
 		{policy.ListenerEventDays, db.ListenerEvents().DeleteOlderThan, "listener events"},
+		{policy.InactiveDeviceDays, db.BluetoothDevices().DeleteNotSeenSince, "bluetooth devices"},
 	}
 
 	results := make([]int64, len(tasks))
@@ -207,6 +209,7 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 	result.VoIPStreamsDeleted = results[7]
 	result.SNMPObservationsDeleted = results[8]
 	result.ListenerEventsDeleted = results[9]
+	result.BluetoothDevicesDeleted = results[10]
 	result.Duration = time.Since(start)
 
 	return result, nil

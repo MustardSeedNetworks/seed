@@ -91,6 +91,10 @@ type ICMPPinger struct {
 	// types, the reply parser and the hop-limit control message all differ.
 	ipv6 bool
 
+	// egress is the index of the interface every echo must leave through, or
+	// zero for host routing. See NewICMPPingerOn.
+	egress int
+
 	// Pending pings tracked by sequence number
 	pending   map[int]*pendingPing
 	pendingMu sync.Mutex
@@ -134,7 +138,7 @@ func PoliteSweepConfig() *SweepConfig {
 // back to the unprivileged datagram socket where raw is refused (seed#2629).
 // Requires root privileges or CAP_NET_RAW capability on Linux.
 func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
-	return newICMPPinger(timeout, false)
+	return newICMPPinger(timeout, false, nil)
 }
 
 // NewICMPv6Pinger creates an ICMPv6 pinger, with the same raw-then-datagram
@@ -142,10 +146,62 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 // both families. Targets may carry a zone ("fe80::1%eth0"), which a
 // link-local address needs to leave the host (seed#3251).
 func NewICMPv6Pinger(timeout time.Duration) (*ICMPPinger, error) {
-	return newICMPPinger(timeout, true)
+	return newICMPPinger(timeout, true, nil)
 }
 
-func newICMPPinger(timeout time.Duration, ipv6Family bool) (*ICMPPinger, error) {
+// NewICMPPingerOn creates a pinger of the given family whose echoes leave
+// through iface whatever the host's routing says, so a target answers only if
+// it is reachable over that link.
+//
+// Two mechanisms, because the platforms differ. The socket is bound to the
+// interface's own address, which is enough on Windows (strong host model).
+// Linux and macOS route a packet by destination whatever its source, so each
+// echo also names the interface in its packet-info control message.
+func NewICMPPingerOn(timeout time.Duration, ipv6Family bool, iface *net.Interface) (*ICMPPinger, error) {
+	return newICMPPinger(timeout, ipv6Family, iface)
+}
+
+// interfaceAddress returns iface's source address for the requested family.
+func interfaceAddress(iface *net.Interface, ipv6Family bool) (string, error) {
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return "", fmt.Errorf("read %s addresses: %w", iface.Name, err)
+	}
+	return sourceAddress(iface.Name, addrs, ipv6Family)
+}
+
+// sourceAddress picks the first address of the requested family, preferring
+// one usable beyond the link: a link-local source cannot carry an echo to the
+// internet.
+func sourceAddress(name string, addrs []net.Addr, ipv6Family bool) (string, error) {
+	var linkLocal string
+	for _, a := range addrs {
+		prefix, err := netip.ParsePrefix(a.String())
+		if err != nil {
+			continue
+		}
+		addr := prefix.Addr()
+		if addr.Is4() == ipv6Family {
+			continue
+		}
+		if !addr.IsLinkLocalUnicast() {
+			return addr.String(), nil
+		}
+		if linkLocal == "" {
+			linkLocal = addr.WithZone(name).String()
+		}
+	}
+	if linkLocal != "" {
+		return linkLocal, nil
+	}
+	family := "IPv4"
+	if ipv6Family {
+		family = "IPv6"
+	}
+	return "", fmt.Errorf("%s has no %s address", name, family)
+}
+
+func newICMPPinger(timeout time.Duration, ipv6Family bool, iface *net.Interface) (*ICMPPinger, error) {
 	if timeout == 0 {
 		timeout = defaultTimeout
 	}
@@ -161,6 +217,14 @@ func newICMPPinger(timeout time.Duration, ipv6Family bool) (*ICMPPinger, error) 
 	rawNetwork, datagramNetwork, wildcard := "ip4:icmp", "udp4", "0.0.0.0"
 	if ipv6Family {
 		rawNetwork, datagramNetwork, wildcard = "ip6:ipv6-icmp", "udp6", "::"
+	}
+	if iface != nil {
+		local, err := interfaceAddress(iface, ipv6Family)
+		if err != nil {
+			return nil, err
+		}
+		wildcard = local
+		p.egress = iface.Index
 	}
 
 	// A raw socket needs root or CAP_NET_RAW. Where it is refused, fall back to
@@ -233,6 +297,20 @@ func (p *ICMPPinger) Close() error {
 		}
 	}
 	return nil
+}
+
+// write sends one echo, naming the egress interface when the pinger has one.
+func (p *ICMPPinger) write(msg []byte, dst net.Addr) error {
+	var err error
+	switch {
+	case p.egress == 0:
+		_, err = p.conn.WriteTo(msg, dst)
+	case p.ipv6:
+		_, err = p.conn.IPv6PacketConn().WriteTo(msg, &ipv6.ControlMessage{IfIndex: p.egress}, dst)
+	default:
+		_, err = p.conn.IPv4PacketConn().WriteTo(msg, &ipv4.ControlMessage{IfIndex: p.egress}, dst)
+	}
+	return err
 }
 
 // Privileged reports whether the pinger holds a raw ICMP socket. False means it
@@ -476,8 +554,7 @@ func (p *ICMPPinger) Ping(ctx context.Context, ipStr string) PingResult {
 		return result
 	}
 
-	// Send ICMP echo request
-	if _, writeErr := p.conn.WriteTo(msgBytes, dst); writeErr != nil {
+	if writeErr := p.write(msgBytes, dst); writeErr != nil {
 		result.Error = writeErr
 		return result
 	}

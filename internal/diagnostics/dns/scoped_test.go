@@ -5,6 +5,7 @@ package dns_test
 import (
 	"context"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
@@ -108,6 +109,27 @@ func TestTestDoesNotLookUpThroughAnotherLink(t *testing.T) {
 	}
 	if len(result.PerServerResults) != 0 {
 		t.Errorf("perServerResults = %v, want none", result.PerServerResults)
+	}
+}
+
+// The interface's own resolver is queried through the interface itself. A
+// resolver also reachable over another link's route would otherwise answer
+// there and credit the selected link with it (P-E1). An interface that cannot
+// be bound to shows the lookup was pinned rather than routed.
+func TestTestQueriesTheInterfaceResolverThroughTheInterface(t *testing.T) {
+	const iface = "seed-no-such-if0"
+	tester := dns.NewTesterForInterface("", "example.com", dns.DefaultThresholds(), iface)
+	dns.ExportSetResolverSource(tester, dns.ExportResolverSource(
+		func() []string { return []string{"1.1.1.1"} },
+		func(string) ([]string, bool) { return []string{"127.0.0.1"}, true },
+	))
+
+	result := tester.Test(context.Background())
+	if result.Forward == nil || result.Forward.Outcome == dns.OutcomeResolved {
+		t.Fatalf("forward = %+v, want a lookup that failed to bind", result.Forward)
+	}
+	if !strings.Contains(result.Forward.Error, iface) {
+		t.Errorf("forward error = %q, want the failed bind to %s", result.Forward.Error, iface)
 	}
 }
 

@@ -90,6 +90,9 @@ CREATE INDEX idx_audit_timestamp ON audit_log(timestamp);
 -- index: idx_audit_user
 CREATE INDEX idx_audit_user ON audit_log(user);
 
+-- index: idx_bluetooth_devices_last_seen
+CREATE INDEX idx_bluetooth_devices_last_seen ON bluetooth_devices(last_seen);
+
 -- index: idx_clients_slug
 CREATE INDEX idx_clients_slug ON clients(slug);
 
@@ -542,6 +545,24 @@ CREATE TABLE audit_log (
 				ip_address TEXT,
 				user_agent TEXT,
 				timestamp TEXT NOT NULL
+			) STRICT;
+
+-- table: bluetooth_devices
+CREATE TABLE bluetooth_devices (
+				address         TEXT NOT NULL PRIMARY KEY,
+				id              TEXT NOT NULL UNIQUE,
+				address_type    TEXT NOT NULL DEFAULT '' CHECK (address_type IN ('', 'public', 'random')),
+				name            TEXT NOT NULL DEFAULT '',
+				vendor          TEXT NOT NULL DEFAULT '',
+				type            TEXT NOT NULL CHECK (type IN ('classic', 'ble', 'dual')),
+				device_class    TEXT NOT NULL DEFAULT '',
+				appearance      INTEGER NOT NULL DEFAULT 0,
+				class_of_device INTEGER NOT NULL DEFAULT 0,
+				manufacturer_id INTEGER NOT NULL DEFAULT 0,
+				rssi            INTEGER NOT NULL,
+				tx_power        INTEGER NOT NULL DEFAULT 0,
+				first_seen      TEXT NOT NULL,
+				last_seen       TEXT NOT NULL
 			) STRICT;
 
 -- table: clients

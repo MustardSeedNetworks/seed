@@ -308,7 +308,8 @@ func (s *Server) startMaintenance(retentionDays int) {
 				result.SpeedTestsDeleted + result.AuditLogsDeleted +
 				result.DevicesDeleted + result.AnomaliesResolvedDeleted +
 				result.MicroburstsDeleted + result.VoIPStreamsDeleted +
-				result.SNMPObservationsDeleted + result.ListenerEventsDeleted
+				result.SNMPObservationsDeleted + result.ListenerEventsDeleted +
+				result.BluetoothDevicesDeleted
 			if totalDeleted > 0 {
 				logging.GetLogger().Info("Data retention cleanup completed",
 					"metrics_deleted", result.MetricsDeleted,
@@ -321,6 +322,7 @@ func (s *Server) startMaintenance(retentionDays int) {
 					"voip_streams_deleted", result.VoIPStreamsDeleted,
 					"snmp_observations_deleted", result.SNMPObservationsDeleted,
 					"listener_events_deleted", result.ListenerEventsDeleted,
+					"bluetooth_devices_deleted", result.BluetoothDevicesDeleted,
 					"duration", result.Duration)
 			}
 		}

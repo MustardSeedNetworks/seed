@@ -318,6 +318,9 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 		ouiDB = s.deviceDisc.GetOUIDatabase()
 	}
 	s.bluetoothScan = enumerate.NewBluetoothScanner("", btConfig, ouiDB)
+	if s.persist != nil {
+		s.bluetoothScan.SetStore(app.NewBluetoothStore(s.persist))
+	}
 	logging.GetLogger().Info("Bluetooth scanner initialized")
 
 	// Initialize WiFi bridge connecting wifi to discovery

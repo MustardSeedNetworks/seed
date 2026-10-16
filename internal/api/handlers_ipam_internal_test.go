@@ -182,3 +182,27 @@ func TestDHCPScopeExhaustionAlerts(t *testing.T) {
 	require.Equal(t, http.StatusOK, scopes(http.MethodDelete, "?start=10.44.20.100", "").Code)
 	require.Empty(t, s.discoverySettings.Scopes())
 }
+
+// The sweep observer runs after a sweep that used its whole deadline, so the
+// scope check must read the ARP bindings on its own budget (seed#3540).
+func TestDHCPScopeAlertAfterTheSweepDeadline(t *testing.T) {
+	s, db := newTopologyTestServer(t)
+	_ = seedTopology(t, db)
+	s.discoverySettings = discoverysettings.NewService(&fakeDiscoveryStore{}, noopSink{}, noopApplier{})
+	s.useAlertDelivery(app.NewAlertDelivery(s.persist, nil, logging.GetLogger()))
+	require.NoError(t, s.discoverySettings.AddScope("Lobby", "10.44.20.100", "10.44.20.101"))
+	require.NoError(t, db.Topology().UpsertARPBinding(t.Context(), &topology.ARPBinding{
+		ClientID: "default", SourceNodeID: "node-test-1", IfIndex: 1,
+		IPAddress: "10.44.20.101", MACAddress: "aa:bb:cc:00:01:01", LastSeen: time.Now().UTC(),
+	}))
+
+	spent, cancel := context.WithDeadline(t.Context(), time.Now().Add(-time.Second))
+	defer cancel()
+	s.afterSweep(spent, []*discovery.DiscoveredDevice{{IP: "10.44.20.100"}})
+
+	list, err := db.Alerts().List(t.Context(), alerts.ListOptions{Limit: 100})
+	require.NoError(t, err)
+	require.True(t, slices.ContainsFunc(list, func(a *alerts.Alert) bool {
+		return a.Rule == alerts.RuleDHCPScopeExhaustion && a.Severity == alerts.SeverityCritical
+	}), "the full scope raised no alert: %+v", list)
+}

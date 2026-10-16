@@ -17,20 +17,19 @@ const pingTimeout = 2 * time.Second
 // errNoAnswer is a ping that timed out without an error of its own.
 var errNoAnswer = errors.New("no echo reply")
 
-// PingHost resolves host when it is a name and sends it one ICMP echo, over
-// an unprivileged datagram socket where the host allows one.
-func PingHost(ctx context.Context, host string) (time.Duration, error) {
+// PingHost resolves host when it is a name and sends it one ICMP echo through
+// iface, over an unprivileged datagram socket where the host allows one. The
+// echo leaves through iface whatever the host's routes say, so a target
+// reached over another link does not count for this one. An empty iface
+// leaves the echo on host routing.
+func PingHost(ctx context.Context, iface, host string) (time.Duration, error) {
 	addr, err := resolve(ctx, host)
 	if err != nil {
 		return 0, err
 	}
-	open := enumerate.NewICMPPinger
-	if addr.Is6() {
-		open = enumerate.NewICMPv6Pinger
-	}
-	pinger, err := open(pingTimeout)
+	pinger, err := openPinger(iface, addr.Is6())
 	if err != nil {
-		return 0, fmt.Errorf("open ICMP socket: %w", err)
+		return 0, err
 	}
 	defer func() { _ = pinger.Close() }()
 
@@ -42,6 +41,24 @@ func PingHost(ctx context.Context, host string) (time.Duration, error) {
 		return 0, errNoAnswer
 	}
 	return res.RTT, nil
+}
+
+func openPinger(iface string, ipv6 bool) (*enumerate.ICMPPinger, error) {
+	if iface == "" {
+		if ipv6 {
+			return enumerate.NewICMPv6Pinger(pingTimeout)
+		}
+		return enumerate.NewICMPPinger(pingTimeout)
+	}
+	link, err := net.InterfaceByName(iface)
+	if err != nil {
+		return nil, fmt.Errorf("open ICMP socket on %s: %w", iface, err)
+	}
+	pinger, err := enumerate.NewICMPPingerOn(pingTimeout, ipv6, link)
+	if err != nil {
+		return nil, fmt.Errorf("open ICMP socket on %s: %w", iface, err)
+	}
+	return pinger, nil
 }
 
 func resolve(ctx context.Context, host string) (netip.Addr, error) {

@@ -2,19 +2,17 @@
 
 package enumerate
 
-// bluetooth_linux.go implements Bluetooth scanning on Linux using bluetoothctl
-// and hcitool for device discovery.
-//
-// For BLE scanning, we use hcitool lescan with btmon for capturing advertisements.
-// Full BLE scanning may require root privileges.
+// bluetooth_linux.go implements Bluetooth scanning on Linux. Discovery runs
+// over the kernel management interface (bluetooth_mgmt_linux.go). When
+// bluetoothd is running, bluetoothctl adds what only it knows: pairing, trust
+// and the devices connected to this host, which stop advertising once
+// connected.
 
 import (
-	"bufio"
 	"context"
+	"errors"
 	"fmt"
-	"io"
 	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -22,13 +20,10 @@ import (
 
 // Linux scanning constants.
 const (
-	linuxBTScanTimeoutSecs = 30
-	deviceLineParts        = 3
-	minimumDeviceParts     = 2
-	uuidLineParts          = 2
-	defaultBLEScanSeconds  = 5
-	macAddressParts        = 6
-	macAddressPartLength   = 2
+	bluetoothctlTimeout = 30 * time.Second
+	deviceLineParts     = 3
+	minimumDeviceParts  = 2
+	uuidLineParts       = 2
 )
 
 // scanPlatform performs Bluetooth scanning on Linux.
@@ -37,34 +32,65 @@ func (s *BluetoothScanner) scanPlatform(
 	adapter string,
 	config *BluetoothScanConfig,
 ) ([]BluetoothDevice, error) {
-	ctx, cancel := context.WithTimeout(ctx, linuxBTScanTimeoutSecs*time.Second)
+	scanTypes, err := mgmtScanTypes(config)
+	if err != nil {
+		return nil, err
+	}
+	duration := time.Duration(config.ScanDurationSec) * time.Second
+	if duration <= 0 {
+		duration = defaultScanDurationSec * time.Second
+	}
+	devices, err := scanMgmt(ctx, adapter, scanTypes, duration)
+	if err != nil {
+		return nil, err
+	}
+
+	ctlCtx, cancel := context.WithTimeout(ctx, bluetoothctlTimeout)
 	defer cancel()
-
-	var devices []BluetoothDevice
-
-	// Get paired/connected devices via bluetoothctl
-	btctlDevices, btctlErr := s.scanBluetoothctl(ctx)
-	if btctlErr == nil {
-		devices = append(devices, btctlDevices...)
+	if known, ctlErr := s.scanBluetoothctl(ctlCtx); ctlErr == nil {
+		devices = applyBluetoothctlState(devices, known)
 	}
-
-	// Try hcitool for classic discovery if enabled
-	if config.IncludeClassic {
-		hciDevices, hciErr := s.scanHCITool(ctx, adapter, config)
-		if hciErr == nil {
-			devices = mergeBluetoothDevices(devices, hciDevices)
-		}
-	}
-
-	// Try BLE scanning if enabled
-	if config.IncludeBLE {
-		bleDevices, bleErr := s.scanBLE(ctx, adapter, config)
-		if bleErr == nil {
-			devices = mergeBluetoothDevices(devices, bleDevices)
-		}
-	}
-
 	return devices, nil
+}
+
+func mgmtScanTypes(config *BluetoothScanConfig) (byte, error) {
+	var types byte
+	if config.IncludeClassic {
+		types |= mgmtScanBREDR
+	}
+	if config.IncludeBLE {
+		types |= mgmtScanLE
+	}
+	if types == 0 {
+		return 0, errors.New("bluetooth scan includes neither classic nor BLE devices")
+	}
+	return types, nil
+}
+
+// applyBluetoothctlState copies bluetoothd's pairing state onto the devices
+// the scan heard, and adds connected devices it did not hear. bluetoothd's
+// cache of devices seen in the past is not evidence a device is in range now.
+func applyBluetoothctlState(heard, known []BluetoothDevice) []BluetoothDevice {
+	index := make(map[string]int, len(heard))
+	for i, dev := range heard {
+		index[normalizeMAC(dev.Address)] = i
+	}
+	for _, k := range known {
+		i, ok := index[normalizeMAC(k.Address)]
+		if !ok {
+			if k.IsConnected {
+				heard = append(heard, k)
+			}
+			continue
+		}
+		dev := &heard[i]
+		dev.IsPaired, dev.IsTrusted, dev.IsBlocked, dev.IsConnected = k.IsPaired, k.IsTrusted, k.IsBlocked, k.IsConnected
+		dev.Alias = k.Alias
+		if dev.Name == "" {
+			dev.Name = k.Name
+		}
+	}
+	return heard
 }
 
 // scanBluetoothctl uses bluetoothctl to get paired/connected devices.
@@ -211,193 +237,6 @@ func setBluetoothManufacturer(dev *BluetoothDevice, value string) {
 	}
 }
 
-// scanHCITool uses hcitool for classic Bluetooth discovery.
-func (s *BluetoothScanner) scanHCITool(
-	ctx context.Context,
-	adapter string,
-	_ *BluetoothScanConfig,
-) ([]BluetoothDevice, error) {
-	// hcitool inq for inquiry scan
-	args := []string{"inq"}
-	if adapter != "" {
-		args = []string{"-i", adapter, "inq"}
-	}
-
-	cmd := exec.CommandContext(ctx, "hcitool", args...)
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, fmt.Errorf("hcitool inq failed: %w", err)
-	}
-
-	return parseHCIToolOutput(string(output))
-}
-
-func parseHCIToolOutput(output string) ([]BluetoothDevice, error) {
-	var devices []BluetoothDevice
-	now := time.Now()
-
-	// hcitool inq output format:
-	// Inquiring ...
-	// AA:BB:CC:DD:EE:FF       clock offset: 0x1234    class: 0x240404
-
-	addrRegex := regexp.MustCompile(
-		`([0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})`,
-	)
-	classRegex := regexp.MustCompile(`class:\s*0x([0-9A-Fa-f]+)`)
-
-	for line := range strings.SplitSeq(output, "\n") {
-		addrMatch := addrRegex.FindStringSubmatch(line)
-		if len(addrMatch) < minimumDeviceParts {
-			continue
-		}
-
-		dev := BluetoothDevice{
-			Address:     addrMatch[1],
-			Type:        BluetoothTypeClassic,
-			DeviceClass: BluetoothClassUncategorized,
-			FirstSeen:   now,
-			LastSeen:    now,
-			Metadata:    make(map[string]any),
-		}
-
-		// Parse class of device
-		if classMatch := classRegex.FindStringSubmatch(line); len(classMatch) > 1 {
-			if cod, err := strconv.ParseUint(classMatch[1], 16, 32); err == nil {
-				dev.ClassOfDev = uint32(cod)
-				dev.DeviceClass = ClassOfDeviceToClass(dev.ClassOfDev)
-			}
-		}
-
-		devices = append(devices, dev)
-	}
-
-	return devices, nil
-}
-
-// scanBLE uses hcitool lescan for BLE discovery. lescan never exits on its
-// own, so the scan runs until the configured duration expires and is then
-// killed.
-func (s *BluetoothScanner) scanBLE(
-	ctx context.Context,
-	adapter string,
-	config *BluetoothScanConfig,
-) ([]BluetoothDevice, error) {
-	scanCtx, cancel := context.WithTimeout(ctx, bleScanDuration(config))
-	defer cancel()
-
-	// hcitool lescan requires root.
-	cmd := exec.CommandContext(scanCtx, "hcitool", lescanArgs(adapter)...)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get stdout pipe: %w", err)
-	}
-
-	if startErr := cmd.Start(); startErr != nil {
-		return nil, fmt.Errorf("hcitool lescan failed: %w", startErr)
-	}
-
-	devices := parseLEScanOutput(stdout)
-
-	_ = cmd.Process.Kill()
-	_ = cmd.Wait()
-
-	return devices, nil
-}
-
-func bleScanDuration(config *BluetoothScanConfig) time.Duration {
-	if config.ScanDurationSec == 0 {
-		return defaultBLEScanSeconds * time.Second
-	}
-	return time.Duration(config.ScanDurationSec) * time.Second
-}
-
-func lescanArgs(adapter string) []string {
-	if adapter == "" {
-		return []string{"lescan", "--duplicates"}
-	}
-	return []string{"-i", adapter, "lescan", "--duplicates"}
-}
-
-// parseLEScanOutput reads hcitool lescan output until EOF, one device per
-// address. With --duplicates an address repeats, often first as "(unknown)"
-// and later with its name, so a name seen later fills an empty one.
-//
-//	LE Scan ...
-//	AA:BB:CC:DD:EE:FF DeviceName
-//	AA:BB:CC:DD:EE:FF (unknown)
-func parseLEScanOutput(r io.Reader) []BluetoothDevice {
-	deviceMap := make(map[string]*BluetoothDevice)
-	scanner := bufio.NewScanner(r)
-	now := time.Now()
-
-	for scanner.Scan() {
-		address, name, ok := parseLEScanLine(scanner.Text())
-		if !ok {
-			continue
-		}
-
-		if existing, seen := deviceMap[address]; seen {
-			if name != "" && existing.Name == "" {
-				existing.Name = name
-			}
-			existing.LastSeen = time.Now()
-			continue
-		}
-
-		deviceMap[address] = &BluetoothDevice{
-			Address:       address,
-			Name:          name,
-			Type:          BluetoothTypeBLE,
-			DeviceClass:   BluetoothClassUncategorized,
-			IsConnectable: true,
-			FirstSeen:     now,
-			LastSeen:      now,
-			Metadata:      make(map[string]any),
-		}
-	}
-
-	devices := make([]BluetoothDevice, 0, len(deviceMap))
-	for _, dev := range deviceMap {
-		devices = append(devices, *dev)
-	}
-
-	return devices
-}
-
-// parseLEScanLine returns the address and name on one lescan line; "(unknown)"
-// is reported as an empty name.
-func parseLEScanLine(line string) (string, string, bool) {
-	parts := strings.SplitN(strings.TrimSpace(line), " ", minimumDeviceParts)
-	if !isValidMACAddress(parts[0]) {
-		return "", "", false
-	}
-
-	name := ""
-	if len(parts) > 1 && parts[1] != "(unknown)" {
-		name = parts[1]
-	}
-
-	return parts[0], name, true
-}
-
-// isValidMACAddress checks if a string looks like a MAC address.
-func isValidMACAddress(s string) bool {
-	// Simple check: 6 hex pairs separated by colons
-	parts := strings.Split(s, ":")
-	if len(parts) != macAddressParts {
-		return false
-	}
-	for _, part := range parts {
-		if len(part) != macAddressPartLength {
-			return false
-		}
-		if _, err := strconv.ParseUint(part, 16, 8); err != nil {
-			return false
-		}
-	}
-	return true
-}
-
 // mergeDeviceInfo merges detailed info into a device.
 func mergeDeviceInfo(base, info BluetoothDevice) BluetoothDevice {
 	if info.Name != "" {
@@ -429,31 +268,4 @@ func mergeDeviceInfo(base, info BluetoothDevice) BluetoothDevice {
 	base.Type = info.Type
 
 	return base
-}
-
-// mergeBluetoothDevices merges two device lists.
-func mergeBluetoothDevices(primary, secondary []BluetoothDevice) []BluetoothDevice {
-	seen := make(map[string]int) // address -> index in result
-
-	for i, dev := range primary {
-		if dev.Address != "" {
-			seen[normalizeMAC(dev.Address)] = i
-		}
-	}
-
-	for _, dev := range secondary {
-		if dev.Address == "" {
-			continue
-		}
-		normalized := normalizeMAC(dev.Address)
-		if idx, exists := seen[normalized]; exists {
-			// Merge additional info
-			primary[idx] = mergeDeviceInfo(primary[idx], dev)
-		} else {
-			primary = append(primary, dev)
-			seen[normalized] = len(primary) - 1
-		}
-	}
-
-	return primary
 }
