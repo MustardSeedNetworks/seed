@@ -4,10 +4,13 @@
 # Extends the default Go + JavaScript/TypeScript analysis with the
 # security-extended and security-and-quality query suites.
 #
-# A finding that is a false positive in one place is suppressed on that
-# line. A query-filter would disable the rule for the whole repository.
-# internal/auth/hibp.go suppresses go/weak-sensitive-data-hashing on the
-# HIBP SHA-1 call; the range API requires it and the digest is not stored.
+# go/weak-sensitive-data-hashing stays excluded. The only SHA-1 of a
+# password is the HIBP k-anonymity prefix in internal/auth/hibp.go and its
+# test. The protocol requires SHA-1, and the digest is not stored. An
+# inline codeql[...] comment does not clear the pull-request CodeQL check:
+# this config's suites do not emit a SARIF suppression, and GitHub still
+# counts the result as a new high alert. Query filters cannot be limited
+# to one file. No other password hash uses SHA-1.
 # =============================================================================
 
 name: "Seed CodeQL config"
@@ -15,3 +18,11 @@ name: "Seed CodeQL config"
 queries:
   - uses: security-extended
   - uses: security-and-quality
+
+# Query filters apply to every path.
+query-filters:
+  # HIBP k-anonymity (https://haveibeenpwned.com/API/v3#PwnedPasswords)
+  # requires SHA-1. Only the five-character prefix is sent. Password
+  # storage in this package is Argon2id, not SHA-1.
+  - exclude:
+      id: go/weak-sensitive-data-hashing

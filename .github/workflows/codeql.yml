@@ -34,9 +34,8 @@ jobs:
         uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           languages: ${{ matrix.language }}
-          # config-file selects the query suites. A single-file false
-          # positive is an inline codeql[...] comment, not a query-filter
-          # (see internal/auth/hibp.go).
+          # config-file selects the query suites and excludes the HIBP
+          # SHA-1 false positive. See .github/codeql/codeql-config.yml.
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Autobuild
