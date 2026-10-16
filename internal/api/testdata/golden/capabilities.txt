@@ -1535,6 +1535,17 @@ body:
     "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/polling-targets/{targetId}/walk",
+    "rateLimited": true,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "maxBodyBytes": 262144,
+    "methods": [
       "GET",
       "POST"
     ],

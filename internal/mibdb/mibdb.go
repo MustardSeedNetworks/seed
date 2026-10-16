@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 )
@@ -35,10 +36,50 @@ func New(db *sql.DB) *DB {
 	return &DB{db: db}
 }
 
-// LoadBuiltinOIDs loads all built-in OID definitions into the database.
+// LoadBuiltinOIDs loads the built-in objects and the branches their full paths
+// name (system, ifTable, ifEntry …), so a subtree can be asked for by name.
 // This is typically called during application initialization.
 func (d *DB) LoadBuiltinOIDs() error {
-	return d.AddOIDs(builtinOIDs)
+	return d.AddOIDs(slices.Concat(builtinOIDs, branchOIDs(builtinOIDs)))
+}
+
+// branchOIDs derives the interior nodes each entry's FullPath names:
+// "…mib-2(1).interfaces(2).ifTable(2).ifEntry(1).ifDescr(2)" yields interfaces,
+// ifTable and ifEntry. A path whose arcs disagree with the entry's OID stops
+// contributing at the disagreement, and a branch name that maps to two OIDs or
+// is also a leaf name is left out rather than guessed.
+func branchOIDs(entries []OIDEntry) []OIDEntry {
+	leaves := make(map[string]bool, len(entries))
+	for _, e := range entries {
+		leaves[e.Name] = true
+	}
+	found := make(map[string]OIDEntry)
+	ambiguous := make(map[string]bool)
+	for _, e := range entries {
+		path := strings.Split(e.FullPath, ".")
+		arcs := strings.Split(e.OID, ".")
+		if len(path) != len(arcs) {
+			continue
+		}
+		for i, node := range path[:len(path)-1] {
+			name, arc, ok := strings.Cut(strings.TrimSuffix(node, ")"), "(")
+			if !ok || arc != arcs[i] {
+				break
+			}
+			oid := strings.Join(arcs[:i+1], ".")
+			if prev, seen := found[name]; seen && prev.OID != oid {
+				ambiguous[name] = true
+			}
+			found[name] = OIDEntry{Name: name, OID: oid, FullPath: strings.Join(path[:i+1], ".")}
+		}
+	}
+	branches := make([]OIDEntry, 0, len(found))
+	for name, e := range found {
+		if !leaves[name] && !ambiguous[name] {
+			branches = append(branches, e)
+		}
+	}
+	return branches
 }
 
 // AddOID adds a single OID entry to the database.
@@ -160,6 +201,29 @@ func (d *DB) GetOIDByNumeric(oid string) (*OIDEntry, error) {
 	}
 
 	return &entry, nil
+}
+
+// LookupNumeric names a numeric OID by its longest known prefix and returns the
+// arcs after that prefix as the instance: "1.3.6.1.2.1.2.2.1.2.3" is ifDescr
+// with instance "3". ErrNotFound means no known object covers the OID.
+func (d *DB) LookupNumeric(ctx context.Context, oid string) (OIDEntry, string, error) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	oid = strings.TrimPrefix(oid, ".")
+	var entry OIDEntry
+	err := d.db.QueryRowContext(ctx, `
+		SELECT name, oid, COALESCE(full_path, ''), COALESCE(mib_name, '')
+		FROM mib_oid_names WHERE oid = ? OR ? LIKE oid || '.%'
+		ORDER BY length(oid) DESC LIMIT 1
+	`, oid, oid).Scan(&entry.Name, &entry.OID, &entry.FullPath, &entry.MIBName)
+	if errors.Is(err, sql.ErrNoRows) {
+		return OIDEntry{}, "", ErrNotFound
+	}
+	if err != nil {
+		return OIDEntry{}, "", err
+	}
+	return entry, strings.TrimPrefix(oid[len(entry.OID):], "."), nil
 }
 
 // GetOIDsByPrefix returns all OIDs that start with the given prefix.
