@@ -17,6 +17,14 @@ import (
 const (
 	leaseLineParts = 2
 	dhcpTimeParts  = 3
+
+	// networkdLeaseDir is where systemd-networkd keeps each link's DHCPv4
+	// lease, one file per interface index. It is the DHCP client on Ubuntu
+	// Server through netplan, so most Linux probes have no dhclient file.
+	networkdLeaseDir = "/run/systemd/netif/leases"
+
+	networkdDay  = 24 * time.Hour
+	networkdWeek = 7 * networkdDay
 )
 
 // leaseFilePathTemplates returns the lease-file locations searched for an
@@ -90,28 +98,28 @@ func testDHCPPlatform(ctx context.Context, interfaceName string) *TestResult {
 	return result
 }
 
-// hostInterfaceName returns the host's own spelling of the named interface, or
-// an error when the host has no such interface.
+// hostInterface returns the host's own entry for the named interface, or an
+// error when the host has no such interface.
 //
-// The point is the source of the returned string: it comes from the kernel's
-// interface list, not from the caller. findAndParseLeaseFile interpolates it
-// into a lease-file path, so a caller-supplied name carrying traversal segments
-// would otherwise steer [os.Stat] and [os.Open] outside the lease directories.
-// Returning the matched entry means the value that reaches the path can only
-// ever be a real interface name.
-func hostInterfaceName(name string) (string, error) {
+// The point is the source of the returned name and index: they come from the
+// kernel's interface list, not from the caller. findAndParseLeaseFile
+// interpolates them into lease-file paths, so a caller-supplied name carrying
+// traversal segments would otherwise steer [os.Stat] and [os.Open] outside the
+// lease directories. Returning the matched entry means the values that reach a
+// path can only ever be a real interface's.
+func hostInterface(name string) (net.Interface, error) {
 	interfaces, err := net.Interfaces()
 	if err != nil {
-		return "", &InterfaceError{Message: "failed to list interfaces: " + err.Error()}
+		return net.Interface{}, &InterfaceError{Message: "failed to list interfaces: " + err.Error()}
 	}
 
 	for _, iface := range interfaces {
 		if iface.Name == name {
-			return iface.Name, nil
+			return iface, nil
 		}
 	}
 
-	return "", &InterfaceError{Message: "interface not found: " + name}
+	return net.Interface{}, &InterfaceError{Message: "interface not found: " + name}
 }
 
 // findAndParseLeaseFile finds and parses the DHCP lease file for an interface.
@@ -121,16 +129,27 @@ func hostInterfaceName(name string) (string, error) {
 // builds the path, and a second caller that forgets the check must not turn it
 // into an arbitrary-file read.
 func findAndParseLeaseFile(requestedName string) (*LeaseInfo, error) {
-	return findLeaseFileIn(leaseFilePathTemplates(), requestedName)
+	return findLeaseFileIn(networkdLeaseDir, leaseFilePathTemplates(), requestedName)
 }
 
-// findLeaseFileIn is findAndParseLeaseFile over a given set of path templates.
-// The templates are a parameter so a test can point the search at a temp
-// directory and demonstrate the traversal the name check prevents.
-func findLeaseFileIn(templates []string, requestedName string) (*LeaseInfo, error) {
-	interfaceName, resolveErr := hostInterfaceName(requestedName)
+// findLeaseFileIn is findAndParseLeaseFile over a given networkd lease
+// directory and set of dhclient/dhcpcd path templates. Both are parameters so a
+// test can point the search at a temp directory and demonstrate the traversal
+// the name check prevents.
+//
+// networkd is searched first. Its directory is on tmpfs and networkd removes a
+// link's file when the lease goes, so a file there is the live lease; dhclient
+// files under /var/lib outlive both the lease and the client that wrote them.
+func findLeaseFileIn(networkdDir string, templates []string, requestedName string) (*LeaseInfo, error) {
+	iface, resolveErr := hostInterface(requestedName)
 	if resolveErr != nil {
 		return nil, resolveErr
+	}
+	interfaceName := iface.Name
+
+	networkdPath := filepath.Join(networkdDir, strconv.Itoa(iface.Index))
+	if _, err := os.Stat(networkdPath); err == nil {
+		return parseNetworkdLeaseFile(networkdPath, interfaceName)
 	}
 
 	for _, pathTemplate := range templates {
@@ -160,6 +179,110 @@ func findLeaseFileIn(templates []string, requestedName string) (*LeaseInfo, erro
 	}
 
 	return nil, &InterfaceError{Message: "no lease file found"}
+}
+
+// parseNetworkdLeaseFile parses a systemd-networkd DHCPv4 lease: KEY=VALUE
+// lines, with list values separated by spaces.
+//
+// networkd heads the file "This is private data. Do not parse." Its varlink
+// API (io.systemd.Network.Describe) was checked first and does not carry the
+// router, DNS or domain options, so the file is the only complete source; the
+// format has been stable since networkd shipped, and cloud-init reads it too.
+//
+// Expiry is left unset. networkd rewrites the file whenever it saves the link's
+// state, not only when the lease changes, so its modification time is not the
+// lease's acquisition time and an expiry derived from it would be invented.
+func parseNetworkdLeaseFile(path, interfaceName string) (*LeaseInfo, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	lease := &LeaseInfo{Interface: interfaceName}
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		key, value, found := strings.Cut(strings.TrimSpace(scanner.Text()), "=")
+		if !found {
+			continue
+		}
+
+		switch key {
+		case "ADDRESS":
+			lease.IPAddress = value
+		case "NETMASK":
+			lease.SubnetMask = value
+		case "ROUTER":
+			if routers := strings.Fields(value); len(routers) > 0 {
+				lease.Gateway = routers[0]
+			}
+		case "SERVER_ADDRESS":
+			lease.ServerIP = value
+		case "DNS":
+			lease.DNSServers = strings.Fields(value)
+		case "DOMAINNAME":
+			lease.DomainName = value
+		case "LIFETIME":
+			if lifetime, ok := parseNetworkdTimespan(value); ok {
+				lease.LeaseTime = lifetime
+				lease.LeaseTimeSec = int(lifetime.Seconds())
+			}
+		}
+	}
+	if scanErr := scanner.Err(); scanErr != nil {
+		return nil, scanErr
+	}
+
+	if lease.IPAddress == "" {
+		return nil, &InterfaceError{Message: "no valid lease found in file"}
+	}
+
+	return lease, nil
+}
+
+// networkdTimespanUnit maps the suffixes systemd's timespan formatter emits at
+// the magnitudes a DHCP lease has.
+func networkdTimespanUnit(suffix string) (time.Duration, bool) {
+	switch suffix {
+	case "ms":
+		return time.Millisecond, true
+	case "s":
+		return time.Second, true
+	case "min":
+		return time.Minute, true
+	case "h":
+		return time.Hour, true
+	case "d":
+		return networkdDay, true
+	case "w":
+		return networkdWeek, true
+	}
+
+	return 0, false
+}
+
+// parseNetworkdTimespan parses a networkd lease duration. Current systemd
+// writes a formatted timespan ("1d", "12h 30min"); older releases wrote plain
+// seconds ("86400"). An "infinity" lease, or anything else, reports false.
+func parseNetworkdTimespan(value string) (time.Duration, bool) {
+	if seconds, err := strconv.Atoi(value); err == nil {
+		return time.Duration(seconds) * time.Second, true
+	}
+
+	var total time.Duration
+	fields := strings.Fields(value)
+	for _, field := range fields {
+		digits := strings.TrimRightFunc(field, func(r rune) bool { return r < '0' || r > '9' })
+		amount, err := strconv.Atoi(digits)
+		unit, known := networkdTimespanUnit(field[len(digits):])
+		if err != nil || !known {
+			return 0, false
+		}
+		total += time.Duration(amount) * unit
+	}
+
+	return total, len(fields) > 0
 }
 
 // parseLeaseFile parses a dhclient lease file.
