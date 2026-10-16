@@ -373,6 +373,20 @@ function LogFiltersBar({
 }
 
 /**
+ * UTF-16 code-unit order, the same order as `Array#sort()` with no comparator.
+ * `localeCompare` would reorder mixed-case component names.
+ */
+function compareUtf16(left: string, right: string): number {
+  if (left < right) {
+    return -1;
+  }
+  if (left > right) {
+    return 1;
+  }
+  return 0;
+}
+
+/**
  * LogViewerModal - Full-screen modal for log viewing.
  */
 export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.JSX.Element | null {
@@ -396,7 +410,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
   // Get unique components from logs
   const availableComponents = Array.from(
     new Set(allLogs.map((log) => log.component).filter(Boolean) as string[]),
-  ).sort();
+  ).sort(compareUtf16);
 
   // Toggle log expansion
   const toggleExpand = (timestamp: string): void => {
