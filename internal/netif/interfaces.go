@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/netif/carrier"
 	"github.com/MustardSeedNetworks/seed/internal/netif/detection"
 )
 
@@ -140,7 +141,7 @@ func (m *Manager) RefreshInterfaces() error {
 			Name:         iface.Name,
 			Type:         interfaceType(iface, scoreMap[iface.Name]),
 			Up:           iface.Flags&net.FlagUp != 0,
-			Running:      iface.Flags&net.FlagRunning != 0,
+			Running:      carrier.Present(iface),
 			HardwareAddr: iface.HardwareAddr.String(),
 			MTU:          iface.MTU,
 			Addresses:    []string{},

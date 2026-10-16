@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/netif/carrier"
 )
 
 // Interface types, as InterfaceScore.Type reports them.
@@ -158,7 +159,7 @@ func (d *Detector) ScoreInterface(iface net.Interface) InterfaceScore {
 	}
 
 	// Determine link status and addresses
-	score.LinkStatus = iface.Flags&net.FlagRunning != 0
+	score.LinkStatus = carrier.Present(iface)
 	addrs, err := iface.Addrs()
 	if err != nil {
 		logging.GetLogger().

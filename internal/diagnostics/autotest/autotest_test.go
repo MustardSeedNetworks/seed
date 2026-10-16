@@ -376,6 +376,12 @@ func TestGatewayStage(t *testing.T) {
 			autotest.OutcomeWarn,
 			autotest.ReasonLossy,
 		},
+		{
+			"slow without loss",
+			&gateway.PingStats{Gateway: "10.0.0.1", Reachable: true, Status: gateway.StatusWarning, AvgTime: 52.2},
+			autotest.OutcomeWarn,
+			autotest.ReasonSlow,
+		},
 		{"unreachable", &gateway.PingStats{
 			Gateway: "10.0.0.1", Status: gateway.StatusError,
 			Results: []gateway.PingResult{{Error: "ping timeout"}},

@@ -160,7 +160,8 @@ func bestLookup(a, b *dns.LookupResult) *dns.LookupResult {
 }
 
 // GatewayStage pings the interface's gateway and grades loss and latency
-// against the gateway tester's thresholds.
+// against the gateway tester's thresholds. Loss is named before latency, the
+// order the tester checks them in.
 func GatewayStage(test func() *gateway.PingStats) Stage {
 	return Stage{Name: StageGateway, Run: func(_ context.Context, _ string, _ Spec) StageReport {
 		st := test()
@@ -181,8 +182,10 @@ func GatewayStage(test func() *gateway.PingStats) Stage {
 			}
 		case st.Status == gateway.StatusSuccess:
 			r.Outcome, r.Reason = OutcomePass, ReasonOK
-		default:
+		case st.LossPercent > 0:
 			r.Outcome, r.Reason = OutcomeWarn, ReasonLossy
+		default:
+			r.Outcome, r.Reason = OutcomeWarn, ReasonSlow
 		}
 		return r
 	}}
