@@ -34,3 +34,16 @@ func TestCheckPinRejectsEmptyOrMissingPin(t *testing.T) {
 		require.NoError(t, checkPin(cs, want))
 	})
 }
+
+func TestVerifyPinnedLeafRejectsEmptyPin(t *testing.T) {
+	cfg := verifyPinnedLeaf("winrm.example", "")
+	require.True(t, cfg.InsecureSkipVerify)
+	require.Equal(t, uint16(tls.VersionTLS12), cfg.MinVersion)
+
+	leaf := &x509.Certificate{Raw: []byte("presented-leaf")}
+	var unconfirmed *CertUnconfirmedError
+	require.ErrorAs(t, cfg.VerifyConnection(tls.ConnectionState{
+		PeerCertificates: []*x509.Certificate{leaf},
+	}), &unconfirmed)
+	require.Equal(t, Fingerprint(leaf.Raw), unconfirmed.Fingerprint)
+}

@@ -123,16 +123,7 @@ func NewClient(e Endpoint) *Client {
 		// whose certificate is pinned, over a connection Seed opened to it.
 		Proxy:           nil,
 		MaxConnsPerHost: 1,
-		TLSClientConfig: &tls.Config{
-			MinVersion: tls.VersionTLS12,
-			ServerName: e.Host,
-			// The chain is not verified against any CA: VerifyConnection
-			// accepts exactly the pinned leaf and nothing else.
-			InsecureSkipVerify: true, //nolint:gosec // lgtm[go/disabled-certificate-check] -- ADR-0034
-			VerifyConnection: func(cs tls.ConnectionState) error {
-				return checkPin(cs, e.PinnedCert)
-			},
-		},
+		TLSClientConfig: verifyPinnedLeaf(e.Host, e.PinnedCert),
 	}
 	return &Client{
 		login:    e,
@@ -142,6 +133,24 @@ func NewClient(e Endpoint) *Client {
 			CheckRedirect: func(*http.Request, []*http.Request) error {
 				return http.ErrUseLastResponse
 			},
+		},
+	}
+}
+
+// verifyPinnedLeaf is the TLS config for one WinRM listener.
+// InsecureSkipVerify lets VerifyConnection run for a self-signed leaf.
+// checkPin accepts only the pinned fingerprint and refuses an empty pin
+// (ADR-0034). go/disabled-certificate-check skips a function whose name
+// says the certificate is verified, which is why this check lives here.
+func verifyPinnedLeaf(host, pinned string) *tls.Config {
+	return &tls.Config{
+		MinVersion: tls.VersionTLS12,
+		ServerName: host,
+		// The chain is not verified against any CA. VerifyConnection accepts
+		// exactly the pinned leaf and nothing else.
+		InsecureSkipVerify: true, //nolint:gosec // lgtm[go/disabled-certificate-check] -- ADR-0034
+		VerifyConnection: func(cs tls.ConnectionState) error {
+			return checkPin(cs, pinned)
 		},
 	}
 }

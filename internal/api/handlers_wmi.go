@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"regexp"
 	"strings"
@@ -196,7 +197,10 @@ func (s *Server) handleWMITargetByID(w http.ResponseWriter, r *http.Request) {
 			writeWMIError(w, r, err)
 			return
 		}
-		s.auditWMI(r, "wmi.target.delete", "Windows inventory target deleted", "target_id", id)
+		s.wmiAudit(r, "wmi.target.delete").InfoContext(r.Context(),
+			"Windows inventory target deleted",
+			"target_id", singleLogLine(id),
+		)
 		w.WriteHeader(http.StatusNoContent)
 	default:
 		t, err := s.wmiInventory.GetTarget(r.Context(), clientID, id)
@@ -225,8 +229,12 @@ func (s *Server) saveWMITarget(w http.ResponseWriter, r *http.Request, clientID,
 		writeWMIError(w, r, err)
 		return
 	}
-	s.auditWMI(r, "wmi.target.save", "Windows inventory target saved",
-		"target_id", t.ID, "host", t.Host, "port", t.Port)
+	s.wmiAudit(r, "wmi.target.save").InfoContext(r.Context(),
+		"Windows inventory target saved",
+		"target_id", singleLogLine(t.ID),
+		"host", singleLogLine(t.Host),
+		"port", t.Port,
+	)
 	status := http.StatusOK
 	if id == "" {
 		status = http.StatusCreated
@@ -249,7 +257,10 @@ func (s *Server) handleWMICertificate(w http.ResponseWriter, r *http.Request) {
 			writeWMIError(w, r, err)
 			return
 		}
-		s.auditWMI(r, "wmi.certificate.clear", "Windows inventory certificate cleared", "target_id", id)
+		s.wmiAudit(r, "wmi.certificate.clear").InfoContext(r.Context(),
+			"Windows inventory certificate cleared",
+			"target_id", singleLogLine(id),
+		)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -263,8 +274,11 @@ func (s *Server) handleWMICertificate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// The audit line names the stored pin, never the request's text.
-	s.auditWMI(r, "wmi.certificate.confirm", "Windows inventory certificate confirmed",
-		"target_id", t.ID, "fingerprint", t.CertSHA256)
+	s.wmiAudit(r, "wmi.certificate.confirm").InfoContext(r.Context(),
+		"Windows inventory certificate confirmed",
+		"target_id", singleLogLine(t.ID),
+		"fingerprint", singleLogLine(t.CertSHA256),
+	)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -306,7 +320,11 @@ func (s *Server) handleWMIRun(w http.ResponseWriter, r *http.Request) {
 	}
 	s.submitClientJob(w, r, clientID, wmiJobKind, wmiJob{ClientID: clientID, TargetIDs: in.TargetIDs},
 		func(jobID string) {
-			s.auditWMI(r, "wmi.run", "Windows inventory run started", "job_id", jobID, "target_ids", in.TargetIDs)
+			s.wmiAudit(r, "wmi.run").InfoContext(r.Context(),
+				"Windows inventory run started",
+				"job_id", singleLogLine(jobID),
+				"target_ids", singleLogLine(strings.Join(in.TargetIDs, ",")),
+			)
 		})
 }
 
@@ -341,23 +359,21 @@ func wmiTargetID(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return id, true
 }
 
-// singleLogLine replaces CR and LF. The log calls below inline the same
-// strings.ReplaceAll calls: CodeQL go/log-injection recognizes that
-// replacement only when it is the logged value itself.
+// singleLogLine replaces CR and LF with spaces so one field stays one log
+// line. Callers pass the result straight into the log call. A slice of
+// already-cleaned values is still treated as tainted by go/log-injection.
 func singleLogLine(s string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(s, "\n", " "), "\r", " ")
 }
 
-// auditWMI writes the security audit line for a Windows inventory action.
-func (s *Server) auditWMI(r *http.Request, event, msg string, attrs ...any) {
-	// Newlines are stripped at these arguments. CodeQL go/log-injection
-	// treats strings.ReplaceAll of "\n" or "\r" as the sanitizer, and only
-	// when that call is the logged value itself.
-	logging.FromContext(r.Context()).With(
+// wmiAudit is the audit logger for one Windows inventory action. Username
+// and client IP are cleaned here, as direct arguments of the logger call.
+func (s *Server) wmiAudit(r *http.Request, event string) *slog.Logger {
+	return logging.FromContext(r.Context()).With(
 		"username", strings.ReplaceAll(strings.ReplaceAll(usernameFromContext(r), "\n", " "), "\r", " "),
 		"client_ip", strings.ReplaceAll(strings.ReplaceAll(s.getClientIP(r), "\n", " "), "\r", " "),
 		"event", event,
-	).InfoContext(r.Context(), msg, attrs...)
+	)
 }
 
 // wmiCaller resolves the caller's client and answers 503 when the use-case is
