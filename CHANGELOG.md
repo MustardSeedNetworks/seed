@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.268.0](https://github.com/MustardSeedNetworks/seed/compare/v0.267.0...v0.268.0) (2026-10-16)
+
+
+### Features
+
+* **autotest:** run the wired port checks as one job with one verdict (P-E1) ([#3531](https://github.com/MustardSeedNetworks/seed/issues/3531)) ([57a42cf](https://github.com/MustardSeedNetworks/seed/commit/57a42cf7a2e0006bd3ee1d5b3f91f25f46fd9a2e))
+
+
+### Tests
+
+* **ui:** take the slow work out of three load-sensitive test timeouts ([#3528](https://github.com/MustardSeedNetworks/seed/issues/3528)) ([c08c9ca](https://github.com/MustardSeedNetworks/seed/commit/c08c9caba6abc155bf67eb7c5c92b76d6dfd8d26)), closes [#3502](https://github.com/MustardSeedNetworks/seed/issues/3502) [#3153](https://github.com/MustardSeedNetworks/seed/issues/3153) [#3105](https://github.com/MustardSeedNetworks/seed/issues/3105)
+
 ## [0.267.0](https://github.com/MustardSeedNetworks/seed/compare/v0.266.0...v0.267.0) (2026-10-16)
 
 
