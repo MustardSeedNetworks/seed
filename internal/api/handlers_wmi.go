@@ -256,12 +256,14 @@ func (s *Server) handleWMICertificate(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSONStrict(w, r, &in, MaxBodySizeJSON) {
 		return
 	}
-	if err := s.wmiInventory.ConfirmCert(r.Context(), clientID, id, in.Fingerprint); err != nil {
+	t, err := s.wmiInventory.ConfirmCert(r.Context(), clientID, id, in.Fingerprint)
+	if err != nil {
 		writeWMIError(w, r, err)
 		return
 	}
+	// The audit line names the stored pin, never the request's text.
 	s.auditWMI(r, "wmi.certificate.confirm", "Windows inventory certificate confirmed",
-		"target_id", id, "fingerprint", in.Fingerprint)
+		"target_id", t.ID, "fingerprint", t.CertSHA256)
 	w.WriteHeader(http.StatusNoContent)
 }
 

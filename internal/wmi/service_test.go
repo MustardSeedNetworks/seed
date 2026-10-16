@@ -258,9 +258,11 @@ func TestRunPinsNothingUntilAnOperatorConfirms(t *testing.T) {
 	require.ErrorIs(t, err, wmi.ErrNotFound)
 
 	var ve wmi.ValidationError
-	require.ErrorAs(t, f.svc.ConfirmCert(t.Context(), client, tgt.ID, strings.Repeat("CD", 32)), &ve,
-		"only the certificate the operator was shown can be confirmed")
-	require.NoError(t, f.svc.ConfirmCert(t.Context(), client, tgt.ID, presented))
+	_, err = f.svc.ConfirmCert(t.Context(), client, tgt.ID, strings.Repeat("CD", 32))
+	require.ErrorAs(t, err, &ve, "only the certificate the operator was shown can be confirmed")
+	confirmed, err := f.svc.ConfirmCert(t.Context(), client, tgt.ID, presented)
+	require.NoError(t, err)
+	require.Equal(t, presented, confirmed.CertSHA256)
 
 	res, err = f.svc.Run(t.Context(), client, []string{tgt.ID}, func(float64) {})
 	require.NoError(t, err)
@@ -338,7 +340,8 @@ func TestSaveTargetKeepsThePinOnlyAtTheSameAddress(t *testing.T) {
 	tgt := f.target(t, "10.0.0.5")
 	pin := strings.Repeat("AB", 32)
 	require.NoError(t, f.repo.SetPendingCert(t.Context(), client, tgt.ID, pin))
-	require.NoError(t, f.svc.ConfirmCert(t.Context(), client, tgt.ID, pin))
+	_, err := f.svc.ConfirmCert(t.Context(), client, tgt.ID, pin)
+	require.NoError(t, err)
 
 	renamed, err := f.svc.SaveTarget(t.Context(), wmi.TargetInput{
 		ID: tgt.ID, ClientID: client, Name: "renamed", Host: "10.0.0.5", CredentialsID: "cred-w",

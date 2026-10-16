@@ -105,7 +105,7 @@ The target's `lastStatus` says why:
 | --- | --- |
 | `cert_unconfirmed` | No certificate is pinned yet. Confirm the pending one (step 4). |
 | `cert_mismatch` | The host presented a certificate other than the pinned one. Seed sent nothing. After a planned renewal, `DELETE /api/v1/wmi-targets/<id>/certificate` and confirm the new one. Otherwise, find out what is answering on that address. |
-| `auth_failed` | The host refused the account or its password. |
+| `auth_failed` | The host refused the account or its password. A host whose WinRM service requires channel binding (`CbtHardeningLevel` set to `Strict`) also refuses Seed, which does not send channel binding tokens; the pinned certificate is what protects the sign-in instead. |
 | `unreachable` | Nothing answered on the port, or the host did not finish in time. A host with only the default HTTP listener reports this. |
 | `query_failed` | The host answered with a WS-Management fault, for example a class it does not have. `lastError` carries the host's message. |
 | `error` | Anything else, such as a credential that was changed to another kind. |

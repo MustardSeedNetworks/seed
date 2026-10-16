@@ -268,18 +268,22 @@ func (s *Service) ClearCert(ctx context.Context, clientID, id string) error {
 	return s.repo.ClearCert(ctx, clientID, id)
 }
 
-// ConfirmCert pins the target's pending certificate. fingerprint is the one
-// the operator was shown; it must still be the pending one, so a certificate
-// that changed after the operator looked is not the one that gets trusted.
-func (s *Service) ConfirmCert(ctx context.Context, clientID, id, fingerprint string) error {
+// ConfirmCert pins the target's pending certificate and returns the target.
+// fingerprint is the one the operator was shown; it must still be the pending
+// one, so a certificate that changed after the operator looked is not the one
+// that gets trusted.
+func (s *Service) ConfirmCert(ctx context.Context, clientID, id, fingerprint string) (Target, error) {
 	t, err := s.repo.GetTarget(ctx, clientID, id)
 	if err != nil {
-		return err
+		return Target{}, err
 	}
 	if t.PendingCertSHA256 == "" || t.PendingCertSHA256 != fingerprint {
-		return ValidationError{Msg: "fingerprint does not match the target's pending certificate"}
+		return Target{}, ValidationError{Msg: "fingerprint does not match the target's pending certificate"}
 	}
-	return s.repo.ConfirmCert(ctx, clientID, id, fingerprint)
+	if err = s.repo.ConfirmCert(ctx, clientID, id, fingerprint); err != nil {
+		return Target{}, err
+	}
+	return s.repo.GetTarget(ctx, clientID, id)
 }
 
 // GetInventory returns a target's last successful inventory.
