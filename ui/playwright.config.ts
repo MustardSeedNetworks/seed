@@ -53,7 +53,14 @@ export default defineConfig({
   //   failing-test backlog from PRs 1–5 is cleared.
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 4 : 1,
-  timeout: 30000,
+  // 60s per test. 30s was tight for the slower webkit flows once the daemon
+  // was cold. auth-complete.spec.ts still lowers its own describe to 45s.
+  timeout: 60_000,
+  // 20 minutes for the whole suite, under the 25-minute timeout-minutes on
+  // the e2e and e2e-smoke jobs. Playwright then fails the run itself, and
+  // the report upload still has time before the runner is killed. Setup
+  // steps (npm ci, artifact download) sit outside this cap.
+  globalTimeout: 20 * 60 * 1000,
   expect: {
     timeout: 10000,
   },

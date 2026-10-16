@@ -34,9 +34,9 @@ jobs:
         uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           languages: ${{ matrix.language }}
-          # config-file holds queries + query-filters; keeping them together
-          # lets us scope exclusions to specific rules with inline justification
-          # (see the config for the HIBP SHA-1 false positive).
+          # config-file selects the query suites. A single-file false
+          # positive is an inline codeql[...] comment, not a query-filter
+          # (see internal/auth/hibp.go).
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Autobuild

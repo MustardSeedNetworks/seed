@@ -1,6 +1,9 @@
 # CI/CD Pipeline
 
-The CI pipeline runs on every push and PR. **All checks must pass.**
+The CI pipeline runs on every pull request and merge queue run. **All checks
+must pass.** A push to `main` runs `ci-main-smoke.yml` instead of this suite:
+the merge group already tested that commit, and release-please still needs a
+successful workflow result on main.
 
 Every job except `changes` is gated on the `changes` job's path filters, so a
 docs-only PR does not pay for a Go build. `ci-complete` is the single required
@@ -35,12 +38,13 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 
 | Workflow                   | Purpose                                            |
 | -------------------------- | -------------------------------------------------- |
+| `ci-main-smoke.yml`        | Push-to-main signal for release-please             |
 | `codeql.yml`               | CodeQL security analysis (Go, JS/TS)               |
 | `dead-code.yml`            | Weekly dead code detection                         |
 | `docs-link-check.yml`      | Weekly external link check (split out of `ci.yml`) |
 | `label-sync.yml`           | Sync label definitions                             |
 | `license-check.yml`        | Verify dependency licenses                         |
-| `main-retry.yml`           | Retry a failed main run once (see the file header) |
+| `main-retry.yml`           | Retry a failed main smoke or CI dispatch once      |
 | `merge-queue-ejection.yml` | Stop a PR the merge queue keeps ejecting           |
 | `pr-hygiene.yml`           | Title lint, PR body template, auto-labels          |
 | `release-please.yml`       | Automated version management and release PRs       |

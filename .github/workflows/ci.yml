@@ -1,7 +1,10 @@
 # =============================================================================
 # CI Pipeline - The Seed
 # =============================================================================
-# Main CI pipeline running on every push/PR to main.
+# Main CI pipeline for pull requests, the merge queue, and manual dispatch.
+# Push to main does not run this workflow. The merge group already tested
+# that commit. release-please still needs a CI result on main, which
+# ci-main-smoke.yml supplies.
 #
 # Features:
 # - Actions pinned to full commit SHAs for reproducibility
@@ -20,8 +23,9 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
+  # No push trigger. A push to main is the commit the merge queue just
+  # tested, and re-running this suite there doubled the bill. See
+  # ci-main-smoke.yml for the result release-please still listens for.
   pull_request:
     branches: [main]
   # Required for the merge queue: `CI Complete` is a required status check, so
@@ -31,22 +35,16 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # Main gets a concurrency group per commit; PRs share one group per ref.
+  # PRs share one group per ref, so a newer push cancels the stale run.
   #
-  # cancel-in-progress off on main protects a *running* main build. It does
-  # not protect a pending one: GitHub keeps at most one pending run per
-  # concurrency group and cancels the older pending run as soon as a newer one
-  # arrives. A merge-queue burst pushes several commits to main within
-  # minutes, so intermediate main runs were cancelled while still queued —
-  # zero jobs, no red check, nothing to retry. release-please is gated on
-  # `workflow_run.conclusion == 'success'`, so it was skipped for every one of
-  # those commits and they released nothing. That is how stem's v0.24.47 went
-  # missing while its three siblings released from the same batch.
-  #
-  # Keying main by SHA gives every commit its own group, so no main run is
-  # ever pending behind another and none can be cancelled.
-  #
-  # Superseded PR runs are still waste and still get cancelled.
+  # A manual dispatch on main is keyed per commit and is not cancelled.
+  # cancel-in-progress off on main protects a *running* build only: GitHub
+  # keeps one pending run per group and cancels the older when a newer
+  # arrives, and a cancelled run has no success conclusion. release-please
+  # is gated on workflow_run success, so a cancelled main run skips that
+  # commit. Keying main by SHA gives every commit its own group. Push to
+  # main no longer runs this file; ci-main-smoke.yml repeats the same rule
+  # for the runs that do.
   group: ${{ github.workflow }}-${{ github.ref }}${{ github.ref == 'refs/heads/main' && format('-{0}', github.sha) || '' }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
@@ -69,7 +67,8 @@ jobs:
     outputs:
       # merge_group has no PR base to diff against, and the queue exists to test
       # the merged result — so every filter reports true there and the full
-      # suite runs. Path filtering stays in effect for pull_request/push.
+      # suite runs. Path filtering stays in effect for pull_request and
+      # workflow_dispatch.
       backend: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.backend }}
       frontend: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.frontend }}
       darwin_bridge: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.darwin_bridge }}
@@ -180,11 +179,11 @@ jobs:
   # builds the real thing.
   #
   # Not on `pull_request`: this ran on the PR AND again on the merge group for
-  # the same commit, and macOS runners carry a 10x minute multiplier. `push:`
-  # is `branches: [main]`, so it still runs in the queue, on main and on
-  # dispatch -- and the `changes` job forces every filter true on merge_group,
-  # so nothing merges without it. A darwin-only break now ejects the PR from the
-  # queue instead of reddening it; that is the trade.
+  # the same commit, and macOS runners carry a 10x minute multiplier. It still
+  # runs in the queue (merge_group forces every filter true) and on
+  # workflow_dispatch, so nothing merges without it. Push to main does not run
+  # this workflow. A darwin-only break ejects the PR from the queue instead of
+  # reddening it; that is the trade.
   backend-darwin:
     name: Backend (macOS)
     runs-on: macos-latest
@@ -529,7 +528,8 @@ jobs:
   # Go Race Detector
   # ===========================================================================
   # Race detection moved here from the pre-commit hook (#945). Hook ran fast
-  # short tests; this job runs the full suite under -race on every push/PR.
+  # short tests; this job runs the full suite under -race on every pull
+  # request and merge group.
   # Blocking — the cmd/seed t.Parallel() races discovered when this job was
   # introduced were fixed in the same PR (#947) by dropping parallelism from
   # cmd/seed tests, since subtests shared a single cobra.Command parent and
@@ -837,6 +837,9 @@ jobs:
       # golangci-lint gate intentionally excludes.
       - name: Run gosec (SARIF visibility only — gate is golangci-lint)
         uses: securego/gosec@deb54465fea23d19a77f037e11e6589021f8501d # v2.29.0
+        # Visibility feed, not a gate. golangci-lint already fails the build on
+        # the curated gosec rules; this default ruleset is the false-positive
+        # set that gate excludes, published to the Security tab as SARIF.
         continue-on-error: true
         with:
           args: "-fmt sarif -out gosec-results.sarif ./..."
@@ -1583,13 +1586,11 @@ jobs:
     # stale silently. The flake budget step below is the live number; read that
     # instead. The flag had masked real failures from the
     # ci-complete aggregator, so the full E2E suite could not gate merge.
-    # Tradeoff now made explicit: a genuine E2E failure flips the CI workflow_run
-    # conclusion to failure, which defers release-please's workflow_run success
-    # gate (release-please.yml) to the next green CI run. That is the intended
-    # behavior — main being E2E-red should NOT cut a release — and release-please
-    # re-triggers on the next push. If a flake recurs, fix or quarantine it (do
-    # NOT re-add continue-on-error); retries:1 in playwright.config.ts already
-    # absorbs single transient failures.
+    # A genuine E2E failure fails CI Complete and ejects the merge group, so
+    # the commit never reaches main and release-please does not cut a release
+    # from it. If a flake recurs, fix or quarantine it (do NOT re-add
+    # continue-on-error); retries:1 in playwright.config.ts already absorbs
+    # single transient failures.
     strategy:
       fail-fast: false
       matrix:
@@ -1980,7 +1981,10 @@ jobs:
       - e2e-smoke
       - phone-width
       - codeql-alert-gate
-    if: always()
+    # Run when an upstream failed, and stay skipped when the run was
+    # cancelled. always() would still execute, see the cancelled upstreams,
+    # and turn that cancellation into a failure.
+    if: ${{ !cancelled() }}
     steps:
       - name: Verify upstream results
         env:

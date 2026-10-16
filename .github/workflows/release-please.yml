@@ -6,7 +6,9 @@
 # release.yml for building packages (via version tag).
 #
 # Trigger pattern (shared with seed, stem, niac):
-#   - workflow_run on CI completion: real trigger; gated on success
+#   - workflow_run on CI completion: real trigger; gated on success.
+#     Push to main completes "CI Main Smoke" (the merge queue already ran
+#     "CI"); the release PR's own checks still complete "CI".
 #   - schedule: reconciles a release that a flaky CI run skipped
 #   - workflow_dispatch: manual debug / force trigger
 #
@@ -53,7 +55,7 @@ on:
   # the enqueue step: the PR can only enter the queue once its checks are
   # green, and nothing else fires at that moment (G-18).
   workflow_run:
-    workflows: ["CI"]
+    workflows: ["CI", "CI Main Smoke"]
     branches: [main, release-please--branches--main]
     types: [completed]
   # Offset from the hour so the fleet's four repos do not all fire at :00.
@@ -253,18 +255,16 @@ jobs:
           fi
           # Only arm a release PR that still describes main.
           #
-          # This workflow runs on workflow_run after CI succeeds on main, and
-          # that is slower than the release PR's own checks. So a commit merged
-          # while the PR was open could go green, merge the PR, and ship inside
-          # the tag with no changelog entry -- v0.94.91, v0.94.92 and v0.95.1
-          # each lost commits that way (niac#1817). Nothing self-corrects: the
-          # next release compares against the new tag.
+          # A commit can land on main after the release PR was generated and
+          # ship inside the tag with no changelog entry -- v0.94.91, v0.94.92
+          # and v0.95.1 each lost commits that way (niac#1817). Nothing
+          # self-corrects: the next release compares against the new tag.
           #
           # release-please branches its single commit off the main commit it
           # generated from, so that commit's parent is exactly the main it
           # described. If main has moved on, the PR is stale -- skip this tick.
-          # The CI run for the newer commit will trigger this workflow again,
-          # release-please will regenerate, and a later tick arms it.
+          # The result for the newer commit triggers this workflow again,
+          # release-please regenerates, and a later tick arms it.
           # `gh api` writes its error body to stdout, so `|| echo ""` would
           # capture the JSON as if it were a SHA and the emptiness check would
           # pass a blob straight into the comparison. Take the value only when

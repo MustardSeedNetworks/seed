@@ -1,0 +1,45 @@
+# =============================================================================
+# CI result on main — smoke only
+# =============================================================================
+# The merge queue already ran .github/workflows/ci.yml on the commit that
+# landed. Running that suite again on push doubled runner time, and a burst
+# of merges cancelled the pending main runs before they started. A cancelled
+# run has no success conclusion, so release-please — gated on workflow_run
+# success — skipped those commits. That is how stem's v0.24.47 went missing.
+#
+# This workflow is the replacement signal. release-please.yml and
+# main-retry.yml listen for it by name. Keep the name stable.
+#
+# It does not re-test the tree. An admin push that bypasses the merge queue
+# is not re-tested here either; the queue is the gate.
+name: CI Main Smoke
+
+on:
+  push:
+    branches: [main]
+
+# One group per commit. A shared group would cancel the pending run when the
+# next merge lands, and that cancellation is the bug this file exists to avoid.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}${{ github.ref == 'refs/heads/main' && format('-{0}', github.sha) || '' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions: {}
+
+jobs:
+  main-smoke:
+    name: Main smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Record the commit the merge queue already tested
+        run: |
+          echo "Commit ${GITHUB_SHA} is on main."
+          echo "Full CI ran in the merge queue. This job exists so release-please still observes a result on main."
