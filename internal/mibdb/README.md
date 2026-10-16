@@ -5,7 +5,12 @@ It is stored in SQLite and loaded on application startup with 918+ built-in OID 
 
 ## Coverage Summary
 
-**Total OIDs:** 918
+**Total OIDs:** 918 objects, plus the branches their full paths name
+
+Loading also derives every interior node named in a `FullPath`
+(`system`, `interfaces`, `ifTable`, `ifEntry`, `dot1dBridge` …), so a subtree
+can be asked for by name. A branch name that would map to two OIDs, or that is
+also a leaf name, is left out.
 
 ### MIB Categories
 
@@ -69,6 +74,10 @@ entry, err := mibDB.GetOIDByName("ifDescr")
 
 // Look up an OID by numeric value
 entry, err := mibDB.GetOIDByNumeric("1.3.6.1.2.1.2.2.1.2")
+
+// Name a walked varbind by its longest known prefix
+entry, instance, err := mibDB.LookupNumeric(ctx, "1.3.6.1.2.1.2.2.1.2.3")
+// Returns: ifDescr, "3"
 
 // Search for OIDs by pattern
 entries, err := mibDB.SearchOIDs("sys")

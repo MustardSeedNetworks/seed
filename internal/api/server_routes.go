@@ -101,6 +101,17 @@ func (s *Server) setupTopologyRoutes() {
 			Auth:    true,
 			CSRF:    true,
 		},
+		// The MIB browser (P-E5): walk any subtree of the target. Rate-limited
+		// like poll-now, since each call is an outbound SNMP conversation.
+		{
+			Path:    APIVersionPrefix + "/polling-targets/{targetId}/walk",
+			Handler: s.handlePollingTargetWalk,
+			Methods: []string{http.MethodPost},
+			Scope:   op,
+			Limiter: limitEndpoint,
+			Auth:    true,
+			CSRF:    true,
+		},
 		// Device-credential vault CRUD (#1799). Operator+ on the mutating
 		// routes, matching /polling-targets: a credential is polling
 		// configuration, and an operator who can add targets but not the

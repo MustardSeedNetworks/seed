@@ -1190,6 +1190,26 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/PollingTargetResponse'
+  POST /api/v1/polling-targets/{targetId}/walk:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SNMPWalkRequest'
+    responses:
+      "200":
+        description: >
+          Every varbind under the OID, walked with the target's stored
+          credentials, each with the MIB object it belongs to and its instance.
+          truncated says the subtree held more rows than the limit. 400 for an
+          OID that is neither numeric nor a known object name, 409 when the
+          target's credentials cannot be resolved, 502 when the device does not
+          complete the walk, 503 without a credential keyring.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SNMPWalkResponse'
   GET /api/v1/profiles:
     responses:
       "200":

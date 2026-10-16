@@ -282,6 +282,7 @@ type Server struct {
 	topologyQueries    *topology.Queries           // Topology read use-case (ADR-0020)
 	pollingTargets     *targets.Service            // Polling-targets CRUD use-case (ADR-0020)
 	snmpPoller         *snmppoller.Poller          // Live poller, reloaded when targets change (seed#2452)
+	snmpBrowser        *snmppoller.Browser         // On-demand subtree walks, the MIB browser (P-E5)
 	deviceCredentials  *credentials.Service        // Device-credential CRUD use-case (#1799)
 	deviceConfigs      *deviceconfig.Service       // Device configuration backup use-case (P-D1)
 	deviceGroups       *devicegroups.Service       // Device-group CRUD use-case (P-D10)
