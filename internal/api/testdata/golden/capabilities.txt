@@ -2081,6 +2081,28 @@ body:
   },
   {
     "auth": true,
+    "csrf": true,
+    "maxBodyBytes": 65536,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
+    "path": "/api/v1/integrations/paloalto",
+    "rateLimited": false,
+    "scope": "admin"
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/integrations/paloalto/devices",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
     "csrf": false,
     "feature": "live_telemetry",
     "maxBodyBytes": 262144,

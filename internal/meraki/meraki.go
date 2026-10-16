@@ -36,60 +36,10 @@ const (
 	requestTimeout = 30 * time.Second
 )
 
-// Settings is the integration's read model. The API key is never served:
-// HasAPIKey says whether one is stored.
-type Settings struct {
-	Choice    outbound.Choice
-	Endpoint  string
-	HasAPIKey bool
-}
-
-// Update is the integration's write model. The operator answers on or off;
-// the question cannot be un-asked. An empty Endpoint means Meraki's. An empty
-// APIKey keeps the stored one; ClearAPIKey removes it.
-type Update struct {
-	Choice      outbound.Choice
-	Endpoint    string
-	APIKey      string
-	ClearAPIKey bool
-}
-
-// ErrInvalidSettings wraps every reason [Update.Validate] refuses an update.
-var ErrInvalidSettings = errors.New("invalid Meraki settings")
-
-// Validate refuses an update that could never read. hasKey says whether a key
-// is already stored, which an update may keep without re-typing it.
-func (u Update) Validate(hasKey bool) error {
-	if err := u.validate(hasKey); err != nil {
-		return fmt.Errorf("%w: %w", ErrInvalidSettings, err)
-	}
-	return nil
-}
-
-func (u Update) validate(hasKey bool) error {
-	if !u.Choice.ValidAnswer() {
-		return errors.New(`choice must be "on" or "off"`)
-	}
-	if u.ClearAPIKey && u.APIKey != "" {
-		return errors.New("apiKey and clearApiKey are exclusive")
-	}
-	if u.Endpoint != "" {
-		if err := outbound.ValidateEndpoint(u.Endpoint); err != nil {
-			return fmt.Errorf("endpoint: %w", err)
-		}
-	}
-	key := u.APIKey != "" || (hasKey && !u.ClearAPIKey)
-	if u.Choice == outbound.ChoiceOn && !key {
-		return errors.New("the Dashboard API needs an API key")
-	}
-	return nil
-}
-
-// Credentials is what one read uses.
-type Credentials struct {
-	Endpoint string
-	APIKey   string
-}
+// RefreshInterval is how often an enabled integration reads device state.
+// The dashboard allows ten requests a second per organization; a read costs
+// three requests per organization plus paging.
+const RefreshInterval = 5 * time.Minute
 
 // Device is one Meraki-managed device and its last reported availability.
 type Device struct {
@@ -145,7 +95,7 @@ type availability struct {
 
 // Devices lists every device in every organization the key can read, in
 // organization then serial order.
-func (c *Client) Devices(ctx context.Context, creds Credentials) ([]Device, error) {
+func (c *Client) Devices(ctx context.Context, creds outbound.Credentials) ([]Device, error) {
 	base, err := url.Parse(strings.TrimRight(creds.Endpoint, "/"))
 	if err != nil {
 		return nil, fmt.Errorf("endpoint: %w", err)

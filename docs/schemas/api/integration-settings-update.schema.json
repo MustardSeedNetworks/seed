@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/meraki-settings-update.schema.json",
-  "$ref": "#/$defs/MerakiSettingsUpdate",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/integration-settings-update.schema.json",
+  "$ref": "#/$defs/IntegrationSettingsUpdate",
   "$defs": {
-    "MerakiSettingsUpdate": {
+    "IntegrationSettingsUpdate": {
       "properties": {
         "choice": {
           "type": "string",
@@ -29,6 +29,6 @@
       ]
     }
   },
-  "title": "MerakiSettingsUpdate",
-  "description": "MerakiSettingsUpdate — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+  "title": "IntegrationSettingsUpdate",
+  "description": "IntegrationSettingsUpdate — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
 }

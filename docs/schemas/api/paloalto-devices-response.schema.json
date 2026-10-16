@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/paloalto-devices-response.schema.json",
+  "$ref": "#/$defs/PaloAltoDevicesResponse",
+  "$defs": {
+    "Device": {
+      "properties": {
+        "serial": {
+          "type": "string"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "family": {
+          "type": "string"
+        },
+        "swVersion": {
+          "type": "string"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "managedBy": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "connected",
+            "disconnected"
+          ]
+        },
+        "haState": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "serial",
+        "status"
+      ]
+    },
+    "PaloAltoDevicesResponse": {
+      "properties": {
+        "readAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "devices": {
+          "items": {
+            "$ref": "#/$defs/Device"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "devices"
+      ]
+    }
+  },
+  "title": "PaloAltoDevicesResponse",
+  "description": "PaloAltoDevicesResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

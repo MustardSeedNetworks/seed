@@ -2007,36 +2007,6 @@ components:
                 - warnings
                 - recommendations
             type: object
-        Device:
-            additionalProperties: false
-            properties:
-                firmware:
-                    type: string
-                lanIp:
-                    type: string
-                mac:
-                    type: string
-                model:
-                    type: string
-                name:
-                    type: string
-                networkId:
-                    type: string
-                organizationId:
-                    type: string
-                organizationName:
-                    type: string
-                productType:
-                    type: string
-                serial:
-                    type: string
-                status:
-                    type: string
-            required:
-                - organizationId
-                - organizationName
-                - serial
-            type: object
         DeviceCredentialListResponse:
             additionalProperties: false
             properties:
@@ -4545,11 +4515,56 @@ components:
                 - warning
                 - critical
             type: object
+        IntegrationSettingsResponse:
+            additionalProperties: false
+            properties:
+                choice:
+                    enum:
+                        - unanswered
+                        - "off"
+                        - "on"
+                    type: string
+                endpoint:
+                    type: string
+                hasApiKey:
+                    type: boolean
+                lastAttempt:
+                    format: date-time
+                    type: string
+                lastError:
+                    type: string
+                lastSuccess:
+                    format: date-time
+                    type: string
+            required:
+                - choice
+                - endpoint
+                - hasApiKey
+            type: object
+        IntegrationSettingsUpdate:
+            additionalProperties: false
+            properties:
+                apiKey:
+                    type: string
+                choice:
+                    enum:
+                        - "off"
+                        - "on"
+                    type: string
+                clearApiKey:
+                    type: boolean
+                endpoint:
+                    type: string
+            required:
+                - choice
+            type: object
         IntegrationsConfig:
             additionalProperties: false
             properties:
                 meraki:
-                    $ref: '#/components/schemas/MerakiConfig'
+                    $ref: '#/components/schemas/VendorAPIConfig'
+                paloAlto:
+                    $ref: '#/components/schemas/VendorAPIConfig'
             type: object
         InterfaceConfig:
             additionalProperties: false
@@ -5851,71 +5866,48 @@ components:
                         $ref: '#/components/schemas/HL7TestResult'
                     type: array
             type: object
-        MerakiConfig:
+        MerakiDevice:
             additionalProperties: false
             properties:
-                api_key:
+                firmware:
                     type: string
-                choice:
+                lanIp:
                     type: string
-                endpoint:
+                mac:
                     type: string
+                model:
+                    type: string
+                name:
+                    type: string
+                networkId:
+                    type: string
+                organizationId:
+                    type: string
+                organizationName:
+                    type: string
+                productType:
+                    type: string
+                serial:
+                    type: string
+                status:
+                    type: string
+            required:
+                - organizationId
+                - organizationName
+                - serial
             type: object
         MerakiDevicesResponse:
             additionalProperties: false
             properties:
                 devices:
                     items:
-                        $ref: '#/components/schemas/Device'
+                        $ref: '#/components/schemas/MerakiDevice'
                     type: array
                 readAt:
                     format: date-time
                     type: string
             required:
                 - devices
-            type: object
-        MerakiSettingsResponse:
-            additionalProperties: false
-            properties:
-                choice:
-                    enum:
-                        - unanswered
-                        - "off"
-                        - "on"
-                    type: string
-                endpoint:
-                    type: string
-                hasApiKey:
-                    type: boolean
-                lastAttempt:
-                    format: date-time
-                    type: string
-                lastError:
-                    type: string
-                lastSuccess:
-                    format: date-time
-                    type: string
-            required:
-                - choice
-                - endpoint
-                - hasApiKey
-            type: object
-        MerakiSettingsUpdate:
-            additionalProperties: false
-            properties:
-                apiKey:
-                    type: string
-                choice:
-                    enum:
-                        - "off"
-                        - "on"
-                    type: string
-                clearApiKey:
-                    type: boolean
-                endpoint:
-                    type: string
-            required:
-                - choice
             type: object
         MintTokenRequest:
             additionalProperties: false
@@ -6652,6 +6644,47 @@ components:
                 - packets
                 - bytesSent
                 - bytesReceived
+            type: object
+        PaloAltoDevicesResponse:
+            additionalProperties: false
+            properties:
+                devices:
+                    items:
+                        $ref: '#/components/schemas/PaloaltoDevice'
+                    type: array
+                readAt:
+                    format: date-time
+                    type: string
+            required:
+                - devices
+            type: object
+        PaloaltoDevice:
+            additionalProperties: false
+            properties:
+                family:
+                    type: string
+                haState:
+                    type: string
+                hostname:
+                    type: string
+                ipAddress:
+                    type: string
+                managedBy:
+                    type: string
+                model:
+                    type: string
+                serial:
+                    type: string
+                status:
+                    enum:
+                        - connected
+                        - disconnected
+                    type: string
+                swVersion:
+                    type: string
+            required:
+                - serial
+                - status
             type: object
         PassiveProtocolConfig:
             additionalProperties: false
@@ -10633,6 +10666,16 @@ components:
                 - enabled
                 - id
             type: object
+        VendorAPIConfig:
+            additionalProperties: false
+            properties:
+                api_key:
+                    type: string
+                choice:
+                    type: string
+                endpoint:
+                    type: string
+            type: object
         VideoResults:
             additionalProperties: false
             properties:
@@ -14209,7 +14252,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/MerakiSettingsResponse'
+                                $ref: '#/components/schemas/IntegrationSettingsResponse'
                     description: |
                         The opt-in Meraki Dashboard API integration's settings and its last read. Choice unanswered means the operator has not been asked yet; the integration is off until an admin answers on, and off makes no outbound request. The API key is never served; hasApiKey says whether one is stored.
                 "401":
@@ -14237,14 +14280,14 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/MerakiSettingsUpdate'
+                            $ref: '#/components/schemas/IntegrationSettingsUpdate'
                 required: true
             responses:
                 "200":
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/MerakiSettingsResponse'
+                                $ref: '#/components/schemas/IntegrationSettingsResponse'
                     description: |
                         The answer and settings were saved; the settings now in effect. On reads every organization the key can see now and then every five minutes; off drops the device state held from earlier reads. A setting that could never read (on without an API key, an endpoint that is not https) is 400.
                 "401":
@@ -14291,6 +14334,114 @@ paths:
                                 $ref: '#/components/schemas/MerakiDevicesResponse'
                     description: |
                         Every device the last successful Dashboard API read returned, with its organization, model, LAN address, firmware and availability (online, alerting, offline or dormant). Empty while the integration is off or before its first read.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+    /api/v1/integrations/paloalto:
+        get:
+            operationId: getApiV1IntegrationsPaloalto
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IntegrationSettingsResponse'
+                    description: |
+                        The opt-in PAN-OS XML API integration's settings and its last read. Choice unanswered means the operator has not been asked yet; the integration is off until an admin answers on, and off makes no outbound request. PAN-OS has no default endpoint, so endpoint is empty until one is set. The API key is never served; hasApiKey says whether one is stored.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+        put:
+            description: Requires an admin-scoped token.
+            operationId: putApiV1IntegrationsPaloalto
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/IntegrationSettingsUpdate'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IntegrationSettingsResponse'
+                    description: |
+                        The answer and settings were saved; the settings now in effect. On reads the firewall or Panorama at the endpoint now and then every five minutes; off drops the device state held from earlier reads. A setting that could never read (on without an API key or an endpoint, an endpoint that is not https) is 400.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Admin scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 65536 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/integrations/paloalto/devices:
+        get:
+            operationId: getApiV1IntegrationsPaloaltoDevices
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PaloAltoDevicesResponse'
+                    description: |
+                        The endpoint itself and, when it is Panorama, every firewall it manages, as the last successful read returned them: serial, hostname, model, PAN-OS version, management address, whether the firewall is connected to Panorama and its HA state. Empty while the integration is off or before its first read.
                 "401":
                     content:
                         application/json:

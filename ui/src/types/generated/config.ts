@@ -483,9 +483,10 @@ export interface EoXFeedConfig {
   client_secret?: string;
 }
 export interface IntegrationsConfig {
-  meraki?: MerakiConfig;
+  meraki?: VendorAPIConfig;
+  paloAlto?: VendorAPIConfig;
 }
-export interface MerakiConfig {
+export interface VendorAPIConfig {
   choice?: string;
   endpoint?: string;
   api_key?: string;

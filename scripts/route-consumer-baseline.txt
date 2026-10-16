@@ -36,6 +36,8 @@
 /api/v1/history/probes/{probeId}          # scheduled: S6-2 #325, see /history/anomalies
 /api/v1/integrations/meraki               # scheduled: UI #3519 asks the first-run question and holds the Settings toggle; P-D12 backend (#3518) landed first
 /api/v1/integrations/meraki/devices       # scheduled: UI #3519, see /integrations/meraki
+/api/v1/integrations/paloalto             # scheduled: UI #3519, see /integrations/meraki
+/api/v1/integrations/paloalto/devices     # scheduled: UI #3519, see /integrations/meraki
 /api/v1/ip-sla/operations                 # scheduled: UI #3464; P-D8 backend (#3463) landed first, API-driven until then
 /api/v1/ip-sla/operations/history         # scheduled: UI #3464, see /ip-sla/operations
 /api/v1/ipam/subnets                      # scheduled: UI #3440; P-D5 backend (#3439) landed first, API-driven until then

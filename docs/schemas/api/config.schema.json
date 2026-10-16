@@ -1049,7 +1049,10 @@
     "IntegrationsConfig": {
       "properties": {
         "meraki": {
-          "$ref": "#/$defs/MerakiConfig"
+          "$ref": "#/$defs/VendorAPIConfig"
+        },
+        "paloAlto": {
+          "$ref": "#/$defs/VendorAPIConfig"
         }
       },
       "additionalProperties": false,
@@ -1295,21 +1298,6 @@
         "max_age",
         "compress"
       ]
-    },
-    "MerakiConfig": {
-      "properties": {
-        "choice": {
-          "type": "string"
-        },
-        "endpoint": {
-          "type": "string"
-        },
-        "api_key": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object"
     },
     "ModbusEndpoint": {
       "properties": {
@@ -1910,6 +1898,21 @@
         "enabled",
         "id"
       ]
+    },
+    "VendorAPIConfig": {
+      "properties": {
+        "choice": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "api_key": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
     },
     "VulnerabilityScanConfig": {
       "properties": {

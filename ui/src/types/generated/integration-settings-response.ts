@@ -5,9 +5,11 @@
  * after Go DTO changes). The schema source of truth lives at
  * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
-export interface MerakiSettingsUpdate {
-  choice: 'off' | 'on';
-  endpoint?: string;
-  apiKey?: string;
-  clearApiKey?: boolean;
+export interface IntegrationSettingsResponse {
+  choice: 'unanswered' | 'off' | 'on';
+  endpoint: string;
+  hasApiKey: boolean;
+  lastAttempt?: string;
+  lastSuccess?: string;
+  lastError?: string;
 }

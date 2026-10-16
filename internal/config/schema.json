@@ -113,13 +113,18 @@
       "additionalProperties": false,
       "properties": {
         "meraki": {
-          "$ref": "#/$defs/MerakiConfig"
+          "$ref": "#/$defs/VendorAPIConfig",
+          "description": "Cisco Meraki Dashboard API; an empty endpoint means https://api.meraki.com/api/v1"
+        },
+        "paloAlto": {
+          "$ref": "#/$defs/VendorAPIConfig",
+          "description": "PAN-OS XML API of a firewall or Panorama; it has no default endpoint"
         }
       }
     },
-    "MerakiConfig": {
+    "VendorAPIConfig": {
       "type": "object",
-      "description": "Opt-in Cisco Meraki Dashboard API integration. An unanswered or off integration makes no outbound request",
+      "description": "Opt-in vendor management API integration. An unanswered or off integration makes no outbound request",
       "additionalProperties": false,
       "properties": {
         "choice": {
@@ -130,12 +135,12 @@
         },
         "endpoint": {
           "type": "string",
-          "description": "https base URL of the Dashboard API; empty means https://api.meraki.com/api/v1",
+          "description": "https base URL of the API; empty means the vendor's default, where it has one",
           "default": ""
         },
         "api_key": {
           "type": "string",
-          "description": "Dashboard API key held as keyring ciphertext (enc: prefix); never stored or served in plaintext",
+          "description": "API key held as keyring ciphertext (enc: prefix); never stored or served in plaintext",
           "default": ""
         }
       }

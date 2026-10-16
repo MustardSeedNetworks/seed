@@ -62,6 +62,8 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/network/ipconfig"
 	"github.com/MustardSeedNetworks/seed/internal/oauth"
+	"github.com/MustardSeedNetworks/seed/internal/outbound"
+	"github.com/MustardSeedNetworks/seed/internal/paloalto"
 	"github.com/MustardSeedNetworks/seed/internal/pipeline/publicip"
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
@@ -292,8 +294,6 @@ type Server struct {
 	lifecycleEoX       lifecycle.Store             // Imported EoX data for the lifecycle report (P-D9)
 	lifecycleFeed      lifecycleFeedSettings       // Opt-in EoX feed settings (P-D9)
 	lifecycleRefresher *lifecycle.Refresher        // Fetches EoX data while the feed is on (P-D9)
-	meraki             merakiSettings              // Opt-in Meraki Dashboard API settings (P-D12)
-	merakiRefresher    *meraki.Refresher           // Reads Meraki device state while it is on (P-D12)
 	interfaceStats     *ifstats.Service            // Interface rates read use-case (UI-SEED-21, #3191)
 	ipSLA              *sla.Service                // IP-SLA operations and trend read use-case (P-D8, #3463)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
@@ -304,6 +304,13 @@ type Server struct {
 	identityOAuth      *ssosync.Service            // SSO identity-sync use-case (ADR-0020, ADR-0024)
 	identityMFA        mfa.Store                   // TOTP + WebAuthn factor store (ADR-0024)
 	tlsFingerprint     tlsFingerprintCache         // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
+
+	// Opt-in vendor API integrations (P-D12): settings, and the readers that
+	// read device state while an integration is on.
+	meraki         vendorAPISettings
+	merakiReader   *outbound.Reader[meraki.Device]
+	paloAlto       vendorAPISettings
+	paloAltoReader *outbound.Reader[paloalto.Device]
 }
 
 // Deps is everything NewServer needs from the composition root (cmd/seed).
