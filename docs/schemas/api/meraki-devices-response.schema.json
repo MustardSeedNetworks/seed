@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/meraki-devices-response.schema.json",
+  "$ref": "#/$defs/MerakiDevicesResponse",
+  "$defs": {
+    "Device": {
+      "properties": {
+        "organizationId": {
+          "type": "string"
+        },
+        "organizationName": {
+          "type": "string"
+        },
+        "networkId": {
+          "type": "string"
+        },
+        "serial": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "productType": {
+          "type": "string"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "lanIp": {
+          "type": "string"
+        },
+        "firmware": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "organizationId",
+        "organizationName",
+        "serial"
+      ]
+    },
+    "MerakiDevicesResponse": {
+      "properties": {
+        "readAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "devices": {
+          "items": {
+            "$ref": "#/$defs/Device"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "devices"
+      ]
+    }
+  },
+  "title": "MerakiDevicesResponse",
+  "description": "MerakiDevicesResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

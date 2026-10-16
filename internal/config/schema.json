@@ -101,9 +101,45 @@
     },
     "lifecycle": {
       "$ref": "#/$defs/LifecycleConfig"
+    },
+    "integrations": {
+      "$ref": "#/$defs/IntegrationsConfig"
     }
   },
   "$defs": {
+    "IntegrationsConfig": {
+      "type": "object",
+      "description": "Opt-in vendor API integrations",
+      "additionalProperties": false,
+      "properties": {
+        "meraki": {
+          "$ref": "#/$defs/MerakiConfig"
+        }
+      }
+    },
+    "MerakiConfig": {
+      "type": "object",
+      "description": "Opt-in Cisco Meraki Dashboard API integration. An unanswered or off integration makes no outbound request",
+      "additionalProperties": false,
+      "properties": {
+        "choice": {
+          "type": "string",
+          "enum": ["", "off", "on"],
+          "description": "The operator's answer; empty means not asked yet, which reads nothing",
+          "default": ""
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "https base URL of the Dashboard API; empty means https://api.meraki.com/api/v1",
+          "default": ""
+        },
+        "api_key": {
+          "type": "string",
+          "description": "Dashboard API key held as keyring ciphertext (enc: prefix); never stored or served in plaintext",
+          "default": ""
+        }
+      }
+    },
     "LifecycleConfig": {
       "type": "object",
       "description": "End-of-life tracking for inventoried hardware",

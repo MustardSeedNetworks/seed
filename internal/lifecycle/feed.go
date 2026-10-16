@@ -18,6 +18,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/outbound"
 )
 
 // Cisco's EoX API v5, and the OAuth endpoint that issues its access tokens
@@ -38,21 +40,10 @@ const (
 	requestTimeout = 30 * time.Second
 )
 
-// Choice is the operator's answer to whether Seed may fetch EoX data.
-type Choice string
-
-// The answers. Unanswered fetches nothing, exactly like Off; the difference
-// is only that the operator has not been asked yet.
-const (
-	ChoiceUnanswered Choice = "unanswered"
-	ChoiceOff        Choice = "off"
-	ChoiceOn         Choice = "on"
-)
-
 // FeedSettings is the feed's read model. The client secret is never served:
 // HasClientSecret says whether one is stored.
 type FeedSettings struct {
-	Choice          Choice
+	Choice          outbound.Choice
 	Endpoint        string
 	TokenURL        string
 	ClientID        string
@@ -63,7 +54,7 @@ type FeedSettings struct {
 // question cannot be un-asked. Empty Endpoint and TokenURL mean Cisco's. An
 // empty ClientSecret keeps the stored one; ClearClientSecret removes it.
 type FeedUpdate struct {
-	Choice            Choice
+	Choice            outbound.Choice
 	Endpoint          string
 	TokenURL          string
 	ClientID          string
@@ -84,7 +75,7 @@ func (u FeedUpdate) Validate(hasSecret bool) error {
 }
 
 func (u FeedUpdate) validate(hasSecret bool) error {
-	if u.Choice != ChoiceOn && u.Choice != ChoiceOff {
+	if !u.Choice.ValidAnswer() {
 		return errors.New(`choice must be "on" or "off"`)
 	}
 	if u.ClearClientSecret && u.ClientSecret != "" {
@@ -96,7 +87,7 @@ func (u FeedUpdate) validate(hasSecret bool) error {
 		if field.value == "" {
 			continue
 		}
-		if err := validateEndpoint(field.value); err != nil {
+		if err := outbound.ValidateEndpoint(field.value); err != nil {
 			return fmt.Errorf("%s: %w", field.name, err)
 		}
 	}
@@ -107,28 +98,8 @@ func (u FeedUpdate) validate(hasSecret bool) error {
 	if u.ClientID != "" && !secret {
 		return errors.New("a client ID needs a client secret")
 	}
-	if u.Choice == ChoiceOn && u.ClientID == "" && (u.Endpoint == "" || u.Endpoint == DefaultEndpoint) {
+	if u.Choice == outbound.ChoiceOn && u.ClientID == "" && (u.Endpoint == "" || u.Endpoint == DefaultEndpoint) {
 		return errors.New("the Cisco EoX API needs a client ID and secret")
-	}
-	return nil
-}
-
-// validateEndpoint accepts an absolute https URL with no credentials, query
-// or fragment. The feed sends a bearer token, so plain http is refused.
-func validateEndpoint(raw string) error {
-	u, err := url.Parse(raw)
-	if err != nil {
-		return errors.New("not a URL")
-	}
-	switch {
-	case u.Scheme != "https":
-		return errors.New("must be https")
-	case u.Hostname() == "":
-		return errors.New("must name a host")
-	case u.User != nil:
-		return errors.New("must not carry credentials")
-	case u.RawQuery != "" || u.Fragment != "":
-		return errors.New("must not carry a query or fragment")
 	}
 	return nil
 }
@@ -152,12 +123,7 @@ type Fetcher struct {
 // bearer token is for the configured host and must not travel further.
 func NewFetcher(client *http.Client) *Fetcher {
 	if client == nil {
-		client = &http.Client{
-			Timeout: requestTimeout,
-			CheckRedirect: func(*http.Request, []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
-		}
+		client = outbound.NewClient(requestTimeout)
 	}
 	return &Fetcher{client: client}
 }

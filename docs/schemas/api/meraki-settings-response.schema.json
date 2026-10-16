@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/meraki-settings-response.schema.json",
+  "$ref": "#/$defs/MerakiSettingsResponse",
+  "$defs": {
+    "MerakiSettingsResponse": {
+      "properties": {
+        "choice": {
+          "type": "string",
+          "enum": [
+            "unanswered",
+            "off",
+            "on"
+          ]
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "hasApiKey": {
+          "type": "boolean"
+        },
+        "lastAttempt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastSuccess": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastError": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "choice",
+        "endpoint",
+        "hasApiKey"
+      ]
+    }
+  },
+  "title": "MerakiSettingsResponse",
+  "description": "MerakiSettingsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

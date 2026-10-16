@@ -31,6 +31,7 @@ export interface Config {
   link?: LinkConfig;
   cableTest?: CableTestConfig;
   lifecycle?: LifecycleConfig;
+  integrations?: IntegrationsConfig;
 }
 export interface ServerConfig {
   port: number;
@@ -480,4 +481,12 @@ export interface EoXFeedConfig {
   token_url?: string;
   client_id?: string;
   client_secret?: string;
+}
+export interface IntegrationsConfig {
+  meraki?: MerakiConfig;
+}
+export interface MerakiConfig {
+  choice?: string;
+  endpoint?: string;
+  api_key?: string;
 }

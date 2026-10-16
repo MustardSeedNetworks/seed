@@ -1331,6 +1331,8 @@ components:
                     $ref: '#/components/schemas/HealthChecksConfig'
                 identity:
                     $ref: '#/components/schemas/IdentityConfig'
+                integrations:
+                    $ref: '#/components/schemas/IntegrationsConfig'
                 interface:
                     $ref: '#/components/schemas/InterfaceConfig'
                 ip:
@@ -2004,6 +2006,36 @@ components:
                 - failedMethods
                 - warnings
                 - recommendations
+            type: object
+        Device:
+            additionalProperties: false
+            properties:
+                firmware:
+                    type: string
+                lanIp:
+                    type: string
+                mac:
+                    type: string
+                model:
+                    type: string
+                name:
+                    type: string
+                networkId:
+                    type: string
+                organizationId:
+                    type: string
+                organizationName:
+                    type: string
+                productType:
+                    type: string
+                serial:
+                    type: string
+                status:
+                    type: string
+            required:
+                - organizationId
+                - organizationName
+                - serial
             type: object
         DeviceCredentialListResponse:
             additionalProperties: false
@@ -4513,6 +4545,12 @@ components:
                 - warning
                 - critical
             type: object
+        IntegrationsConfig:
+            additionalProperties: false
+            properties:
+                meraki:
+                    $ref: '#/components/schemas/MerakiConfig'
+            type: object
         InterfaceConfig:
             additionalProperties: false
             properties:
@@ -5812,6 +5850,72 @@ components:
                     items:
                         $ref: '#/components/schemas/HL7TestResult'
                     type: array
+            type: object
+        MerakiConfig:
+            additionalProperties: false
+            properties:
+                api_key:
+                    type: string
+                choice:
+                    type: string
+                endpoint:
+                    type: string
+            type: object
+        MerakiDevicesResponse:
+            additionalProperties: false
+            properties:
+                devices:
+                    items:
+                        $ref: '#/components/schemas/Device'
+                    type: array
+                readAt:
+                    format: date-time
+                    type: string
+            required:
+                - devices
+            type: object
+        MerakiSettingsResponse:
+            additionalProperties: false
+            properties:
+                choice:
+                    enum:
+                        - unanswered
+                        - "off"
+                        - "on"
+                    type: string
+                endpoint:
+                    type: string
+                hasApiKey:
+                    type: boolean
+                lastAttempt:
+                    format: date-time
+                    type: string
+                lastError:
+                    type: string
+                lastSuccess:
+                    format: date-time
+                    type: string
+            required:
+                - choice
+                - endpoint
+                - hasApiKey
+            type: object
+        MerakiSettingsUpdate:
+            additionalProperties: false
+            properties:
+                apiKey:
+                    type: string
+                choice:
+                    enum:
+                        - "off"
+                        - "on"
+                    type: string
+                clearApiKey:
+                    type: boolean
+                endpoint:
+                    type: string
+            required:
+                - choice
             type: object
         MintTokenRequest:
             additionalProperties: false
@@ -14097,6 +14201,114 @@ paths:
               required: true
               schema:
                 type: string
+    /api/v1/integrations/meraki:
+        get:
+            operationId: getApiV1IntegrationsMeraki
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/MerakiSettingsResponse'
+                    description: |
+                        The opt-in Meraki Dashboard API integration's settings and its last read. Choice unanswered means the operator has not been asked yet; the integration is off until an admin answers on, and off makes no outbound request. The API key is never served; hasApiKey says whether one is stored.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+        put:
+            description: Requires an admin-scoped token.
+            operationId: putApiV1IntegrationsMeraki
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/MerakiSettingsUpdate'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/MerakiSettingsResponse'
+                    description: |
+                        The answer and settings were saved; the settings now in effect. On reads every organization the key can see now and then every five minutes; off drops the device state held from earlier reads. A setting that could never read (on without an API key, an endpoint that is not https) is 400.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Admin scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 65536 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/integrations/meraki/devices:
+        get:
+            operationId: getApiV1IntegrationsMerakiDevices
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/MerakiDevicesResponse'
+                    description: |
+                        Every device the last successful Dashboard API read returned, with its organization, model, LAN address, firmware and availability (online, alerting, offline or dormant). Empty while the integration is off or before its first read.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
     /api/v1/interface:
         get:
             operationId: getApiV1Interface

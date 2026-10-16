@@ -57,6 +57,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/lifecycle"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	logquery "github.com/MustardSeedNetworks/seed/internal/logs/query"
+	"github.com/MustardSeedNetworks/seed/internal/meraki"
 	"github.com/MustardSeedNetworks/seed/internal/mibdb"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/network/ipconfig"
@@ -291,6 +292,8 @@ type Server struct {
 	lifecycleEoX       lifecycle.Store             // Imported EoX data for the lifecycle report (P-D9)
 	lifecycleFeed      lifecycleFeedSettings       // Opt-in EoX feed settings (P-D9)
 	lifecycleRefresher *lifecycle.Refresher        // Fetches EoX data while the feed is on (P-D9)
+	meraki             merakiSettings              // Opt-in Meraki Dashboard API settings (P-D12)
+	merakiRefresher    *meraki.Refresher           // Reads Meraki device state while it is on (P-D12)
 	interfaceStats     *ifstats.Service            // Interface rates read use-case (UI-SEED-21, #3191)
 	ipSLA              *sla.Service                // IP-SLA operations and trend read use-case (P-D8, #3463)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
