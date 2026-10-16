@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.272.1](https://github.com/MustardSeedNetworks/seed/compare/v0.272.0...v0.272.1) (2026-10-16)
+
+
+### Bug Fixes
+
+* **license:** adopt foundation v0.9.3 device fingerprint ([#3556](https://github.com/MustardSeedNetworks/seed/issues/3556)) ([2ab8518](https://github.com/MustardSeedNetworks/seed/commit/2ab851808f72ecf15fca631fdbb6548fcbf0aa2f)), closes [#3554](https://github.com/MustardSeedNetworks/seed/issues/3554)
+* **netif:** read macOS carrier from media status, not IFF_RUNNING ([#3553](https://github.com/MustardSeedNetworks/seed/issues/3553)) ([497ef35](https://github.com/MustardSeedNetworks/seed/commit/497ef35d206ea343f7b180affc0b8f6d40c07e0a)), closes [#3552](https://github.com/MustardSeedNetworks/seed/issues/3552)
+
+
+### Continuous Integration
+
+* replace the push-to-main suite with a smoke result ([#3550](https://github.com/MustardSeedNetworks/seed/issues/3550)) ([6c21423](https://github.com/MustardSeedNetworks/seed/commit/6c21423fa60e44eef240ee2f5698d0f24c2b77b5))
+
 ## [0.272.0](https://github.com/MustardSeedNetworks/seed/compare/v0.271.0...v0.272.0) (2026-10-16)
 
 
