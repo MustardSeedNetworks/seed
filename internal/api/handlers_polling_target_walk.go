@@ -108,7 +108,11 @@ func (s *Server) handlePollingTargetWalk(w http.ResponseWriter, r *http.Request)
 		writeError(w, r, http.StatusConflict, ErrCodeConflict, err.Error())
 		return
 	case err != nil:
-		logger.WarnContext(r.Context(), "snmp walk failed", "target_id", target.ID, "oid", root, "error", err)
+		logger.WarnContext(r.Context(), "snmp walk failed",
+			"target_id", target.ID,
+			"oid", singleLogLine(root),
+			"error", singleLogLine(err.Error()),
+		)
 		writeError(w, r, http.StatusBadGateway, ErrCodeSNMPFailed, err.Error())
 		return
 	}
