@@ -83,17 +83,6 @@ func NewLifecycleFeed(cfg *config.Config, path string) *LifecycleFeed {
 	return &LifecycleFeed{store: managementStore{cfg: cfg, path: path}}
 }
 
-func feedChoice(choice config.EoXFeedChoice) lifecycle.Choice {
-	switch choice {
-	case config.EoXFeedOn:
-		return lifecycle.ChoiceOn
-	case config.EoXFeedOff:
-		return lifecycle.ChoiceOff
-	case config.EoXFeedUnanswered:
-	}
-	return lifecycle.ChoiceUnanswered
-}
-
 // Settings returns the feed settings, with Cisco's endpoints filled in for
 // empty ones and the secret reported only as present or not.
 func (f *LifecycleFeed) Settings() lifecycle.FeedSettings {
@@ -101,7 +90,7 @@ func (f *LifecycleFeed) Settings() lifecycle.FeedSettings {
 	f.store.Read(func(cfg *config.Config) {
 		feed := cfg.Lifecycle.EoXFeed
 		out = lifecycle.FeedSettings{
-			Choice:          feedChoice(feed.Choice),
+			Choice:          optInChoice(feed.Choice),
 			Endpoint:        orDefault(feed.Endpoint, lifecycle.DefaultEndpoint),
 			TokenURL:        orDefault(feed.TokenURL, lifecycle.DefaultOAuthURL),
 			ClientID:        feed.ClientID,
@@ -120,14 +109,11 @@ func (f *LifecycleFeed) Update(u lifecycle.FeedUpdate) error {
 			return err
 		}
 		next := config.EoXFeedConfig{
-			Choice:       config.EoXFeedOff,
+			Choice:       optInAnswer(u.Choice),
 			Endpoint:     emptyIfDefault(u.Endpoint, lifecycle.DefaultEndpoint),
 			TokenURL:     emptyIfDefault(u.TokenURL, lifecycle.DefaultOAuthURL),
 			ClientID:     u.ClientID,
 			ClientSecret: feed.ClientSecret,
-		}
-		if u.Choice == lifecycle.ChoiceOn {
-			next.Choice = config.EoXFeedOn
 		}
 		switch {
 		case u.ClearClientSecret:
@@ -155,11 +141,11 @@ func (f *LifecycleFeed) Credentials(context.Context) (lifecycle.Credentials, boo
 	)
 	f.store.Read(func(cfg *config.Config) {
 		feed = cfg.Lifecycle.EoXFeed
-		if feed.Choice == config.EoXFeedOn && feed.ClientSecret != "" {
+		if feed.Choice == config.OptInOn && feed.ClientSecret != "" {
 			secret, err = decryptSecret(cfg, feed.ClientSecret)
 		}
 	})
-	if feed.Choice != config.EoXFeedOn {
+	if feed.Choice != config.OptInOn {
 		return lifecycle.Credentials{}, false, nil
 	}
 	if err != nil {
@@ -171,18 +157,4 @@ func (f *LifecycleFeed) Credentials(context.Context) (lifecycle.Credentials, boo
 		ClientID:     feed.ClientID,
 		ClientSecret: secret,
 	}, true, nil
-}
-
-func orDefault(value, fallback string) string {
-	if value == "" {
-		return fallback
-	}
-	return value
-}
-
-func emptyIfDefault(value, fallback string) string {
-	if value == fallback {
-		return ""
-	}
-	return value
 }

@@ -50,6 +50,8 @@ type Config struct {
 	CableTest CableTestConfig `json:"cableTest,omitzero"`
 	// Lifecycle is absent until the operator answers the EoX feed question.
 	Lifecycle LifecycleConfig `json:"lifecycle,omitzero"`
+	// Integrations is absent until the operator answers a vendor API question.
+	Integrations IntegrationsConfig `json:"integrations,omitzero"`
 
 	// credentialKeyring holds the DEK used for SNMP-credential encryption
 	// (ADR-0015), decoupled from Auth.JWTSecret. It is never serialised; it is
@@ -119,6 +121,7 @@ func (c *Config) cloneFields() *Config {
 		Link:             c.Link,
 		CableTest:        c.CableTest,
 		Lifecycle:        c.Lifecycle,
+		Integrations:     c.Integrations,
 		// The keyring is immutable after init and safe to share across clones.
 		credentialKeyring: c.credentialKeyring,
 	}
@@ -163,5 +166,6 @@ func (c *Config) CopyFieldsFrom(src *Config) {
 	c.Link = temp.Link
 	c.CableTest = temp.CableTest
 	c.Lifecycle = temp.Lifecycle
+	c.Integrations = temp.Integrations
 	c.credentialKeyring = temp.credentialKeyring
 }

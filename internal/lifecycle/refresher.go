@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"sync"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/outbound"
 )
 
 // RefreshInterval is how often an enabled feed asks about the inventory.
@@ -31,21 +33,18 @@ type FeedStatus struct {
 }
 
 // Refresher fetches EoX data for the inventory while the feed is on, and
-// merges it into the stored table. It implements engine.Engine.
+// merges it into the stored table. Its embedded loop implements engine.Engine.
 type Refresher struct {
+	*outbound.Loop
+
 	source    FeedSource
 	inventory Inventory
 	store     Store
 	fetcher   *Fetcher
-	interval  time.Duration
 	logger    *slog.Logger
-	wake      chan struct{}
 
-	mu      sync.Mutex
-	status  FeedStatus
-	started bool
-	cancel  context.CancelFunc
-	wg      sync.WaitGroup
+	mu     sync.Mutex
+	status FeedStatus
 }
 
 // NewRefresher returns a refresher that checks the feed every interval and
@@ -54,66 +53,9 @@ func NewRefresher(
 	source FeedSource, inventory Inventory, store Store, fetcher *Fetcher,
 	interval time.Duration, logger *slog.Logger,
 ) *Refresher {
-	return &Refresher{
-		source: source, inventory: inventory, store: store, fetcher: fetcher,
-		interval: interval, logger: logger, wake: make(chan struct{}, 1),
-	}
-}
-
-// Name implements engine.Engine.
-func (*Refresher) Name() string { return "lifecycle-feed" }
-
-// Start checks the feed once now and then on every tick or wake. It is a
-// no-op when already started.
-func (r *Refresher) Start(ctx context.Context) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if r.started {
-		return nil
-	}
-	loopCtx, cancel := context.WithCancel(ctx)
-	r.cancel = cancel
-	r.started = true
-	r.wg.Add(1)
-	go r.loop(loopCtx)
-	return nil
-}
-
-// Stop ends the loop and waits, up to ctx's deadline, for an in-flight
-// refresh to finish.
-func (r *Refresher) Stop(ctx context.Context) error {
-	r.mu.Lock()
-	if !r.started {
-		r.mu.Unlock()
-		return nil
-	}
-	cancel := r.cancel
-	r.mu.Unlock()
-	cancel()
-
-	done := make(chan struct{})
-	go func() {
-		r.wg.Wait()
-		close(done)
-	}()
-	select {
-	case <-done:
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-
-	r.mu.Lock()
-	r.started = false
-	r.mu.Unlock()
-	return nil
-}
-
-// Wake asks for a check now, after the operator changed the feed settings.
-func (r *Refresher) Wake() {
-	select {
-	case r.wake <- struct{}{}:
-	default:
-	}
+	r := &Refresher{source: source, inventory: inventory, store: store, fetcher: fetcher, logger: logger}
+	r.Loop = outbound.NewLoop("lifecycle-feed", interval, r.refresh)
+	return r
 }
 
 // Status returns the outcome of the last refresh.
@@ -121,21 +63,6 @@ func (r *Refresher) Status() FeedStatus {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	return r.status
-}
-
-func (r *Refresher) loop(ctx context.Context) {
-	defer r.wg.Done()
-	ticker := time.NewTicker(r.interval)
-	defer ticker.Stop()
-	for {
-		r.refresh(ctx)
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-		case <-r.wake:
-		}
-	}
 }
 
 // refresh fetches and stores once, if the feed is on and there is anything

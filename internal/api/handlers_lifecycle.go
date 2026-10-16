@@ -17,6 +17,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/lifecycle"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/outbound"
 )
 
 // handlers_lifecycle.go serves end-of-life tracking for inventoried hardware
@@ -59,11 +60,11 @@ type LifecycleDevicesResponse struct {
 // means the operator has not been asked yet, and the feed is off until they
 // answer on. The client secret is never served.
 type LifecycleFeedResponse struct {
-	Choice          lifecycle.Choice `json:"choice"          jsonschema:"enum=unanswered,enum=off,enum=on"`
-	Endpoint        string           `json:"endpoint"`
-	TokenURL        string           `json:"tokenUrl"`
-	ClientID        string           `json:"clientId"`
-	HasClientSecret bool             `json:"hasClientSecret"`
+	Choice          outbound.Choice `json:"choice"          jsonschema:"enum=unanswered,enum=off,enum=on"`
+	Endpoint        string          `json:"endpoint"`
+	TokenURL        string          `json:"tokenUrl"`
+	ClientID        string          `json:"clientId"`
+	HasClientSecret bool            `json:"hasClientSecret"`
 	// LastAttempt, LastSuccess and LastError describe the last refresh since
 	// the daemon started; absent when none has run.
 	LastAttempt *time.Time `json:"lastAttempt,omitempty"`
@@ -78,12 +79,12 @@ type LifecycleFeedResponse struct {
 // tokenUrl mean Cisco's. An empty clientSecret keeps the stored one;
 // clearClientSecret removes it.
 type LifecycleFeedUpdate struct {
-	Choice            lifecycle.Choice `json:"choice"                      jsonschema:"enum=off,enum=on"`
-	Endpoint          string           `json:"endpoint,omitempty"`
-	TokenURL          string           `json:"tokenUrl,omitempty"`
-	ClientID          string           `json:"clientId,omitempty"`
-	ClientSecret      string           `json:"clientSecret,omitempty"`
-	ClearClientSecret bool             `json:"clearClientSecret,omitempty"`
+	Choice            outbound.Choice `json:"choice"                      jsonschema:"enum=off,enum=on"`
+	Endpoint          string          `json:"endpoint,omitempty"`
+	TokenURL          string          `json:"tokenUrl,omitempty"`
+	ClientID          string          `json:"clientId,omitempty"`
+	ClientSecret      string          `json:"clientSecret,omitempty"`
+	ClearClientSecret bool            `json:"clearClientSecret,omitempty"`
 }
 
 // lifecycleFeedSettings is the feed's settings use-case.
@@ -189,7 +190,7 @@ func (s *Server) handleLifecycleFeed(w http.ResponseWriter, r *http.Request) {
 		}
 		// Update accepted only "on" or "off", so a bool records the whole answer
 		// without echoing request text into the log.
-		enabled := in.Choice == lifecycle.ChoiceOn
+		enabled := in.Choice == outbound.ChoiceOn
 		logger.InfoContext(r.Context(), "EoX feed settings changed",
 			"event", "lifecycle.feed.updated", "enabled", enabled, "user", usernameFromContext(r))
 		if enabled && s.lifecycleRefresher != nil {

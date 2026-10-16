@@ -735,6 +735,50 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/LifecycleFeedResponse'
+  GET /api/v1/integrations/meraki:
+    responses:
+      "200":
+        description: >
+          The opt-in Meraki Dashboard API integration's settings and its last
+          read. Choice unanswered means the operator has not been asked yet;
+          the integration is off until an admin answers on, and off makes no
+          outbound request. The API key is never served; hasApiKey says
+          whether one is stored.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerakiSettingsResponse'
+  PUT /api/v1/integrations/meraki:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MerakiSettingsUpdate'
+    responses:
+      "200":
+        description: >
+          The answer and settings were saved; the settings now in effect. On
+          reads every organization the key can see now and then every five
+          minutes; off drops the device state held from earlier reads. A
+          setting that could never read (on without an API key, an endpoint
+          that is not https) is 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerakiSettingsResponse'
+  GET /api/v1/integrations/meraki/devices:
+    responses:
+      "200":
+        description: >
+          Every device the last successful Dashboard API read returned, with
+          its organization, model, LAN address, firmware and availability
+          (online, alerting, offline or dormant). Empty while the integration
+          is off or before its first read.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerakiDevicesResponse'
   GET /api/v1/lifecycle/devices:
     responses:
       "200":

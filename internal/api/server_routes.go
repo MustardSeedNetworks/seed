@@ -42,7 +42,7 @@ func (s *Server) setupRoutes() {
 	s.routes.RegisterAll(slices.Concat(s.alertRoutes(), s.vulnerabilityRoutes(), s.flowRoutes(),
 		s.dashboardRoutes(), s.jobsRoutes(), s.captureRoutes(), s.targetNetworkRoutes(),
 		s.interfaceStatsRoutes(), s.tftpRoutes(), s.deviceConfigRoutes(), s.ipamRoutes(),
-		s.lifecycleRoutes(), s.ipSLARoutes(), s.deviceGroupRoutes()))
+		s.lifecycleRoutes(), s.ipSLARoutes(), s.deviceGroupRoutes(), s.merakiRoutes()))
 	s.setupSSEAndStatic()
 }
 

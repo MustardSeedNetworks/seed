@@ -274,6 +274,9 @@
         },
         "lifecycle": {
           "$ref": "#/$defs/LifecycleConfig"
+        },
+        "integrations": {
+          "$ref": "#/$defs/IntegrationsConfig"
         }
       },
       "additionalProperties": false,
@@ -1043,6 +1046,15 @@
         "critical"
       ]
     },
+    "IntegrationsConfig": {
+      "properties": {
+        "meraki": {
+          "$ref": "#/$defs/MerakiConfig"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
     "InterfaceConfig": {
       "properties": {
         "default": {
@@ -1283,6 +1295,21 @@
         "max_age",
         "compress"
       ]
+    },
+    "MerakiConfig": {
+      "properties": {
+        "choice": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "api_key": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
     },
     "ModbusEndpoint": {
       "properties": {

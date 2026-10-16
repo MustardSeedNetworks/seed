@@ -17,6 +17,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/lifecycle"
+	"github.com/MustardSeedNetworks/seed/internal/outbound"
 )
 
 func newLifecycleServer(t *testing.T) *Server {
@@ -179,7 +180,7 @@ func TestHandleLifecycleFeed(t *testing.T) {
 	require.NotContains(t, w.Body.String(), "hunter22")
 	var resp LifecycleFeedResponse
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
-	require.Equal(t, lifecycle.ChoiceOn, resp.Choice)
+	require.Equal(t, outbound.ChoiceOn, resp.Choice)
 	require.True(t, resp.HasClientSecret)
 
 	saved, err := os.ReadFile(path)
@@ -193,7 +194,7 @@ func TestHandleLifecycleFeed(t *testing.T) {
 	w = serveLifecycleFeed(t, s, http.MethodPut, `{"choice":"off","clientId":"seed-eox"}`)
 	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
-	require.Equal(t, lifecycle.ChoiceOff, resp.Choice)
+	require.Equal(t, outbound.ChoiceOff, resp.Choice)
 	require.True(t, resp.HasClientSecret)
 
 	w = serveLifecycleFeed(t, s, http.MethodPut, `{"choice":"unanswered"}`)
@@ -210,7 +211,7 @@ func TestLifecycleFeedCredentials(t *testing.T) {
 	require.False(t, on, "unanswered is off")
 
 	require.NoError(t, feed.Update(lifecycle.FeedUpdate{
-		Choice: lifecycle.ChoiceOn, ClientID: "seed-eox", ClientSecret: "hunter22",
+		Choice: outbound.ChoiceOn, ClientID: "seed-eox", ClientSecret: "hunter22",
 	}))
 	creds, on, err := feed.Credentials(context.Background())
 	require.NoError(t, err)

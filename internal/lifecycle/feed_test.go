@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MustardSeedNetworks/seed/internal/lifecycle"
+	"github.com/MustardSeedNetworks/seed/internal/outbound"
 )
 
 // fakeEoXAPI serves the token endpoint and EOXByProductID the way Cisco's API
@@ -116,55 +117,55 @@ func TestFeedUpdateValidate(t *testing.T) {
 		hasSecret bool
 		wantErr   string
 	}{
-		{name: "answer off", update: lifecycle.FeedUpdate{Choice: lifecycle.ChoiceOff}},
+		{name: "answer off", update: lifecycle.FeedUpdate{Choice: outbound.ChoiceOff}},
 		{
 			name: "on with Cisco credentials",
 			update: lifecycle.FeedUpdate{
-				Choice: lifecycle.ChoiceOn, ClientID: "id", ClientSecret: "s",
+				Choice: outbound.ChoiceOn, ClientID: "id", ClientSecret: "s",
 			},
 		},
 		{
 			name:      "on keeping the stored secret",
-			update:    lifecycle.FeedUpdate{Choice: lifecycle.ChoiceOn, ClientID: "id"},
+			update:    lifecycle.FeedUpdate{Choice: outbound.ChoiceOn, ClientID: "id"},
 			hasSecret: true,
 		},
 		{
 			name:   "on against a mirror with no credentials",
-			update: lifecycle.FeedUpdate{Choice: lifecycle.ChoiceOn, Endpoint: "https://eox.example.net/v5"},
+			update: lifecycle.FeedUpdate{Choice: outbound.ChoiceOn, Endpoint: "https://eox.example.net/v5"},
 		},
 		{
 			name:    "cannot un-answer",
-			update:  lifecycle.FeedUpdate{Choice: lifecycle.ChoiceUnanswered},
+			update:  lifecycle.FeedUpdate{Choice: outbound.ChoiceUnanswered},
 			wantErr: `choice must be "on" or "off"`,
 		},
 		{
 			name:    "on against Cisco with no credentials",
-			update:  lifecycle.FeedUpdate{Choice: lifecycle.ChoiceOn},
+			update:  lifecycle.FeedUpdate{Choice: outbound.ChoiceOn},
 			wantErr: "needs a client ID and secret",
 		},
 		{
 			name: "plain http endpoint",
 			update: lifecycle.FeedUpdate{
-				Choice: lifecycle.ChoiceOff, Endpoint: "http://eox.example.net",
+				Choice: outbound.ChoiceOff, Endpoint: "http://eox.example.net",
 			},
 			wantErr: "endpoint: must be https",
 		},
 		{
 			name: "credentials in the token URL",
 			update: lifecycle.FeedUpdate{
-				Choice: lifecycle.ChoiceOff, TokenURL: "https://u:p@id.example.net/token",
+				Choice: outbound.ChoiceOff, TokenURL: "https://u:p@id.example.net/token",
 			},
 			wantErr: "tokenUrl: must not carry credentials",
 		},
 		{
 			name:    "client ID without a secret",
-			update:  lifecycle.FeedUpdate{Choice: lifecycle.ChoiceOff, ClientID: "id"},
+			update:  lifecycle.FeedUpdate{Choice: outbound.ChoiceOff, ClientID: "id"},
 			wantErr: "a client ID needs a client secret",
 		},
 		{
 			name: "clearing the secret leaves the ID without one",
 			update: lifecycle.FeedUpdate{
-				Choice: lifecycle.ChoiceOff, ClientID: "id", ClearClientSecret: true,
+				Choice: outbound.ChoiceOff, ClientID: "id", ClearClientSecret: true,
 			},
 			hasSecret: true,
 			wantErr:   "a client ID needs a client secret",
@@ -172,7 +173,7 @@ func TestFeedUpdateValidate(t *testing.T) {
 		{
 			name: "secret and clear together",
 			update: lifecycle.FeedUpdate{
-				Choice: lifecycle.ChoiceOff, ClientID: "id", ClientSecret: "s", ClearClientSecret: true,
+				Choice: outbound.ChoiceOff, ClientID: "id", ClientSecret: "s", ClearClientSecret: true,
 			},
 			wantErr: "exclusive",
 		},
