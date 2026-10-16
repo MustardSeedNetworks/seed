@@ -5,6 +5,14 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    # The scan reads only the module and ui/ manifests; a PR that changes
+    # neither cannot change its result, and main still scans every push.
+    paths:
+      - go.mod
+      - go.sum
+      - ui/package.json
+      - ui/package-lock.json
+      - .github/workflows/license-check.yml
   schedule:
     # Run weekly on Mondays at 9am UTC
     - cron: '0 9 * * 1'
