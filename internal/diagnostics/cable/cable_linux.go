@@ -235,6 +235,7 @@ func tryEthtoolCableTest(iface string, result *TestResult) bool {
 	}
 
 	result.Supported = true
+	result.TDR = true
 	parseEthtoolCableTestOutput(output, result)
 	return true
 }

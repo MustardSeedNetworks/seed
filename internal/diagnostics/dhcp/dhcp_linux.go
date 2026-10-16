@@ -303,36 +303,10 @@ func parseDHClientLine(line string, result *TestResult) {
 	}
 }
 
-// getCurrentLeasePlatform retrieves the current DHCP lease on Linux.
+// getCurrentLeasePlatform retrieves the current DHCP lease on Linux. An
+// interface with no lease file holds no lease: its address, if it has one, is
+// not one DHCP gave it, and reporting it as a lease would grade a static
+// configuration as an incomplete lease.
 func getCurrentLeasePlatform(interfaceName string) (*LeaseInfo, error) {
-	// First try to find and parse the lease file
-	lease, err := findAndParseLeaseFile(interfaceName)
-	if err == nil && lease != nil {
-		return lease, nil
-	}
-
-	// Fallback: get current IP info from interface
-	lease = &LeaseInfo{
-		Interface: interfaceName,
-	}
-
-	iface, err := net.InterfaceByName(interfaceName)
-	if err != nil {
-		return nil, &InterfaceError{Message: "interface not found: " + err.Error()}
-	}
-
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return nil, &InterfaceError{Message: "failed to get addresses: " + err.Error()}
-	}
-
-	for _, addr := range addrs {
-		if ipnet, ok := addr.(*net.IPNet); ok && ipnet.IP.To4() != nil {
-			lease.IPAddress = ipnet.IP.String()
-			lease.SubnetMask = net.IP(ipnet.Mask).String()
-			return lease, nil
-		}
-	}
-
-	return nil, &InterfaceError{Message: "no IPv4 address found"}
+	return findAndParseLeaseFile(interfaceName)
 }
