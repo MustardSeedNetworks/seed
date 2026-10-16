@@ -75,7 +75,11 @@ type WirePinout struct {
 
 // TestResult contains the cable test results.
 type TestResult struct {
-	Supported   bool           `json:"supported"`
+	Supported bool `json:"supported"`
+	// TDR is true when a time-domain reflectometry test measured the pairs.
+	// Without it the result is only the link state read back as a cable
+	// verdict, which says nothing the link itself has not.
+	TDR         bool           `json:"tdr"`
 	Status      Status         `json:"status"`                // Overall status
 	Length      *float64       `json:"length,omitempty"`      // meters (overall or shortest)
 	LengthFt    *float64       `json:"lengthFt,omitempty"`    // feet

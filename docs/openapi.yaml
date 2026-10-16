@@ -7594,6 +7594,17 @@ components:
                 - url
                 - connectTimeMs
             type: object
+        Reading:
+            additionalProperties: false
+            properties:
+                label:
+                    type: string
+                value:
+                    type: string
+            required:
+                - label
+                - value
+            type: object
         RecoveryCompleteRequest:
             additionalProperties: false
             properties:
@@ -7720,6 +7731,33 @@ components:
             required:
                 - status
                 - interface
+            type: object
+        Report:
+            additionalProperties: false
+            properties:
+                durationMs:
+                    type: integer
+                interface:
+                    type: string
+                stages:
+                    items:
+                        $ref: '#/components/schemas/StageReport'
+                    type: array
+                startedAt:
+                    format: date-time
+                    type: string
+                verdict:
+                    enum:
+                        - pass
+                        - warn
+                        - fail
+                    type: string
+            required:
+                - interface
+                - verdict
+                - startedAt
+                - durationMs
+                - stages
             type: object
         ReportInfo:
             additionalProperties: false
@@ -9181,6 +9219,14 @@ components:
                 - classes
                 - preserved
             type: object
+        Spec:
+            additionalProperties: false
+            properties:
+                expectedVlan:
+                    maximum: 4094
+                    minimum: 0
+                    type: integer
+            type: object
         SpeedtestCard:
             additionalProperties: false
             properties:
@@ -9318,6 +9364,65 @@ components:
                 - running
                 - phase
                 - progress
+            type: object
+        StageReport:
+            additionalProperties: false
+            properties:
+                durationMs:
+                    type: integer
+                message:
+                    type: string
+                outcome:
+                    enum:
+                        - pass
+                        - warn
+                        - fail
+                        - skipped
+                    type: string
+                readings:
+                    items:
+                        $ref: '#/components/schemas/Reading'
+                    type: array
+                reason:
+                    enum:
+                        - ok
+                        - noCarrier
+                        - halfDuplex
+                        - linkUp
+                        - unsupported
+                        - cableFault
+                        - incompleteLease
+                        - noAddress
+                        - leaseExpired
+                        - noLeaseFound
+                        - slow
+                        - noResolvers
+                        - noAnswer
+                        - lossy
+                        - noGateway
+                        - unreachable
+                        - notAdvertised
+                        - vlanMismatch
+                        - partial
+                        - noTargets
+                        - cancelled
+                        - error
+                    type: string
+                stage:
+                    enum:
+                        - link
+                        - cable
+                        - dhcp
+                        - dns
+                        - gateway
+                        - vlan
+                        - internet
+                    type: string
+            required:
+                - stage
+                - outcome
+                - reason
+                - durationMs
             type: object
         StaticIP:
             additionalProperties: false

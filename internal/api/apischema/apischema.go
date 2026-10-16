@@ -12,6 +12,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/autotest"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/multicast"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/packetcapture"
@@ -305,6 +306,11 @@ func Targets() []Target {
 		// rather than an api mirror of it: a mirror is one more thing to drift
 		// and the handler serves this struct verbatim.
 		{&bonjour.BrowseResult{}, "bonjour-browse-response.schema.json"},
+
+		// P-E1's AutoTest, a jobs-spine kind: the request is the params and the
+		// result is the job's result, registered as the package's own types.
+		{&autotest.Spec{}, "autotest-request.schema.json"},
+		{&autotest.Report{}, "autotest-response.schema.json"},
 
 		// #399's multicast listen and observation, jobs-spine kinds: the request is
 		// the kind's params and the result is the job's result. Registered as the
