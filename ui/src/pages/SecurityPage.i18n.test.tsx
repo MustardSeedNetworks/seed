@@ -94,7 +94,7 @@ function context(): AppContextValue {
   } as unknown as AppContextValue;
 }
 
-async function renderIn(language: string): Promise<void> {
+async function mount(language: string): Promise<void> {
   await i18n.changeLanguage(language);
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
@@ -106,6 +106,10 @@ async function renderIn(language: string): Promise<void> {
       </RoleProvider>
     </QueryClientProvider>,
   );
+}
+
+async function renderIn(language: string): Promise<void> {
+  await mount(language);
   // The MFA status line only appears once the status request resolves.
   expect(await screen.findByText(i18n.t('cards:mfa.none'))).toBeVisible();
 }
@@ -144,24 +148,21 @@ describe('SecurityPage — real locale copy', () => {
         ? Promise.resolve({ username: 'u', role: 'admin', isActive: true })
         : status,
     );
-    let ready = false;
-    const rendering = renderIn('en').then(() => {
-      ready = true;
-    });
+    await mount('en');
     try {
       await waitFor(() => expect(screen.getAllByRole('button').length).toBeGreaterThan(2));
       await act(async () => {
         await Promise.resolve();
       });
-      expect(ready).toBe(false);
       expect(screen.queryByText('No second factor enrolled')).toBeNull();
     } finally {
       await act(async () => {
         resolveStatus({ totpEnabled: false, webauthnEnabled: false, webauthnCredentialCount: 0 });
       });
-      await rendering;
     }
-    expect(screen.getByText('No second factor enrolled')).toBeVisible();
+    // Waited for only from here: findByText's one-second clock must not start
+    // at render, or a slow host spends it before the status is even resolved.
+    expect(await screen.findByText('No second factor enrolled')).toBeVisible();
   });
 
   /* #2674: the posture cards below assess discovered devices, but the page
