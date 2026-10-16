@@ -175,10 +175,11 @@ jobs:
   # A frontend-only dispatch now builds darwin and windows too. PRs still
   # skip them.
   #
-  # lint-windows stays the shared job (full tree, skip-cache, every event).
-  # The input keeps the old path filter: a frontend-only PR still runs the
-  # Linux backend, because the UI is embedded, and does not pay for a second
-  # lint of the Windows tree.
+  # lint-windows is false here. The shared job would run the same full-tree
+  # GOOS=windows lint, but ci-conformance reads the golangci-lint version from
+  # a golangci-lint-action pin in THIS file. That pin stays on the local job
+  # below. A frontend-only PR still runs the Linux backend, because the UI is
+  # embedded, and does not lint the Windows tree.
   backend:
     needs: [changes, build-ui]
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
@@ -196,7 +197,7 @@ jobs:
       fetch-depth: 0
       native-fetch-depth: 0
       timeout-minutes: 20
-      lint-windows: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true' }}
+      lint-windows: false
       windows-vet-command: GOOS=windows CGO_ENABLED=0 go vet ./internal/api/...
       darwin-test-command: go test -race ./internal/wifi/...
       windows-test-command: go test ./internal/api/ -run 'IsAddrInUse|BindWithFallback' -v
@@ -253,6 +254,42 @@ jobs:
       tidy-command: |
         go mod tidy
         git diff --exit-code go.mod go.sum
+
+  # Stays in this file. ci-conformance.yml greps ci.yml for
+  # golangci/golangci-lint-action and the version: line within six lines of
+  # it, then installs that version to check the linter floor. The shared
+  # lint-windows job cannot satisfy that grep, so the caller sets
+  # lint-windows: false and this job is the gate.
+  #
+  # golangci-lint on ubuntu skips every *_windows.go file. GOOS=windows makes
+  # it compile and lint the whole Windows tree on Linux -- nothing Windows-side
+  # needs cgo -- so this costs one job, no runner. The tree is at zero findings
+  # (#2421), so this gates the whole tree on every event, merge queue included
+  # (#2291).
+  lint-windows:
+    name: Lint (GOOS=windows)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Run golangci-lint for GOOS=windows
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        env:
+          GOOS: windows
+        with:
+          version: v2.14.0
+          # The action's cache key carries no GOOS, so this job and the Linux
+          # lint inside ci-backend.yml would share one entry while analysing
+          # two different trees. #2511.
+          skip-cache: true
 
   # ===========================================================================
   # Go Race Detector — fleet-shared ci-race.yml
@@ -1276,7 +1313,8 @@ jobs:
   # Body" from their own workflows). CodeQL and license-check are not required
   # contexts. The semgrep job in this file is the required SAST gate.
   #
-  # macOS, Windows, and the GOOS=windows lint run inside the backend caller.
+  # macOS and Windows run inside the backend caller. GOOS=windows lint stays
+  # a local job: ci-conformance reads its golangci-lint version from this file.
   # The E2E daemon, the sharded browser suite, and smoke run inside the e2e
   # caller. A failed inner job fails that caller, so this list needs the
   # caller, not each shard. A docs-only PR skips those callers and still
@@ -1289,6 +1327,7 @@ jobs:
       - changes
       - build-ui
       - backend
+      - lint-windows
       - race
       - bench
       - frontend

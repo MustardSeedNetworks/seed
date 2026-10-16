@@ -7,8 +7,8 @@ successful workflow result on main.
 
 `changes`, `backend`, `race`, `frontend`, `storybook`, and `e2e` call the
 reusable workflows in `MustardSeedNetworks/.github`, pinned to
-`e092081a97245d29978e229be7425179cc1dcde1`. macOS, Windows, and the
-`GOOS=windows` lint run inside `backend`. The E2E daemon, the sharded browser
+`e092081a97245d29978e229be7425179cc1dcde1`. macOS and Windows run inside
+`backend`. The E2E daemon, the sharded browser
 suite, and smoke run inside `e2e`. `CI Complete` stays a job in this file so
 the required check keeps that exact name.
 
@@ -26,6 +26,7 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 | `changes`       | Path filtering           | Shared `ci-changes`: decides which downstream jobs run                                                                                                   |
 | `build-ui`      | Shared frontend build    | Builds `internal/api/ui/` once and uploads it as an artifact                                                                                             |
 | `backend`       | Go checks                | Shared `ci-backend`: lint, vet, fmt, tests, macOS, Windows, coverage floor (55%)                                                                         |
+| `lint-windows`  | Windows lint             | `GOOS=windows` golangci-lint; stays local so ci-conformance can read the pin                                                                             |
 | `race`          | Go race detector         | Shared `ci-race`: `go test -race`, split from `backend` so it fails distinctly                                                                           |
 | `frontend`      | React/TS checks          | Shared `ci-frontend`: tsc typecheck, Biome, design-token gate, Vitest, lockfile integrity                                                                |
 | `storybook`     | Component tests          | Shared `ci-storybook`: interactions and axe accessibility                                                                                                |
@@ -60,7 +61,9 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 | `update-oui.yml`           | Refresh the OUI vendor database                    |
 
 These jobs stay in `ci.yml` because the shared product workflows do not cover
-them: `build-ui` (the production bundle and the first-load budget), `bench`,
+them: `build-ui` (the production bundle and the first-load budget),
+`lint-windows` (the conformance check reads its golangci-lint pin from this
+file), `bench`,
 `security`, `quality`, `release-notes`, `bridge-format`, `workflow-lint`,
 `i18n`, `docs`, `build`, `iperf3`, and `phone-width`. `semgrep`,
 `dependency-review`, `ci-conformance`, and `codeql-alert-gate` were already
@@ -106,11 +109,11 @@ a write scope declares it on the job, never workflow-wide. `release.yml`
 deliberately runs without npm caching, because its output is published and
 attested and a restored cache entry could land inside a signed artifact; it opts
 out by passing `cache: ""` to the `setup-node` composite action. The shared
-`ci-backend` workflow's golangci-lint steps opt out too, with `skip-cache:
+`ci-backend` lint and the local `lint-windows` job both set `skip-cache:
 true`: a restored analysis cache reported two `nolintlint` findings that were
 not in the tree and survived a re-run (#2511), and its key carries neither
-`GOOS` nor the linter config, so the `GOOS=windows` lint job shares one entry
-with `Backend (Go)`.
+`GOOS` nor the linter config, so the `GOOS=windows` lint job would share one
+entry with `Backend (Go)`.
 
 ## Disabled lint rule: `nursery/useAwaitThenable`
 
