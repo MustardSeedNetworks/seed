@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.270.0](https://github.com/MustardSeedNetworks/seed/compare/v0.269.0...v0.270.0) (2026-10-16)
+
+
+### Features
+
+* **bluetooth:** discover devices over the kernel management interface (P-E3) ([#3539](https://github.com/MustardSeedNetworks/seed/issues/3539)) ([50b1656](https://github.com/MustardSeedNetworks/seed/commit/50b1656f5f6bf4141fa1279193afd5d688beb628))
+
+
+### Bug Fixes
+
+* **dhcp:** read systemd-networkd leases on Linux ([#3536](https://github.com/MustardSeedNetworks/seed/issues/3536)) ([3019294](https://github.com/MustardSeedNetworks/seed/commit/301929400d5b4bb18b7656b47bc81f81bd79ca1c)), closes [#3530](https://github.com/MustardSeedNetworks/seed/issues/3530)
+* **discovery:** run the post-sweep observer on its own deadline ([#3541](https://github.com/MustardSeedNetworks/seed/issues/3541)) ([b95e595](https://github.com/MustardSeedNetworks/seed/commit/b95e59527ef9abf2a02d21592a47511786628089)), closes [#3540](https://github.com/MustardSeedNetworks/seed/issues/3540)
+
 ## [0.269.0](https://github.com/MustardSeedNetworks/seed/compare/v0.268.0...v0.269.0) (2026-10-16)
 
 
