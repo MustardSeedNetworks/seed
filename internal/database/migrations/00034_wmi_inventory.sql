@@ -1,4 +1,4 @@
--- 00033_wmi_inventory.sql — Windows inventory over WS-Management (P-D11,
+-- 00034_wmi_inventory.sql — Windows inventory over WS-Management (P-D11,
 -- #3506, ADR-0034).
 --
 --   * The credential vault learns a fourth kind, 'winrm': a user and a password

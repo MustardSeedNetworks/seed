@@ -1,6 +1,6 @@
 package database_test
 
-// 00033 rebuilds device_credentials to admit the winrm kind and adds the
+// 00034 rebuilds device_credentials to admit the winrm kind and adds the
 // Windows inventory tables. Existing credentials and the targets that
 // reference them survive the rebuild in both directions; WinRM credentials,
 // their targets and inventories cannot survive the rollback.
@@ -13,7 +13,7 @@ import (
 const credentialKindRows = `SELECT coalesce(group_concat(id || ',' || kind, ';'), '')
 	FROM (SELECT id, kind FROM device_credentials ORDER BY id)`
 
-func TestMigration00033AdmitsWinRMCredentialsAndKeepsTheRest(t *testing.T) {
+func TestMigration00034AdmitsWinRMCredentialsAndKeepsTheRest(t *testing.T) {
 	t.Parallel()
 
 	db := migrateTo(t, 32)
@@ -30,7 +30,7 @@ func TestMigration00033AdmitsWinRMCredentialsAndKeepsTheRest(t *testing.T) {
 		t.Fatalf("seed credentials: %v", err)
 	}
 
-	upTo(t, db, 33)
+	upTo(t, db, 34)
 
 	if got := scanString(t, db, credentialKindRows); got != "cred-s,ssh;cred-v,v2c" {
 		t.Errorf("credentials after up = %q", got)

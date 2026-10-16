@@ -341,20 +341,23 @@ func wmiTargetID(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return id, true
 }
 
-// singleLogLine replaces CR and LF so a value taken from a request cannot
-// break into a second log record. CodeQL go/log-injection treats that
-// replacement as sanitizing the value.
+// singleLogLine replaces CR and LF. The log calls below inline the same
+// strings.ReplaceAll calls: CodeQL go/log-injection recognizes that
+// replacement only when it is the logged value itself.
 func singleLogLine(s string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(s, "\n", " "), "\r", " ")
 }
 
 // auditWMI writes the security audit line for a Windows inventory action.
 func (s *Server) auditWMI(r *http.Request, event, msg string, attrs ...any) {
-	attrs = append(attrs,
-		"username", singleLogLine(usernameFromContext(r)),
-		"client_ip", singleLogLine(s.getClientIP(r)),
-		"event", event)
-	logging.FromContext(r.Context()).InfoContext(r.Context(), msg, attrs...)
+	// Newlines are stripped at these arguments. CodeQL go/log-injection
+	// treats strings.ReplaceAll of "\n" or "\r" as the sanitizer, and only
+	// when that call is the logged value itself.
+	logging.FromContext(r.Context()).With(
+		"username", strings.ReplaceAll(strings.ReplaceAll(usernameFromContext(r), "\n", " "), "\r", " "),
+		"client_ip", strings.ReplaceAll(strings.ReplaceAll(s.getClientIP(r), "\n", " "), "\r", " "),
+		"event", event,
+	).InfoContext(r.Context(), msg, attrs...)
 }
 
 // wmiCaller resolves the caller's client and answers 503 when the use-case is
@@ -383,7 +386,8 @@ func writeWMIError(w http.ResponseWriter, r *http.Request, err error) {
 			"Windows inventory store unavailable")
 	default:
 		logging.FromContext(r.Context()).ErrorContext(r.Context(),
-			"Windows inventory request failed", "error", singleLogLine(err.Error()))
+			"Windows inventory request failed", "error",
+			strings.ReplaceAll(strings.ReplaceAll(err.Error(), "\n", " "), "\r", " "))
 		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal,
 			"Failed to process Windows inventory request")
 	}

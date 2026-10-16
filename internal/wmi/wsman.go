@@ -128,8 +128,7 @@ func NewClient(e Endpoint) *Client {
 			ServerName: e.Host,
 			// The chain is not verified against any CA: VerifyConnection
 			// accepts exactly the pinned leaf and nothing else.
-			// codeql[go/disabled-certificate-check] -- leaf pinned in VerifyConnection (ADR-0034)
-			InsecureSkipVerify: true, //nolint:gosec // G402: the certificate is pinned in VerifyConnection (ADR-0034)
+			InsecureSkipVerify: true, //nolint:gosec // lgtm[go/disabled-certificate-check] -- ADR-0034
 			VerifyConnection: func(cs tls.ConnectionState) error {
 				return checkPin(cs, e.PinnedCert)
 			},
