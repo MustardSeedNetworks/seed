@@ -1,6 +1,18 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["github>MustardSeedNetworks/.github"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "The e2e caller passes playwright-image instead of a job container, so the github-actions manager no longer sees the image. The shared ci-e2e assert fails when this tag and @playwright/test disagree.",
+      "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/"],
+      "matchStrings": [
+        "playwright-image:\\s*(?<depName>mcr\\.microsoft\\.com/playwright):(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+-noble)@(?<currentDigest>sha256:[a-f0-9]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    }
+  ],
   "packageRules": [
     {
       "description": "babel-plugin-react-compiler 1.0.0 is built on @babel/types 7; under @babel/core 8 it skips every component with a defaulted destructured prop. Lift when the compiler supports Babel 8.",

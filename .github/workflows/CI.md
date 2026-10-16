@@ -5,6 +5,13 @@ must pass.** A push to `main` runs `ci-main-smoke.yml` instead of this suite:
 the merge group already tested that commit, and release-please still needs a
 successful workflow result on main.
 
+`changes`, `backend`, `race`, `frontend`, `storybook`, and `e2e` call the
+reusable workflows in `MustardSeedNetworks/.github`, pinned to
+`e092081a97245d29978e229be7425179cc1dcde1`. macOS, Windows, and the
+`GOOS=windows` lint run inside `backend`. The E2E daemon, the sharded browser
+suite, and smoke run inside `e2e`. `CI Complete` stays a job in this file so
+the required check keeps that exact name.
+
 Every job except `changes` is gated on the `changes` job's path filters, so a
 docs-only PR does not pay for a Go build. `ci-complete` is the single required
 status check — it depends on every other job, so adding a job to `ci.yml`
@@ -16,12 +23,12 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 
 | Job             | Description              | Checks                                                                                                                                                   |
 | --------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `changes`       | Path filtering           | Decides which downstream jobs run                                                                                                                        |
+| `changes`       | Path filtering           | Shared `ci-changes`: decides which downstream jobs run                                                                                                   |
 | `build-ui`      | Shared frontend build    | Builds `internal/api/ui/` once and uploads it as an artifact                                                                                             |
-| `backend`       | Go checks                | lint, vet, staticcheck, fmt, tests, coverage floor (50%)                                                                                                 |
-| `race`          | Go race detector         | `go test -race`, split from `backend` so it fails distinctly                                                                                             |
-| `frontend`      | React/TS checks          | tsc typecheck, Biome, design-token gate, Vitest, lockfile integrity                                                                                      |
-| `storybook`     | Component tests          | Storybook interactions and axe accessibility                                                                                                             |
+| `backend`       | Go checks                | Shared `ci-backend`: lint, vet, fmt, tests, macOS, Windows, coverage floor (55%)                                                                         |
+| `race`          | Go race detector         | Shared `ci-race`: `go test -race`, split from `backend` so it fails distinctly                                                                           |
+| `frontend`      | React/TS checks          | Shared `ci-frontend`: tsc typecheck, Biome, design-token gate, Vitest, lockfile integrity                                                                |
+| `storybook`     | Component tests          | Shared `ci-storybook`: interactions and axe accessibility                                                                                                |
 | `security`      | Security scans           | govulncheck (hard gate), gosec via golangci-lint (blocking gate; G103/G204/G304/G702 are SARIF-only via the standalone step), npm audit, gitleaks, Trivy |
 | `semgrep`       | SAST                     | Semgrep rules                                                                                                                                            |
 | `quality`       | Code quality gates       | banned vocabulary, file size ratchet, output escaping, sensitive files                                                                                   |
@@ -30,9 +37,8 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 | `i18n`          | Internationalization     | Catalog completeness, no translated standard terms                                                                                                       |
 | `docs`          | Documentation            | Markdown lint (blocking, scoped to changed files)                                                                                                        |
 | `build`         | Build verification       | Multi-arch binaries with full ldflags, UIBuildHash verified                                                                                              |
-| `e2e`           | Browser tests            | Playwright, chromium + webkit, 2 shards each                                                                                                             |
-| `e2e-smoke`     | Smoke tests              | Fast critical-path Playwright run                                                                                                                        |
-| `ci-complete`   | Aggregate gate           | The required status check                                                                                                                                |
+| `e2e`           | Browser tests            | Shared `ci-e2e`: daemon, chromium + webkit, 2 shards, and the `@smoke` job                                                                               |
+| `ci-complete`   | Aggregate gate           | The required status check, named exactly `CI Complete`                                                                                                   |
 
 ### Other Workflows
 
@@ -53,11 +59,19 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 | `todo-tracker.yml`         | Weekly TODO tracking                               |
 | `update-oui.yml`           | Refresh the OUI vendor database                    |
 
+These jobs stay in `ci.yml` because the shared product workflows do not cover
+them: `build-ui` (the production bundle and the first-load budget), `bench`,
+`security`, `quality`, `release-notes`, `bridge-format`, `workflow-lint`,
+`i18n`, `docs`, `build`, `iperf3`, and `phone-width`. `semgrep`,
+`dependency-review`, `ci-conformance`, and `codeql-alert-gate` were already
+calls into `MustardSeedNetworks/.github`. `ci-complete` stays local so branch
+protection and `release.yml` keep matching the check name `CI Complete`.
+
 ## Shared UI artifact
 
 `build-ui` runs the Vite build once and publishes `internal/api/ui/` as an
-artifact. Jobs that need embedded assets — `backend`, `race`, `build`, `e2e`,
-`e2e-smoke` — download it rather than rebuilding.
+artifact. Jobs that need embedded assets — `backend`, `race`, `build`, and
+`e2e` — download it rather than rebuilding.
 
 `frontend` does not run the Vite build at all; it typechecks, lints and unit
 tests. It still declares `needs: build-ui` so a broken build fails the pipeline
@@ -91,11 +105,12 @@ Permissions follow least privilege: workflows declare `permissions: {}` (or
 a write scope declares it on the job, never workflow-wide. `release.yml`
 deliberately runs without npm caching, because its output is published and
 attested and a restored cache entry could land inside a signed artifact; it opts
-out by passing `cache: ""` to the `setup-node` composite action. Both
-`golangci-lint-action` steps opt out too, with `skip-cache: true`: a restored
-analysis cache reported two `nolintlint` findings that were not in the tree and
-survived a re-run (#2511), and its key carries neither `GOOS` nor the linter
-config, so the `GOOS=windows` lint job shares one entry with `Backend (Go)`.
+out by passing `cache: ""` to the `setup-node` composite action. The shared
+`ci-backend` workflow's golangci-lint steps opt out too, with `skip-cache:
+true`: a restored analysis cache reported two `nolintlint` findings that were
+not in the tree and survived a re-run (#2511), and its key carries neither
+`GOOS` nor the linter config, so the `GOOS=windows` lint job shares one entry
+with `Backend (Go)`.
 
 ## Disabled lint rule: `nursery/useAwaitThenable`
 
@@ -112,10 +127,12 @@ keep it at `error` — neither uses `await act(`.
 
 ## The Node.js pin lives in one file
 
-`.nvmrc` is the single source of truth for the Node version. Every workflow that
-needs Node uses `./.github/actions/setup-node`, and that composite reads
+`.nvmrc` is the single source of truth for the Node version. Jobs that stay in
+this repo use `./.github/actions/setup-node`, and that composite reads
 `.nvmrc` via `node-version-file` — it has **no `node-version` input**, so no
-caller can override it and no second copy of the version can exist.
+caller can override it and no second copy of the version can exist. The shared
+backend, frontend, Storybook, and E2E workflows read the same `.nvmrc` and
+install the composite's npm pin (`12.1.0`).
 
 That input used to default to a literal, and it drifted: Renovate bumps the
 manifests it can see and cannot see a default buried inside a composite, so CI
@@ -130,8 +147,9 @@ next step and is deliberately **not** taken yet: Homebrew's newest `node` is
 turning the mismatch fatal would block local development in all four repos. See
 the linked issue.
 
-The npm version is still declared in the composite; `packageManager` in
-`package.json` is what `engines` checks it against.
+The npm version is declared in the composite and as the shared workflows'
+`npm-version` default. `packageManager` in `package.json` is what `engines`
+checks it against.
 
 ## CI Must Pass Before Merge
 
