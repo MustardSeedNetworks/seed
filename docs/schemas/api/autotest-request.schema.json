@@ -9,6 +9,14 @@
           "type": "integer",
           "maximum": 4094,
           "minimum": 0
+        },
+        "jackLabel": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "assetTag": {
+          "type": "string",
+          "maxLength": 64
         }
       },
       "additionalProperties": false,

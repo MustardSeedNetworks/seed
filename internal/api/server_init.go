@@ -503,6 +503,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.ipSLA = app.NewIPSLA(s.persistence)
 	s.pollingTargets = app.NewPollingTargets(s.persistence, s.pollingTargetLimit)
 	s.deviceGroups = app.NewDeviceGroups(s.persistence)
+	s.autotestResults = app.NewAutotestResults(s.persistence)
 	s.initVaultUseCases()
 	s.alertInbox = app.NewAlertInbox(s.persistence)
 }

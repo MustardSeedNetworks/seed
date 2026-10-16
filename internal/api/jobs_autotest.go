@@ -4,7 +4,8 @@ package api
 // DHCP, DNS, gateway, VLAN and internet checks run in turn on the selected
 // interface and come back as one verdict with every stage's answer. It is a
 // job because the run takes seconds, and the runner already gives a caller the
-// handle, the progress and the cancel.
+// handle, the progress and the cancel. Every completed run is kept as a record
+// (P-E2) before the job reports it.
 
 import (
 	"bytes"
@@ -26,8 +27,14 @@ import (
 const autotestJobKind = "autotest"
 
 // newAutotestHandler returns the job Handler for the kind. iface names the
-// interface a run checks; stages are the checks bound to it.
-func newAutotestHandler(iface func() string, stages []autotest.Stage) jobs.Handler {
+// interface a run checks; stages are the checks bound to it; keep stores the
+// finished run. A run that cannot be kept fails, rather than handing back a
+// record id that does not exist.
+func newAutotestHandler(
+	iface func() string,
+	stages []autotest.Stage,
+	keep func(context.Context, *autotest.Report) error,
+) jobs.Handler {
 	return func(ctx context.Context, params any, report func(float64)) (any, error) {
 		var req autotest.Spec
 		if raw, ok := params.(json.RawMessage); ok && len(raw) > 0 {
@@ -37,7 +44,14 @@ func newAutotestHandler(iface func() string, stages []autotest.Stage) jobs.Handl
 				return nil, fmt.Errorf("invalid autotest params: %w", err)
 			}
 		}
-		return autotest.Run(ctx, iface(), req, stages, report), nil
+		if err := req.Validate(); err != nil {
+			return nil, fmt.Errorf("invalid autotest params: %w", err)
+		}
+		res := autotest.Run(ctx, iface(), req, stages, report)
+		if err := keep(ctx, res); err != nil {
+			return nil, fmt.Errorf("keep autotest result: %w", err)
+		}
+		return res, nil
 	}
 }
 
@@ -80,7 +94,11 @@ func (s *Server) autotestInternetTargets(ctx context.Context) ([]autotest.Target
 
 // registerAutotestKind registers the kind on the selected interface.
 func (s *Server) registerAutotestKind() {
-	handler := newAutotestHandler(func() string { return s.netManager().GetCurrentInterface() }, s.autotestStages())
+	handler := newAutotestHandler(
+		func() string { return s.netManager().GetCurrentInterface() },
+		s.autotestStages(),
+		func(ctx context.Context, r *autotest.Report) error { return s.autotestResults.Insert(ctx, r) },
+	)
 	if err := s.jobsRunner().Register(autotestJobKind, handler); err != nil {
 		logging.GetLogger().Error("failed to register autotest job kind", "error", err)
 	}

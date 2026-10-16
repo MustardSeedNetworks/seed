@@ -92,6 +92,7 @@ type DB struct {
 	flowRecords       *FlowRecordsRepository
 	microbursts       *MicroburstsRepository
 	bluetoothDevices  *BluetoothDevicesRepository
+	autotestResults   *AutotestResultsRepository
 	voipStreams       *VoIPStreamsRepository
 	topology          *TopologyRepository
 	alertRules        *AlertRulesRepository

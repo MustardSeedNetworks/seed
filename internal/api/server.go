@@ -29,6 +29,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/deviceconfig"
 	"github.com/MustardSeedNetworks/seed/internal/devicegroups"
 	"github.com/MustardSeedNetworks/seed/internal/dhcp"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/autotest"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/cable"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/export"
@@ -287,6 +288,7 @@ type Server struct {
 	deviceConfigs      *deviceconfig.Service       // Device configuration backup use-case (P-D1)
 	deviceGroups       *devicegroups.Service       // Device-group CRUD use-case (P-D10)
 	wmiInventory       *wmi.Service                // Windows inventory use-case (P-D11)
+	autotestResults    autotest.Store              // AutoTest run records (P-E2)
 	alertInbox         *inbox.Service              // Alert-inbox (list/ack/resolve) use-case (ADR-0020)
 	configBackups      *backups.Service            // Config backup/restore use-case (ADR-0020)
 	exportService      *export.Service             // Diagnostic-export use-case (ADR-0020)

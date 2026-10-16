@@ -7,4 +7,6 @@
  */
 export interface Spec {
   expectedVlan?: number;
+  jackLabel?: string;
+  assetTag?: string;
 }

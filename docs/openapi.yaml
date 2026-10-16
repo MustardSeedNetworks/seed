@@ -552,6 +552,19 @@ components:
                 - default_password_hash
                 - session_timeout
             type: object
+        AutotestResultListResponse:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                results:
+                    items:
+                        $ref: '#/components/schemas/Report'
+                    type: array
+            required:
+                - count
+                - results
+            type: object
         BSSView:
             additionalProperties: false
             properties:
@@ -7886,9 +7899,16 @@ components:
         Report:
             additionalProperties: false
             properties:
+                assetTag:
+                    type: string
                 durationMs:
                     type: integer
+                id:
+                    format: uuid
+                    type: string
                 interface:
+                    type: string
+                jackLabel:
                     type: string
                 stages:
                     items:
@@ -7904,6 +7924,7 @@ components:
                         - fail
                     type: string
             required:
+                - id
                 - interface
                 - verdict
                 - startedAt
@@ -9417,10 +9438,16 @@ components:
         Spec:
             additionalProperties: false
             properties:
+                assetTag:
+                    maxLength: 64
+                    type: string
                 expectedVlan:
                     maximum: 4094
                     minimum: 0
                     type: integer
+                jackLabel:
+                    maxLength: 64
+                    type: string
             type: object
         SpeedtestCard:
             additionalProperties: false
@@ -12957,6 +12984,172 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Error'
                     description: Request body larger than 1024 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/autotest/results:
+        get:
+            operationId: getApiV1AutotestResults
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AutotestResultListResponse'
+                    description: Every kept AutoTest run, newest first. Each completed autotest job keeps its run, with the jack label and asset tag it was given.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+    /api/v1/autotest/results/{resultId}:
+        get:
+            operationId: getApiV1AutotestResultsResultId
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Report'
+                    description: One kept AutoTest run.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: resultId
+              required: true
+              schema:
+                type: string
+    /api/v1/autotest/results/{resultId}/export:
+        get:
+            operationId: getApiV1AutotestResultsResultIdExport
+            parameters:
+                - description: json (the record, which the import route reads back), csv (one row per stage) or pdf (a printable sheet; needs audit_pdf).
+                  in: query
+                  name: format
+                  required: true
+                  schema:
+                    enum:
+                        - json
+                        - csv
+                        - pdf
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Report'
+                        application/pdf:
+                            schema:
+                                contentMediaType: application/pdf
+                                type: string
+                        text/csv:
+                            schema:
+                                type: string
+                    description: The record as an attachment named autotest-<resultId>.<format>.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: resultId
+              required: true
+              schema:
+                type: string
+    /api/v1/autotest/results/import:
+        post:
+            description: Requires an operator-scoped token.
+            operationId: postApiV1AutotestResultsImport
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Report'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Report'
+                    description: The record a JSON export describes, stored under its own id; Location names it. A body that is not an AutoTest JSON export is a 400, and an id already stored is a 409.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
                 "500":
                     content:
                         application/json:

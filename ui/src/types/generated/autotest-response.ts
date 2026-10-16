@@ -6,7 +6,10 @@
  * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
 export interface Report {
+  id: string;
   interface: string;
+  jackLabel?: string;
+  assetTag?: string;
   verdict: 'pass' | 'warn' | 'fail';
   startedAt: string;
   durationMs: number;

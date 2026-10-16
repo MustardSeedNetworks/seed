@@ -10,7 +10,13 @@ package autotest
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
+	"unicode"
+	"unicode/utf8"
+
+	"github.com/google/uuid"
 )
 
 // Outcome grades one stage, and the run as a whole.
@@ -78,6 +84,32 @@ type Spec struct {
 	// ExpectedVLAN is the native VLAN the port should be on. Zero means no
 	// expectation: the VLAN stage then reports what the switch advertised.
 	ExpectedVLAN int `json:"expectedVlan,omitempty" jsonschema:"minimum=0,maximum=4094"`
+	// JackLabel and AssetTag tie the run to the physical port it tested: the
+	// label on the wall jack and the asset tag of the device or patch panel.
+	// Both are optional and are carried into the record and its exports.
+	JackLabel string `json:"jackLabel,omitempty" jsonschema:"maxLength=64"`
+	AssetTag  string `json:"assetTag,omitempty"  jsonschema:"maxLength=64"`
+}
+
+// maxLabelLen bounds a label in characters: enough for a building, floor,
+// room and port, short enough to print on one line of the PDF.
+const maxLabelLen = 64
+
+// Validate checks the labels; the VLAN range is the job's schema.
+func (s Spec) Validate() error {
+	return errors.Join(validLabel("jackLabel", s.JackLabel), validLabel("assetTag", s.AssetTag))
+}
+
+func validLabel(field, v string) error {
+	if !utf8.ValidString(v) || utf8.RuneCountInString(v) > maxLabelLen {
+		return fmt.Errorf("%s must be at most %d characters of UTF-8", field, maxLabelLen)
+	}
+	for _, r := range v {
+		if unicode.IsControl(r) {
+			return fmt.Errorf("%s must not contain control characters", field)
+		}
+	}
+	return nil
 }
 
 // Reading is one labelled reading behind a stage's outcome, such as the
@@ -100,7 +132,11 @@ type StageReport struct {
 
 // Report is a whole run: the verdict and every stage behind it.
 type Report struct {
+	// ID names the record: it is kept by every export and by a re-import.
+	ID        string `json:"id"                  jsonschema:"format=uuid"`
 	Interface string `json:"interface"`
+	JackLabel string `json:"jackLabel,omitempty"`
+	AssetTag  string `json:"assetTag,omitempty"`
 	// Verdict is fail when any stage failed, warn when any warned, else pass.
 	Verdict    Outcome       `json:"verdict"    jsonschema:"enum=pass,enum=warn,enum=fail"`
 	StartedAt  time.Time     `json:"startedAt"`
@@ -120,7 +156,14 @@ type Stage struct {
 // recorded as skipped rather than run.
 func Run(ctx context.Context, iface string, req Spec, stages []Stage, report func(float64)) *Report {
 	start := time.Now()
-	res := &Report{Interface: iface, StartedAt: start, Stages: make([]StageReport, 0, len(stages))}
+	res := &Report{
+		ID:        uuid.NewString(),
+		Interface: iface,
+		JackLabel: req.JackLabel,
+		AssetTag:  req.AssetTag,
+		StartedAt: start.UTC(),
+		Stages:    make([]StageReport, 0, len(stages)),
+	}
 	for i, st := range stages {
 		res.Stages = append(res.Stages, runStage(ctx, iface, req, st))
 		report(float64(i+1) / float64(len(stages)))

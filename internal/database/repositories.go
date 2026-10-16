@@ -224,6 +224,17 @@ func (db *DB) BluetoothDevices() *BluetoothDevicesRepository {
 	return db.bluetoothDevices
 }
 
+// AutotestResults returns the AutoTest record repository (P-E2).
+func (db *DB) AutotestResults() *AutotestResultsRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.autotestResults == nil {
+		db.autotestResults = &AutotestResultsRepository{db: db}
+	}
+	return db.autotestResults
+}
+
 // VoIPStreams returns the repository the VoIP analyser writes into.
 func (db *DB) VoIPStreams() *VoIPStreamsRepository {
 	db.mu.Lock()

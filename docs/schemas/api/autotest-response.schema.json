@@ -21,7 +21,17 @@
     },
     "Report": {
       "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
         "interface": {
+          "type": "string"
+        },
+        "jackLabel": {
+          "type": "string"
+        },
+        "assetTag": {
           "type": "string"
         },
         "verdict": {
@@ -49,6 +59,7 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
+        "id",
         "interface",
         "verdict",
         "startedAt",
