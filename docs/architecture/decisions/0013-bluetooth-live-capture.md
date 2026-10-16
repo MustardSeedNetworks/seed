@@ -80,6 +80,11 @@ BlueZ D-Bus. `hcitool` and `bluetoothctl` discovery are gone.
   advertising. When the management interface is unavailable, the scan fails
   with the cause (no adapter, missing `CAP_NET_ADMIN`) instead of returning a
   partial list as if it were complete.
+- **Kept across scans.** Every scan upserts the devices it heard into
+  `bluetooth_devices`, keyed by address, so a device keeps its id and the time
+  it was first heard across scans and restarts. A scan whose devices cannot be
+  stored fails rather than reporting them as new. Devices not heard for the
+  inactive-device retention window age out with wired ones.
 
 ## Consequences
 

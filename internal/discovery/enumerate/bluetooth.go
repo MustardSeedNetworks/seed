@@ -100,12 +100,21 @@ func DefaultBluetoothScanConfig() *BluetoothScanConfig {
 	}
 }
 
+// BluetoothStore remembers every device a scan hears, so a device keeps its
+// identity and the time it was first heard across scans and restarts.
+type BluetoothStore interface {
+	// RememberBluetoothDevices stores each device by address and sets its ID
+	// and FirstSeen to the ones its first scan recorded.
+	RememberBluetoothDevices(ctx context.Context, devices []BluetoothDevice) error
+}
+
 // BluetoothScanner discovers Bluetooth devices.
 type BluetoothScanner struct {
 	mu                sync.RWMutex
 	adapterName       string
 	config            *BluetoothScanConfig
 	oui               *resolve.OUIDatabase
+	store             BluetoothStore
 	lastScan          *BluetoothScanResult
 	lastScanTime      time.Time
 	authorizedDevices map[string]bool // Authorized MAC addresses
@@ -137,6 +146,13 @@ func (s *BluetoothScanner) SetAdapter(name string) {
 	s.adapterName = name
 }
 
+// SetStore makes every later scan remember the devices it hears.
+func (s *BluetoothScanner) SetStore(store BluetoothStore) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.store = store
+}
+
 // SetAuthorizedDevices sets the list of authorized Bluetooth addresses.
 func (s *BluetoothScanner) SetAuthorizedDevices(addresses []string) {
 	s.mu.Lock()
@@ -153,6 +169,7 @@ func (s *BluetoothScanner) Scan(ctx context.Context) (*BluetoothScanResult, erro
 	s.mu.Lock()
 	adapter := s.adapterName
 	config := s.config
+	store := s.store
 	s.mu.Unlock()
 
 	logger := logging.GetLogger()
@@ -166,16 +183,10 @@ func (s *BluetoothScanner) Scan(ctx context.Context) (*BluetoothScanResult, erro
 		return nil, fmt.Errorf("bluetooth scan failed: %w", err)
 	}
 
-	// Filter by minimum RSSI
-	filteredDevices := make([]BluetoothDevice, 0, len(rawDevices))
-	for _, dev := range rawDevices {
-		if dev.RSSI >= config.MinRSSI {
-			filteredDevices = append(filteredDevices, dev)
-		}
+	filteredDevices, err := s.keep(ctx, store, config.MinRSSI, rawDevices)
+	if err != nil {
+		return nil, err
 	}
-
-	// Enrich devices
-	s.enrichDevices(filteredDevices)
 
 	result := &BluetoothScanResult{
 		Devices:      filteredDevices,
@@ -197,6 +208,26 @@ func (s *BluetoothScanner) Scan(ctx context.Context) (*BluetoothScanResult, erro
 	)
 
 	return result, nil
+}
+
+// keep drops the devices heard below minRSSI, enriches the rest and, with a
+// store, remembers them.
+func (s *BluetoothScanner) keep(
+	ctx context.Context, store BluetoothStore, minRSSI int, raw []BluetoothDevice,
+) ([]BluetoothDevice, error) {
+	kept := make([]BluetoothDevice, 0, len(raw))
+	for _, dev := range raw {
+		if dev.RSSI >= minRSSI {
+			kept = append(kept, dev)
+		}
+	}
+	s.enrichDevices(kept)
+	if store != nil {
+		if err := store.RememberBluetoothDevices(ctx, kept); err != nil {
+			return nil, fmt.Errorf("recording bluetooth devices: %w", err)
+		}
+	}
+	return kept, nil
 }
 
 // GetLastScan returns the most recent scan result.
@@ -271,9 +302,9 @@ func (s *BluetoothScanner) enrichDevices(devices []BluetoothDevice) {
 			devices[i].Vendor = s.oui.Lookup(devices[i].Address)
 		}
 
-		// Check authorization
-		normalized := normalizeMAC(devices[i].Address)
-		if authorized[normalized] || devices[i].IsTrusted || devices[i].IsPaired {
+		// The address is the device's identity across scans.
+		devices[i].Address = normalizeMAC(devices[i].Address)
+		if authorized[devices[i].Address] || devices[i].IsTrusted || devices[i].IsPaired {
 			devices[i].IsAuthorized = true
 		}
 
