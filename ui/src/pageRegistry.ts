@@ -15,6 +15,7 @@ import {
   ArrowLeftRight,
   BarChart3,
   Bell,
+  Boxes,
   EthernetPort,
   LayoutDashboard,
   Network,
@@ -51,6 +52,9 @@ const ReportsPage = lazy(() =>
 const LogsPage = lazy(() => import('./pages/LogsPage').then((m) => ({ default: m.LogsPage })));
 const PollingTargetsPage = lazy(() =>
   import('./pages/PollingTargetsPage').then((m) => ({ default: m.PollingTargetsPage })),
+);
+const DeviceGroupsPage = lazy(() =>
+  import('./pages/DeviceGroupsPage').then((m) => ({ default: m.DeviceGroupsPage })),
 );
 const TopologyPage = lazy(() =>
   import('./pages/TopologyPage').then((m) => ({ default: m.TopologyPage })),
@@ -108,6 +112,7 @@ type PageI18nKey =
   | 'reports'
   | 'logs'
   | 'pollingTargets'
+  | 'deviceGroups'
   | 'topology'
   | 'interfaces'
   | 'flows'
@@ -228,6 +233,15 @@ const staticPages: PageDef[] = [
     iconColorClass: 'text-module-security',
     component: PollingTargetsPage,
     help: 'pollingTargets',
+  },
+  {
+    path: '/device-groups',
+    group: 'monitoring',
+    i18nKey: 'deviceGroups',
+    icon: Boxes,
+    iconColorClass: 'text-module-security',
+    component: DeviceGroupsPage,
+    help: 'deviceGroups',
   },
   {
     path: '/topology',

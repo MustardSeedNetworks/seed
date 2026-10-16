@@ -43,6 +43,7 @@ import {
   Bluetooth,
   BluetoothConnected,
   BookOpen,
+  Boxes,
   Cable,
   Calendar,
   Check,
@@ -149,6 +150,7 @@ export {
   BluetoothConnected,
   // Help/documentation icons
   BookOpen,
+  Boxes,
   Cable,
   Calendar,
   Check,

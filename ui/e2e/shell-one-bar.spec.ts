@@ -41,6 +41,7 @@ const ROUTES = [
   '/reports',
   '/logs',
   '/polling-targets',
+  '/device-groups',
   '/topology',
   '/interfaces',
   '/flows',

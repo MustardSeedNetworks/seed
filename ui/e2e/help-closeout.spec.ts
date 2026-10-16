@@ -195,6 +195,7 @@ for (const route of [
   '/reports',
   '/logs',
   '/polling-targets',
+  '/device-groups',
   '/topology',
   '/interfaces',
   '/flows',

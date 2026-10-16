@@ -32,6 +32,7 @@
     "logs": "Logs",
     "alerts": "Alertas",
     "pollingTargets": "Objetivos de sondeo",
+    "deviceGroups": "Grupos de dispositivos",
     "topology": "Topología",
     "interfaces": "Interfaces",
     "flows": "Flujos"
@@ -650,6 +651,19 @@
         "snmp": {
           "term": "SNMP",
           "description": "El Protocolo Simple de Administración de Red lee el estado y las tablas del dispositivo con las credenciales configuradas."
+        }
+      }
+    },
+    "deviceGroups": {
+      "description": "Mantenga conjuntos con nombre de destinos de sondeo. Una regla de alerta o un informe programado limitado a un grupo cubre solo sus miembros, tal como estén al ejecutarse. Un grupo en uso por una regla o un informe no se puede eliminar hasta cambiar esa regla o ese informe.",
+      "terms": {
+        "member": {
+          "term": "Miembro",
+          "description": "Un destino de sondeo del grupo. Un destino puede pertenecer a cualquier número de grupos."
+        },
+        "scope": {
+          "term": "Ámbito",
+          "description": "Limitar una regla de alerta o un informe a los miembros de un grupo. Sin grupo, cubren todos los destinos."
         }
       }
     },
