@@ -6,6 +6,12 @@
 # that commit. release-please still needs a CI result on main, which
 # ci-main-smoke.yml supplies.
 #
+# Shared callers — changes, backend, race, frontend, storybook, and e2e —
+# pin MustardSeedNetworks/.github at e092081a97245d29978e229be7425179cc1dcde1
+# (.github#163). That commit pins apt-install and flake-budget inside the
+# called workflows, so this repo does not vendor those actions. Jobs that
+# stay in this file still use ./.github/actions/setup-go and setup-node.
+#
 # Features:
 # - Actions pinned to full commit SHAs for reproducibility
 # - Go version from go.mod, Node.js from .github/actions/setup-node
@@ -55,78 +61,59 @@ jobs:
   # ===========================================================================
   # Path filter — classifies which areas changed so downstream jobs can skip
   # ===========================================================================
-  # Adds ~5s to every run; saves several minutes when a PR only touches one
-  # area (e.g. docs-only changes skip backend/frontend/c jobs entirely).
-  # The CI Complete aggregator at the bottom of this file enforces that all
-  # required jobs either passed or were intentionally skipped, so branch
-  # protection can require just CI Complete instead of every individual job.
+  # The matcher is scripts/ci-changes.py in the pinned .github commit. On
+  # merge_group every declared filter is true: the queue has no PR base to
+  # diff against. pull_request and workflow_dispatch still filter. id-token:
+  # write is how that workflow reads its own commit; without it the job fails
+  # closed rather than classifying paths with whatever main currently says.
+  # CI Complete needs this job, so branch protection can require that one
+  # check instead of every individual job.
   changes:
-    name: Changed paths
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      # merge_group has no PR base to diff against, and the queue exists to test
-      # the merged result — so every filter reports true there and the full
-      # suite runs. Path filtering stays in effect for pull_request and
-      # workflow_dispatch.
-      backend: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.backend }}
-      frontend: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.frontend }}
-      darwin_bridge: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.darwin_bridge }}
-      docs: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.docs }}
-      ci_infra: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.ci_infra }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
-        id: filter
-        if: github.event_name != 'merge_group'
-        with:
-          filters: |
-            backend:
-              - '**/*.go'
-              - 'go.mod'
-              - 'go.sum'
-              - 'Makefile'
-              - 'mk/**'
-              # Embedded migration baseline + its schema-gate golden are Go test
-              # inputs (//go:embed in internal/database); a change here must run
-              # the Go suite even when no .go file moves.
-              - 'internal/database/migrations/**'
-              - 'internal/database/testdata/**'
-              # cmd/seed-openapi renders docs/openapi.yaml from this source and
-              # the route registry; editing either alone must run the drift gate.
-              - 'docs/openapi-source.yaml'
-              - 'docs/openapi.yaml'
-              # The locale catalogue is //go:embed'ed by internal/i18n and
-              # imported by the UI through the @locales alias, so a
-              # translation-only change is an input of both test suites and
-              # of the i18n job that the frontend filter gates.
-              - 'internal/i18n/locales/**'
-            frontend:
-              - 'ui/**'
-              - 'internal/i18n/locales/**'
-            darwin_bridge:
-              - 'internal/**/*_darwin.h'
-              - '.clang-format'
-            docs:
-              - '**/*.md'
-            # Everything that *implements* a CI gate, not just the workflow
-            # that calls it. This class previously named three composite
-            # actions and one script individually; seed has 47 scripts under
-            # scripts/, most of them gate implementations (check-schema-drift,
-            # check-output-escaping, check-route-policy and friends), and the
-            # rest matched no filter. A PR could rewrite a gate, run no job
-            # that used it, and merge green — CI Complete accepts `skipped`.
-            # Naming them one at a time is the failure mode; this is the
-            # directory class that replaces it.
-            ci_infra:
-              - '.github/workflows/**'
-              - '.github/actions/**'
-              - 'scripts/**'
-              - '.golangci.yml'
-              - 'biome.json'
-              - 'ui/biome.json'
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-changes.yml@e092081a97245d29978e229be7425179cc1dcde1 # .github#163
+    with:
+      filters: |
+        backend:
+          - '**/*.go'
+          - 'go.mod'
+          - 'go.sum'
+          - 'Makefile'
+          - 'mk/**'
+          # Embedded migration baseline + its schema-gate golden are Go test
+          # inputs (//go:embed in internal/database); a change here must run
+          # the Go suite even when no .go file moves.
+          - 'internal/database/migrations/**'
+          - 'internal/database/testdata/**'
+          # cmd/seed-openapi renders docs/openapi.yaml from this source and
+          # the route registry; editing either alone must run the drift gate.
+          - 'docs/openapi-source.yaml'
+          - 'docs/openapi.yaml'
+          # The locale catalogue is //go:embed'ed by internal/i18n and
+          # imported by the UI through the @locales alias, so a
+          # translation-only change is an input of both test suites and
+          # of the i18n job that the frontend filter gates.
+          - 'internal/i18n/locales/**'
+        frontend:
+          - 'ui/**'
+          - 'internal/i18n/locales/**'
+        darwin_bridge:
+          - 'internal/**/*_darwin.h'
+          - '.clang-format'
+        docs:
+          - '**/*.md'
+        # Everything that implements a CI gate, not just the workflow that
+        # calls it. scripts/ holds the gate scripts, and a PR that weakened
+        # one used to stay green because CI Complete accepts skipped.
+        ci_infra:
+          - '.github/workflows/**'
+          - '.github/actions/**'
+          - 'scripts/**'
+          - '.golangci.yml'
+          - 'biome.json'
+          - 'ui/biome.json'
 
   # ===========================================================================
   # Build UI once, shared via artifact
@@ -170,110 +157,110 @@ jobs:
           path: internal/api/ui/
           retention-days: 1
 
+
   # ===========================================================================
-  # macOS Backend Checks
+  # Backend (Go, macOS, Windows, GOOS=windows lint) — fleet-shared ci-backend.yml
   # ===========================================================================
-  # Every darwin-only file is behind //go:build darwin, so the ubuntu backend
-  # job never compiles it. The macOS Wi-Fi path is CoreWLAN through cgo and
-  # Objective-C; a break in it would leave every other check green. This job
-  # builds the real thing.
+  # One caller. The Linux job is the product gate: golangci-lint, vet, the
+  # drift and policy scripts, tests, the coverage floor, the deterministic
+  # and CGO-free builds, and go mod tidy. macOS builds and vets the tree and
+  # race-tests internal/wifi. Windows builds with CGO_ENABLED=0 and runs the
+  # port-fallback tests. Both native jobs stay off pull_request
+  # (skip-native-on-pull-request defaults true): macOS runners are 10x the
+  # minutes, and the merge queue still runs them because changes forces every
+  # filter true there.
   #
-  # Not on `pull_request`: this ran on the PR AND again on the merge group for
-  # the same commit, and macOS runners carry a 10x minute multiplier. It still
-  # runs in the queue (merge_group forces every filter true) and on
-  # workflow_dispatch, so nothing merges without it. Push to main does not run
-  # this workflow. A darwin-only break ejects the PR from the queue instead of
-  # reddening it; that is the trade.
-  backend-darwin:
-    name: Backend (macOS)
-    runs-on: macos-latest
-    needs: changes
-    if: >-
-      github.event_name != 'pull_request' &&
-      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true')
-    timeout-minutes: 20
-    env:
-      GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
-      GOCACHE: ${{ github.workspace }}/.cache/go/build
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Set up Go
-        uses: ./.github/actions/setup-go
-
-      # No libpcap step: macOS ships it, and the UI embed is satisfied by the
-      # tracked .gitkeep because the directive is `all:ui`, which matches
-      # dotfiles. So this needs neither the apt composite nor the UI artifact.
-      - name: Build
-        run: go build ./...
-
-      - name: Vet
-        run: go vet ./...
-
-      # Linking, not just compiling, is what proves the -framework LDFLAGS
-      # resolve: building a library package stops after the Objective-C compile.
-      # The wifi test binaries link the darwin implementation, covering both.
-      # These tests are pure mapping and protocol logic, so the runner needs no
-      # Wi-Fi adapter and no Location Services grant.
-      - name: Test
-        run: go test -race ./internal/wifi/...
-
-  # ===========================================================================
-  # Go Backend Checks
-  # ===========================================================================
-  # ===========================================================================
-  # Backend (Windows)
-  # ===========================================================================
-  # Windows is a supported target with 19 `*_windows.go` files across cmd/seed
-  # and internal/{diagnostics,discovery,netif,phy,security,truststore,wifi},
-  # and until now not one of them was compiled by CI -- only internal/api was
-  # cross-vetted. A break in any of the others surfaced at release time.
+  # On workflow_dispatch the native jobs run whenever this caller runs. That
+  # is wider than their old path filter, which required backend or ci_infra.
+  # A frontend-only dispatch now builds darwin and windows too. PRs still
+  # skip them.
   #
-  # The cross-`GOOS=windows` vet elsewhere in this file stays as the cheap
-  # fast-fail, but it is deliberately NOT the gate: cross-vet catches compile
-  # errors, not the #2096 class, where syscall.EADDRINUSE simply is not
-  # WSAEADDRINUSE and only a real Winsock error object proves it. That is what
-  # TestIsAddrInUse_RecognisesWSAEADDRINUSE asserts, and this job is the first
-  # thing that has ever executed it.
+  # lint-windows is false here. The shared job would run the same full-tree
+  # GOOS=windows lint, but ci-conformance reads the golangci-lint version from
+  # a golangci-lint-action pin in THIS file. That pin stays on the local job
+  # below. A frontend-only PR still runs the Linux backend, because the UI is
+  # embedded, and does not lint the Windows tree.
+  backend:
+    needs: [changes, build-ui]
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
+    permissions:
+      contents: read
+      actions: read
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-backend.yml@e092081a97245d29978e229be7425179cc1dcde1 # .github#163
+    with:
+      install-libpcap: true
+      setup-node: true
+      ui-artifact: frontend-dist
+      ui-install: true
+      golangci-lint-version: v2.14.0
+      golangci-lint-args: --timeout=5m
+      fetch-depth: 0
+      native-fetch-depth: 0
+      timeout-minutes: 20
+      lint-windows: false
+      windows-vet-command: GOOS=windows CGO_ENABLED=0 go vet ./internal/api/...
+      darwin-test-command: go test -race ./internal/wifi/...
+      windows-test-command: go test ./internal/api/ -run 'IsAddrInUse|BindWithFallback' -v
+      extra-command: |
+        ./scripts/check-package-reachability.sh
+        node --test scripts/check-ui-file-reachability.test.ts
+        node scripts/check-ui-file-reachability.ts
+        ./scripts/check-hardware-matrix.sh
+        ./scripts/check-tailwind-classes.sh
+        python3 scripts/test-check-component-variants.py
+        python3 scripts/check-component-variants.py
+        ./scripts/check-schema-drift.sh
+        ./scripts/check-openapi-drift.sh
+        ./scripts/check-types-drift.sh
+        ./scripts/check-output-escaping.sh
+        ./scripts/check-snmp-credential-surface.sh
+        ./scripts/check-single-writer.sh
+        ./scripts/check-route-policy.sh
+        ./scripts/check-json-casing.sh
+        ./scripts/check-error-shape.sh
+        ./scripts/check-filename-policy.sh
+        python3 scripts/test-check-route-consumers.py
+        python3 scripts/check-route-consumers.py
+        python3 scripts/check-ui-fetch.py
+        python3 scripts/test-check-ui-generated-types.py
+        python3 scripts/check-ui-generated-types.py
+        python3 scripts/test-check-feature-catalog.py
+        python3 scripts/check-feature-catalog.py
+        python3 scripts/test-check-feature-gate-parity.py
+        python3 scripts/check-feature-gate-parity.py
+        python3 scripts/check-tsconfig-flags.py
+        test -z "$(git ls-files '*.go' | xargs gofmt -l)"
+      build-command: |
+        go build -trimpath -buildvcs=false ./...
+        CGO_ENABLED=0 go build ./...
+      test-command: SKIP_NETWORK_TESTS=1 go test -v -coverprofile=coverage.out ./...
+      coverage-command: |
+        COVERAGE=$(go tool cover -func=coverage.out | grep total: | awk '{print $3}' | sed 's/%//')
+        echo "Current coverage: ${COVERAGE}%"
+        # Anti-regression floor. Measured 59.4% on ubuntu-latest, this job's
+        # runner, on 2026-09-03 (#2374). 55 keeps about 4pp of headroom.
+        # Measure on Linux with SKIP_NETWORK_TESTS=1 before moving it.
+        # Ratchet: 55 now, 60 in 2027-Q2, 70 long-term.
+        # bc -l may print 1 or 1.0. The shared step runs this under sh.
+        MIN_COVERAGE=55
+        below=$(echo "$COVERAGE < $MIN_COVERAGE" | bc -l)
+        case "$below" in
+          1*)
+            echo "ERROR: Coverage ${COVERAGE}% is below minimum threshold of ${MIN_COVERAGE}%"
+            exit 1
+            ;;
+        esac
+        echo "Coverage check passed (${COVERAGE}% >= ${MIN_COVERAGE}%)"
+      tidy-command: |
+        go mod tidy
+        git diff --exit-code go.mod go.sum
+
+  # Stays in this file. ci-conformance.yml greps ci.yml for
+  # golangci/golangci-lint-action and the version: line within six lines of
+  # it, then installs that version to check the linter floor. The shared
+  # lint-windows job cannot satisfy that grep, so the caller sets
+  # lint-windows: false and this job is the gate.
   #
-  # CGO_ENABLED=0: this runner has no Npcap, so anything reaching libpcap
-  # cannot link here. Build and vet still cover every package compiling; the
-  # test step is scoped to the port-fallback tests, which are the ones with
-  # Windows-specific behaviour to exercise.
-  #
-  # Off `pull_request` for the same reason as Backend (macOS) above. Every PR
-  # still cross-vets the Windows tree and runs `Lint (GOOS=windows)`.
-  backend-windows:
-    name: Backend (Windows)
-    runs-on: windows-latest
-    timeout-minutes: 20
-    needs: changes
-    if: >-
-      github.event_name != 'pull_request' &&
-      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true')
-    env:
-      CGO_ENABLED: "0"
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up Go
-        uses: ./.github/actions/setup-go
-
-      - name: Build
-        run: go build ./...
-
-      - name: Vet
-        run: go vet ./...
-
-      - name: Test (port fallback)
-        run: go test ./internal/api/ -run 'IsAddrInUse|BindWithFallback' -v
-
   # golangci-lint on ubuntu skips every *_windows.go file. GOOS=windows makes
   # it compile and lint the whole Windows tree on Linux -- nothing Windows-side
   # needs cgo -- so this costs one job, no runner. The tree is at zero findings
@@ -299,283 +286,29 @@ jobs:
           GOOS: windows
         with:
           version: v2.14.0
-          # See the Backend (Go) step below: the action's cache key carries no
-          # GOOS, so this job and that one share one entry while analysing two
-          # different trees. #2511.
+          # The action's cache key carries no GOOS, so this job and the Linux
+          # lint inside ci-backend.yml would share one entry while analysing
+          # two different trees. #2511.
           skip-cache: true
 
-  backend:
-    name: Backend (Go)
-    runs-on: ubuntu-latest
-    needs: [changes, build-ui]
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
-    timeout-minutes: 20
-    env:
-      GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
-      GOCACHE: ${{ github.workspace }}/.cache/go/build
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: ./.github/actions/setup-go
-
-      - name: Install libpcap-dev
-        uses: ./.github/actions/setup-libpcap
-        timeout-minutes: 10
-
-      - name: Set up Node.js
-        uses: ./.github/actions/setup-node
-
-      - name: Download built UI assets
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: frontend-dist
-          path: internal/api/ui/
-
-      - name: Install UI dependencies
-        # npm ci (not a build) — needed by check-types-drift.sh, which runs
-        # `npm --prefix ui run gen-types` below. The actual built UI assets
-        # come from the build-ui job's shared artifact, downloaded above.
-        working-directory: ui
-        run: npm ci
-
-      # The same gate dead-code.yml runs, moved onto the PR path as well.
-      # There it runs weekly, so a package could go unreachable and stay that
-      # way for up to seven days on a job nothing is blocked by -- which is how
-      # stem carried 2,800 unreachable lines for months (#2138). It costs about
-      # a second and needs only the Go toolchain, already set up above.
-      - name: Check package reachability
-        run: ./scripts/check-package-reachability.sh
-
-      # The UI half of the same question. dead-code.yml's weekly grep only
-      # reported orphaned .tsx files, so AppDashboard.tsx sat unimported for
-      # months and took NetworkDiscoveryCard's only non-Pro mount with it
-      # (#2707). Needs the UI dependencies installed above for @babel/parser.
-      - name: Check UI file reachability
-        run: |
-          node --test scripts/check-ui-file-reachability.test.ts
-          node scripts/check-ui-file-reachability.ts
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
-        with:
-          version: v2.14.0
-          # Full-tree lint verified clean on 2026-08-14. Keep CI aligned with
-          # the repository-wide zero-warning policy.
-          args: --timeout=5m
-          # skip-cache, because a restored analysis cache can report findings
-          # that are not in the tree: #2509 failed twice on two `nolintlint`
-          # findings in files it did not touch, survived a plain re-run, and
-          # went green the moment the two `golangci-lint.cache-Linux-*`
-          # entries were deleted -- with a real Linux host at the same Go and
-          # linter versions saying `0 issues` on both main and the branch the
-          # whole time. The key (`golangci-lint.cache-<OS>-<week>-<hash>`)
-          # carries neither GOOS nor the linter config, so the GOOS=windows
-          # job above writes into the same entry. A lint gate whose result can
-          # disagree with the tree is worse than a slower one; the rebuild
-          # costs about a minute against a job that already runs `npm ci`.
-          # #2511.
-          skip-cache: true
-
-      - name: Run go vet
-        run: go vet ./...
-
-      - name: Run go vet (GOOS=windows, internal/api)
-        # The host runner's build tags decide which files a same-OS pass even
-        # sees, so a Linux run above never type-checks
-        # server_port_fallback_windows.go — that's how #2096 (the Windows
-        # port-fallback predicate comparing against the wrong errno) went
-        # unverified. This only proves the package still compiles for
-        # windows/amd64; the predicate's actual behavior needs a Windows
-        # test runner, which ci.yml does not have (tracked separately).
-        env:
-          GOOS: windows
-          CGO_ENABLED: "0"
-        run: go vet ./internal/api/...
-
-      - name: Hardware matrix drift
-        run: ./scripts/check-hardware-matrix.sh
-
-      - name: Malformed Tailwind classes
-        run: ./scripts/check-tailwind-classes.sh
-
-      - name: Variants on @layer components classes
-        run: |
-          python3 scripts/test-check-component-variants.py
-          python3 scripts/check-component-variants.py
-
-      - name: Verify API schemas are up to date
-        run: ./scripts/check-schema-drift.sh
-
-      - name: Verify docs/openapi.yaml is up to date
-        run: ./scripts/check-openapi-drift.sh
-
-      - name: Verify generated TS types are up to date
-        run: ./scripts/check-types-drift.sh
-
-      - name: Output-escaping / XSS gate (#1225)
-        run: ./scripts/check-output-escaping.sh
-
-      - name: SNMP credential-surface gate (#1799)
-        run: ./scripts/check-snmp-credential-surface.sh
-
-      - name: SQLite single-writer gate (#2453)
-        run: ./scripts/check-single-writer.sh
-
-      - name: Route-policy gate — capability registry (ADR-0002)
-        run: ./scripts/check-route-policy.sh
-
-      - name: JSON wire-casing gate — camelCase ratchet (ADR-0010)
-        run: ./scripts/check-json-casing.sh
-
-      - name: Error-shape gate — one JSON error contract (#2749)
-        run: ./scripts/check-error-shape.sh
-
-      - name: Filename-policy gate — no monolith naming outside internal/api
-        run: ./scripts/check-filename-policy.sh
-
-      - name: Route-consumer gate — every route has a caller, every call has a route
-        run: |
-          python3 scripts/test-check-route-consumers.py
-          python3 scripts/check-route-consumers.py
-
-      - name: UI fetch gate — mutating calls go through the CSRF-bearing api client
-        run: python3 scripts/check-ui-fetch.py
-
-      - name: UI generated-type gate — no hand-typed shadow of a wire type
-        run: |
-          python3 scripts/test-check-ui-generated-types.py
-          python3 scripts/check-ui-generated-types.py
-
-      - name: Feature-catalog gate — every sold feature has a gate in code
-        run: |
-          python3 scripts/test-check-feature-catalog.py
-          python3 scripts/check-feature-catalog.py
-
-      - name: Feature-gate parity — a UI page gate names the feature the API enforces
-        run: |
-          python3 scripts/test-check-feature-gate-parity.py
-          python3 scripts/check-feature-gate-parity.py
-
-      # The four products each own their tsconfig, so the strictness flags
-      # drift silently — a missing one never announces itself, it just checks
-      # less than its sibling does.
-      - name: TypeScript strictness contract
-        run: python3 scripts/check-tsconfig-flags.py
-
-      - name: Check formatting
-        run: test -z "$(git ls-files '*.go' | xargs gofmt -l)"
-
-      - name: Run tests
-        env:
-          SKIP_NETWORK_TESTS: "1"
-        run: go test -v -coverprofile=coverage.out ./...
-
-      - name: Check coverage threshold
-        run: |
-          COVERAGE=$(go tool cover -func=coverage.out | grep total: | awk '{print $3}' | sed 's/%//')
-          echo "Current coverage: ${COVERAGE}%"
-
-          # Minimum coverage threshold. Acts as an anti-regression floor.
-          # Measured 59.4% on ubuntu-latest, which is this job's runner, on
-          # 2026-09-03 (#2374) — the 54.0% the previous comment recorded was
-          # stale, and the floor of 50 left a 9pp hole a regression could fall
-          # through unnoticed. 55 keeps ~4pp of headroom for ordinary variance
-          # while closing most of that gap.
-          #
-          # Measure the same way this job does before moving it: on Linux, with
-          # SKIP_NETWORK_TESTS=1 and the full package set. A darwin run reads
-          # several points lower because the build-tagged *_linux.go tests never
-          # compile there.
-          #
-          # Ratchet plan (see #959):
-          #   2026-Q3: 55 (current)
-          #   2027-Q2: 60
-          #   long-term: 70
-          MIN_COVERAGE=55
-
-          if (( $(echo "$COVERAGE < $MIN_COVERAGE" | bc -l) )); then
-            echo "ERROR: Coverage ${COVERAGE}% is below minimum threshold of ${MIN_COVERAGE}%"
-            exit 1
-          fi
-
-          echo "✅ Coverage check passed (${COVERAGE}% >= ${MIN_COVERAGE}%)"
-
-      - name: Deterministic build check
-        run: go build -trimpath -buildvcs=false ./...
-
-      # Phase 6 capture port: the whole tree must build with CGO disabled, using
-      # the CGO-free null capture adapter. libpcap is confined to the build-tagged
-      # internal/capture/pcap package, which the ./... wildcard skips under
-      # CGO_ENABLED=0. A regression that re-imports gopacket/pcap from a domain
-      # package (depguard also guards this) would fail here.
-      # See docs/architecture/CGO_BUILD_STRATEGY.md.
-      - name: CGO-free build check (null capture adapter)
-        env:
-          CGO_ENABLED: 0
-        run: go build ./...
-
-      - name: Check go mod tidy
-        run: |
-          go mod tidy
-          git diff --exit-code go.mod go.sum
-
   # ===========================================================================
-  # Go Race Detector
+  # Go Race Detector — fleet-shared ci-race.yml
   # ===========================================================================
-  # Race detection moved here from the pre-commit hook (#945). Hook ran fast
-  # short tests; this job runs the full suite under -race on every pull
-  # request and merge group.
-  # Blocking — the cmd/seed t.Parallel() races discovered when this job was
-  # introduced were fixed in the same PR (#947) by dropping parallelism from
-  # cmd/seed tests, since subtests shared a single cobra.Command parent and
-  # raced on its sortedFlags cache.
+  # The full suite under -race, not -short: the detector is most useful on the
+  # paths -short skips. SKIP_NETWORK_TESTS=1 matches the Linux test job. The
+  # built UI is the frontend-dist artifact from build-ui.
   race:
-    name: Backend (race detector)
-    runs-on: ubuntu-latest
     needs: [changes, build-ui]
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
-    timeout-minutes: 20
-    env:
-      GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
-      GOCACHE: ${{ github.workspace }}/.cache/go/build
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up Go
-        uses: ./.github/actions/setup-go
-
-      - name: Install libpcap-dev
-        uses: ./.github/actions/setup-libpcap
-        timeout-minutes: 10
-
-      - name: Download built UI assets
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: frontend-dist
-          path: internal/api/ui/
-
-      # No -short. The race detector is most useful on exactly the paths
-      # -short skips, and skipping them made a green race run mean less than it
-      # read as: internal/discovery/resolve, for one, measures 20.1% covered
-      # normally and 15.7% under -short.
-      #
-      # The cost was measured before removing it, not assumed: `go test -race
-      # ./...` over the whole tree is about three minutes and 107 packages.
-      # An earlier measurement suggested tens of minutes, but that was taken on
-      # a machine already saturated by other work — worth remembering that a
-      # timing taken under load is not a timing.
-      - name: Run tests with race detector
-        env:
-          SKIP_NETWORK_TESTS: "1"
-        run: go test -race ./...
+    permissions:
+      contents: read
+      actions: read
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-race.yml@e092081a97245d29978e229be7425179cc1dcde1 # .github#163
+    with:
+      install-libpcap: true
+      ui-artifact: frontend-dist
+      skip-network-tests: true
+      timeout-minutes: 20
 
   # ===========================================================================
   # Benchmark regression gate
@@ -683,109 +416,35 @@ jobs:
             ${{ runner.temp }}/bench-verdict.txt
 
   # ===========================================================================
-  # Frontend Checks
+  # Frontend (TypeScript) — fleet-shared ci-frontend.yml
   # ===========================================================================
+  # Defaults cover tsc --build --noEmit, biome, the lockfile check, and
+  # test:coverage. Token discipline is the one seed gate this job adds. The
+  # production bundle is build-ui; this workflow does not build it again.
+  # needs: build-ui so a broken bundle fails this job instead of only the
+  # jobs that download the artifact.
   frontend:
-    name: Frontend (React/TypeScript)
-    runs-on: ubuntu-latest
     needs: [changes, build-ui]
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: ui
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up Node.js
-        uses: ./.github/actions/setup-node
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Verify package-lock integrity
-        run: git diff --exit-code package-lock.json
-
-      # --build, not a bare --noEmit: the bare form checks only the app
-      # project, so a type error in the test project (its own tsconfig) reached
-      # main green. seed#2610 did exactly that.
-      - name: Run TypeScript check
-        run: npx tsc --build --noEmit
-
-      - name: Run Biome (lint + format)
-        run: npm run lint
-
-      - name: Design token discipline (Phase 0 gate)
-        run: ../scripts/check-token-discipline.sh
-
-      # test:coverage, not test. The thresholds in ui/vitest.config.ts were
-      # never evaluated by CI because `npm run test` does not enable coverage --
-      # so the floors were decorative and coverage could regress past all four
-      # while the job stayed green. Measured before switching: statements 32.74
-      # (floor 32), branches 27.17 (26), functions 28.66 (27), lines 35.43 (34).
-      # Already clearing them, so this needs no new tests; it stops the next
-      # regression instead. Ratchet the floors up, never down.
-      - name: Run unit tests with coverage thresholds
-        run: npm run test:coverage
-      # Build is done once by the build-ui job and shared as the
-      # frontend-dist artifact (downloaded by backend/race/build/e2e/
-      # This job validates source (types/lint/tests) only.
+    permissions:
+      contents: read
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-frontend.yml@e092081a97245d29978e229be7425179cc1dcde1 # .github#163
+    with:
+      timeout-minutes: 15
+      extra-command: ../scripts/check-token-discipline.sh
 
   # ===========================================================================
-  # Storybook interaction and accessibility checks
+  # Storybook interaction and accessibility checks — fleet-shared ci-storybook.yml
   # ===========================================================================
+  # Defaults are this repo's steps: npm ci, Chromium's apt deps split from
+  # the browser download, test:storybook, and test:storybook:contract. The
+  # apt half uses the called workflow's own apt-install pin.
   storybook:
-    name: Storybook interactions and accessibility
-    runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
-    timeout-minutes: 25
-    defaults:
-      run:
-        working-directory: ui
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up Node.js
-        uses: ./.github/actions/setup-node
-
-      - name: Install dependencies
-        run: npm ci
-
-      # Split from the browser download because `--with-deps` runs apt, and
-      # bundling them left the apt half with no step budget, no
-      # Acquire::*::Timeout and no dpkg lock bound. It consumed this job's
-      # whole 15-minute budget on 2026-08-18 (run 32161702107) and ejected a
-      # release PR from the merge queue — the same orphaned-apt-get cause as
-      # #1950, in the one job every audit missed because `--with-deps` matches
-      # neither `install-deps` nor `apt-get`.
-      - name: Install Chromium OS dependencies
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
-        timeout-minutes: 10
-        with:
-          # cd ui explicitly: the job's defaults.run.working-directory does not
-          # reach inside a composite action's own steps.
-          command: cd ui && node ./node_modules/playwright/cli.js install-deps chromium
-
-      - name: Install Chromium
-        timeout-minutes: 10
-        run: node ./node_modules/playwright/cli.js install chromium
-
-      - name: Run interaction and accessibility tests
-        env:
-          STORYBOOK_DISABLE_TELEMETRY: "1"
-        run: npm run test:storybook
-
-      - name: Verify injected defects fail the gate
-        env:
-          STORYBOOK_DISABLE_TELEMETRY: "1"
-        run: npm run test:storybook:contract
+    permissions:
+      contents: read
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-storybook.yml@e092081a97245d29978e229be7425179cc1dcde1 # .github#163
 
   # ===========================================================================
   # Security Scanning
@@ -1483,345 +1142,45 @@ jobs:
           done
 
   # ===========================================================================
-  # E2E daemon (built once for the e2e and e2e-smoke containers)
+  # E2E Browser Tests (Playwright) — fleet-shared ci-e2e.yml
   # ===========================================================================
-  # The Playwright image has no C toolchain or libpcap and cannot apt-install
-  # them, so a cgo daemon cannot be built inside it. It is built here, against
-  # a static libpcap so it needs libc alone, and the container jobs download
-  # it. That gives the E2E daemon live capture, so packet-capture.spec.ts runs
-  # its capture path rather than skipping it (#2986).
-  e2e-backend:
-    name: E2E Daemon
-    # Must be the image's Ubuntu release (noble): a binary linked against a
-    # newer glibc than the image's will not start in it.
-    runs-on: ubuntu-24.04
-    needs: [changes, backend, frontend]
-    timeout-minutes: 20
+  # One caller for the daemon, the sharded chromium/webkit suite, and the
+  # @smoke job. The daemon is built on ubuntu-24.04 — the noble image's
+  # Ubuntu release — against a static libpcap, and the shards download it.
+  # The image ships the browsers, so the shard never calls apt. Drafts skip
+  # the caller, so the check is skipped rather than a green workflow whose
+  # inner jobs were skipped.
+  #
+  # !cancelled() keeps a cancelled run from launching shards. A failed or
+  # skipped backend still reaches this if; frontend and build-ui have to have
+  # succeeded because the daemon embeds that artifact. The test commands,
+  # flake budget 0, and the two-by-two shard matrix are the workflow defaults,
+  # which are this repo's scripts/run-e2e.sh invocations.
+  e2e:
+    needs: [changes, build-ui, backend, frontend]
     if: |
-      always() &&
+      !cancelled() &&
       (github.event_name != 'pull_request' || github.event.pull_request.draft == false) &&
+      needs.build-ui.result == 'success' &&
       needs.frontend.result == 'success' &&
       (needs.backend.result == 'success' || needs.backend.result == 'skipped')
+    permissions:
+      contents: read
+      actions: write
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-e2e.yml@e092081a97245d29978e229be7425179cc1dcde1 # .github#163
+    with:
+      backend-result: ${{ needs.backend.result }}
+      frontend-result: ${{ needs.frontend.result }}
+      playwright-image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
+      ui-artifact: frontend-dist
+      build-daemon: true
+      static-libpcap: true
+      require-static-libpcap: true
+      daemon-binary: seed
+      daemon-artifact: seed-e2e-daemon
+      daemon-build-command: ./scripts/build-backend-e2e.sh
+      timeout-minutes: 25
 
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up Go
-        uses: ./.github/actions/setup-go
-
-      - name: Download frontend build
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: frontend-dist
-          path: internal/api/ui/
-
-      - name: Install libpcap build tools
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
-        timeout-minutes: 10
-        with:
-          packages: flex bison
-
-      - name: Build a static libpcap
-        timeout-minutes: 10
-        run: ./scripts/build-static-libpcap.sh "$RUNNER_TEMP/libpcap-static"
-
-      - name: Build the E2E daemon
-        run: |
-          CGO_CFLAGS="-I$RUNNER_TEMP/libpcap-static/include" \
-            CGO_LDFLAGS="-L$RUNNER_TEMP/libpcap-static/lib" \
-            ./scripts/build-backend-e2e.sh
-          # A dynamic libpcap would build and then fail to start in the image.
-          if ldd seed | grep libpcap; then
-            echo "::error::the E2E daemon links libpcap dynamically; the Playwright image has none"
-            exit 1
-          fi
-
-      - name: Upload the E2E daemon
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: seed-e2e-daemon
-          path: seed
-          retention-days: 1
-
-  # ===========================================================================
-  # E2E Browser Tests (Playwright)
-  # ===========================================================================
-  e2e:
-    name: E2E Browser Tests (${{ matrix.browser }} ${{ matrix.shard }}/2)
-    runs-on: ubuntu-latest
-    needs: [changes, backend, frontend, e2e-backend]
-    timeout-minutes: 25
-    # Runs in Playwright's own image so the browsers and their 181-package
-    # OS dependency stack are already present. That removes BOTH apt surfaces
-    # from this job — `playwright install-deps` and libpcap — which is the
-    # remaining half of the #1950 fix: the dpkg-lock flake cannot recur in a
-    # job that never calls apt.
-    #
-    # Probed before adoption rather than assumed (three runs on a throwaway
-    # branch). What the image gives and does not give:
-    #   * runs as root; chromium AND webkit both launch fine, so neither
-    #     `--user 1001` nor `--no-sandbox` is needed. `--user 1001` would in
-    #     fact break setup-go/setup-node, which write to the root-owned
-    #     tool cache.
-    #   * setup-node works here and installs OUR pin (.nvmrc) over the image's
-    #     bundled node 24.
-    #   * no gcc, no make, no libpcap — and apt cannot supply them: the image's
-    #     sources point at azure.archive.ubuntu.com, unreachable from the
-    #     container network. Hence the daemon comes from the e2e-backend job.
-    # Pinned by tag AND digest, as release.yml pins goreleaser-cross.
-    container:
-      image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
-      options: --ipc=host
-    # Blocking tier — "CI Complete" gates on this job (see ci-complete.needs).
-    # 2 shards × 2 browsers = 4 jobs. This was 4 × 2 = 8; per-shard wall-clock
-    # was indeed ~3–5 min, but the 8 shards did not start together — measured
-    # run 31840685070 launched them in waves at t+9, t+11 and t+12 min against
-    # a 24-job run, so the last shard finished at t+15 and the sharding added
-    # queue latency instead of removing wall-clock. Sharding past the available
-    # runner concurrency costs both time and billing. Re-measure before
-    # widening this axis again.
-    #
-    # continue-on-error was REMOVED so this suite could gate merge; do not
-    # re-add it. The claim that used to sit here -- flake-free after #1588, 0
-    # hard failures / 0 flaky -- has not held, and a count in a comment goes
-    # stale silently. The flake budget step below is the live number; read that
-    # instead. The flag had masked real failures from the
-    # ci-complete aggregator, so the full E2E suite could not gate merge.
-    # A genuine E2E failure fails CI Complete and ejects the merge group, so
-    # the commit never reaches main and release-please does not cut a release
-    # from it. If a flake recurs, fix or quarantine it (do NOT re-add
-    # continue-on-error); retries:1 in playwright.config.ts already absorbs
-    # single transient failures.
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, webkit]
-        shard: [1, 2]
-    # Skipped on draft PRs (slow); also skipped if no frontend/backend changed.
-    # always() lets the if: evaluate when backend was skipped upstream.
-    if: |
-      always() &&
-      (github.event_name != 'pull_request' || github.event.pull_request.draft == false) &&
-      needs.e2e-backend.result == 'success'
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up Node.js
-        uses: ./.github/actions/setup-node
-
-      - name: Download frontend build
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: frontend-dist
-          path: internal/api/ui/
-
-      - name: Install frontend dependencies (for Playwright)
-        working-directory: ui
-        run: npm ci
-
-      # The browsers are baked into the image, so the npm package MUST match
-      # the image tag. A @playwright/test bump without an image bump would
-      # otherwise fail deep in a spec run with a missing-browser error.
-      - name: Assert Playwright matches the container image
-        working-directory: ui
-        run: |
-          # Single source of truth: the container image tag Renovate bumps.
-          # A hardcoded value here is invisible to every Renovate manager and
-          # drifts on each @playwright/test bump — the guard then fails on a
-          # false mismatch, and each bump needs a manual edit (see msn-plans G-14).
-          want=$(sed -nE 's|^[[:space:]]*image: mcr\.microsoft\.com/playwright:v([0-9]+\.[0-9]+\.[0-9]+)-.*|\1|p' "$GITHUB_WORKSPACE/.github/workflows/ci.yml" | head -1)
-          got=$(npx playwright --version | awk '{print $NF}')
-          if [ "$got" != "$want" ]; then
-            echo "::error::Playwright $got does not match the container image ($want) — bump the container: image tag+digest in ci.yml together with @playwright/test"
-            exit 1
-          fi
-          echo "Playwright $got matches the image"
-
-      # upload-artifact drops the executable bit.
-      - name: Download the E2E daemon
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: seed-e2e-daemon
-          path: .
-
-      - name: Restore the daemon's executable bit
-        run: chmod +x seed
-
-      - name: Run Playwright E2E tests (full suite minus smoke)
-        env:
-          E2E_SKIP_BUILD: "1"
-          E2E_SERVER_LOG: server.log
-        # Smoke tier runs in the e2e-smoke job; full e2e skips it to
-        # avoid duplicate runtime. See seed#1053.
-        # Both chromium and webkit run per E2E_CONVENTIONS — the projects
-        # array in playwright.config.ts is exactly [chromium, webkit].
-        # No --reporter here on purpose: passing one REPLACES the config's
-        # reporter array, and the config is what writes the JSON report the
-        # flake budget below reads. `--reporter=html` silently produced no
-        # results.json at all. The config already emits html + list + json.
-        run: ./scripts/run-e2e.sh --project=${{ matrix.browser }} --grep-invert "@smoke" --shard=${{ matrix.shard }}/2
-
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
-        with:
-          name: playwright-report-${{ matrix.browser }}-shard-${{ matrix.shard }}
-          path: ui/playwright-report/
-          retention-days: 7
-
-      # A test that fails then passes on retry reports `flaky` and the job exits
-      # 0, so a retry-pass looks exactly like a pass. That is how #1524 and
-      # #1593 were each closed against auth-complete.spec.ts while it kept
-      # flaking -- nothing ever failed. The cause turned out to be real (#2178:
-      # refresh was charging the login rate-limit bucket), and it was fixed
-      # before this gate was switched on, so budget 0 is achievable now.
-      #
-      # Runs after the upload so the report is retained even when this fails.
-      - name: Enforce flake budget
-        if: always()
-        uses: MustardSeedNetworks/.github/.github/actions/flake-budget@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
-        with:
-          report: ui/playwright-report/results.json
-          budget: "0"
-
-      # always(), not failure(). A flaky test passes on retry, so the JOB
-      # succeeds and failure() discards the server log -- exactly when it is
-      # needed. #2178 could not be confirmed from CI for that reason: the
-      # retry-pass threw away the only evidence explaining it.
-      - name: Upload server logs
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
-        with:
-          name: server-logs-${{ matrix.browser }}-shard-${{ matrix.shard }}
-          path: server.log
-          retention-days: 7
-
-  # ===========================================================================
-  # E2E Smoke Tests (Playwright tier-1 / required)
-  # ===========================================================================
-  # Smaller, faster subset of the Playwright suite covering the critical
-  # paths (login, dashboard renders, theme toggle, smoke-spec checks).
-  # Runs the @smoke-tagged tests only — currently ~33 tests, target
-  # runtime < 5 minutes. Designed to be gated by branch protection as
-  # the user-visible E2E signal, distinct from the full e2e job which
-  # is advisory. See seed#1053.
-  e2e-smoke:
-    name: E2E Smoke
-    runs-on: ubuntu-latest
-    needs: [changes, backend, frontend, e2e-backend]
-    timeout-minutes: 25
-    # Same container as the e2e job — see the rationale there.
-    container:
-      image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
-      options: --ipc=host
-    if: |
-      always() &&
-      (github.event_name != 'pull_request' || github.event.pull_request.draft == false) &&
-      needs.e2e-backend.result == 'success'
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up Node.js
-        uses: ./.github/actions/setup-node
-
-      - name: Download frontend build
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: frontend-dist
-          path: internal/api/ui/
-
-      - name: Install frontend dependencies (for Playwright)
-        working-directory: ui
-        run: npm ci
-
-      - name: Assert Playwright matches the container image
-        working-directory: ui
-        run: |
-          # Single source of truth: the container image tag Renovate bumps.
-          # A hardcoded value here is invisible to every Renovate manager and
-          # drifts on each @playwright/test bump — the guard then fails on a
-          # false mismatch, and each bump needs a manual edit (see msn-plans G-14).
-          want=$(sed -nE 's|^[[:space:]]*image: mcr\.microsoft\.com/playwright:v([0-9]+\.[0-9]+\.[0-9]+)-.*|\1|p' "$GITHUB_WORKSPACE/.github/workflows/ci.yml" | head -1)
-          got=$(npx playwright --version | awk '{print $NF}')
-          if [ "$got" != "$want" ]; then
-            echo "::error::Playwright $got does not match the container image ($want) — bump the container: image tag+digest in ci.yml together with @playwright/test"
-            exit 1
-          fi
-          echo "Playwright $got matches the image"
-
-      # upload-artifact drops the executable bit.
-      - name: Download the E2E daemon
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: seed-e2e-daemon
-          path: .
-
-      - name: Restore the daemon's executable bit
-        run: chmod +x seed
-
-      - name: Run Playwright @smoke tests
-        env:
-          E2E_SKIP_BUILD: "1"
-          E2E_SERVER_LOG: server.log
-        # Smoke tier on both browsers per PR per E2E_CONVENTIONS.
-        # No --reporter, for the same reason as the sharded job above.
-        run: ./scripts/run-e2e.sh --grep "@smoke"
-
-      - name: Upload Playwright smoke report
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
-        with:
-          name: playwright-smoke-report
-          path: ui/playwright-report/
-          retention-days: 7
-
-      # A test that fails then passes on retry reports `flaky` and the job exits
-      # 0, so a retry-pass looks exactly like a pass. That is how #1524 and
-      # #1593 were each closed against auth-complete.spec.ts while it kept
-      # flaking -- nothing ever failed. The cause turned out to be real (#2178:
-      # refresh was charging the login rate-limit bucket), and it was fixed
-      # before this gate was switched on, so budget 0 is achievable now.
-      #
-      # Runs after the upload so the report is retained even when this fails.
-      - name: Enforce flake budget
-        if: always()
-        uses: MustardSeedNetworks/.github/.github/actions/flake-budget@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
-        with:
-          report: ui/playwright-report/results.json
-          budget: "0"
-
-      # always(), for the same reason as the sharded job above.
-      - name: Upload smoke server logs
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
-        with:
-          name: smoke-server-logs
-          path: server.log
-          retention-days: 7
-
-  # ===========================================================================
-  # CI Complete — dispatcher / branch-protection aggregator
-  # ===========================================================================
-  # Every required-status-check on `main` is consolidated into this single
-  # job. It fails if any upstream job actually failed; it passes if every
-  # upstream either succeeded or was intentionally skipped via the path
-  # filter. Branch protection requires ONLY "CI Complete" (plus "Lint PR
-  # Title" / "Lint PR Body" from their own workflows) rather than
-  # enumerating every individual job — so a docs-only PR can merge cleanly
-  # when backend/frontend/c are all skipped. CodeQL and license-check are
-  # NOT required contexts: CodeQL is advisory (and skips entirely on
-  # private repos) and license-check reports without blocking. The
-  # `semgrep` job in this file is the required SAST gate (blocking on
-  # ERROR severity).
-  # ===========================================================================
   # iperf3 boundary — the tests that need a real iperf3 and a real transfer
   # ===========================================================================
   # internal/diagnostics/iperf is otherwise driven through the cached-binary
@@ -1940,32 +1299,36 @@ jobs:
     permissions:
       security-events: read
 
+
+  # ===========================================================================
+  # CI Complete — dispatcher / branch-protection aggregator
+  # ===========================================================================
+  # Not the shared ci-complete.yml. GitHub would report that check as
+  # `ci-complete / CI Complete`. Branch protection and release.yml require
+  # the plain name `CI Complete`, so the aggregator stays in this file.
+  #
+  # It fails if any upstream job actually failed; it passes if every upstream
+  # either succeeded or was intentionally skipped via the path filter. Branch
+  # protection requires ONLY "CI Complete" (plus "Lint PR Title" / "Lint PR
+  # Body" from their own workflows). CodeQL and license-check are not required
+  # contexts. The semgrep job in this file is the required SAST gate.
+  #
+  # macOS and Windows run inside the backend caller. GOOS=windows lint stays
+  # a local job: ci-conformance reads its golangci-lint version from this file.
+  # The E2E daemon, the sharded browser suite, and smoke run inside the e2e
+  # caller. A failed inner job fails that caller, so this list needs the
+  # caller, not each shard. A docs-only PR skips those callers and still
+  # passes.
   ci-complete:
     name: CI Complete
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # The full E2E browser suite (e2e) and E2E Smoke now gate merge through
-    # this aggregator. It blocks because a merge gate that ignores E2E is not a
-    # gate; that is the reason, not an (outdated) claim that the suite never
-    # flakes. See the flake budget in the e2e job for the live number. Branch protection requires ONLY "CI Complete" (plus
-    # "Lint PR Title" / "Lint PR Body"), NOT the individual E2E shard names:
-    # enumerating "E2E Browser Tests (webkit 3/4)" ×8 in branch protection is
-    # brittle (a reshard silently breaks every required entry) and was also
-    # toothless while e2e carried continue-on-error. The aggregator's
-    # success-or-skipped check below handles the path-filter case (a
-    # docs/backend-only PR skips e2e and still passes) without the
-    # skipped-required-check deadlock.
-    #
     needs:
       - changes
       - build-ui
-      - workflow-lint
       - backend
-      - backend-darwin
-      - backend-windows
       - lint-windows
       - race
-      - iperf3
       - bench
       - frontend
       - storybook
@@ -1976,12 +1339,12 @@ jobs:
       - quality
       - release-notes
       - bridge-format
+      - workflow-lint
       - i18n
       - docs
       - build
-      - e2e-backend
       - e2e
-      - e2e-smoke
+      - iperf3
       - phone-width
       - codeql-alert-gate
     # Run when an upstream failed, and stay skipped when the run was

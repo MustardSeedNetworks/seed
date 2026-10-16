@@ -5,7 +5,7 @@
 # CI runs the daemon inside mcr.microsoft.com/playwright:v1.64.0-noble, which
 # ships no libpcap and cannot apt-install one (its sources point at
 # azure.archive.ubuntu.com, which the container network cannot reach). So the
-# e2e-backend job builds it on a host runner, with cgo against the static
+# e2e caller's daemon job builds it on a host runner, with cgo against the static
 # libpcap from scripts/build-static-libpcap.sh, passed in through CGO_CFLAGS and
 # CGO_LDFLAGS. The binary then needs libc alone and captures in the image, so
 # the packet-capture spec runs its capture path in CI (#2986). Locally the

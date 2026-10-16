@@ -19,7 +19,7 @@
 #   * release.yml: the one Linux binary is packaged as both .deb and .rpm.
 #     Debian names its libpcap `libpcap.so.0.8` and Fedora `libpcap.so.1`, so a
 #     dynamic link crash-looped seed.service on every Fedora install (#2978).
-#   * ci.yml e2e-backend: the E2E daemon runs inside the Playwright image,
+#   * ci.yml e2e caller: the E2E daemon runs inside the Playwright image,
 #     which has no libpcap and cannot apt-install one (#2986).
 #
 # Built from source because Debian's libpcap.a is built with RDMA, D-Bus,
