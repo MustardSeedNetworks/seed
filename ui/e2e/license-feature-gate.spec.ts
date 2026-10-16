@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
 
 /**
- * Licence feature gate (/path, /reports) E2E — seed#2688, seed#2669.
+ * Licence feature gate (/path, /reports, /device-configs) E2E — seed#2688, seed#2669.
  *
  * Every licence-gated surface reads `features` off GET /api/v1/license
  * and nothing else. The endpoint never sent that field, so Pro and Trial
@@ -94,6 +94,11 @@ test.describe('licence feature gate', () => {
   const GATED_ROUTES = [
     { path: '/path', pitch: 'Pro feature: Path Analysis', sample: '203.0.113.24' },
     { path: '/reports', pitch: 'Starter feature: Reports', sample: 'Executive summary' },
+    {
+      path: '/device-configs',
+      pitch: 'Pro feature: Configuration backup',
+      sample: 'switchport access vlan 30',
+    },
   ] as const;
 
   for (const { path, pitch, sample } of GATED_ROUTES) {

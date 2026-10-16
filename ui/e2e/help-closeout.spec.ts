@@ -198,6 +198,7 @@ for (const route of [
   '/device-groups',
   '/topology',
   '/interfaces',
+  '/device-configs',
   '/flows',
   '/alerts',
   '/dashboard',

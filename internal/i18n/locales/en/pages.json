@@ -152,6 +152,47 @@
       "peak": "Peak {{series}} {{value}}"
     }
   },
+  "deviceConfigs": {
+    "description": "Saved device configurations and what changed between backups.",
+    "label": "Device configs",
+    "title": "Device configs",
+    "operatorOnly": "Operator role required — a saved configuration carries the device's secrets.",
+    "deviceCount_one": "{{count}} device backed up",
+    "deviceCount_other": "{{count}} devices backed up",
+    "filterPlaceholder": "Filter {{count}} devices",
+    "filterLabel": "Filter backed-up devices",
+    "noTargets": "No devices are backed up yet. Backup targets are added through the API for now.",
+    "noMatch": "No device matches this filter.",
+    "emptyAddPrompt": "Add a backup target to see its saved configurations here.",
+    "emptySelectPrompt": "Select a device to see its backups and what changed.",
+    "selectedDevice": "Selected device",
+    "platform": {
+      "cisco-ios": "Cisco IOS",
+      "cisco-nxos": "Cisco NX-OS",
+      "arista-eos": "Arista EOS",
+      "juniper-junos": "Juniper Junos",
+      "netconf": "NETCONF"
+    },
+    "backupsHeading": "Backups",
+    "backupsFailed": "Could not load the backups: {{reason}}",
+    "noBackups": "No backups of this device yet.",
+    "status": {
+      "ok": "Saved",
+      "auth_failed": "Sign-in failed",
+      "host_key_mismatch": "Host key changed",
+      "host_key_unconfirmed": "Host key not confirmed",
+      "unreachable": "Unreachable",
+      "command_failed": "Command failed",
+      "error": "Failed"
+    },
+    "attemptFailed": "{{status}}: {{reason}}. This attempt saved no configuration.",
+    "firstBackup": "This is the device's first saved configuration, so there is nothing to compare it with.",
+    "diffFailed": "Could not load the change: {{reason}}",
+    "labelComparedWith": "Compared with",
+    "labelChanges": "Changes",
+    "changeCounts": "+{{added}} −{{removed}} lines",
+    "unchanged": "No change since the previous backup."
+  },
   "link": {
     "description": "Physical link state, cable diagnostics, and Wi-Fi association for the active interface.",
     "label": "Link",

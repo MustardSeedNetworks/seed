@@ -17,6 +17,7 @@ import {
   Bell,
   Boxes,
   EthernetPort,
+  FileDiff,
   LayoutDashboard,
   Network,
   Route,
@@ -61,6 +62,9 @@ const TopologyPage = lazy(() =>
 );
 const InterfacesPage = lazy(() =>
   import('./pages/InterfacesPage').then((m) => ({ default: m.InterfacesPage })),
+);
+const DeviceConfigsPage = lazy(() =>
+  import('./pages/DeviceConfigsPage').then((m) => ({ default: m.DeviceConfigsPage })),
 );
 const FlowsPage = lazy(() => import('./pages/FlowsPage').then((m) => ({ default: m.FlowsPage })));
 const AlertsPage = lazy(() =>
@@ -115,6 +119,7 @@ type PageI18nKey =
   | 'deviceGroups'
   | 'topology'
   | 'interfaces'
+  | 'deviceConfigs'
   | 'flows'
   | 'alerts';
 
@@ -260,6 +265,15 @@ const staticPages: PageDef[] = [
     iconColorClass: 'text-module-security',
     component: InterfacesPage,
     help: 'interfaces',
+  },
+  {
+    path: '/device-configs',
+    group: 'monitoring',
+    i18nKey: 'deviceConfigs',
+    icon: FileDiff,
+    iconColorClass: 'text-module-security',
+    component: DeviceConfigsPage,
+    help: 'deviceConfigs',
   },
   {
     path: '/flows',

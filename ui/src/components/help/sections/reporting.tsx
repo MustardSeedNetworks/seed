@@ -15,6 +15,7 @@ import {
   BarChart3,
   Boxes,
   EthernetPort,
+  FileDiff,
   Network,
   Route,
   ScrollText,
@@ -347,6 +348,32 @@ export const reportingSections: HelpSection[] = [
           {
             term: 'content.interfaces.terms.utilization.term',
             description: 'content.interfaces.terms.utilization.description',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'deviceConfigs',
+    titleKey: 'sections.deviceConfigs',
+    icon: <FileDiff className={ICON} />,
+    keywords: ['configuration', 'backup', 'diff', 'changes', 'ssh', 'netconf'],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'content.deviceConfigs.description',
+      },
+      {
+        kind: 'terms',
+        heading: 'content.common.terms',
+        items: [
+          {
+            term: 'content.deviceConfigs.terms.backup.term',
+            description: 'content.deviceConfigs.terms.backup.description',
+          },
+          {
+            term: 'content.deviceConfigs.terms.diff.term',
+            description: 'content.deviceConfigs.terms.diff.description',
           },
         ],
       },
