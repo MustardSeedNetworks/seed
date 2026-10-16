@@ -21,6 +21,17 @@ const (
 	BluetoothTypeDual    BluetoothType = "dual"    // Supports both
 )
 
+// BluetoothAddressType says whether a device address is a fixed, registered
+// one or a random one an LE device chose for itself. Only a public address
+// carries an IEEE OUI, so only a public address has a vendor prefix.
+type BluetoothAddressType string
+
+// Bluetooth address type values.
+const (
+	BluetoothAddressPublic BluetoothAddressType = "public"
+	BluetoothAddressRandom BluetoothAddressType = "random"
+)
+
 // BluetoothDeviceClass represents major device classes per Bluetooth spec.
 type BluetoothDeviceClass string
 
@@ -45,11 +56,12 @@ type BluetoothDevice struct {
 	DeviceID string `json:"deviceId,omitempty"` // Links to DiscoveredDevice if correlated
 
 	// Identity
-	Address     string `json:"address"`     // MAC address (AA:BB:CC:DD:EE:FF)
-	Name        string `json:"name"`        // Advertised device name
-	Alias       string `json:"alias"`       // User-assigned alias
-	Vendor      string `json:"vendor"`      // OUI vendor lookup
-	IsConnected bool   `json:"isConnected"` // Currently connected to this host
+	Address     string               `json:"address"`               // MAC address (AA:BB:CC:DD:EE:FF)
+	AddressType BluetoothAddressType `json:"addressType,omitempty"` // public or random; empty when unknown
+	Name        string               `json:"name"`                  // Advertised device name
+	Alias       string               `json:"alias"`                 // User-assigned alias
+	Vendor      string               `json:"vendor"`                // OUI vendor lookup
+	IsConnected bool                 `json:"isConnected"`           // Currently connected to this host
 
 	// Classification
 	Type        BluetoothType        `json:"type"`                    // classic, ble, dual

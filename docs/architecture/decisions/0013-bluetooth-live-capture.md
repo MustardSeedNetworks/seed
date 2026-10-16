@@ -1,14 +1,9 @@
 # ADR-0013: Bluetooth live-scan capture port
 
-**Status:** Proposed — demoted 2026-09-14 (owner). Bluetooth stays a discovery-enumeration signal
-(`internal/discovery/enumerate/bluetooth_*.go`); the live-scan capture port below is deferred, is outside the
-locked charter (strategy reset rule 4 names Wi-Fi troubleshooting only) and has no v1 plan row. It returns to
-Accepted only through the feature-scope gate with a named user and pain.
-Originally Accepted — 2026-06-05 · per-OS live-scan drivers (CoreBluetooth / BlueZ D-Bus / WinRT) not yet
-implemented, so live BLE advertisement sweep remains pending. The `Scanner` port this ADR calls for is the per-OS
-capture source; it is still unbuilt. (The unrelated ADR-0020 use-case port that once lived at
-`internal/discovery/bluetooth` was deleted with the legacy `/security/bluetooth/*` routes it served — see #2564. The
-consumed path this ADR builds on, the `bluetooth-scan` job kind plus card and modal, is unchanged.)
+**Status:** Accepted for Linux — 2026-10-16, through seed plan row P-E3 (the owner's parity decision of
+2026-09-17 put the BLE survey in v1). macOS and Windows live scans stay Proposed. History: demoted to Proposed
+2026-09-14 (owner) as outside the charter with no plan row; originally Accepted 2026-06-05. The 2026-10-16
+amendment below replaces the Linux source this ADR first named and its degrade rule.
 
 ## Context
 
@@ -57,6 +52,34 @@ capture-port split that already works for Wi-Fi/pcap (ADR-0012):
 - **Tiering** follows `LICENSE_STRATEGY.md`: the basic device view stays as-is;
   whether deep live-scan depth is Pro-gated is settled at implementation against
   the locked tier matrix (not invented here).
+
+## Amendment 2026-10-16: the Linux source is the kernel management interface
+
+The Linux source is the kernel's Bluetooth management interface (the HCI
+control channel, `internal/discovery/enumerate/bluetooth_mgmt_linux.go`), not
+BlueZ D-Bus. `hcitool` and `bluetoothctl` discovery are gone.
+
+- **No daemon.** The management interface is what bluetoothd itself drives.
+  Going through D-Bus would make the scan depend on bluetoothd running and on
+  its bus policy, which by default admits root and the `bluetooth` group, not
+  the `seed` service user. A headless probe often runs no bluetoothd at all.
+- **One capability.** The packaged unit already holds `CAP_NET_ADMIN`, which
+  is all the management interface needs. No new dependency: the socket comes
+  from `golang.org/x/sys/unix`.
+- **Raw records.** Each Device Found event carries the address type, the RSSI
+  and the advertising or EIR bytes, which a shared parser
+  (`bluetooth_ad.go`) decodes. A random LE address gets no OUI vendor; its
+  manufacturer ID names the vendor instead.
+- **Adapter state.** A controller bluetoothd never touched is powered off with
+  LE disabled. A scan turns on what it needs and restores both afterwards. If
+  another client is already discovering, the scan listens to that discovery
+  instead of starting its own.
+- **Degrade, revised.** bluetoothd's cache of devices seen in the past is not a
+  scan, so it is no longer the fallback. When bluetoothd is running it adds
+  pairing state to the devices heard and adds connected devices, which stop
+  advertising. When the management interface is unavailable, the scan fails
+  with the cause (no adapter, missing `CAP_NET_ADMIN`) instead of returning a
+  partial list as if it were complete.
 
 ## Consequences
 

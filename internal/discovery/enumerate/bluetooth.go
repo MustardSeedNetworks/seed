@@ -265,8 +265,9 @@ func (s *BluetoothScanner) enrichDevices(devices []BluetoothDevice) {
 	now := time.Now()
 
 	for i := range devices {
-		// Vendor lookup
-		if s.oui != nil && devices[i].Vendor == "" {
+		// A random LE address has no OUI; its first bytes would name some
+		// unrelated registrant.
+		if s.oui != nil && devices[i].Vendor == "" && devices[i].AddressType != BluetoothAddressRandom {
 			devices[i].Vendor = s.oui.Lookup(devices[i].Address)
 		}
 

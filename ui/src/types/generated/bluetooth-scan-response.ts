@@ -17,6 +17,7 @@ export interface BluetoothDevice {
   id: string;
   deviceId?: string;
   address: string;
+  addressType?: string;
   name: string;
   alias: string;
   vendor: string;
