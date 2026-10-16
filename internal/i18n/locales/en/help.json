@@ -32,6 +32,7 @@
     "logs": "Logs",
     "alerts": "Alerts",
     "pollingTargets": "Polling Targets",
+    "deviceGroups": "Device Groups",
     "topology": "Topology",
     "interfaces": "Interfaces",
     "flows": "Flows"
@@ -650,6 +651,19 @@
         "snmp": {
           "term": "SNMP",
           "description": "Simple Network Management Protocol reads device state and tables using the configured credentials."
+        }
+      }
+    },
+    "deviceGroups": {
+      "description": "Keep named sets of polling targets. An alert rule or a scheduled report scoped to a group covers only its members, as they stand when it runs. A group in use by a rule or report cannot be deleted until that rule or report is changed.",
+      "terms": {
+        "member": {
+          "term": "Member",
+          "description": "A polling target in the group. A target can belong to any number of groups."
+        },
+        "scope": {
+          "term": "Scope",
+          "description": "Limiting an alert rule or a report to one group's members. Without a group, they cover every target."
         }
       }
     },

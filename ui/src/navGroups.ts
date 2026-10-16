@@ -34,6 +34,7 @@ import {
   ArrowLeftRight,
   BarChart3,
   Bell,
+  Boxes,
   EthernetPort,
   LayoutDashboard,
   Network,
@@ -97,6 +98,7 @@ export function useNavGroups(): SidebarNavGroup[] {
         { path: '/flows', label: t('flows.label'), icon: ArrowLeftRight },
         { path: '/alerts', label: t('alerts.label'), icon: Bell },
         { path: '/polling-targets', label: t('pollingTargets.label'), icon: Target },
+        { path: '/device-groups', label: t('deviceGroups.label'), icon: Boxes },
       ],
     },
     {

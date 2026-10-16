@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   ArrowLeftRight,
   BarChart3,
+  Boxes,
   EthernetPort,
   Network,
   Route,
@@ -260,6 +261,32 @@ export const reportingSections: HelpSection[] = [
           {
             term: 'content.pollingTargets.terms.snmp.term',
             description: 'content.pollingTargets.terms.snmp.description',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'deviceGroups',
+    titleKey: 'sections.deviceGroups',
+    icon: <Boxes className={ICON} />,
+    keywords: ['groups', 'device groups', 'members', 'scope', 'alert rules', 'reports'],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'content.deviceGroups.description',
+      },
+      {
+        kind: 'terms',
+        heading: 'content.common.terms',
+        items: [
+          {
+            term: 'content.deviceGroups.terms.member.term',
+            description: 'content.deviceGroups.terms.member.description',
+          },
+          {
+            term: 'content.deviceGroups.terms.scope.term',
+            description: 'content.deviceGroups.terms.scope.description',
           },
         ],
       },
