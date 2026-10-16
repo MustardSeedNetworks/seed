@@ -152,6 +152,47 @@
       "peak": "Pico {{series}} {{value}}"
     }
   },
+  "deviceConfigs": {
+    "description": "Configuraciones guardadas y qué cambió entre copias de seguridad.",
+    "label": "Configuraciones",
+    "title": "Configuraciones",
+    "operatorOnly": "Se requiere el rol de operador: una configuración guardada contiene los secretos del dispositivo.",
+    "deviceCount_one": "{{count}} dispositivo con copia",
+    "deviceCount_other": "{{count}} dispositivos con copia",
+    "filterPlaceholder": "Filtrar {{count}} dispositivos",
+    "filterLabel": "Filtrar dispositivos con copia",
+    "noTargets": "Aún no hay dispositivos con copia de seguridad. Por ahora, los destinos se añaden mediante la API.",
+    "noMatch": "Ningún dispositivo coincide con este filtro.",
+    "emptyAddPrompt": "Añada un destino de copia para ver aquí sus configuraciones guardadas.",
+    "emptySelectPrompt": "Seleccione un dispositivo para ver sus copias y qué cambió.",
+    "selectedDevice": "Dispositivo seleccionado",
+    "platform": {
+      "cisco-ios": "Cisco IOS",
+      "cisco-nxos": "Cisco NX-OS",
+      "arista-eos": "Arista EOS",
+      "juniper-junos": "Juniper Junos",
+      "netconf": "NETCONF"
+    },
+    "backupsHeading": "Copias de seguridad",
+    "backupsFailed": "No se pudieron cargar las copias: {{reason}}",
+    "noBackups": "Aún no hay copias de este dispositivo.",
+    "status": {
+      "ok": "Guardada",
+      "auth_failed": "Error de inicio de sesión",
+      "host_key_mismatch": "La clave de host cambió",
+      "host_key_unconfirmed": "Clave de host sin confirmar",
+      "unreachable": "Inaccesible",
+      "command_failed": "Error del comando",
+      "error": "Error"
+    },
+    "attemptFailed": "{{status}}: {{reason}}. Este intento no guardó ninguna configuración.",
+    "firstBackup": "Es la primera configuración guardada del dispositivo; no hay nada con qué compararla.",
+    "diffFailed": "No se pudo cargar el cambio: {{reason}}",
+    "labelComparedWith": "Comparada con",
+    "labelChanges": "Cambios",
+    "changeCounts": "+{{added}} −{{removed}} líneas",
+    "unchanged": "Sin cambios desde la copia anterior."
+  },
   "link": {
     "description": "Estado del enlace físico, diagnóstico de cableado y asociación Wi-Fi de la interfaz activa.",
     "label": "Enlace",

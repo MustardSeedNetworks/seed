@@ -32,6 +32,7 @@ const ROUTES = [
   '/device-groups',
   '/topology',
   '/interfaces',
+  '/device-configs',
   '/flows',
   '/alerts',
   '/dashboard',

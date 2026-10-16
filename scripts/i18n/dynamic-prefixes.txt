@@ -202,9 +202,11 @@ validation:fields.
 # .eyebrow, so the static analyzer never sees these as literal keys.
 # InterfacesPage also reads t(`interfaces.status.${operStatus}`), and its
 # history panel t(`interfaces.history.window.${range}`). DeviceGroupsPage
-# reads t(`deviceGroups.severity.${severity}`).
+# reads t(`deviceGroups.severity.${severity}`). DeviceConfigsPage reads
+# t(`deviceConfigs.platform.${platform}`) and .status.${status}.
 pages:alerts.
 pages:dashboard.
+pages:deviceConfigs.
 pages:deviceGroups.
 pages:flows.
 pages:groups.

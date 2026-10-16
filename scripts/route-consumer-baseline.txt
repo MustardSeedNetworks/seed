@@ -15,10 +15,6 @@
 /api/v1/alert-rules                       # PAT-only allow-list (owner 2026-09-04)
 /api/v1/alert-rules/{ruleId}              # PAT-only allow-list (owner 2026-09-04)
 /api/v1/device-credentials/{credentialId} # PAT-only allow-list (owner 2026-09-04) until the SE-2 credential picker
-/api/v1/device-config-targets             # scheduled: UI #3121; P-D1 backend (#348) landed first, API-driven until then
-/api/v1/device-config-targets/            # scheduled: UI #3121; P-D1 backend (#348) landed first, API-driven until then
-/api/v1/device-configs                    # scheduled: UI #3121; P-D1 backend (#348) landed first, API-driven until then
-/api/v1/device-configs/                   # scheduled: UI #3121; P-D1 backend (#348) landed first, API-driven until then
 /api/v1/device-configs/run                # scheduled: UI #3121; P-D1 backend (#348) landed first, API-driven until then
 /api/v1/discovery/engine                  # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/capabilities     # PAT-only allow-list (owner 2026-09-04)

@@ -35,6 +35,7 @@
     "deviceGroups": "Grupos de dispositivos",
     "topology": "Topología",
     "interfaces": "Interfaces",
+    "deviceConfigs": "Configuraciones",
     "flows": "Flujos"
   },
   "content": {
@@ -698,6 +699,19 @@
         "utilization": {
           "term": "Utilización",
           "description": "El tráfico de cada sentido como porcentaje de la velocidad de línea. Vacío cuando el dispositivo no informa la velocidad de línea."
+        }
+      }
+    },
+    "deviceConfigs": {
+      "description": "Revise las configuraciones que Seed guardó de sus dispositivos por SSH o NETCONF, de la más reciente a la más antigua. Seleccione una copia guardada para ver qué cambió desde la anterior: las líneas añadidas en verde, las eliminadas en rojo. Un intento fallido muestra por qué no guardó nada.",
+      "terms": {
+        "backup": {
+          "term": "Copia de seguridad",
+          "description": "Un intento de guardar la configuración en ejecución de un dispositivo. Las configuraciones guardadas se cifran en reposo y solo los operadores pueden leerlas."
+        },
+        "diff": {
+          "term": "Cambio",
+          "description": "Las líneas añadidas y eliminadas desde la configuración guardada anterior del dispositivo, con algunas líneas sin cambios alrededor como contexto."
         }
       }
     },

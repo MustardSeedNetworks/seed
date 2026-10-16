@@ -21,6 +21,7 @@ export interface CatalogEntry {
 export const FEATURE_CATALOG = {
   path_analysis: { tier: 'Pro' },
   export_csv_json: { tier: 'Starter' },
+  compliance_advanced: { tier: 'Pro' },
 } as const satisfies Record<string, CatalogEntry>;
 
 /** Feature ids the UI may gate a page on. */

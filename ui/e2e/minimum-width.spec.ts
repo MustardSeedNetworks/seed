@@ -47,6 +47,7 @@ const PAGES = [
   { name: 'device-groups', path: '/device-groups' },
   { name: 'topology', path: '/topology' },
   { name: 'interfaces', path: '/interfaces' },
+  { name: 'device-configs', path: '/device-configs' },
   { name: 'flows', path: '/flows' },
   { name: 'alerts', path: '/alerts' },
   { name: 'dashboard', path: '/dashboard' },

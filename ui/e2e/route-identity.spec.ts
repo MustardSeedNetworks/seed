@@ -38,6 +38,7 @@ const PAGES = [
   { path: '/device-groups', label: 'Device groups' },
   { path: '/topology', label: 'Topology' },
   { path: '/interfaces', label: 'Interfaces' },
+  { path: '/device-configs', label: 'Device configs' },
   { path: '/flows', label: 'Flows' },
   { path: '/alerts', label: 'Alerts' },
   { path: '/dashboard', label: 'Dashboard' },

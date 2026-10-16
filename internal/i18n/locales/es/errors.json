@@ -55,6 +55,10 @@
         "export_csv_json": {
           "name": "Informes",
           "pitch": "Genere resúmenes ejecutivos e inventarios de dispositivos cuando los necesite, y descargue cada uno en PDF, CSV o JSON para quienes nunca abren Seed."
+        },
+        "compliance_advanced": {
+          "name": "Copia de configuración",
+          "pitch": "Guarde la configuración en ejecución de cada dispositivo por SSH o NETCONF y vea exactamente qué líneas cambiaron entre copias."
         }
       },
       "samples": {

@@ -36,6 +36,7 @@ import {
   Bell,
   Boxes,
   EthernetPort,
+  FileDiff,
   LayoutDashboard,
   Network,
   Route,
@@ -95,6 +96,7 @@ export function useNavGroups(): SidebarNavGroup[] {
       items: [
         { path: '/topology', label: t('topology.label'), icon: Share2 },
         { path: '/interfaces', label: t('interfaces.label'), icon: EthernetPort },
+        { path: '/device-configs', label: t('deviceConfigs.label'), icon: FileDiff },
         { path: '/flows', label: t('flows.label'), icon: ArrowLeftRight },
         { path: '/alerts', label: t('alerts.label'), icon: Bell },
         { path: '/polling-targets', label: t('pollingTargets.label'), icon: Target },
