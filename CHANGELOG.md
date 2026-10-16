@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.267.0](https://github.com/MustardSeedNetworks/seed/compare/v0.266.0...v0.267.0) (2026-10-16)
+
+
+### Features
+
+* **integrations:** read Palo Alto PAN-OS device state, off until an admin answers (P-D12) ([#3526](https://github.com/MustardSeedNetworks/seed/issues/3526)) ([cd42dc7](https://github.com/MustardSeedNetworks/seed/commit/cd42dc750330936b2716a4b4d05aceabc29cdb01))
+* **ui:** show device configuration backups and what changed ([#3514](https://github.com/MustardSeedNetworks/seed/issues/3514)) ([6b3df1b](https://github.com/MustardSeedNetworks/seed/commit/6b3df1b5c7f3650105569afc309d3748ec7d13f3)), closes [#3510](https://github.com/MustardSeedNetworks/seed/issues/3510)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3525](https://github.com/MustardSeedNetworks/seed/issues/3525)) ([2f4777e](https://github.com/MustardSeedNetworks/seed/commit/2f4777ea76dd9c3bb0eee69e282382b480ded7f9))
+
 ## [0.266.0](https://github.com/MustardSeedNetworks/seed/compare/v0.265.0...v0.266.0) (2026-10-16)
 
 
