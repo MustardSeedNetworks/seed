@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.269.0](https://github.com/MustardSeedNetworks/seed/compare/v0.268.0...v0.269.0) (2026-10-16)
+
+
+### Features
+
+* **autotest:** run the DNS and internet stages through the interface under test ([#3535](https://github.com/MustardSeedNetworks/seed/issues/3535)) ([6ec2e2d](https://github.com/MustardSeedNetworks/seed/commit/6ec2e2dc9bb4593b1c2921d43a3a563653efbd3e))
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.54.0 ([#3533](https://github.com/MustardSeedNetworks/seed/issues/3533)) ([43dde48](https://github.com/MustardSeedNetworks/seed/commit/43dde486ccc1795117d5bc39685f32df588e05d4))
+
 ## [0.268.0](https://github.com/MustardSeedNetworks/seed/compare/v0.267.0...v0.268.0) (2026-10-16)
 
 
