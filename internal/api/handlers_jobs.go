@@ -116,11 +116,17 @@ func (s *Server) handleJobs(w http.ResponseWriter, r *http.Request) {
 			ErrCodeValidation, "Job kind is required", "")
 		return
 	}
-	// A configuration backup belongs to the caller's client, which this
-	// tenant-blind route cannot carry; it has its own route.
-	if req.Kind == deviceConfigJobKind {
+	// A configuration backup or a Windows inventory run belongs to the
+	// caller's client, which this tenant-blind route cannot carry; each has its
+	// own route.
+	switch req.Kind {
+	case deviceConfigJobKind:
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation,
 			"Start a configuration backup with POST "+deviceConfigRunPath, "")
+		return
+	case wmiJobKind:
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation,
+			"Start a Windows inventory run with POST "+wmiRunsPath, "")
 		return
 	}
 	if feature, ok := jobKindFeature(req.Kind); ok && !s.hasFeature(feature) {
@@ -319,6 +325,24 @@ func sseFrame(event string, data []byte) []byte {
 	b.Write(data)
 	b.WriteString("\n\n")
 	return b.Bytes()
+}
+
+// submitClientJob starts a job owned by the caller's client and answers 201
+// with it, Location naming it. audit writes the action's audit line once the
+// job id is known.
+func (s *Server) submitClientJob(
+	w http.ResponseWriter, r *http.Request, clientID, kind string, params any, audit func(jobID string),
+) {
+	logger := logging.FromContext(r.Context())
+	id, err := s.jobsRunner().SubmitFor(clientID, kind, params)
+	if err != nil {
+		writeJobError(w, logger, err)
+		return
+	}
+	audit(id)
+	j, _ := s.jobsRunner().Get(id)
+	w.Header().Set("Location", jobsPath+"/"+id)
+	sendJSONResponse(w, logger, http.StatusCreated, toJobResponse(j))
 }
 
 // writeJobError maps a runner sentinel error to its HTTP status + ErrCode.

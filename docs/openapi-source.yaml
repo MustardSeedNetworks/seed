@@ -1050,6 +1050,90 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/DeviceGroupSummaryResponse'
+  GET /api/v1/wmi-targets:
+    responses:
+      "200":
+        description: The caller's client's Windows inventory targets, ordered by name.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WMITargetListResponse'
+  POST /api/v1/wmi-targets:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WMITargetRequest'
+    responses:
+      "201":
+        description: The created target; Location names it. credentialsId must name one of the caller's winrm credentials, and a host and port another target uses is a 400. No certificate is pinned until the first run records the one the host presents and an operator confirms it.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WMITargetResponse'
+  GET /api/v1/wmi-targets/{targetId}:
+    responses:
+      "200":
+        description: The target, with the outcome of its last collection.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WMITargetResponse'
+  PUT /api/v1/wmi-targets/{targetId}:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WMITargetRequest'
+    responses:
+      "200":
+        description: The replaced target. Moving it to another host or port forgets its pinned and pending certificates.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WMITargetResponse'
+  DELETE /api/v1/wmi-targets/{targetId}:
+    responses:
+      "204":
+        description: The target and its inventory were deleted.
+  PUT /api/v1/wmi-targets/{targetId}/certificate:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WMICertificateRequest'
+    responses:
+      "204":
+        description: The pending certificate is pinned. The fingerprint must be the target's pendingCertSha256; one that changed since the operator read it is a 400.
+  DELETE /api/v1/wmi-targets/{targetId}/certificate:
+    responses:
+      "204":
+        description: The pinned and pending certificates are forgotten. The next run records the certificate the host presents as pending, for an operator to confirm; this is the answer to a planned certificate renewal.
+  GET /api/v1/wmi-targets/{targetId}/inventory:
+    responses:
+      "200":
+        description: The target's last successful inventory. A failed collection keeps the previous one; a target no collection has succeeded for is a 404.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WMIInventoryResponse'
+  POST /api/v1/wmi-runs:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WMIRunRequest'
+    responses:
+      "201":
+        description: The run, started as a wmi-inventory job; Location names it and /jobs/events follows it. Each host's outcome is in the job's result, and a host that fails is that host's result, not the run's failure.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobResponse'
   GET /api/v1/polling-targets:
     responses:
       "200":

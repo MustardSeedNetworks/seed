@@ -86,6 +86,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
+	"github.com/MustardSeedNetworks/seed/internal/wmi"
 )
 
 // indexHTMLPath is the path to the SPA entry point.
@@ -284,6 +285,7 @@ type Server struct {
 	deviceCredentials  *credentials.Service        // Device-credential CRUD use-case (#1799)
 	deviceConfigs      *deviceconfig.Service       // Device configuration backup use-case (P-D1)
 	deviceGroups       *devicegroups.Service       // Device-group CRUD use-case (P-D10)
+	wmiInventory       *wmi.Service                // Windows inventory use-case (P-D11)
 	alertInbox         *inbox.Service              // Alert-inbox (list/ack/resolve) use-case (ADR-0020)
 	configBackups      *backups.Service            // Config backup/restore use-case (ADR-0020)
 	exportService      *export.Service             // Diagnostic-export use-case (ADR-0020)

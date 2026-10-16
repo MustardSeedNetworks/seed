@@ -140,6 +140,17 @@ func (db *DB) DeviceConfigs() *DeviceConfigRepository {
 	return db.deviceConfigs
 }
 
+// WMI returns the Windows inventory repository (P-D11).
+func (db *DB) WMI() *WMIRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.wmi == nil {
+		db.wmi = &WMIRepository{db: db}
+	}
+	return db.wmi
+}
+
 // DeviceGroups returns the device group repository (P-D10).
 func (db *DB) DeviceGroups() *DeviceGroupRepository {
 	db.mu.Lock()

@@ -1948,6 +1948,69 @@ body:
   },
   {
     "auth": true,
+    "csrf": true,
+    "feature": "server_monitoring",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "path": "/api/v1/wmi-targets",
+    "rateLimited": false,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "feature": "server_monitoring",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT",
+      "DELETE"
+    ],
+    "path": "/api/v1/wmi-targets/{targetId}",
+    "rateLimited": false,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "feature": "server_monitoring",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "PUT",
+      "DELETE"
+    ],
+    "path": "/api/v1/wmi-targets/{targetId}/certificate",
+    "rateLimited": false,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "feature": "server_monitoring",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/wmi-targets/{targetId}/inventory",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "feature": "server_monitoring",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/wmi-runs",
+    "rateLimited": true,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
     "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [

@@ -252,18 +252,11 @@ func (s *Server) handleDeviceConfigRun(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	logger := logging.FromContext(r.Context())
-	id, err := s.jobsRunner().SubmitFor(clientID, deviceConfigJobKind,
-		deviceConfigJob{ClientID: clientID, TargetIDs: in.TargetIDs})
-	if err != nil {
-		writeJobError(w, logger, err)
-		return
-	}
-	s.auditDeviceConfig(r, "device_config.run", "Configuration backup run started",
-		"job_id", id, "target_ids", in.TargetIDs)
-	j, _ := s.jobsRunner().Get(id)
-	w.Header().Set("Location", jobsPath+"/"+id)
-	sendJSONResponse(w, logger, http.StatusCreated, toJobResponse(j))
+	s.submitClientJob(w, r, clientID, deviceConfigJobKind,
+		deviceConfigJob{ClientID: clientID, TargetIDs: in.TargetIDs}, func(jobID string) {
+			s.auditDeviceConfig(r, "device_config.run", "Configuration backup run started",
+				"job_id", jobID, "target_ids", in.TargetIDs)
+		})
 }
 
 func (s *Server) handleDeviceConfigBackups(w http.ResponseWriter, r *http.Request) {

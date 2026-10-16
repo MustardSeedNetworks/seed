@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/wmi-target-response.schema.json",
+  "$ref": "#/$defs/WMITargetResponse",
+  "$defs": {
+    "WMITargetResponse": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "credentialsId": {
+          "type": "string"
+        },
+        "certSha256": {
+          "type": "string"
+        },
+        "pendingCertSha256": {
+          "type": "string"
+        },
+        "lastAttemptAt": {
+          "type": "string"
+        },
+        "lastStatus": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "auth_failed",
+            "cert_mismatch",
+            "cert_unconfirmed",
+            "unreachable",
+            "query_failed",
+            "error"
+          ]
+        },
+        "lastError": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "host",
+        "port",
+        "credentialsId",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "title": "WMITargetResponse",
+  "description": "WMITargetResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

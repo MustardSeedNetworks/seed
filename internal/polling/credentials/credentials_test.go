@@ -127,6 +127,25 @@ func TestSaveEncryptsTheSSHPassword(t *testing.T) {
 	require.Contains(t, string(encoded), `"sshUser":"backup"`)
 }
 
+// TestSaveEncryptsTheWinRMPassword covers the Windows inventory login
+// (P-D11), as the SSH one above.
+func TestSaveEncryptsTheWinRMPassword(t *testing.T) {
+	repo := &fakeRepo{}
+	svc := newService(t, repo)
+
+	got, err := svc.Save(context.Background(), credentials.Input{
+		ID: "c1", ClientID: "client-1", Name: "inventory login",
+		WinRMUser: ` LAB\inventory `, WinRMPassword: "winrm-plain",
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, `LAB\inventory`, repo.saved.WinRMUser)
+	require.Equal(t, "enc:v1:winrm-plain", repo.saved.WinRMPasswordCT)
+	encoded, err := json.Marshal(got)
+	require.NoError(t, err)
+	require.NotContains(t, string(encoded), "winrm-plain")
+}
+
 func TestSaveRejectsAmbiguousAndEmptyCredentials(t *testing.T) {
 	svc := newService(t, &fakeRepo{})
 
@@ -140,6 +159,11 @@ func TestSaveRejectsAmbiguousAndEmptyCredentials(t *testing.T) {
 		{"neither", credentials.Input{Name: "x"}, "provide a community"},
 		{"ssh without password", credentials.Input{Name: "x", SSHUser: "u"}, "both sshUser and sshPassword"},
 		{"ssh without user", credentials.Input{Name: "x", SSHPassword: "p"}, "both sshUser and sshPassword"},
+		{"ssh and winrm", credentials.Input{
+			Name: "x", SSHUser: "u", SSHPassword: "p", WinRMUser: "u", WinRMPassword: "p",
+		}, "not several"},
+		{"winrm without password", credentials.Input{Name: "x", WinRMUser: "u"}, "both winrmUser and winrmPassword"},
+		{"winrm without user", credentials.Input{Name: "x", WinRMPassword: "p"}, "both winrmUser and winrmPassword"},
 		{"no name", credentials.Input{Community: "c"}, "name is required"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

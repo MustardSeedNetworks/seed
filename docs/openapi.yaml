@@ -1306,6 +1306,23 @@ components:
                 - status
                 - received
             type: object
+        ComputerSystem:
+            additionalProperties: false
+            properties:
+                domain:
+                    type: string
+                manufacturer:
+                    type: string
+                memoryBytes:
+                    type: integer
+                model:
+                    type: string
+            required:
+                - manufacturer
+                - model
+                - domain
+                - memoryBytes
+            type: object
         Config:
             additionalProperties: false
             properties:
@@ -1495,6 +1512,8 @@ components:
                     type: string
                 updatedAt:
                     format: date-time
+                    type: string
+                winrmUser:
                     type: string
             required:
                 - id
@@ -2041,6 +2060,10 @@ components:
                     type: string
                 sshUser:
                     type: string
+                winrmPassword:
+                    type: string
+                winrmUser:
+                    type: string
             required:
                 - name
             type: object
@@ -2529,6 +2552,20 @@ components:
                     type: integer
             required:
                 - rescanIntervalMs
+            type: object
+        Disk:
+            additionalProperties: false
+            properties:
+                deviceId:
+                    type: string
+                freeBytes:
+                    type: integer
+                sizeBytes:
+                    type: integer
+            required:
+                - deviceId
+                - sizeBytes
+                - freeBytes
             type: object
         DisplayOptionsConfig:
             additionalProperties: false
@@ -3220,6 +3257,17 @@ components:
                 - enabled
                 - osDetection
                 - serviceProbes
+            type: object
+        Firmware:
+            additionalProperties: false
+            properties:
+                serialNumber:
+                    type: string
+                version:
+                    type: string
+            required:
+                - serialNumber
+                - version
             type: object
         Flow:
             additionalProperties: false
@@ -4828,6 +4876,40 @@ components:
                 - operStatus
                 - speedBps
             type: object
+        Inventory:
+            additionalProperties: false
+            properties:
+                adapters:
+                    items:
+                        $ref: '#/components/schemas/NetworkAdapter'
+                    type: array
+                disks:
+                    items:
+                        $ref: '#/components/schemas/Disk'
+                    type: array
+                firmware:
+                    $ref: '#/components/schemas/Firmware'
+                os:
+                    $ref: '#/components/schemas/OperatingSystem'
+                processors:
+                    items:
+                        $ref: '#/components/schemas/Processor'
+                    type: array
+                software:
+                    items:
+                        $ref: '#/components/schemas/Program'
+                    type: array
+                system:
+                    $ref: '#/components/schemas/ComputerSystem'
+            required:
+                - os
+                - system
+                - firmware
+                - processors
+                - disks
+                - adapters
+                - software
+            type: object
         IperfCard:
             additionalProperties: false
             properties:
@@ -6207,6 +6289,22 @@ components:
                 - mac
                 - family
             type: object
+        NetworkAdapter:
+            additionalProperties: false
+            properties:
+                description:
+                    type: string
+                ipAddresses:
+                    items:
+                        type: string
+                    type: array
+                macAddress:
+                    type: string
+            required:
+                - description
+                - macAddress
+                - ipAddresses
+            type: object
         NetworkDiscoveryConfig:
             additionalProperties: false
             properties:
@@ -6574,6 +6672,29 @@ components:
                 - port
                 - protocol
                 - isOpen
+            type: object
+        OperatingSystem:
+            additionalProperties: false
+            properties:
+                architecture:
+                    type: string
+                buildNumber:
+                    type: string
+                caption:
+                    type: string
+                installDate:
+                    format: date-time
+                    type: string
+                lastBootUpTime:
+                    format: date-time
+                    type: string
+                version:
+                    type: string
+            required:
+                - caption
+                - version
+                - buildNumber
+                - architecture
             type: object
         OptionsResponse:
             additionalProperties: false
@@ -7283,6 +7404,20 @@ components:
                 - cpuPercent
                 - memoryMb
             type: object
+        Processor:
+            additionalProperties: false
+            properties:
+                cores:
+                    type: integer
+                logicalCores:
+                    type: integer
+                name:
+                    type: string
+            required:
+                - name
+                - cores
+                - logicalCores
+            type: object
         ProfileDuplicateRequest:
             additionalProperties: false
             properties:
@@ -7442,6 +7577,20 @@ components:
                 - maxConcurrent
                 - portsToScan
                 - scanIntensity
+            type: object
+        Program:
+            additionalProperties: false
+            properties:
+                name:
+                    type: string
+                vendor:
+                    type: string
+                version:
+                    type: string
+            required:
+                - name
+                - version
+                - vendor
             type: object
         ProtocolCount:
             additionalProperties: false
@@ -11135,6 +11284,109 @@ components:
                 - scanning
                 - stats
                 - severityFilter
+            type: object
+        WMICertificateRequest:
+            additionalProperties: false
+            properties:
+                fingerprint:
+                    type: string
+            required:
+                - fingerprint
+            type: object
+        WMIInventoryResponse:
+            additionalProperties: false
+            properties:
+                collectedAt:
+                    type: string
+                inventory:
+                    $ref: '#/components/schemas/Inventory'
+                targetId:
+                    type: string
+            required:
+                - targetId
+                - collectedAt
+                - inventory
+            type: object
+        WMIRunRequest:
+            additionalProperties: false
+            properties:
+                targetIds:
+                    items:
+                        type: string
+                    type: array
+            type: object
+        WMITargetListResponse:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                targets:
+                    items:
+                        $ref: '#/components/schemas/WMITargetResponse'
+                    type: array
+            required:
+                - count
+                - targets
+            type: object
+        WMITargetRequest:
+            additionalProperties: false
+            properties:
+                credentialsId:
+                    type: string
+                host:
+                    type: string
+                name:
+                    type: string
+                port:
+                    type: integer
+            required:
+                - name
+                - host
+                - credentialsId
+            type: object
+        WMITargetResponse:
+            additionalProperties: false
+            properties:
+                certSha256:
+                    type: string
+                createdAt:
+                    type: string
+                credentialsId:
+                    type: string
+                host:
+                    type: string
+                id:
+                    type: string
+                lastAttemptAt:
+                    type: string
+                lastError:
+                    type: string
+                lastStatus:
+                    enum:
+                        - ok
+                        - auth_failed
+                        - cert_mismatch
+                        - cert_unconfirmed
+                        - unreachable
+                        - query_failed
+                        - error
+                    type: string
+                name:
+                    type: string
+                pendingCertSha256:
+                    type: string
+                port:
+                    type: integer
+                updatedAt:
+                    type: string
+            required:
+                - id
+                - name
+                - host
+                - port
+                - credentialsId
+                - createdAt
+                - updatedAt
             type: object
         WebAuthnCreationOptions:
             additionalProperties: false
@@ -21274,6 +21526,389 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
+    /api/v1/wmi-runs:
+        post:
+            description: Requires an operator-scoped token.
+            operationId: postApiV1WmiRuns
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/WMIRunRequest'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/JobResponse'
+                    description: The run, started as a wmi-inventory job; Location names it and /jobs/events follows it. Each host's outcome is in the job's result, and a host that fails is that host's result, not the run's failure.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "429":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Rate limit exceeded for this route class.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/wmi-targets:
+        get:
+            operationId: getApiV1WmiTargets
+            responses:
+                "200":
+                    description: The caller's client's Windows inventory targets, ordered by name.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/WMITargetListResponse'
+        post:
+            description: Requires an operator-scoped token.
+            operationId: postApiV1WmiTargets
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/WMITargetRequest'
+                required: true
+            responses:
+                "201":
+                    description: The created target; Location names it. credentialsId must name one of the caller's winrm credentials, and a host and port another target uses is a 400. No certificate is pinned until the first run records the one the host presents and an operator confirms it.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/WMITargetResponse'
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/wmi-targets/{targetId}:
+        delete:
+            description: Requires an operator-scoped token.
+            operationId: deleteApiV1WmiTargetsTargetId
+            responses:
+                "204":
+                    description: The target and its inventory were deleted.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+        get:
+            operationId: getApiV1WmiTargetsTargetId
+            responses:
+                "200":
+                    description: The target, with the outcome of its last collection.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/WMITargetResponse'
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: targetId
+              required: true
+              schema:
+                type: string
+        put:
+            description: Requires an operator-scoped token.
+            operationId: putApiV1WmiTargetsTargetId
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/WMITargetRequest'
+                required: true
+            responses:
+                "200":
+                    description: The replaced target. Moving it to another host or port forgets its pinned and pending certificates.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/WMITargetResponse'
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/wmi-targets/{targetId}/certificate:
+        delete:
+            description: Requires an operator-scoped token.
+            operationId: deleteApiV1WmiTargetsTargetIdCertificate
+            responses:
+                "204":
+                    description: The pinned and pending certificates are forgotten. The next run records the certificate the host presents as pending, for an operator to confirm; this is the answer to a planned certificate renewal.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: targetId
+              required: true
+              schema:
+                type: string
+        put:
+            description: Requires an operator-scoped token.
+            operationId: putApiV1WmiTargetsTargetIdCertificate
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/WMICertificateRequest'
+                required: true
+            responses:
+                "204":
+                    description: The pending certificate is pinned. The fingerprint must be the target's pendingCertSha256; one that changed since the operator read it is a 400.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/wmi-targets/{targetId}/inventory:
+        get:
+            operationId: getApiV1WmiTargetsTargetIdInventory
+            responses:
+                "200":
+                    description: The target's last successful inventory. A failed collection keeps the previous one; a target no collection has succeeded for is a 404.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/WMIInventoryResponse'
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: targetId
+              required: true
+              schema:
+                type: string
 security:
     - BearerAuth: []
 servers:
