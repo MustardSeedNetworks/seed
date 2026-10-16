@@ -24,12 +24,13 @@ type BluetoothScanResponse struct {
 
 // BluetoothDevice is the flat transport view of a discovered Bluetooth device,
 // mirroring discovery.BluetoothDevice's wire shape so the published schema does
-// not depend on the discovery domain package. Type and DeviceClass are plain
-// strings (the domain's BluetoothType/BluetoothDeviceClass are string enums).
+// not depend on the discovery domain package. AddressType, Type and
+// DeviceClass are plain strings (the domain's are string enums).
 type BluetoothDevice struct {
 	ID               string         `json:"id"`
 	DeviceID         string         `json:"deviceId,omitempty"`
 	Address          string         `json:"address"`
+	AddressType      string         `json:"addressType,omitempty"`
 	Name             string         `json:"name"`
 	Alias            string         `json:"alias"`
 	Vendor           string         `json:"vendor"`
@@ -82,6 +83,7 @@ func toBluetoothDevices(devices []discovery.BluetoothDevice) []BluetoothDevice {
 			ID:               d.ID,
 			DeviceID:         d.DeviceID,
 			Address:          d.Address,
+			AddressType:      string(d.AddressType),
 			Name:             d.Name,
 			Alias:            d.Alias,
 			Vendor:           d.Vendor,

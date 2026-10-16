@@ -14,6 +14,8 @@ import (
 type (
 	// BluetoothType is the kernel Bluetooth protocol-type enum.
 	BluetoothType = discovery.BluetoothType
+	// BluetoothAddressType is the kernel public/random address enum.
+	BluetoothAddressType = discovery.BluetoothAddressType
 	// BluetoothDeviceClass is the kernel major-device-class enum.
 	BluetoothDeviceClass = discovery.BluetoothDeviceClass
 	// BluetoothDevice is a discovered Bluetooth device (kernel result type).
@@ -30,6 +32,9 @@ const (
 	BluetoothTypeClassic = discovery.BluetoothTypeClassic
 	BluetoothTypeBLE     = discovery.BluetoothTypeBLE
 	BluetoothTypeDual    = discovery.BluetoothTypeDual
+
+	BluetoothAddressPublic = discovery.BluetoothAddressPublic
+	BluetoothAddressRandom = discovery.BluetoothAddressRandom
 
 	BluetoothClassMisc          = discovery.BluetoothClassMisc
 	BluetoothClassComputer      = discovery.BluetoothClassComputer

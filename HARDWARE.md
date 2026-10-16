@@ -283,10 +283,14 @@ sudo modprobe 8021q
 
 ### "Bluetooth scanning limited"
 
-**Linux:** Ensure BlueZ is installed and bluetoothd is running:
+**Linux:** Seed scans through the kernel's Bluetooth management interface,
+which needs `CAP_NET_ADMIN` (the packaged service has it) and no BlueZ tools.
+A scan powers the adapter and enables LE only while it runs. If bluetoothd is
+running, it adds pairing state and the devices connected to this host. Check
+that the kernel sees the adapter:
 
 ```bash
-sudo systemctl status bluetooth
+ls /sys/class/bluetooth
 ```
 
 **macOS:** Grant Bluetooth permissions to Terminal/application.

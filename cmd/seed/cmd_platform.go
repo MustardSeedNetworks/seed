@@ -74,7 +74,7 @@ func printLinuxCapabilities(w io.Writer) {
 	writeStr(w, "  • Speed/duplex detection via ethtool/sysfs\n")
 	writeStr(w, "  • Wi-Fi scanning and connection (nl80211)\n")
 	writeStr(w, "  • ARP/NDP neighbor discovery\n")
-	writeStr(w, "  • Bluetooth scanning (BlueZ)\n")
+	writeStr(w, "  • Bluetooth scanning (kernel management interface)\n")
 	writeStr(w, "  • VLAN creation and management (ip link)\n")
 	writeStr(w, "  • Gateway and DNS detection\n")
 	writeStr(w, "  • DHCP lease information\n\n")
