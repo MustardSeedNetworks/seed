@@ -56,7 +56,7 @@ Free-tier banner.`,
 		Use:   "activate",
 		Short: "Activate a license key",
 		Long: `Activate a Seed license key on this device. Validation is fully
-offline (rotor cipher + device fingerprint); no phone-home. The key is bound
+offline (Ed25519 signature + device fingerprint); no phone-home. The key is bound
 to this device's hash and unlocks the tier features encoded in the key.`,
 		Example: `  # Activate a Pro key
   seed license activate -k XXXX-XXXX-XXXX-XXXX
