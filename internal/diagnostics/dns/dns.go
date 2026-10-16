@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/netif/egress"
 )
 
 // Status represents the status of a DNS operation.
@@ -159,7 +161,7 @@ func NewTester(server, testHostname string, thresholds Thresholds) *Tester {
 		testHostname: testHostname,
 		thresholds:   thresholds,
 		resolvers:    systemResolvers(),
-		resolver:     resolverForServer(server),
+		resolver:     resolverForServer(server, ""),
 	}
 
 	return t
@@ -176,17 +178,18 @@ func NewTesterForInterface(server, testHostname string, thresholds Thresholds, i
 }
 
 // resolverForServer returns a resolver that dials server, or the system
-// resolver when no server is named.
-func resolverForServer(server string) *net.Resolver {
+// resolver when no server is named. A non-empty iface pins the queries to that
+// interface, so they cannot leave through another link's route.
+func resolverForServer(server, iface string) *net.Resolver {
 	if server == "" {
 		return net.DefaultResolver
 	}
 	// Capture the address in the closure so a later SetServer cannot race it.
-	serverAddr := server + ":53"
+	serverAddr := net.JoinHostPort(server, "53")
 	return &net.Resolver{
 		PreferGo: true,
 		Dial: func(ctx context.Context, _, _ string) (net.Conn, error) {
-			d := net.Dialer{Timeout: DefaultDialerTimeout}
+			d := net.Dialer{Timeout: DefaultDialerTimeout, Control: egress.Control(iface)}
 			return d.DialContext(ctx, "udp", serverAddr)
 		},
 	}
@@ -220,7 +223,7 @@ func (t *Tester) SetServer(server string) {
 	defer t.mu.Unlock()
 
 	t.server = server
-	t.resolver = resolverForServer(server)
+	t.resolver = resolverForServer(server, "")
 }
 
 // SetConfiguredServers updates the list of user-configured DNS servers.
@@ -508,10 +511,14 @@ func (t *Tester) Test(ctx context.Context) *TestResult {
 
 	// Without an explicitly selected server the lookups would go through the
 	// system resolver, so a scoped list would be displayed and a host-wide
-	// resolver measured. Dial the interface's own first resolver instead.
+	// resolver measured. Dial the interface's own first resolver instead, and
+	// through the interface itself: its resolver may well answer over another
+	// link's route too, which would again credit this link with an answer it
+	// did not carry.
 	lookups := t
 	if selectedServer == "" && scope == ScopeInterface {
 		lookups = NewTester(servers[0], host, thresholds)
+		lookups.resolver = resolverForServer(servers[0], iface)
 		result.Server = servers[0]
 	}
 

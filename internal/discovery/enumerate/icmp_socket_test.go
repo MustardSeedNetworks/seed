@@ -2,6 +2,7 @@ package enumerate_test
 
 import (
 	"context"
+	"net"
 	"testing"
 	"time"
 
@@ -97,4 +98,45 @@ func TestICMPv6PingerReachesLoopback(t *testing.T) {
 	if !res.Reachable {
 		t.Fatalf("::1 unreachable (privileged=%v): the echo was sent but the reply never matched", p.Privileged())
 	}
+}
+
+// P-E1: AutoTest's internet stage pings through the interface under test. A
+// pinger pinned to an interface must still make the round trip over that
+// interface, in whichever mode it opened.
+func TestPingerOnAnInterfaceReachesItsOwnAddress(t *testing.T) {
+	requireAnUnprivilegedSocketIsPossible(t)
+
+	lo := loopback(t)
+	p, err := enumerate.NewICMPPingerOn(2*time.Second, false, lo)
+	if err != nil {
+		t.Fatalf("NewICMPPingerOn(%s): %v", lo.Name, err)
+	}
+	defer func() { _ = p.Close() }()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	res := p.Ping(ctx, "127.0.0.1")
+	if res.Error != nil {
+		t.Fatalf("Ping(127.0.0.1) on %s: %v (privileged=%v)", lo.Name, res.Error, p.Privileged())
+	}
+	if !res.Reachable {
+		testutil.SkipIfHostDropsLoopbackICMP(t)
+		t.Fatalf("loopback unreachable on %s (privileged=%v)", lo.Name, p.Privileged())
+	}
+}
+
+func loopback(t *testing.T) *net.Interface {
+	t.Helper()
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		t.Fatalf("Interfaces: %v", err)
+	}
+	for i := range ifaces {
+		if ifaces[i].Flags&net.FlagLoopback != 0 {
+			return &ifaces[i]
+		}
+	}
+	t.Skip("no loopback interface")
+	return nil
 }
