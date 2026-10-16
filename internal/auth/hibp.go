@@ -104,9 +104,11 @@ func hibpDisabled() bool {
 
 // sha1PrefixAndSuffix returns the (5-char prefix, 35-char suffix)
 // uppercase hex of SHA-1(password) as required by the HIBP API.
+// The digest is not stored; only the five-character prefix is sent.
 func sha1PrefixAndSuffix(password string) (string, string) {
-	// nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-sha1 -- HIBP k-anonymity API mandates SHA-1
-	sum := sha1.Sum([]byte(password)) // #nosec G401 -- HIBP API contract; see file header.
+	// #nosec G401 -- HIBP API mandates SHA-1
+	// codeql[go/weak-sensitive-data-hashing] -- HIBP API mandates SHA-1
+	sum := sha1.Sum([]byte(password)) // nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-sha1
 	full := strings.ToUpper(hex.EncodeToString(sum[:]))
 	return full[:hibpPrefixLen], full[hibpPrefixLen:]
 }
