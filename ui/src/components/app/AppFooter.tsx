@@ -16,6 +16,7 @@
 
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
+import { accessibleNameIncluding } from '../../lib/accessibleName';
 import { cn, spacing } from '../../styles/theme';
 
 const LINK = 'caption text-text-muted hover:text-text-primary link-target';
@@ -53,7 +54,10 @@ export function AppFooter(): JSX.Element {
               href="https://www.mustardseednetworks.com"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={t('footer.website')}
+              aria-label={accessibleNameIncluding(
+                t('footer.website'),
+                'www.mustardseednetworks.com',
+              )}
               className={LINK}
             >
               www.mustardseednetworks.com

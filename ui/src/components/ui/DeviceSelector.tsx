@@ -30,6 +30,7 @@ import {
   getDeviceDisplayName,
   useDiscoveredDevices,
 } from '../../hooks/useDiscoveredDevices';
+import { accessibleNameIncluding } from '../../lib/accessibleName';
 import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
 import {
   ChevronDown,
@@ -279,6 +280,13 @@ export function DeviceSelector({
     return null;
   };
 
+  const secondaryText = getSecondaryText();
+  const shownIp = selectedDevice && selectedDevice.ip !== value ? selectedDevice.ip : '';
+  // Trailing spaces keep each visible part a separate word. axe reads text
+  // nodes, not the flex gap, so "Office Switch" + "Cisco" would otherwise
+  // glue into one token that the accessible name cannot contain.
+  const triggerLabel = [getButtonText(), secondaryText, shownIp].filter(Boolean).join(' ');
+
   return (
     // biome-ignore lint/a11y/useSemanticElements: Group role is semantically correct for dropdown container
     <div ref={dropdownRef} className="relative" onKeyDown={handleKeyDown} role="group">
@@ -297,7 +305,7 @@ export function DeviceSelector({
         )}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label={t('accessibility.selectDevice')}
+        aria-label={accessibleNameIncluding(t('accessibility.selectDevice'), triggerLabel)}
       >
         {/* Device icon or search icon */}
         {getDeviceButtonIcon()}
@@ -310,16 +318,16 @@ export function DeviceSelector({
               value ? 'text-text-primary' : 'text-text-muted',
             )}
           >
-            {getButtonText()}
+            {`${getButtonText()} `}
           </div>
-          {getSecondaryText() ? (
-            <div className="caption text-text-muted truncate">{getSecondaryText()}</div>
+          {secondaryText ? (
+            <div className="caption text-text-muted truncate">{`${secondaryText} `}</div>
           ) : null}
         </div>
 
         {/* Show IP if device is selected */}
-        {selectedDevice && selectedDevice.ip !== value ? (
-          <span className="caption text-text-muted hidden sm:inline">{selectedDevice.ip}</span>
+        {shownIp ? (
+          <span className="caption text-text-muted hidden sm:inline">{shownIp}</span>
         ) : null}
 
         {/* Dropdown arrow */}

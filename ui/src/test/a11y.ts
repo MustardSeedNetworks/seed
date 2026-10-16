@@ -34,6 +34,19 @@ const DEFAULT_RULES: RunOptions = {
     // work should say so in code. Contrast belongs to the Storybook a11y run,
     // which renders in real chromium.
     'color-contrast': { enabled: false },
+    // label-content-name-mismatch cannot run here either. axe-core 4.14
+    // enables it by default (WCAG 2.5.3 Label in Name). The check compares
+    // visible words to the accessible name, and to ignore icon ligatures it
+    // paints text onto a canvas. jsdom's getContext() returns null, so the
+    // check throws and axe reports the rule as `incomplete` ("encountered an
+    // error") on every control that has visible text — including ones that
+    // really do mismatch. Allowing that incomplete would hide the violation.
+    //
+    // Disabled for the same reason as color-contrast: a rule this environment
+    // cannot evaluate belongs in the Storybook a11y run, which uses real
+    // Chromium. Fix mismatches there in the component; do not turn this back
+    // on under jsdom.
+    'label-content-name-mismatch': { enabled: false },
   },
 };
 

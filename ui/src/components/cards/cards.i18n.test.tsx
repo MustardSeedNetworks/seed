@@ -114,7 +114,11 @@ describe('discovery cards — Spanish, with no English left behind', () => {
       screen.getByRole('button', { name: 'Abrir vista de pantalla completa' }),
     ).toBeInTheDocument();
     expect(screen.queryByLabelText('Open full screen view')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Iniciar escaneo de red' })).toBeInTheDocument();
+    // Visible label is "Escanear", which is not the word "escaneo", so the
+    // accessible name has to keep it (WCAG 2.5.3) as well as the longer cue.
+    expect(
+      screen.getByRole('button', { name: 'Iniciar escaneo de red Escanear' }),
+    ).toBeInTheDocument();
     expect(screen.queryByLabelText('Start network scan')).toBeNull();
   });
 

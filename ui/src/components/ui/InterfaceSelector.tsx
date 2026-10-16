@@ -24,6 +24,7 @@ import { Tooltip } from './Tooltip';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { accessibleNameIncluding } from '../../lib/accessibleName';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
 import type { InterfaceInfo } from '../../types/generated/categorized-interfaces-response';
 
@@ -248,14 +249,22 @@ export function InterfaceSelector({
         )}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label={t('accessibility.selectInterface')}
+        aria-label={accessibleNameIncluding(
+          t('accessibility.selectInterface'),
+          [
+            currentInfo ? getDisplayName(currentInfo) : String(currentInterface),
+            currentInfo ? getStatusText(currentInfo) : '',
+          ]
+            .filter(Boolean)
+            .join(' '),
+        )}
       >
         {/* Current interface icon */}
         {getTypeIcon(isWifi ? 'wifi' : 'ethernet', currentInfo?.up ?? true)}
 
         {/* Current interface name */}
         <span className="body-small font-medium text-text-primary truncate max-w-24 sm:max-w-32">
-          {currentInfo ? getDisplayName(currentInfo) : String(currentInterface)}
+          {`${currentInfo ? getDisplayName(currentInfo) : String(currentInterface)} `}
         </span>
 
         {/* Status indicator */}

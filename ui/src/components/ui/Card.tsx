@@ -111,9 +111,14 @@ export function Card({
     }
   };
 
-  // Fixes #674: Add aria-label and aria-live for accessibility
+  // Fixes #674: a summary label and aria-live for dynamic updates.
+  // A clickable card is a button, so its accessible name has to include every
+  // visible word (WCAG 2.5.3, axe label-content-name-mismatch). A short
+  // summary replaces that name and drops the body. Interactive cards are
+  // named from their content; static cards keep the summary.
+  const summaryLabel = ariaLabel || `${title}${subtitle ? ` - ${subtitle}` : ''}`;
   const ariaProps = {
-    'aria-label': ariaLabel || `${title}${subtitle ? ` - ${subtitle}` : ''}`,
+    ...(!isInteractive ? { 'aria-label': summaryLabel } : {}),
     ...(enableLiveRegion && {
       'aria-live': 'polite' as const,
       'aria-atomic': 'true' as const,

@@ -29,6 +29,7 @@ import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import i18n, { languages } from '../../../i18n';
+import { accessibleNameIncluding } from '../../../lib/accessibleName';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Palette } from '../../ui/Icons';
@@ -169,7 +170,10 @@ export function AppearanceSettings({
           type="button"
           onClick={(): void => setTheme(isDark ? 'light' : 'dark')}
           data-testid="theme-toggle"
-          aria-label={isDark ? t('appearance.switchToLight') : t('appearance.switchToDark')}
+          aria-label={accessibleNameIncluding(
+            isDark ? t('appearance.switchToLight') : t('appearance.switchToDark'),
+            t('appearance.quickToggle'),
+          )}
           className={cn(
             'w-full',
             layout.flex.between,

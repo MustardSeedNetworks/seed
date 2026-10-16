@@ -24,6 +24,7 @@
 
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
+import { accessibleNameIncluding } from '../lib/accessibleName';
 import type { TopologyLink, TopologyNode } from '../types/generated/topology-node-detail-response';
 import { type GraphLinkInput, type GraphNodeInput, layoutTopology } from './topologyLayout';
 
@@ -154,10 +155,13 @@ export function TopologyGraph({
                   type="button"
                   data-testid={`topology-graph-node-${node.id}`}
                   aria-pressed={selected}
-                  aria-label={t('topology.graphNodeAria', {
-                    name: node.label,
-                    type: node.deviceType || t('common:status.notApplicable'),
-                  })}
+                  aria-label={accessibleNameIncluding(
+                    t('topology.graphNodeAria', {
+                      name: node.label,
+                      type: node.deviceType || t('common:status.notApplicable'),
+                    }),
+                    truncate(node.label),
+                  )}
                   onClick={(): void => onSelect(node.id)}
                   className="flex w-full flex-col items-center gap-0.5"
                 >

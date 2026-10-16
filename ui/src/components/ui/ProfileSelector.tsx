@@ -18,6 +18,7 @@
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { accessibleNameIncluding } from '../../lib/accessibleName';
 import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
 import type { Profile } from '../../types/profile';
 
@@ -127,6 +128,7 @@ export function ProfileSelector({
   );
 
   const isDisabled = disabled || loading || switching;
+  const triggerLabel = loading ? t('profile.loading') : getProfileDisplayName();
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: Group role is semantically correct for dropdown container
@@ -146,14 +148,14 @@ export function ProfileSelector({
         )}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label={t('accessibility.selectProfile')}
+        aria-label={accessibleNameIncluding(t('accessibility.selectProfile'), triggerLabel)}
       >
         {/* Profile icon */}
         <PROFILE_ICON />
 
         {/* Current profile name */}
         <span className="body-small font-medium text-text-primary truncate max-w-24 sm:max-w-32">
-          {loading ? t('profile.loading') : getProfileDisplayName()}
+          {triggerLabel}
         </span>
 
         {/* Loading/switching indicator */}

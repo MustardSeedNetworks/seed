@@ -449,7 +449,7 @@ export function HealthScoreBadge({
           className,
         )}
       >
-        {showValue ? <span className="tabular-nums">{Math.round(score)}</span> : null}
+        {showValue ? <span className="tabular-nums">{Math.round(score)} </span> : null}
         <span className={showValue ? 'hidden sm:inline' : ''}>{getStatusLabel()}</span>
       </button>
     </Tooltip>
