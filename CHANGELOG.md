@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.271.0](https://github.com/MustardSeedNetworks/seed/compare/v0.270.0...v0.271.0) (2026-10-16)
+
+
+### Features
+
+* **bluetooth:** keep devices and their first-seen time across scans (P-E3) ([#3543](https://github.com/MustardSeedNetworks/seed/issues/3543)) ([8da5130](https://github.com/MustardSeedNetworks/seed/commit/8da5130211bb054aa7a877929490b5f8e84af874))
+
+
+### Miscellaneous
+
+* **deps:** update dependency axe-core to v4.14.0 ([#3354](https://github.com/MustardSeedNetworks/seed/issues/3354)) ([368f7b1](https://github.com/MustardSeedNetworks/seed/commit/368f7b1917af479a3b8b7c1c9391da3afab62753))
+* **deps:** update frontend toolchain ([#3185](https://github.com/MustardSeedNetworks/seed/issues/3185)) ([e259ca8](https://github.com/MustardSeedNetworks/seed/commit/e259ca8202e95c76fd322d382f2040f174b25d5d))
+
 ## [0.270.0](https://github.com/MustardSeedNetworks/seed/compare/v0.269.0...v0.270.0) (2026-10-16)
 
 
