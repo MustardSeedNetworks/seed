@@ -157,12 +157,12 @@ func SingleClientID(ctx context.Context, clients ClientLister) (string, error) {
 // append decrypts one stored credential onto the sweep list.
 //
 // Kind decides which columns are read rather than inferring from which ones
-// are populated: the column is NOT NULL under a CHECK of ('v2c','v3','ssh'),
-// so it is the row's own answer, and a v3 row whose user is still blank would
-// otherwise be silently read as a v2c row with no community. An SSH login is
-// not an SNMP credential and is skipped.
+// are populated: the column is NOT NULL under a CHECK of
+// ('v2c','v3','ssh','winrm'), so it is the row's own answer, and a v3 row whose
+// user is still blank would otherwise be silently read as a v2c row with no
+// community. SSH and WinRM logins are not SNMP credentials and are skipped.
 func (v *VaultSNMPCredentials) append(out *snmp.Session, cred *polling.Credentials) error {
-	if cred == nil || cred.Kind == polling.CredentialKindSSH {
+	if cred == nil || (cred.Kind != polling.CredentialKindV2c && cred.Kind != polling.CredentialKindV3) {
 		return nil
 	}
 

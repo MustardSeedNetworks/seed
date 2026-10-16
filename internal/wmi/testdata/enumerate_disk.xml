@@ -1,0 +1,17 @@
+<s:Envelope xml:lang="en-US" xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:n="http://schemas.xmlsoap.org/ws/2004/09/enumeration" xmlns:w="http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd" xmlns:p="http://schemas.microsoft.com/wbem/wsman/1/wsman.xsd">
+  <s:Header>
+    <a:Action>http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerateResponse</a:Action>
+    <a:MessageID>uuid:7F6E5D4C-3B2A-4198-9F8E-7D6C5B4A3928</a:MessageID>
+    <a:To>http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous</a:To>
+    <a:RelatesTo>uuid:00000000-0000-0000-0000-000000000000</a:RelatesTo>
+  </s:Header>
+  <s:Body>
+    <n:EnumerateResponse>
+      <n:EnumerationContext></n:EnumerationContext>
+      <w:Items>
+        <w:XmlFragment><DeviceID>C:</DeviceID><FreeSpace>41275392000</FreeSpace><Size>85348298752</Size></w:XmlFragment>
+      </w:Items>
+      <w:EndOfSequence/>
+    </n:EnumerateResponse>
+  </s:Body>
+</s:Envelope>

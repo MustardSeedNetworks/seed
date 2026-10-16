@@ -19,6 +19,7 @@ export interface Credentials {
   snmpV3AuthProto?: string;
   snmpV3PrivProto?: string;
   sshUser?: string;
+  winrmUser?: string;
   createdAt: string;
   updatedAt: string;
 }

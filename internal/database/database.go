@@ -83,6 +83,7 @@ type DB struct {
 	pollingTargets    *PollingTargetRepository
 	deviceCredentials *DeviceCredentialRepository
 	deviceConfigs     *DeviceConfigRepository
+	wmi               *WMIRepository
 	deviceGroups      *DeviceGroupRepository
 	jobs              *JobRepository
 	outbox            *OutboxRepository

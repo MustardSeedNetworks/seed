@@ -1,0 +1,17 @@
+<s:Envelope xml:lang="en-US" xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:n="http://schemas.xmlsoap.org/ws/2004/09/enumeration" xmlns:w="http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd" xmlns:p="http://schemas.microsoft.com/wbem/wsman/1/wsman.xsd">
+  <s:Header>
+    <a:Action>http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerateResponse</a:Action>
+    <a:MessageID>uuid:2F1A0B9C-8D7E-4F60-A1B2-C3D4E5F60718</a:MessageID>
+    <a:To>http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous</a:To>
+    <a:RelatesTo>uuid:00000000-0000-0000-0000-000000000000</a:RelatesTo>
+  </s:Header>
+  <s:Body>
+    <n:EnumerateResponse>
+      <n:EnumerationContext>uuid:9A8B7C6D-5E4F-4A3B-8C2D-1E0F9A8B7C6D</n:EnumerationContext>
+      <w:Items>
+        <w:XmlFragment><Name>Microsoft 365 Apps for enterprise - en-us</Name><Vendor>Microsoft Corporation</Vendor><Version>16.0.20430.20146</Version></w:XmlFragment>
+        <w:XmlFragment><Name>Microsoft OneDrive</Name><Vendor>Microsoft Corporation</Vendor><Version>26.178.0913.0007</Version></w:XmlFragment>
+      </w:Items>
+    </n:EnumerateResponse>
+  </s:Body>
+</s:Envelope>

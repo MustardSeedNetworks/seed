@@ -65,6 +65,8 @@ type Input struct {
 	SNMPv3PrivProto string
 	SSHUser         string // ssh (configuration backup login)
 	SSHPassword     string
+	WinRMUser       string // winrm (Windows inventory login)
+	WinRMPassword   string
 }
 
 // Service is the device-credential CRUD use-case.
@@ -108,7 +110,7 @@ func (s *Service) Save(ctx context.Context, in Input) (*polling.Credentials, err
 		return nil, ValidationError{Msg: "name is required"}
 	}
 	kinds := 0
-	for _, field := range []string{in.Community, in.V3User, in.SSHUser + in.SSHPassword} {
+	for _, field := range []string{in.Community, in.V3User, in.SSHUser + in.SSHPassword, in.WinRMUser + in.WinRMPassword} {
 		if strings.TrimSpace(field) != "" {
 			kinds++
 		}
@@ -116,14 +118,16 @@ func (s *Service) Save(ctx context.Context, in Input) (*polling.Credentials, err
 	switch {
 	case kinds > 1:
 		return nil, ValidationError{
-			Msg: "a credential is one of v2c (community), v3 (user) or SSH (sshUser), not several",
+			Msg: "a credential is one of v2c (community), v3 (user), SSH (sshUser) or WinRM (winrmUser), not several",
 		}
 	case kinds == 0:
 		return nil, ValidationError{
-			Msg: "provide a community string (v2c), a user (v3) or an SSH user and password",
+			Msg: "provide a community string (v2c), a user (v3), or a user and password for SSH or WinRM",
 		}
 	case (strings.TrimSpace(in.SSHUser) == "") != (strings.TrimSpace(in.SSHPassword) == ""):
 		return nil, ValidationError{Msg: "an SSH credential needs both sshUser and sshPassword"}
+	case (strings.TrimSpace(in.WinRMUser) == "") != (strings.TrimSpace(in.WinRMPassword) == ""):
+		return nil, ValidationError{Msg: "a WinRM credential needs both winrmUser and winrmPassword"}
 	}
 
 	c := &polling.Credentials{
@@ -134,6 +138,7 @@ func (s *Service) Save(ctx context.Context, in Input) (*polling.Credentials, err
 		SNMPv3AuthProto: in.SNMPv3AuthProto,
 		SNMPv3PrivProto: in.SNMPv3PrivProto,
 		SSHUser:         strings.TrimSpace(in.SSHUser),
+		WinRMUser:       strings.TrimSpace(in.WinRMUser),
 	}
 
 	for _, f := range []struct {
@@ -145,6 +150,7 @@ func (s *Service) Save(ctx context.Context, in Input) (*polling.Credentials, err
 		{in.V3AuthSecret, &c.SNMPv3AuthCT, "v3 auth secret"},
 		{in.V3PrivSecret, &c.SNMPv3PrivCT, "v3 privacy secret"},
 		{in.SSHPassword, &c.SSHPasswordCT, "SSH password"},
+		{in.WinRMPassword, &c.WinRMPasswordCT, "WinRM password"},
 	} {
 		if strings.TrimSpace(f.plaintext) == "" {
 			continue

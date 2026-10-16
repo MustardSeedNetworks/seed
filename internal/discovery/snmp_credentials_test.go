@@ -66,6 +66,9 @@ func TestVaultSNMPCredentialsResolvesTheOneClient(t *testing.T) {
 					SNMPv3AuthProto: "SHA256", SNMPv3PrivProto: "AES256",
 					SecurityLevel: "authPriv",
 				},
+				// Login credentials are not SNMP ones and the sweep skips them.
+				{ID: "c3", Name: "ssh", Kind: polling.CredentialKindSSH, SSHUser: "backup", SSHPasswordCT: "pw"},
+				{ID: "c4", Name: "winrm", Kind: polling.CredentialKindWinRM, WinRMUser: "inv", WinRMPasswordCT: "pw"},
 			},
 		}},
 	)

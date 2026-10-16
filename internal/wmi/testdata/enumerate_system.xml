@@ -1,0 +1,17 @@
+<s:Envelope xml:lang="en-US" xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:n="http://schemas.xmlsoap.org/ws/2004/09/enumeration" xmlns:w="http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd" xmlns:p="http://schemas.microsoft.com/wbem/wsman/1/wsman.xsd">
+  <s:Header>
+    <a:Action>http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerateResponse</a:Action>
+    <a:MessageID>uuid:3B2C1D0E-F9A8-4B76-8C54-3E2D1C0B9A87</a:MessageID>
+    <a:To>http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous</a:To>
+    <a:RelatesTo>uuid:00000000-0000-0000-0000-000000000000</a:RelatesTo>
+  </s:Header>
+  <s:Body>
+    <n:EnumerateResponse>
+      <n:EnumerationContext></n:EnumerationContext>
+      <w:Items>
+        <w:XmlFragment><Domain>WORKGROUP</Domain><Manufacturer>QEMU</Manufacturer><Model>Standard PC (Q35 + ICH9, 2009)</Model><TotalPhysicalMemory>8588746752</TotalPhysicalMemory></w:XmlFragment>
+      </w:Items>
+      <w:EndOfSequence/>
+    </n:EnumerateResponse>
+  </s:Body>
+</s:Envelope>

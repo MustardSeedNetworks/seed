@@ -144,6 +144,14 @@ func TestResolveFailsClosed(t *testing.T) {
 			dec:    fakeDecrypter{},
 			target: &polling.Target{ID: "t-1", CredentialsID: "cred-1"},
 		},
+		{
+			name: "credential is a WinRM login",
+			store: &fakeCredStore{creds: &polling.Credentials{
+				Kind: polling.CredentialKindWinRM, WinRMUser: `LAB\inventory`, WinRMPasswordCT: "enc:v1:pw",
+			}},
+			dec:    fakeDecrypter{},
+			target: &polling.Target{ID: "t-1", CredentialsID: "cred-1"},
+		},
 	}
 
 	for _, tt := range tests {

@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/wmi-inventory-response.schema.json",
+  "$ref": "#/$defs/WMIInventoryResponse",
+  "$defs": {
+    "ComputerSystem": {
+      "properties": {
+        "manufacturer": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        },
+        "memoryBytes": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "manufacturer",
+        "model",
+        "domain",
+        "memoryBytes"
+      ]
+    },
+    "Disk": {
+      "properties": {
+        "deviceId": {
+          "type": "string"
+        },
+        "sizeBytes": {
+          "type": "integer"
+        },
+        "freeBytes": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "deviceId",
+        "sizeBytes",
+        "freeBytes"
+      ]
+    },
+    "Firmware": {
+      "properties": {
+        "serialNumber": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "serialNumber",
+        "version"
+      ]
+    },
+    "Inventory": {
+      "properties": {
+        "os": {
+          "$ref": "#/$defs/OperatingSystem"
+        },
+        "system": {
+          "$ref": "#/$defs/ComputerSystem"
+        },
+        "firmware": {
+          "$ref": "#/$defs/Firmware"
+        },
+        "processors": {
+          "items": {
+            "$ref": "#/$defs/Processor"
+          },
+          "type": "array"
+        },
+        "disks": {
+          "items": {
+            "$ref": "#/$defs/Disk"
+          },
+          "type": "array"
+        },
+        "adapters": {
+          "items": {
+            "$ref": "#/$defs/NetworkAdapter"
+          },
+          "type": "array"
+        },
+        "software": {
+          "items": {
+            "$ref": "#/$defs/Program"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "os",
+        "system",
+        "firmware",
+        "processors",
+        "disks",
+        "adapters",
+        "software"
+      ]
+    },
+    "NetworkAdapter": {
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "macAddress": {
+          "type": "string"
+        },
+        "ipAddresses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "description",
+        "macAddress",
+        "ipAddresses"
+      ]
+    },
+    "OperatingSystem": {
+      "properties": {
+        "caption": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "buildNumber": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "installDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastBootUpTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "caption",
+        "version",
+        "buildNumber",
+        "architecture"
+      ]
+    },
+    "Processor": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "cores": {
+          "type": "integer"
+        },
+        "logicalCores": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "cores",
+        "logicalCores"
+      ]
+    },
+    "Program": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "vendor"
+      ]
+    },
+    "WMIInventoryResponse": {
+      "properties": {
+        "targetId": {
+          "type": "string"
+        },
+        "collectedAt": {
+          "type": "string"
+        },
+        "inventory": {
+          "$ref": "#/$defs/Inventory"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "targetId",
+        "collectedAt",
+        "inventory"
+      ]
+    }
+  },
+  "title": "WMIInventoryResponse",
+  "description": "WMIInventoryResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

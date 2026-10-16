@@ -438,6 +438,14 @@ func Targets() []Target {
 		{&api.DeviceGroupListResponse{}, "device-group-list-response.schema.json"},
 		{&api.DeviceGroupSummaryResponse{}, "device-group-summary-response.schema.json"},
 
+		// Windows inventory over WS-Management (P-D11).
+		{&api.WMITargetRequest{}, "wmi-target-request.schema.json"},
+		{&api.WMITargetResponse{}, "wmi-target-response.schema.json"},
+		{&api.WMITargetListResponse{}, "wmi-target-list-response.schema.json"},
+		{&api.WMICertificateRequest{}, "wmi-certificate-request.schema.json"},
+		{&api.WMIRunRequest{}, "wmi-run-request.schema.json"},
+		{&api.WMIInventoryResponse{}, "wmi-inventory-response.schema.json"},
+
 		// The alert inbox and its acknowledge/resolve actions (Stage A5.2).
 		{&api.AlertListResponse{}, "alert-list-response.schema.json"},
 		{&api.AlertAcknowledgeResponse{}, "alert-acknowledge-response.schema.json"},

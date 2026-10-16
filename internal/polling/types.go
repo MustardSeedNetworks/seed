@@ -47,11 +47,13 @@ var ErrCredentialsNotFound = errors.New("device credentials not found")
 // keyring seam.
 // Credential kinds. A credential is exactly one of these; the schema has no
 // representation for a row that is both or neither. SSH is the configuration
-// backup login (P-D1): the SNMP poller never uses it.
+// backup login (P-D1) and WinRM the Windows inventory login (P-D11): the SNMP
+// poller uses neither.
 const (
-	CredentialKindV2c = "v2c"
-	CredentialKindV3  = "v3"
-	CredentialKindSSH = "ssh"
+	CredentialKindV2c   = "v2c"
+	CredentialKindV3    = "v3"
+	CredentialKindSSH   = "ssh"
+	CredentialKindWinRM = "winrm"
 )
 
 // SNMPv3 security levels, in the spelling RFC 3414 uses. The level and the
@@ -81,6 +83,8 @@ type Credentials struct {
 	SNMPv3PrivProto string    `json:"snmpV3PrivProto,omitempty"`
 	SSHUser         string    `json:"sshUser,omitempty"`
 	SSHPasswordCT   string    `json:"-"`
+	WinRMUser       string    `json:"winrmUser,omitempty"`
+	WinRMPasswordCT string    `json:"-"`
 	CreatedAt       time.Time `json:"createdAt"`
 	UpdatedAt       time.Time `json:"updatedAt"`
 }

@@ -112,6 +112,7 @@ func (s *Server) registerJobKinds() {
 	s.registerDefaultPacketCaptureKind()
 	s.registerDeviceConfigKind()
 	s.registerAutotestKind()
+	s.registerWMIKind()
 }
 
 // registerSpeedtestKind registers the speedtest kind with an injectable tester

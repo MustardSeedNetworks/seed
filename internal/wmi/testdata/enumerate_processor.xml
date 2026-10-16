@@ -1,0 +1,17 @@
+<s:Envelope xml:lang="en-US" xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:n="http://schemas.xmlsoap.org/ws/2004/09/enumeration" xmlns:w="http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd" xmlns:p="http://schemas.microsoft.com/wbem/wsman/1/wsman.xsd">
+  <s:Header>
+    <a:Action>http://schemas.xmlsoap.org/ws/2004/09/enumeration/EnumerateResponse</a:Action>
+    <a:MessageID>uuid:6E5D4C3B-2A19-4087-8E7D-6C5B4A392817</a:MessageID>
+    <a:To>http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous</a:To>
+    <a:RelatesTo>uuid:00000000-0000-0000-0000-000000000000</a:RelatesTo>
+  </s:Header>
+  <s:Body>
+    <n:EnumerateResponse>
+      <n:EnumerationContext></n:EnumerationContext>
+      <w:Items>
+        <w:XmlFragment><Name>AMD EPYC 7302P 16-Core Processor</Name><NumberOfCores>4</NumberOfCores><NumberOfLogicalProcessors>4</NumberOfLogicalProcessors></w:XmlFragment>
+      </w:Items>
+      <w:EndOfSequence/>
+    </n:EnumerateResponse>
+  </s:Body>
+</s:Envelope>

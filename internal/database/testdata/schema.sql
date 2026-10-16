@@ -422,6 +422,9 @@ CREATE UNIQUE INDEX idx_webauthn_credential_id
 -- index: idx_webauthn_user
 CREATE INDEX idx_webauthn_user ON webauthn_credentials(user_id);
 
+-- index: idx_wmi_targets_credentials
+CREATE INDEX idx_wmi_targets_credentials ON wmi_targets(client_id, credentials_id);
+
 -- table: alert_deliveries
 CREATE TABLE alert_deliveries (
     alert_id     INTEGER NOT NULL REFERENCES alerts(id) ON DELETE CASCADE,
@@ -613,7 +616,7 @@ CREATE TABLE "device_credentials" (
 				id                 TEXT NOT NULL,
 				client_id          TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
 				name               TEXT NOT NULL,
-				kind               TEXT NOT NULL CHECK (kind IN ('v2c','v3','ssh')),
+				kind               TEXT NOT NULL CHECK (kind IN ('v2c','v3','ssh','winrm')),
 				security_level     TEXT CHECK (security_level IS NULL OR security_level IN ('noAuthNoPriv','authNoPriv','authPriv')),
 				snmp_community_enc BLOB,
 				snmp_v3_user       TEXT,
@@ -623,6 +626,8 @@ CREATE TABLE "device_credentials" (
 				snmp_v3_priv_proto TEXT CHECK (snmp_v3_priv_proto IS NULL OR snmp_v3_priv_proto IN ('DES','AES','AES192','AES256')),
 				ssh_user           TEXT,
 				ssh_password_enc   BLOB,
+				winrm_user         TEXT,
+				winrm_password_enc BLOB,
 				created_at         TEXT NOT NULL,
 				updated_at         TEXT NOT NULL,
 				PRIMARY KEY (id),
@@ -632,9 +637,12 @@ CREATE TABLE "device_credentials" (
 				CHECK (snmp_v3_auth_enc   IS NULL OR CAST(snmp_v3_auth_enc   AS TEXT) GLOB 'enc:v[0-9]*:*'),
 				CHECK (snmp_v3_priv_enc   IS NULL OR CAST(snmp_v3_priv_enc   AS TEXT) GLOB 'enc:v[0-9]*:*'),
 				CHECK (ssh_password_enc   IS NULL OR CAST(ssh_password_enc   AS TEXT) GLOB 'enc:v[0-9]*:*'),
+				CHECK (winrm_password_enc IS NULL OR CAST(winrm_password_enc AS TEXT) GLOB 'enc:v[0-9]*:*'),
 
-				-- SNMP kinds carry nothing of SSH's.
+				-- Only an SSH credential carries SSH's columns, and only a WinRM
+				-- credential WinRM's.
 				CHECK (kind = 'ssh' OR (ssh_user IS NULL AND ssh_password_enc IS NULL)),
+				CHECK (kind = 'winrm' OR (winrm_user IS NULL AND winrm_password_enc IS NULL)),
 
 				CHECK (kind <> 'v2c' OR (
 					snmp_community_enc IS NOT NULL
@@ -656,6 +664,19 @@ CREATE TABLE "device_credentials" (
 				CHECK (kind <> 'ssh' OR (
 					ssh_user IS NOT NULL AND ssh_user <> ''
 					AND ssh_password_enc IS NOT NULL
+					AND security_level IS NULL
+					AND snmp_community_enc IS NULL
+					AND snmp_v3_user     IS NULL
+					AND snmp_v3_auth_enc IS NULL
+					AND snmp_v3_priv_enc IS NULL
+					AND snmp_v3_auth_proto IS NULL
+					AND snmp_v3_priv_proto IS NULL
+				)),
+
+				-- WinRM is a user and a password, and nothing of SNMP's.
+				CHECK (kind <> 'winrm' OR (
+					winrm_user IS NOT NULL AND winrm_user <> ''
+					AND winrm_password_enc IS NOT NULL
 					AND security_level IS NULL
 					AND snmp_community_enc IS NULL
 					AND snmp_v3_user     IS NULL
@@ -1231,5 +1252,42 @@ CREATE TABLE webauthn_credentials (
 				created_at TEXT NOT NULL,
 				last_used_at TEXT,
 				FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+			) STRICT;
+
+-- table: wmi_inventories
+CREATE TABLE wmi_inventories (
+				client_id    TEXT NOT NULL,
+				target_id    TEXT NOT NULL,
+				collected_at TEXT NOT NULL,
+				inventory    TEXT NOT NULL CHECK (json_valid(inventory)),
+				PRIMARY KEY (client_id, target_id),
+				FOREIGN KEY (client_id, target_id)
+					REFERENCES wmi_targets(client_id, id) ON DELETE CASCADE
+			) STRICT;
+
+-- table: wmi_targets
+CREATE TABLE wmi_targets (
+				id                  TEXT NOT NULL PRIMARY KEY,
+				client_id           TEXT NOT NULL REFERENCES clients(id),
+				name                TEXT NOT NULL CHECK (name <> ''),
+				host                TEXT NOT NULL CHECK (host <> ''),
+				port                INTEGER NOT NULL CHECK (port BETWEEN 1 AND 65535),
+				credentials_id      TEXT NOT NULL,
+				cert_sha256         TEXT CHECK (cert_sha256 IS NULL
+					OR (length(cert_sha256) = 64 AND cert_sha256 NOT GLOB '*[^0-9A-F]*')),
+				pending_cert_sha256 TEXT CHECK (pending_cert_sha256 IS NULL
+					OR (length(pending_cert_sha256) = 64 AND pending_cert_sha256 NOT GLOB '*[^0-9A-F]*')),
+				last_attempt_at     TEXT,
+				last_status         TEXT CHECK (last_status IS NULL OR last_status IN
+					('ok','auth_failed','cert_mismatch','cert_unconfirmed','unreachable','query_failed','error')),
+				last_error          TEXT,
+				created_at          TEXT NOT NULL,
+				updated_at          TEXT NOT NULL,
+				UNIQUE (client_id, id),
+				UNIQUE (client_id, host, port),
+				CHECK ((last_attempt_at IS NULL) = (last_status IS NULL)),
+				CHECK (last_status IS NULL OR (last_status = 'ok') = (last_error IS NULL)),
+				FOREIGN KEY (client_id, credentials_id)
+					REFERENCES device_credentials(client_id, id) ON DELETE RESTRICT
 			) STRICT;
 

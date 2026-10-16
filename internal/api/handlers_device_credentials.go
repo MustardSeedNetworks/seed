@@ -2,7 +2,7 @@ package api
 
 // /api/v1/device-credentials endpoints — #1799. The vault is the only
 // production device credential store (SNMP for polling, SSH for configuration
-// backup); this is how an operator fills it.
+// backup, WinRM for Windows inventory); this is how an operator fills it.
 //
 //   GET    /api/v1/device-credentials         list (this session's client only)
 //   POST   /api/v1/device-credentials         create
@@ -50,6 +50,9 @@ type DeviceCredentialRequest struct {
 	V3PrivProto  string `json:"snmpV3PrivProto,omitempty"`
 	SSHUser      string `json:"sshUser,omitempty"`
 	SSHPassword  string `json:"sshPassword,omitempty"`
+	// WinRMUser is DOMAIN\user, user@domain, or a local account name.
+	WinRMUser     string `json:"winrmUser,omitempty"`
+	WinRMPassword string `json:"winrmPassword,omitempty"`
 }
 
 // DeviceCredentialListResponse is the GET /device-credentials envelope.
@@ -177,6 +180,8 @@ func (s *Server) saveDeviceCredential(w http.ResponseWriter, r *http.Request, id
 		SNMPv3PrivProto: in.V3PrivProto,
 		SSHUser:         in.SSHUser,
 		SSHPassword:     in.SSHPassword,
+		WinRMUser:       in.WinRMUser,
+		WinRMPassword:   in.WinRMPassword,
 	})
 	if err != nil {
 		// No credential_id field: the logging middleware already records
@@ -190,9 +195,10 @@ func (s *Server) saveDeviceCredential(w http.ResponseWriter, r *http.Request, id
 	}
 	// Devices already found were asked with the credentials that existed
 	// then; the new one reaches them only if they are asked again. A server
-	// built for credential storage alone has no profiler, and an SSH login
-	// is not something SNMP profiling can use.
-	if s.profiler != nil && saved.Kind != polling.CredentialKindSSH {
+	// built for credential storage alone has no profiler, and an SSH or
+	// WinRM login is not something SNMP profiling can use.
+	isSNMP := saved.Kind == polling.CredentialKindV2c || saved.Kind == polling.CredentialKindV3
+	if s.profiler != nil && isSNMP {
 		s.profiler.ReprofileSNMPSilent()
 	}
 	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, saved)
@@ -217,8 +223,8 @@ func (s *Server) deleteDeviceCredential(w http.ResponseWriter, r *http.Request, 
 // writeCredentialError maps the use-case's sentinels onto status codes.
 //
 // In-use is 409 rather than 400: the request is well-formed and the caller is
-// authorised; the conflict is with a polling or backup target that still
-// references the credential, and deleting it anyway would leave that target
+// authorised; the conflict is with a polling, backup or inventory target that
+// still references the credential, and deleting it anyway would leave that target
 // unable to authenticate.
 func writeCredentialError(w http.ResponseWriter, r *http.Request, err error) {
 	var ve credentials.ValidationError
@@ -229,7 +235,7 @@ func writeCredentialError(w http.ResponseWriter, r *http.Request, err error) {
 		writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "Credential not found")
 	case errors.Is(err, credentials.ErrInUse):
 		writeError(w, r, http.StatusConflict, ErrCodeConflict,
-			"Credential is still referenced by a polling or backup target")
+			"Credential is still referenced by a polling, backup or inventory target")
 	case errors.Is(err, credentials.ErrUnavailable):
 		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail,
 			"Credential store unavailable")
