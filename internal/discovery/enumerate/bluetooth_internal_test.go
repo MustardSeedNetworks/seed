@@ -1,9 +1,13 @@
 package enumerate
 
 import (
+	"context"
+	"errors"
 	"math"
 	"net"
+	"strings"
 	"testing"
+	"time"
 )
 
 // bleAppearance builds the 16-bit appearance value for a SIG category. The low
@@ -206,4 +210,61 @@ func TestIsInLocalSubnet(t *testing.T) {
 			t.Error("a scanner with no subnet reported an address as local")
 		}
 	})
+}
+
+// firstSeenStore stands in for the database: every device it is given was
+// first heard at first.
+type firstSeenStore struct {
+	first time.Time
+	got   []BluetoothDevice
+	err   error
+}
+
+func (f *firstSeenStore) RememberBluetoothDevices(_ context.Context, devices []BluetoothDevice) error {
+	if f.err != nil {
+		return f.err
+	}
+	for i := range devices {
+		devices[i].FirstSeen = f.first
+	}
+	f.got = append(f.got, devices...)
+	return nil
+}
+
+// TestScanRemembersDevices pins that a scan hands the store every device it
+// keeps, under the address it reports, and returns the stored first-seen time
+// rather than this scan's.
+func TestScanRemembersDevices(t *testing.T) {
+	first := time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC)
+	store := &firstSeenStore{first: first}
+	s := NewBluetoothScanner("hci0", nil, nil)
+
+	kept, err := s.keep(context.Background(), store, defaultMinRSSI, []BluetoothDevice{
+		{Address: "74-da-cf-00-00-01", Type: BluetoothTypeBLE, RSSI: -60},
+		{Address: "7D:8E:03:2E:A3:3D", Type: BluetoothTypeBLE, RSSI: -95},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(kept) != 1 || len(store.got) != 1 {
+		t.Fatalf("kept %d, stored %d; want the one device above the RSSI floor", len(kept), len(store.got))
+	}
+	if kept[0].Address != "74:DA:CF:00:00:01" || store.got[0].Address != kept[0].Address {
+		t.Errorf("address returned %q, stored %q; want 74:DA:CF:00:00:01 for both",
+			kept[0].Address, store.got[0].Address)
+	}
+	if !kept[0].FirstSeen.Equal(first) {
+		t.Errorf("first seen = %v, want the stored %v", kept[0].FirstSeen, first)
+	}
+}
+
+// TestScanFailsWhenDevicesCannotBeRecorded pins that a scan whose devices
+// were not stored says so instead of reporting this scan as their first.
+func TestScanFailsWhenDevicesCannotBeRecorded(t *testing.T) {
+	s := NewBluetoothScanner("hci0", nil, nil)
+	_, err := s.keep(context.Background(), &firstSeenStore{err: errors.New("disk full")}, defaultMinRSSI,
+		[]BluetoothDevice{{Address: "74:DA:CF:00:00:01", Type: BluetoothTypeBLE, RSSI: -60}})
+	if err == nil || !strings.Contains(err.Error(), "disk full") {
+		t.Fatalf("err = %v, want the store's failure", err)
+	}
 }

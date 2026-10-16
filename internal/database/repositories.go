@@ -202,6 +202,17 @@ func (db *DB) Microbursts() *MicroburstsRepository {
 	return db.microbursts
 }
 
+// BluetoothDevices returns the repository every Bluetooth scan writes into.
+func (db *DB) BluetoothDevices() *BluetoothDevicesRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.bluetoothDevices == nil {
+		db.bluetoothDevices = &BluetoothDevicesRepository{db: db}
+	}
+	return db.bluetoothDevices
+}
+
 // VoIPStreams returns the repository the VoIP analyser writes into.
 func (db *DB) VoIPStreams() *VoIPStreamsRepository {
 	db.mu.Lock()
