@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.273.0](https://github.com/MustardSeedNetworks/seed/compare/v0.272.1...v0.273.0) (2026-10-16)
+
+
+### Features
+
+* **autotest:** keep each run and export it with jack label and asset tag (P-E2) ([#3558](https://github.com/MustardSeedNetworks/seed/issues/3558)) ([057f17b](https://github.com/MustardSeedNetworks/seed/commit/057f17ba35e24ce6e26e12e4499088d3254ba50b)), closes [#3557](https://github.com/MustardSeedNetworks/seed/issues/3557)
+
+
+### Continuous Integration
+
+* call shared product workflows for the common jobs ([#3551](https://github.com/MustardSeedNetworks/seed/issues/3551)) ([ca2d502](https://github.com/MustardSeedNetworks/seed/commit/ca2d5027a1ec0d57fae757833a4e63dbe0ee586c))
+
 ## [0.272.1](https://github.com/MustardSeedNetworks/seed/compare/v0.272.0...v0.272.1) (2026-10-16)
 
 
