@@ -33,22 +33,23 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 
 ### Other Workflows
 
-| Workflow              | Purpose                                            |
-| --------------------- | -------------------------------------------------- |
-| `codeql.yml`          | CodeQL security analysis (Go, JS/TS)               |
-| `dead-code.yml`       | Weekly dead code detection                         |
-| `docs-link-check.yml` | Weekly external link check (split out of `ci.yml`) |
-| `label-sync.yml`      | Sync label definitions                             |
-| `labeler.yml`         | Auto-label PRs and issues                          |
-| `license-check.yml`   | Verify dependency licenses                         |
-| `main-retry.yml`      | Retry a failed main run once (see the file header) |
-| `pr-body-lint.yml`    | Enforce the PR body template                       |
-| `release-please.yml`  | Automated version management and release PRs       |
-| `release.yml`         | goreleaser release builds, signing, provenance     |
-| `scorecard.yml`       | OpenSSF Scorecard                                  |
-| `title-lint.yml`      | Lint PR and issue titles                           |
-| `todo-tracker.yml`    | Weekly TODO tracking                               |
-| `update-oui.yml`      | Refresh the OUI vendor database                    |
+| Workflow                   | Purpose                                            |
+| -------------------------- | -------------------------------------------------- |
+| `codeql.yml`               | CodeQL security analysis (Go, JS/TS)               |
+| `dead-code.yml`            | Weekly dead code detection                         |
+| `docs-link-check.yml`      | Weekly external link check (split out of `ci.yml`) |
+| `label-sync.yml`           | Sync label definitions                             |
+| `labeler.yml`              | Auto-label PRs and issues                          |
+| `license-check.yml`        | Verify dependency licenses                         |
+| `main-retry.yml`           | Retry a failed main run once (see the file header) |
+| `merge-queue-ejection.yml` | Stop a PR the merge queue keeps ejecting           |
+| `pr-body-lint.yml`         | Enforce the PR body template                       |
+| `release-please.yml`       | Automated version management and release PRs       |
+| `release.yml`              | goreleaser release builds, signing, provenance     |
+| `scorecard.yml`            | OpenSSF Scorecard                                  |
+| `title-lint.yml`           | Lint PR and issue titles                           |
+| `todo-tracker.yml`         | Weekly TODO tracking                               |
+| `update-oui.yml`           | Refresh the OUI vendor database                    |
 
 ## Shared UI artifact
 

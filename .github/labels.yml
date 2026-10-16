@@ -115,6 +115,9 @@
 - name: "dependencies"
   color: 0366D6
   description: "Dependency update."
+- name: "stop-updating"
+  color: B60205
+  description: "Renovate does not rebase or re-arm this PR"
 - name: "todo"
   color: FBCA04
   description: "Auto-filed from a TODO/FIXME/HACK/XXX code comment (todo-tracker workflow)."

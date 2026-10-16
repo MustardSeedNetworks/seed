@@ -1,0 +1,19 @@
+name: Merge Queue Ejection
+
+# Stops a PR that keeps failing in the merge queue from re-entering it on
+# every main commit (support plan G-17; trellis#731 was ejected 294 times).
+# The logic, and why it counts ejections rather than waiting for a green PR
+# run, is in the reusable workflow's header.
+
+on:
+  pull_request:
+    types: [dequeued]
+
+permissions: {}
+
+jobs:
+  merge-queue-ejection:
+    permissions:
+      issues: write
+      pull-requests: write
+    uses: MustardSeedNetworks/.github/.github/workflows/merge-queue-ejection.yml@e8fc863e01646ea076b89cc47a6ed55de00c9d3c # .github#156, untagged
