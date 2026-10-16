@@ -100,7 +100,6 @@ export interface RailStatus {
 }
 
 const STORAGE_KEY = 'seed-sidebar-collapsed';
-
 interface NavItemButtonProps {
   item: SidebarNavItem;
   active: boolean;
