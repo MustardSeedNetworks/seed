@@ -1038,6 +1038,9 @@ jobs:
           python3 scripts/test-check-product-name.py
           python3 scripts/check-product-name.py
 
+      - name: Verify the HIBP CodeQL SARIF filter
+        run: python3 scripts/test-codeql-drop-hibp-weak-hash.py
+
       # Runs in quality, not in the bench job: the gate's own correctness does
       # not depend on benchmarks having run, and a docs-only PR skips bench.
       - name: Verify benchmark regression gate

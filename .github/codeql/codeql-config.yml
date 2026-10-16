@@ -4,12 +4,13 @@
 # Extends the default Go + JavaScript/TypeScript analysis with the
 # security-extended and security-and-quality query suites.
 #
-# go/weak-sensitive-data-hashing still runs on the rest of the repo.
-# internal/auth/hibp.go is left out of analysis: the HIBP range API
-# requires SHA-1 of the password, only the five-character prefix is sent,
-# and the digest is not stored. A query-filter cannot name a path, so the
-# file is ignored instead of disabling the query everywhere. Gosec and
-# Semgrep still see the inline suppressions in that file.
+# go/weak-sensitive-data-hashing stays enabled for the whole repository.
+# A query filter cannot name a path, and the Go extractor ignores
+# paths-ignore, so this file does not try to exclude internal/auth/hibp.go.
+# codeql.yml drops that one result from the uploaded Go SARIF. The HIBP
+# range API requires SHA-1 of the password; only the five-character prefix
+# is sent, and the digest is not stored. Gosec and Semgrep still see the
+# inline suppressions in that file.
 # =============================================================================
 
 name: "Seed CodeQL config"
@@ -17,6 +18,3 @@ name: "Seed CodeQL config"
 queries:
   - uses: security-extended
   - uses: security-and-quality
-
-paths-ignore:
-  - internal/auth/hibp.go
