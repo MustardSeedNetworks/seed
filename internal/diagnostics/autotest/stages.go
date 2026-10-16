@@ -220,13 +220,14 @@ type Target struct {
 	Host string
 }
 
-// Pinger sends one echo to host and returns its round-trip time.
-type Pinger func(ctx context.Context, host string) (time.Duration, error)
+// Pinger sends one echo to host through iface and returns its round-trip
+// time.
+type Pinger func(ctx context.Context, iface, host string) (time.Duration, error)
 
-// InternetStage pings every target. All answering is a pass, some a warning,
-// none a failure.
+// InternetStage pings every target through the interface under test. All
+// answering is a pass, some a warning, none a failure.
 func InternetStage(targets func(ctx context.Context) ([]Target, error), ping Pinger) Stage {
-	return Stage{Name: StageInternet, Run: func(ctx context.Context, _ string, _ Spec) StageReport {
+	return Stage{Name: StageInternet, Run: func(ctx context.Context, iface string, _ Spec) StageReport {
 		ts, err := targets(ctx)
 		if err != nil {
 			return StageReport{Outcome: OutcomeFail, Reason: ReasonError, Message: err.Error()}
@@ -237,7 +238,7 @@ func InternetStage(targets func(ctx context.Context) ([]Target, error), ping Pin
 		r := StageReport{}
 		reached := 0
 		for _, t := range ts {
-			rtt, pingErr := ping(ctx, t.Host)
+			rtt, pingErr := ping(ctx, iface, t.Host)
 			value := "unreachable"
 			if pingErr == nil {
 				reached++

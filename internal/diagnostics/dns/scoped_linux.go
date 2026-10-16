@@ -5,16 +5,34 @@
 package dns
 
 import (
+	"bufio"
+	"context"
+	"encoding/json"
+	"fmt"
 	"net"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
+// resolvedVarlinkSocket is systemd-resolved's varlink endpoint. Its
+// DumpDNSConfiguration call needs no privilege and names every link's
+// servers; systemd 259 no longer writes the per-link files below.
+const resolvedVarlinkSocket = "/run/systemd/resolve/io.systemd.Resolve"
+
+// dumpDNSConfigurationCall is the varlink request frame: a JSON object
+// terminated by a NUL.
+const dumpDNSConfigurationCall = `{"method":"io.systemd.Resolve.DumpDNSConfiguration","parameters":{}}` + "\x00"
+
+// resolvedVarlinkTimeout bounds the whole exchange with systemd-resolved.
+const resolvedVarlinkTimeout = 2 * time.Second
+
 // resolvedNetifDir holds systemd-resolved's per-link state, one file per
-// interface index. Its absence means this host does not run systemd-resolved
-// and cannot say which interface a resolver belongs to.
+// interface index, on the releases before 259. Its absence, with no varlink
+// answer either, means this host does not run systemd-resolved and cannot say
+// which interface a resolver belongs to.
 const resolvedNetifDir = "/run/systemd/resolve/netif"
 
 // interfaceResolversPlatform reads the resolvers systemd-resolved holds for
@@ -22,6 +40,12 @@ const resolvedNetifDir = "/run/systemd/resolve/netif"
 // is one list for the whole machine, and splitting it per interface would be
 // invention.
 func interfaceResolversPlatform(iface string) ([]string, bool) {
+	if reply, dumpErr := dumpResolvedDNSConfiguration(); dumpErr == nil {
+		if servers, parseErr := parseDNSConfiguration(reply, iface); parseErr == nil {
+			return servers, true
+		}
+	}
+
 	if _, err := os.Stat(resolvedNetifDir); err != nil {
 		return nil, false
 	}
@@ -39,6 +63,66 @@ func interfaceResolversPlatform(iface string) ([]string, bool) {
 	}
 
 	return parseResolvedLinkDNS(string(content)), true
+}
+
+// dumpResolvedDNSConfiguration makes one varlink call to systemd-resolved and
+// returns the reply frame without its terminating NUL.
+func dumpResolvedDNSConfiguration() ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), resolvedVarlinkTimeout)
+	defer cancel()
+	var d net.Dialer
+	conn, err := d.DialContext(ctx, "unix", resolvedVarlinkSocket)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = conn.Close() }()
+	if err = conn.SetDeadline(time.Now().Add(resolvedVarlinkTimeout)); err != nil {
+		return nil, err
+	}
+	if _, err = conn.Write([]byte(dumpDNSConfigurationCall)); err != nil {
+		return nil, err
+	}
+	reply, err := bufio.NewReader(conn).ReadBytes(0)
+	if err != nil {
+		return nil, err
+	}
+	return reply[:len(reply)-1], nil
+}
+
+// parseDNSConfiguration returns the servers systemd-resolved lists for iface
+// in a DumpDNSConfiguration reply. A link the reply does not list, or lists
+// without servers, has none. A varlink error reply (an older resolved without
+// the call) is an error, so the caller can try the per-link files instead.
+func parseDNSConfiguration(reply []byte, iface string) ([]string, error) {
+	var msg struct {
+		Error      string `json:"error"`
+		Parameters struct {
+			Configuration []struct {
+				Ifname  string `json:"ifname"`
+				Servers []struct {
+					AddressString string `json:"addressString"`
+				} `json:"servers"`
+			} `json:"configuration"`
+		} `json:"parameters"`
+	}
+	if err := json.Unmarshal(reply, &msg); err != nil {
+		return nil, fmt.Errorf("decode resolved reply: %w", err)
+	}
+	if msg.Error != "" {
+		return nil, fmt.Errorf("resolved: %s", msg.Error)
+	}
+	var servers []string
+	for _, link := range msg.Parameters.Configuration {
+		if link.Ifname != iface {
+			continue
+		}
+		for _, srv := range link.Servers {
+			if net.ParseIP(srv.AddressString) != nil {
+				servers = append(servers, srv.AddressString)
+			}
+		}
+	}
+	return servers, nil
 }
 
 // parseResolvedLinkDNS reads the DNS entries of a systemd-resolved link file.

@@ -422,7 +422,10 @@ func TestInternetStage(t *testing.T) {
 
 	targets := []autotest.Target{{Name: "A", Host: "192.0.2.1"}, {Name: "B", Host: "192.0.2.2"}}
 	ping := func(up ...string) autotest.Pinger {
-		return func(_ context.Context, host string) (time.Duration, error) {
+		return func(_ context.Context, iface, host string) (time.Duration, error) {
+			if iface != "eth0" {
+				return 0, errors.New("pinged through " + iface + ", not the interface under test")
+			}
 			if slices.Contains(up, host) {
 				return 1500 * time.Microsecond, nil
 			}
