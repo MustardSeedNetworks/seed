@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/netif/carrier"
 )
 
 // LinkState represents the current link state.
@@ -301,33 +302,26 @@ func (m *LinkMonitor) checkLinkStateLinux() LinkState {
 		return LinkStateUnknown
 	}
 
-	carrier := strings.TrimSpace(string(data))
-	if carrier == "1" {
+	if strings.TrimSpace(string(data)) == "1" {
 		return LinkStateUp
 	}
 	return LinkStateDown
 }
 
-// checkLinkStateDarwin checks link state on macOS using [net.Interface].
+// checkLinkStateDarwin checks link state on macOS from the media status.
 func (m *LinkMonitor) checkLinkStateDarwin() LinkState {
 	iface, err := net.InterfaceByName(m.interfaceName)
 	if err != nil {
 		return LinkStateUnknown
 	}
 
-	// Check if interface is UP and RUNNING (has carrier)
-	// net.FlagUp means administratively up
-	// net.FlagRunning means operationally up (link active)
-	if iface.Flags&net.FlagUp != 0 && iface.Flags&net.FlagRunning != 0 {
+	if iface.Flags&net.FlagUp == 0 {
+		return LinkStateUnknown
+	}
+	if carrier.Present(*iface) {
 		return LinkStateUp
 	}
-
-	// If interface is up but not running, link is down
-	if iface.Flags&net.FlagUp != 0 {
-		return LinkStateDown
-	}
-
-	return LinkStateUnknown
+	return LinkStateDown
 }
 
 // GetHistory returns the recent link state change events.
