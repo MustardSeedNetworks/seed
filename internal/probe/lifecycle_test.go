@@ -1,11 +1,15 @@
 package probe_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
+	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/probe"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
@@ -348,4 +352,67 @@ func (c *echoChecker) RequiredCapabilities() []string { return nil }
 func (c *echoChecker) Run(_ context.Context, p probe.Probe) probe.Result {
 	c.got = p
 	return probe.Result{Success: true, Metadata: json.RawMessage(`{"echoed":true}`)}
+}
+
+// A scheduled run that Stop cancels was abandoned and says nothing about the
+// target: it records no result and is not a failed job. A deadline, or any
+// other error, is still the run's outcome (seed#3586).
+func TestProbeJob_Run_CancelledRunIsNotAFailure(t *testing.T) {
+	t.Parallel()
+	expired := func() (context.Context, context.CancelFunc) {
+		return context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+	}
+	cancelled := func() (context.Context, context.CancelFunc) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		return ctx, cancel
+	}
+	live := func() (context.Context, context.CancelFunc) {
+		return context.WithCancel(context.Background())
+	}
+	cases := []struct {
+		name        string
+		ctx         func() (context.Context, context.CancelFunc)
+		recordErr   error
+		wantErr     bool
+		wantResults int
+	}{
+		{name: "cancelled", ctx: cancelled},
+		{name: "deadline", ctx: expired, recordErr: context.DeadlineExceeded, wantErr: true},
+		{name: "storage error", ctx: live, recordErr: errors.New("disk full"), wantErr: true},
+		{name: "success", ctx: live, wantResults: 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			storage := newFakeStorage()
+			storage.addProbe(probe.Probe{ID: "p-1", Kind: "dns", IntervalSeconds: 60, Enabled: true})
+			storage.recordErr = tc.recordErr
+			sched := newFakeScheduler()
+			var logs bytes.Buffer
+			e := probe.NewEngine(slog.New(slog.NewTextHandler(&logs, nil))).WithStorage(storage, sched)
+			e.RegisterChecker(&fakeChecker{kind: "dns", result: probe.Result{Success: true}})
+			if err := e.Start(context.Background()); err != nil {
+				t.Fatalf("Start: %v", err)
+			}
+			job, ok := sched.registered["probe:p-1"]
+			if !ok {
+				t.Fatal("probe:p-1 was not registered")
+			}
+
+			ctx, cancel := tc.ctx()
+			defer cancel()
+			err := job.Run(ctx)
+
+			if gotErr := err != nil; gotErr != tc.wantErr {
+				t.Errorf("Run error = %v, wantErr %v", err, tc.wantErr)
+			}
+			if got := len(storage.recordedResults()); got != tc.wantResults {
+				t.Errorf("recorded %d results, want %d", got, tc.wantResults)
+			}
+			if logged := strings.Contains(logs.String(), "probe dispatch failed"); logged != tc.wantErr {
+				t.Errorf("logged dispatch failure = %v, want %v:\n%s", logged, tc.wantErr, logs.String())
+			}
+		})
+	}
 }
