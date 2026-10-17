@@ -161,7 +161,9 @@ func (e *Engine) loadAndRegisterProbes(ctx context.Context, storage probeStorage
 }
 
 // RunNow loads the named probe from storage, dispatches it through
-// RunDefinition, and persists the Result to probe_results. Used by
+// RunDefinition, and persists the Result to probe_results. A run whose
+// context was cancelled is abandoned and not persisted: its Result
+// describes the cancellation, not the target. Used by
 // AutoTest sequences, manual UI triggers, and webhook callbacks.
 // Returns ErrStorageNotConfigured if WithStorage was not called.
 func (e *Engine) RunNow(ctx context.Context, probeID string) (Result, error) {
@@ -176,6 +178,9 @@ func (e *Engine) RunNow(ctx context.Context, probeID string) (Result, error) {
 	}
 
 	r := e.RunDefinition(ctx, p)
+	if errors.Is(ctx.Err(), context.Canceled) {
+		return r, fmt.Errorf("probe %q abandoned: %w", probeID, ctx.Err())
+	}
 	if persistErr := storage.RecordResult(ctx, r); persistErr != nil {
 		return r, fmt.Errorf("persist result for probe %q: %w", probeID, persistErr)
 	}
@@ -224,6 +229,11 @@ func (j *probeJob) NextRun(now time.Time) time.Time {
 func (j *probeJob) Run(ctx context.Context) error {
 	j.lastRun = time.Now().UTC()
 	_, err := j.engine.RunNow(ctx, j.probeID)
+	if errors.Is(ctx.Err(), context.Canceled) {
+		// scheduler.Stop cancelled the run: it was abandoned, not failed
+		// (seed#3586). A deadline still is the run's outcome.
+		return nil
+	}
 	if err != nil {
 		j.engine.logger.WarnContext(ctx, "probe dispatch failed",
 			"probe_id", j.probeID,
