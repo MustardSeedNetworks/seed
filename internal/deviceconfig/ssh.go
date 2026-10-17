@@ -24,19 +24,58 @@ const (
 
 // SSHFetcher retrieves the configuration over SSH: by running the CLI command
 // on an exec channel, or with a NETCONF <get-config> on the netconf subsystem.
+// It is also the push dry runner.
 type SSHFetcher struct{}
 
-// Fetch checks the host key against the pin, logs in with password or
-// keyboard-interactive authentication (network operating systems offer one or
-// the other for the same password), and retrieves the configuration. The host
-// key is checked during key exchange, before any authentication method runs,
-// so an unpinned or mismatched key never receives the password.
+// Fetch checks the host key against the pin, logs in, and retrieves the
+// configuration.
 func (SSHFetcher) Fetch(ctx context.Context, req FetchRequest) (FetchResult, error) {
-	addr := net.JoinHostPort(req.Host, strconv.Itoa(req.Port))
+	var output string
+	err := withSession(ctx, req.Host, req.Port, req.User, req.Password, req.PinnedHostKey,
+		func(session *ssh.Session) error {
+			var runErr error
+			if req.NETCONF {
+				output, runErr = getRunningConfig(session)
+			} else {
+				output, runErr = runCommand(session, req.Command)
+			}
+			return runErr
+		})
+	if err != nil {
+		return FetchResult{}, err
+	}
+	return FetchResult{Output: output}, nil
+}
+
+// DryRun previews a candidate on the device and changes nothing. Only NETCONF
+// has a dialogue so far; Pushes refuses the other platforms before a login.
+func (SSHFetcher) DryRun(ctx context.Context, req DryRunRequest) (DryRunResult, error) {
+	if req.Platform != PlatformNETCONF {
+		return DryRunResult{}, &PlanRefusedError{Reason: string(req.Platform) + " has no dry run"}
+	}
+	var res DryRunResult
+	err := withSession(ctx, req.Host, req.Port, req.User, req.Password, req.PinnedHostKey,
+		func(session *ssh.Session) error {
+			var runErr error
+			res, runErr = netconfDryRun(session, req.Mode, req.Candidate)
+			return runErr
+		})
+	return res, err
+}
+
+// withSession checks the host key against the pin, logs in with password or
+// keyboard-interactive authentication (network operating systems offer one or
+// the other for the same password), and runs fn on one session. The host key
+// is checked during key exchange, before any authentication method runs, so
+// an unpinned or mismatched key never receives the password.
+func withSession(
+	ctx context.Context, host string, port int, user, password, pinned string, fn func(*ssh.Session) error,
+) error {
+	addr := net.JoinHostPort(host, strconv.Itoa(port))
 	var dialer net.Dialer
 	conn, err := dialer.DialContext(ctx, "tcp", addr)
 	if err != nil {
-		return FetchResult{}, fmt.Errorf("%w: %w", ErrUnreachable, err)
+		return fmt.Errorf("%w: %w", ErrUnreachable, err)
 	}
 	defer func() { _ = conn.Close() }()
 	// The SSH library has no context: closing the socket is what unblocks a
@@ -45,13 +84,13 @@ func (SSHFetcher) Fetch(ctx context.Context, req FetchRequest) (FetchResult, err
 	defer stop()
 
 	cfg := &ssh.ClientConfig{
-		User: req.User,
+		User: user,
 		Auth: []ssh.AuthMethod{
-			ssh.Password(req.Password),
+			ssh.Password(password),
 			ssh.KeyboardInteractive(func(_, _ string, questions []string, _ []bool) ([]string, error) {
 				answers := make([]string, len(questions))
 				for i := range answers {
-					answers[i] = req.Password
+					answers[i] = password
 				}
 				return answers, nil
 			}),
@@ -59,11 +98,11 @@ func (SSHFetcher) Fetch(ctx context.Context, req FetchRequest) (FetchResult, err
 		HostKeyCallback: func(_ string, _ net.Addr, key ssh.PublicKey) error {
 			presented := ssh.FingerprintSHA256(key)
 			switch {
-			case req.PinnedHostKey == "":
+			case pinned == "":
 				return &HostKeyUnconfirmedError{Fingerprint: presented}
-			case presented != req.PinnedHostKey:
+			case presented != pinned:
 				return fmt.Errorf("%w: device presented %s, pinned %s",
-					ErrHostKeyMismatch, presented, req.PinnedHostKey)
+					ErrHostKeyMismatch, presented, pinned)
 			}
 			return nil
 		},
@@ -71,30 +110,22 @@ func (SSHFetcher) Fetch(ctx context.Context, req FetchRequest) (FetchResult, err
 
 	sshConn, chans, reqs, err := ssh.NewClientConn(conn, addr, cfg)
 	if err != nil {
-		return FetchResult{}, classifyHandshake(ctx, err)
+		return classifyHandshake(ctx, err)
 	}
 	client := ssh.NewClient(sshConn, chans, reqs)
 	defer func() { _ = client.Close() }()
 
 	session, err := client.NewSession()
 	if err != nil {
-		return FetchResult{}, fmt.Errorf("%w: open session: %w", ErrCommand, err)
+		return fmt.Errorf("%w: open session: %w", ErrCommand, err)
 	}
 	defer func() { _ = session.Close() }()
 
-	var output string
-	if req.NETCONF {
-		output, err = getRunningConfig(session)
-	} else {
-		output, err = runCommand(session, req.Command)
-	}
+	err = fn(session)
 	if ctx.Err() != nil {
-		return FetchResult{}, fmt.Errorf("%w: %w", ErrUnreachable, ctx.Err())
+		return fmt.Errorf("%w: %w", ErrUnreachable, ctx.Err())
 	}
-	if err != nil {
-		return FetchResult{}, err
-	}
-	return FetchResult{Output: output}, nil
+	return err
 }
 
 // runCommand runs command on the session's exec channel and returns its

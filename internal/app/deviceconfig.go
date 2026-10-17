@@ -9,7 +9,9 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
@@ -134,6 +136,14 @@ func (a deviceConfigRepo) ClearHostKey(ctx context.Context, clientID, id string)
 	return repo.ClearHostKey(ctx, clientID, id)
 }
 
+func (a deviceConfigRepo) SetPushCredentials(ctx context.Context, clientID, id, credentialsID string) error {
+	repo, err := a.repo()
+	if err != nil {
+		return err
+	}
+	return repo.SetPushCredentials(ctx, clientID, id, credentialsID)
+}
+
 func (a deviceConfigRepo) InsertBackup(ctx context.Context, b *deviceconfig.Backup) error {
 	repo, err := a.repo()
 	if err != nil {
@@ -176,4 +186,68 @@ func (a deviceConfigRepo) LatestConfig(
 		return deviceconfig.Backup{}, err
 	}
 	return repo.LatestConfig(ctx, clientID, targetID, before)
+}
+
+// NewDeviceConfigPushes builds the configuration push use-case (P-D3) over the
+// backup use-case, the database's plan store, and the dry runner
+// (deviceconfig.SSHFetcher in production). Push events go to the database
+// audit log; with no database wired the use-case's stores answer 503 first.
+func NewDeviceConfigPushes(
+	persist func() *Persistence, backups *deviceconfig.Service, dryRun deviceconfig.DryRunner,
+) (*deviceconfig.Pushes, error) {
+	db := lazyHandle(persist)
+	return deviceconfig.NewPushes(backups, deviceConfigRepo{db: db}, dryRun,
+		func(ctx context.Context, e deviceconfig.PushAuditEvent) error {
+			d := db()
+			if d == nil {
+				return deviceconfig.ErrUnavailable
+			}
+			detail, err := json.Marshal(e.Detail)
+			if err != nil {
+				return fmt.Errorf("encode push audit detail: %w", err)
+			}
+			return d.RecordAuditLog(ctx, &database.AuditLogEntry{
+				Action:       e.Action,
+				User:         e.User,
+				ResourceType: deviceconfig.PushAuditResource,
+				ResourceID:   e.TargetID,
+				NewValueJSON: string(detail),
+				IPAddress:    e.Remote,
+				UserAgent:    e.UserAgent,
+			})
+		})
+}
+
+func (a deviceConfigRepo) InsertPlan(ctx context.Context, p *deviceconfig.Plan) error {
+	repo, err := a.repo()
+	if err != nil {
+		return err
+	}
+	return repo.InsertPlan(ctx, p)
+}
+
+func (a deviceConfigRepo) GetPlan(ctx context.Context, clientID, id string) (deviceconfig.Plan, error) {
+	repo, err := a.repo()
+	if err != nil {
+		return deviceconfig.Plan{}, err
+	}
+	return repo.GetPlan(ctx, clientID, id)
+}
+
+func (a deviceConfigRepo) ListPlans(
+	ctx context.Context, clientID, targetID string, limit int,
+) ([]deviceconfig.Plan, error) {
+	repo, err := a.repo()
+	if err != nil {
+		return nil, err
+	}
+	return repo.ListPlans(ctx, clientID, targetID, limit)
+}
+
+func (a deviceConfigRepo) PrunePlans(ctx context.Context, clientID, targetID string, keep int) error {
+	repo, err := a.repo()
+	if err != nil {
+		return err
+	}
+	return repo.PrunePlans(ctx, clientID, targetID, keep)
 }

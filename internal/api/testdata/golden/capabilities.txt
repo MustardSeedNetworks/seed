@@ -1960,6 +1960,43 @@ body:
   {
     "auth": true,
     "csrf": true,
+    "feature": "config_push",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "PUT",
+      "DELETE"
+    ],
+    "path": "/api/v1/device-config-targets/{targetId}/push",
+    "rateLimited": false,
+    "scope": "admin"
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "feature": "config_push",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "path": "/api/v1/device-config-pushes",
+    "rateLimited": true,
+    "scope": "admin"
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "feature": "config_push",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/device-config-pushes/{planId}",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": true,
     "feature": "server_monitoring",
     "maxBodyBytes": 262144,
     "methods": [

@@ -94,6 +94,18 @@ func (r *memRepo) ConfirmHostKey(_ context.Context, _, id, fingerprint string) e
 
 func (r *memRepo) ClearHostKey(context.Context, string, string) error { return nil }
 
+func (r *memRepo) SetPushCredentials(_ context.Context, _, id, credentialsID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	t, ok := r.targets[id]
+	if !ok {
+		return deviceconfig.ErrNotFound
+	}
+	t.PushCredentialsID = credentialsID
+	r.targets[id] = t
+	return nil
+}
+
 func (r *memRepo) InsertBackup(_ context.Context, b *deviceconfig.Backup) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

@@ -79,6 +79,9 @@ type netconfSession struct {
 	r       *bufio.Reader
 	w       io.Writer
 	chunked bool
+	// capabilities is what the device's hello advertised, each without its
+	// query parameters.
+	capabilities map[string]bool
 }
 
 // hello exchanges capabilities and settles the framing for the rest of the
@@ -98,16 +101,13 @@ func (nc *netconfSession) hello() error {
 	if err = xml.Unmarshal(msg, &hello); err != nil {
 		return fmt.Errorf("%w: the device's hello is not NETCONF: %w", ErrCommand, err)
 	}
-	var base10 bool
+	nc.capabilities = make(map[string]bool, len(hello.Capabilities))
 	for _, c := range hello.Capabilities {
-		switch strings.TrimSpace(c) {
-		case netconfBase11:
-			nc.chunked = true
-		case netconfBase10:
-			base10 = true
-		}
+		uri, _, _ := strings.Cut(strings.TrimSpace(c), "?")
+		nc.capabilities[uri] = true
 	}
-	if !base10 && !nc.chunked {
+	nc.chunked = nc.capabilities[netconfBase11]
+	if !nc.capabilities[netconfBase10] && !nc.chunked {
 		return fmt.Errorf("%w: the device advertises no NETCONF base capability", ErrCommand)
 	}
 	return nil
@@ -235,22 +235,25 @@ func expect(r *bufio.Reader, want string) error {
 	return nil
 }
 
-// parseGetConfigReply returns the contents of a <get-config> reply's <data>,
-// or the device's error. Warnings ride along with data and do not fail it.
-func parseGetConfigReply(msg []byte) (string, error) {
-	var reply struct {
-		XMLName xml.Name `xml:"rpc-reply"`
-		Errors  []struct {
-			Severity string `xml:"error-severity"`
-			Tag      string `xml:"error-tag"`
-			Message  string `xml:"error-message"`
-		} `xml:"rpc-error"`
-		Data *struct {
-			Inner string `xml:",innerxml"`
-		} `xml:"data"`
-	}
+// rpcReply is an <rpc-reply>: errors, and the <data> of a retrieval.
+type rpcReply struct {
+	XMLName xml.Name `xml:"rpc-reply"`
+	Errors  []struct {
+		Severity string `xml:"error-severity"`
+		Tag      string `xml:"error-tag"`
+		Message  string `xml:"error-message"`
+	} `xml:"rpc-error"`
+	Data *struct {
+		Inner string `xml:",innerxml"`
+	} `xml:"data"`
+}
+
+// parseReply decodes an operation's reply and returns the device's error, if
+// it sent one. Warnings do not fail an operation.
+func parseReply(msg []byte, op string) (rpcReply, error) {
+	var reply rpcReply
 	if err := xml.Unmarshal(msg, &reply); err != nil {
-		return "", fmt.Errorf("%w: the get-config reply is not an rpc-reply: %w", ErrCommand, err)
+		return rpcReply{}, fmt.Errorf("%w: the %s reply is not an rpc-reply: %w", ErrCommand, op, err)
 	}
 	for _, e := range reply.Errors {
 		if strings.TrimSpace(e.Severity) == "warning" {
@@ -260,7 +263,17 @@ func parseGetConfigReply(msg []byte) (string, error) {
 		if detail == "" {
 			detail = strings.TrimSpace(e.Tag)
 		}
-		return "", fmt.Errorf("%w: get-config: %s", ErrCommand, detail)
+		return rpcReply{}, fmt.Errorf("%w: %s: %s", ErrCommand, op, detail)
+	}
+	return reply, nil
+}
+
+// parseGetConfigReply returns the contents of a <get-config> reply's <data>,
+// or the device's error.
+func parseGetConfigReply(msg []byte) (string, error) {
+	reply, err := parseReply(msg, "get-config")
+	if err != nil {
+		return "", err
 	}
 	if reply.Data == nil {
 		return "", fmt.Errorf("%w: the get-config reply carries no data", ErrCommand)

@@ -107,9 +107,13 @@ reload confirmation says so.
   may be created by token.
 - Reading plans and push history is operator and above, the same rule as
   reading backups: a diff carries configuration text.
-- Pushing is off per target by default. A target needs `allowPush: true` and a
-  `pushCredentialId` separate from its backup credential, so the read-only
-  backup login never gains write access.
+- Pushing is off per target by default. An admin enables it by giving the
+  target a push credential (`PUT /device-config-targets/{id}/push`
+  `{credentialsId}`; `DELETE` turns it off), which must be another credential
+  than the backup's, so the read-only backup login never gains write access.
+  The target carries it as `pushCredentialsId`, matching its `credentialsId`;
+  a separate `allowPush` flag would only add a state with a flag and no
+  credential. Editing the target keeps it.
 - A push needs a pinned host key; an unpinned or changed key refuses the plan,
   exactly as a backup does.
 - One push or image job runs per target at a time. A push names one target;
@@ -128,9 +132,10 @@ alert fires on the new configuration.
 ### 6. Delivery
 
 1. This ADR.
-2. Migration, per-target `allowPush`/`pushCredentialId`, the `config_push`
-   feature, and the plan endpoint (dry run only; nothing is written to a
-   device).
+2. Migration, the per-target push credential, the `config_push` feature,
+   and the plan endpoint (dry run only; nothing is written to a device), for
+   NETCONF and IOS/IOS-XE; then the Junos and EOS dry runs, which are refused
+   at plan time until they land.
 3. Apply, confirmed commit, post-check and rollback for Junos and NETCONF.
 4. EOS and IOS/IOS-XE.
 5. SCP image staging, verification and boot set; reload as its own action.

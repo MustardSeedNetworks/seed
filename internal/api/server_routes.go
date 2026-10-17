@@ -39,10 +39,26 @@ func (s *Server) setupRoutes() {
 	s.setupWiFiRoutes()
 	s.setupReportingRoutes()
 	s.setupTopologyRoutes()
-	s.routes.RegisterAll(slices.Concat(s.alertRoutes(), s.vulnerabilityRoutes(), s.flowRoutes(),
-		s.dashboardRoutes(), s.jobsRoutes(), s.captureRoutes(), s.targetNetworkRoutes(),
-		s.interfaceStatsRoutes(), s.tftpRoutes(), s.deviceConfigRoutes(), s.wmiRoutes(), s.ipamRoutes(),
-		s.lifecycleRoutes(), s.ipSLARoutes(), s.deviceGroupRoutes(), s.autotestResultRoutes(), s.integrationRoutes()))
+	s.routes.RegisterAll(slices.Concat(
+		s.alertRoutes(),
+		s.vulnerabilityRoutes(),
+		s.flowRoutes(),
+		s.dashboardRoutes(),
+		s.jobsRoutes(),
+		s.captureRoutes(),
+		s.targetNetworkRoutes(),
+		s.interfaceStatsRoutes(),
+		s.tftpRoutes(),
+		s.deviceConfigRoutes(),
+		s.deviceConfigPushRoutes(),
+		s.wmiRoutes(),
+		s.ipamRoutes(),
+		s.lifecycleRoutes(),
+		s.ipSLARoutes(),
+		s.deviceGroupRoutes(),
+		s.autotestResultRoutes(),
+		s.integrationRoutes(),
+	))
 	s.setupSSEAndStatic()
 }
 

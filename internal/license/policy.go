@@ -151,6 +151,9 @@ func proFeatures() []string {
 		// The qos-send / qos-listen / qos-single-host job kinds: whether a
 		// path keeps the DSCP marking each class was sent with (#400).
 		"dscp_verification",
+		// Configuration push (P-D3, ADR-0035): planning and applying a
+		// change to a device, beside the backups compliance_advanced sells.
+		"config_push",
 	}
 	return append(starterFeatures(), pro...)
 }
