@@ -46,6 +46,7 @@ import {
   Boxes,
   Cable,
   Calendar,
+  CalendarClock,
   Check,
   CheckCircle,
   ChevronDown,
@@ -154,6 +155,7 @@ export {
   Boxes,
   Cable,
   Calendar,
+  CalendarClock,
   Check,
   // Status icons
   CheckCircle,

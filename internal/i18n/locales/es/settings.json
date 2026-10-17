@@ -17,7 +17,8 @@
     "alertDelivery": "Envío de alertas",
     "alertEmail": "Correo de alertas",
     "alertEscalation": "Escalado de alertas",
-    "identity": "Identidad del equipo"
+    "identity": "Identidad del equipo",
+    "eoxFeed": "Fuente EoX"
   },
   "common": {
     "add": "+ Agregar",
@@ -577,6 +578,26 @@
     "toHelp": "Separe las direcciones con comas o saltos de línea.",
     "toPlaceholder": "noc@example.com, oncall@example.com",
     "save": "Guardar correo"
+  },
+  "eoxFeed": {
+    "description": "Obtenga las fechas de fin de vida del hardware inventariado desde la API EoX de Cisco, con su propio cliente de la API de Cisco. Mientras está desactivada, Seed no se conecta a Cisco; los operadores pueden seguir importando un archivo EoX en la página Ciclo de vida del hardware.",
+    "unanswered": "Aún sin decidir. La fuente sigue desactivada hasta que la active.",
+    "choice": "Obtener datos EoX de Cisco",
+    "off": "Desactivada",
+    "on": "Activada",
+    "clientId": "ID de cliente",
+    "clientSecret": "Secreto de cliente",
+    "clientSecretHelp": "Se guarda cifrado y no se vuelve a mostrar. Déjelo vacío para conservar el guardado.",
+    "secretStored": "Hay un secreto guardado; escriba para reemplazarlo",
+    "clearSecret": "Quitar el secreto guardado",
+    "endpoint": "Dirección de la API EoX",
+    "endpointHelp": "Déjela vacía para usar la de Cisco. Indíquela para una réplica de la API dentro de su red.",
+    "tokenUrl": "Dirección del token",
+    "tokenUrlHelp": "Déjela vacía para usar la de Cisco.",
+    "save": "Guardar fuente EoX",
+    "lastSuccess": "Última obtención {{time}}: {{count}} productos.",
+    "lastError": "El último intento {{time}} falló: {{reason}}",
+    "loadFailed": "No se pudo cargar la configuración de la fuente EoX: {{reason}}"
   },
   "alertEscalation": {
     "description": "Vuelva a enviar una alerta, por más canales, cuando nadie la reconoce. Cada regla tiene una escalera; cada etapa sale un tiempo fijo después de generarse la alerta.",

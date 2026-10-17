@@ -46,6 +46,7 @@ const PAGES = [
   { name: 'polling-targets', path: '/polling-targets' },
   { name: 'device-groups', path: '/device-groups' },
   { name: 'ipam', path: '/ipam' },
+  { name: 'lifecycle', path: '/lifecycle' },
   { name: 'topology', path: '/topology' },
   { name: 'interfaces', path: '/interfaces' },
   { name: 'device-configs', path: '/device-configs' },

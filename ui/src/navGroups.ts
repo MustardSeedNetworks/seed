@@ -35,6 +35,7 @@ import {
   BarChart3,
   Bell,
   Boxes,
+  CalendarClock,
   EthernetPort,
   FileDiff,
   Grid3X3,
@@ -103,6 +104,7 @@ export function useNavGroups(): SidebarNavGroup[] {
         { path: '/polling-targets', label: t('pollingTargets.label'), icon: Target },
         { path: '/device-groups', label: t('deviceGroups.label'), icon: Boxes },
         { path: '/ipam', label: t('ipam.label'), icon: Grid3X3 },
+        { path: '/lifecycle', label: t('lifecycle.label'), icon: CalendarClock },
       ],
     },
     {

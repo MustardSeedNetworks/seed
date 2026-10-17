@@ -17,7 +17,8 @@
     "alertDelivery": "Alert Delivery",
     "alertEmail": "Alert email",
     "alertEscalation": "Alert escalation",
-    "identity": "Device Identity"
+    "identity": "Device Identity",
+    "eoxFeed": "EoX feed"
   },
   "common": {
     "add": "+ Add",
@@ -577,6 +578,26 @@
     "toHelp": "Separate addresses with commas or new lines.",
     "toPlaceholder": "noc@example.com, oncall@example.com",
     "save": "Save email"
+  },
+  "eoxFeed": {
+    "description": "Fetch end-of-life dates for your inventoried hardware from Cisco's EoX API, with your own Cisco API client. While it is off Seed makes no call to Cisco; operators can still import an EoX file on the Hardware lifecycle page.",
+    "unanswered": "Not decided yet. The feed stays off until you turn it on.",
+    "choice": "Fetch EoX data from Cisco",
+    "off": "Off",
+    "on": "On",
+    "clientId": "Client ID",
+    "clientSecret": "Client secret",
+    "clientSecretHelp": "Stored encrypted and never shown again. Leave empty to keep the stored one.",
+    "secretStored": "A client secret is stored; type to replace it",
+    "clearSecret": "Remove the stored secret",
+    "endpoint": "EoX API address",
+    "endpointHelp": "Leave empty for Cisco's. Set it for a mirror of the API inside your network.",
+    "tokenUrl": "Token address",
+    "tokenUrlHelp": "Leave empty for Cisco's.",
+    "save": "Save EoX feed",
+    "lastSuccess": "Last fetched {{time}}: {{count}} products.",
+    "lastError": "Last attempt {{time}} failed: {{reason}}",
+    "loadFailed": "Could not load the EoX feed setting: {{reason}}"
   },
   "alertEscalation": {
     "description": "Send an alert again, on more channels, when nobody acknowledges it. Each rule gets one ladder; each stage goes out a set time after the alert was raised.",

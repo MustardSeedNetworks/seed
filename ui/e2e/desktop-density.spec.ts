@@ -44,6 +44,7 @@ const ROUTES = [
   '/polling-targets',
   '/device-groups',
   '/ipam',
+  '/lifecycle',
   '/topology',
   '/interfaces',
   '/device-configs',

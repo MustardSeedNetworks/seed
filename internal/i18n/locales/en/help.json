@@ -34,6 +34,7 @@
     "pollingTargets": "Polling Targets",
     "deviceGroups": "Device Groups",
     "ipam": "IP Addresses",
+    "lifecycle": "Hardware Lifecycle",
     "topology": "Topology",
     "interfaces": "Interfaces",
     "deviceConfigs": "Device Configs",
@@ -679,6 +680,19 @@
         "utilization": {
           "term": "Utilization",
           "description": "Addresses seen in use as a share of the assignable addresses. A subnet's network and broadcast addresses are not assignable and are not counted."
+        }
+      }
+    },
+    "lifecycle": {
+      "description": "See which of your hardware is past, or nearing, its vendor's end-of-life milestones. Discovery inventories each device's parts over ENTITY-MIB; each part's product ID is looked up in Cisco EoX data, which an operator imports here as a downloaded EoX API response. An admin can instead turn on the EoX feed in Settings, which fetches the same data with your own Cisco API client. The feed is off until an admin turns it on, so an air-gapped install never calls out.",
+      "terms": {
+        "status": {
+          "term": "Status",
+          "description": "The latest milestone whose date has passed: end of sale, end of software maintenance, end of security support or end of support. Parts past end of security support are marked critical; they get no more security fixes."
+        },
+        "notListed": {
+          "term": "Not listed",
+          "description": "The EoX data has no record for the product: it has no announced end of life, or the data does not cover it."
         }
       }
     },

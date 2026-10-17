@@ -205,6 +205,7 @@ validation:fields.
 # reads t(`deviceGroups.severity.${severity}`). DeviceConfigsPage reads
 # t(`deviceConfigs.platform.${platform}`) and .status.${status}. IpamPage
 # reads t(`ipam.source.${source}`) and t(`ipam.exhaustion.${exhaustion}`).
+# LifecyclePage reads t(`lifecycle.status.${status}`).
 pages:alerts.
 pages:dashboard.
 pages:deviceConfigs.
@@ -213,6 +214,7 @@ pages:flows.
 pages:groups.
 pages:interfaces.
 pages:ipam.
+pages:lifecycle.
 pages:link.
 pages:logs.
 pages:network.
