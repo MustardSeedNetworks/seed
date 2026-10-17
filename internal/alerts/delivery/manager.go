@@ -103,6 +103,22 @@ func (m *Manager) ApplySyslog(cfg SyslogConfig) {
 	m.swap(alerts.ChannelSyslog, n)
 }
 
+// ApplyTrap re-points the SNMP trap channel at cfg's receiver. An empty
+// cfg.Host turns it off, as does a cfg that could never deliver, with the
+// reason logged.
+func (m *Manager) ApplyTrap(cfg TrapConfig) {
+	if cfg.Host == "" {
+		m.swap(alerts.ChannelTrap, nil)
+		return
+	}
+	cfg.Options = m.fill(cfg.Options)
+	n, err := NewTrap(cfg)
+	if err != nil {
+		m.logger.Error("alert trap not configured; alerts will not be sent as traps", "error", err)
+	}
+	m.swap(alerts.ChannelTrap, n)
+}
+
 // fill supplies the Manager's own recorder, narrator and logger wherever opts
 // leaves them unset, so a caller states only what it is changing.
 func (m *Manager) fill(opts Options) Options {

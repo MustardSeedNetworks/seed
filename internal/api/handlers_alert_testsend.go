@@ -15,12 +15,12 @@ const ErrCodeDeliveryFailed = "DELIVERY_FAILED"
 
 // AlertTestSendRequest names the saved receiver to test.
 type AlertTestSendRequest struct {
-	Channel alerts.Channel `json:"channel" jsonschema:"enum=email,enum=syslog,enum=webhook"`
+	Channel alerts.Channel `json:"channel" jsonschema:"enum=email,enum=syslog,enum=trap,enum=webhook"`
 }
 
 // AlertTestSendResponse reports that the receiver accepted the test alert.
 type AlertTestSendResponse struct {
-	Channel alerts.Channel `json:"channel" jsonschema:"enum=email,enum=syslog,enum=webhook"`
+	Channel alerts.Channel `json:"channel" jsonschema:"enum=email,enum=syslog,enum=trap,enum=webhook"`
 	Sent    bool           `json:"sent"`
 }
 
@@ -39,7 +39,7 @@ func (s *Server) handleAlertTestSend(w http.ResponseWriter, r *http.Request) {
 	var req AlertTestSendRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, "body must be {\"channel\": \"email\" | \"syslog\" | \"webhook\"}", "")
+			ErrCodeBadRequest, "body must be {\"channel\": \"email\" | \"syslog\" | \"trap\" | \"webhook\"}", "")
 		return
 	}
 	// Resolve to the package constant so nothing the caller sent reaches the
@@ -50,11 +50,13 @@ func (s *Server) handleAlertTestSend(w http.ResponseWriter, r *http.Request) {
 		channel = alerts.ChannelEmail
 	case alerts.ChannelSyslog:
 		channel = alerts.ChannelSyslog
+	case alerts.ChannelTrap:
+		channel = alerts.ChannelTrap
 	case alerts.ChannelWebhook:
 		channel = alerts.ChannelWebhook
 	default:
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, "channel must be \"email\", \"syslog\" or \"webhook\"", "")
+			ErrCodeValidation, "channel must be \"email\", \"syslog\", \"trap\" or \"webhook\"", "")
 		return
 	}
 	if s.alertDelivery == nil {

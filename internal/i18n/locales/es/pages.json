@@ -33,6 +33,7 @@
     "labelDeliveryWebhook": "Envío al webhook",
     "labelDeliveryEmail": "Envío por correo",
     "labelDeliverySyslog": "Envío por syslog",
+    "labelDeliveryTrap": "Envío por trap SNMP",
     "deliveryPending": "en cola para el receptor",
     "deliveryDelivered": "enviada {{time}}",
     "deliveryFailed": "falló {{time}} — {{reason}}",

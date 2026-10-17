@@ -1,0 +1,214 @@
+SEED-ALERT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    MODULE-COMPLIANCE, OBJECT-GROUP, NOTIFICATION-GROUP
+        FROM SNMPv2-CONF
+    SnmpAdminString
+        FROM SNMP-FRAMEWORK-MIB
+    CounterBasedGauge64
+        FROM HCNUM-TC
+    msnSeed
+        FROM MUSTARD-SEED-SMI;
+
+seedAlertMIB MODULE-IDENTITY
+    LAST-UPDATED "202610160000Z"
+    ORGANIZATION "Mustard Seed Networks"
+    CONTACT-INFO
+        "Mustard Seed Networks
+         support@mustardseednetworks.com"
+    DESCRIPTION
+        "The notification Seed sends to an SNMP trap receiver for every alert
+        it raises. Seed sends it as an SNMPv2-Trap-PDU; it does not answer
+        SNMP requests for these objects, which are accessible for notify
+        only. docs/ALERT_TRAP.md describes the channel."
+    REVISION    "202610160000Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { msnSeed 1 }
+
+seedAlertNotifications OBJECT IDENTIFIER ::= { seedAlertMIB 0 }
+seedAlertObjects       OBJECT IDENTIFIER ::= { seedAlertMIB 1 }
+seedAlertConformance   OBJECT IDENTIFIER ::= { seedAlertMIB 2 }
+
+SeedSeverity ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "How serious an alert is. An alert whose severity Seed does not
+        recognise is sent as warning."
+    SYNTAX      INTEGER {
+                    critical(1),
+                    error(2),
+                    warning(3),
+                    info(4)
+                }
+
+seedAlertId OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The alert's ID, as served by GET /api/v1/alerts. Zero on a test
+        send, which is not stored."
+    ::= { seedAlertObjects 1 }
+
+seedAlertSeverity OBJECT-TYPE
+    SYNTAX      SeedSeverity
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The alert's severity."
+    ::= { seedAlertObjects 2 }
+
+seedAlertType OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The alert's type, for example performance, connectivity or
+        security."
+    ::= { seedAlertObjects 3 }
+
+seedAlertRule OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The rule that raised the alert, for example iface.down. Empty when
+        no rule did."
+    ::= { seedAlertObjects 4 }
+
+seedAlertSource OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "What generated the alert."
+    ::= { seedAlertObjects 5 }
+
+seedAlertDevice OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The device the alert is about. Empty when it is about none."
+    ::= { seedAlertObjects 6 }
+
+seedAlertCause OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The ID of an earlier alert that probably caused this one. Zero when
+        nothing explains it."
+    ::= { seedAlertObjects 7 }
+
+seedAlertTitle OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "A one-line summary of the alert."
+    ::= { seedAlertObjects 8 }
+
+seedAlertMessage OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The alert's text, cut to 255 octets on a character boundary."
+    ::= { seedAlertObjects 9 }
+
+seedAlertSummary OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The narrative's summary of what happened and where, as the Alerts
+        page shows it. Empty when the alert has no narrative."
+    ::= { seedAlertObjects 10 }
+
+seedAlertNextCheck OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The narrative's next check. Empty when the alert has no narrative."
+    ::= { seedAlertObjects 11 }
+
+seedAlertEvidence OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The narrative's evidence, sentences separated by a semicolon and a
+        space, cut to 255 octets on a character boundary. Empty when the
+        alert has no narrative."
+    ::= { seedAlertObjects 12 }
+
+seedAlertRaised NOTIFICATION-TYPE
+    OBJECTS     {
+                    seedAlertId,
+                    seedAlertSeverity,
+                    seedAlertType,
+                    seedAlertRule,
+                    seedAlertSource,
+                    seedAlertDevice,
+                    seedAlertCause,
+                    seedAlertTitle,
+                    seedAlertMessage,
+                    seedAlertSummary,
+                    seedAlertNextCheck,
+                    seedAlertEvidence
+                }
+    STATUS      current
+    DESCRIPTION
+        "Seed raised an alert, or an unacknowledged alert reached a stage of
+        its escalation ladder and was sent again."
+    ::= { seedAlertNotifications 1 }
+
+seedAlertCompliances OBJECT IDENTIFIER ::= { seedAlertConformance 1 }
+seedAlertGroups      OBJECT IDENTIFIER ::= { seedAlertConformance 2 }
+
+seedAlertCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "Seed sends every object and the notification."
+    MODULE      -- this module
+        MANDATORY-GROUPS {
+            seedAlertObjectGroup,
+            seedAlertNotificationGroup
+        }
+    ::= { seedAlertCompliances 1 }
+
+seedAlertObjectGroup OBJECT-GROUP
+    OBJECTS     {
+                    seedAlertId,
+                    seedAlertSeverity,
+                    seedAlertType,
+                    seedAlertRule,
+                    seedAlertSource,
+                    seedAlertDevice,
+                    seedAlertCause,
+                    seedAlertTitle,
+                    seedAlertMessage,
+                    seedAlertSummary,
+                    seedAlertNextCheck,
+                    seedAlertEvidence
+                }
+    STATUS      current
+    DESCRIPTION
+        "The objects an alert notification carries."
+    ::= { seedAlertGroups 1 }
+
+seedAlertNotificationGroup NOTIFICATION-GROUP
+    NOTIFICATIONS { seedAlertRaised }
+    STATUS      current
+    DESCRIPTION
+        "The alert notification."
+    ::= { seedAlertGroups 2 }
+
+END

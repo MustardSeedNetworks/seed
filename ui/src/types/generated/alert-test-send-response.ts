@@ -6,6 +6,6 @@
  * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
 export interface AlertTestSendResponse {
-  channel: 'email' | 'syslog' | 'webhook';
+  channel: 'email' | 'syslog' | 'trap' | 'webhook';
   sent: boolean;
 }

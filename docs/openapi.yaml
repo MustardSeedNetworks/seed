@@ -123,6 +123,7 @@ components:
                         - webhook
                         - email
                         - syslog
+                        - trap
                     type: string
                 error:
                     type: string
@@ -341,6 +342,8 @@ components:
                     type: array
                 syslog:
                     $ref: '#/components/schemas/SyslogSettings'
+                trap:
+                    $ref: '#/components/schemas/TrapSettings'
                 webhook:
                     $ref: '#/components/schemas/WebhookSettings'
             required:
@@ -348,6 +351,7 @@ components:
                 - email
                 - escalations
                 - syslog
+                - trap
             type: object
         AlertSyslogConfig:
             additionalProperties: false
@@ -370,6 +374,7 @@ components:
                     enum:
                         - email
                         - syslog
+                        - trap
                         - webhook
                     type: string
             required:
@@ -382,6 +387,7 @@ components:
                     enum:
                         - email
                         - syslog
+                        - trap
                         - webhook
                     type: string
                 sent:
@@ -389,6 +395,20 @@ components:
             required:
                 - channel
                 - sent
+            type: object
+        AlertTrapConfig:
+            additionalProperties: false
+            properties:
+                community:
+                    type: string
+                host:
+                    type: string
+                port:
+                    type: integer
+            required:
+                - host
+                - port
+                - community
             type: object
         AlertWebhookConfig:
             additionalProperties: false
@@ -412,12 +432,15 @@ components:
                     type: array
                 syslog:
                     $ref: '#/components/schemas/AlertSyslogConfig'
+                trap:
+                    $ref: '#/components/schemas/AlertTrapConfig'
                 webhook:
                     $ref: '#/components/schemas/AlertWebhookConfig'
             required:
                 - webhook
                 - email
                 - syslog
+                - trap
             type: object
         Anomaly:
             additionalProperties: false
@@ -2960,6 +2983,7 @@ components:
                             - webhook
                             - email
                             - syslog
+                            - trap
                         type: string
                     type: array
             required:
@@ -10806,6 +10830,20 @@ components:
                 - protocol
                 - hops
                 - completed
+            type: object
+        TrapSettings:
+            additionalProperties: false
+            properties:
+                communitySet:
+                    type: boolean
+                host:
+                    type: string
+                port:
+                    type: integer
+            required:
+                - host
+                - port
+                - communitySet
             type: object
         UDPPortResponse:
             additionalProperties: false

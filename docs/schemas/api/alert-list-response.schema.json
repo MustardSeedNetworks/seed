@@ -92,7 +92,8 @@
           "enum": [
             "webhook",
             "email",
-            "syslog"
+            "syslog",
+            "trap"
           ]
         },
         "status": {

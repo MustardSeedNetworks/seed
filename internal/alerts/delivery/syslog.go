@@ -19,12 +19,10 @@ import (
 // The syslog channel (#3037): one RFC 5424 message per alert to the
 // operator's collector, which is how a SIEM expects to be fed.
 //
-// The message carries no structured data. RFC 5424 §6.3.2 reserves SD-IDs
-// without an "@" for IANA registration and requires every other one to name
-// the sender's Private Enterprise Number, which Mustard Seed Networks does not
-// have; an SD-ID under someone else's number would be a lie a collector
-// believes. The alert's facts travel in MSG as logfmt key=value pairs instead,
-// which every SIEM's field extraction already parses.
+// The message carries no structured data. The alert's facts travel in MSG as
+// logfmt key=value pairs, which every SIEM's field extraction already parses;
+// a custom SD-ID (RFC 5424 §6.3.2, named under the sender's Private
+// Enterprise Number) would need a parsing rule on every collector.
 
 // SyslogTransport is how messages reach the collector.
 type SyslogTransport string

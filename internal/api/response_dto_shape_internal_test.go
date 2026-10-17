@@ -551,7 +551,8 @@ func TestSettingsResponseShape(t *testing.T) {
 			"escalations": [
 				{"rule": "iface.down", "stages": [{"afterSeconds": 300, "channels": ["webhook"]}], "repeatSeconds": 3600}
 			],
-			"syslog": {"host": "", "port": 0, "transport": ""}
+			"syslog": {"host": "", "port": 0, "transport": ""},
+			"trap": {"host": "", "port": 0, "communitySet": false}
 		},
 		"displayOptions": {"showPublicIP": true, "unitSystem": "sae"},
 		"identity": {"name": "seed-idf-3b", "location": "IDF 3B"}

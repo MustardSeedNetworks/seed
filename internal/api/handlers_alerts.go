@@ -273,7 +273,7 @@ type AlertNarrative narrative.Text
 
 // AlertDelivery is one channel's delivery outcome for one alert.
 type AlertDelivery struct {
-	Channel alerts.Channel `json:"channel" jsonschema:"enum=webhook,enum=email,enum=syslog"`
+	Channel alerts.Channel `json:"channel" jsonschema:"enum=webhook,enum=email,enum=syslog,enum=trap"`
 	Status  string         `json:"status"  jsonschema:"enum=pending,enum=delivered,enum=failed,enum=dropped"`
 	// AttemptedAt is when the last attempt finished; absent while queued.
 	AttemptedAt string `json:"attemptedAt,omitempty"`

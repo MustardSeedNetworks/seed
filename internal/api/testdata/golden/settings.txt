@@ -17,6 +17,11 @@ body:
       "port": 0,
       "transport": ""
     },
+    "trap": {
+      "communitySet": false,
+      "host": "",
+      "port": 0
+    },
     "webhook": {
       "secretSet": false,
       "url": ""
