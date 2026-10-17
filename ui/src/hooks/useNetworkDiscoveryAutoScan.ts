@@ -32,6 +32,8 @@ import type { PortScanResponse, ServiceInfo } from '../types/generated/port-scan
 import type { VulnScanRequest } from '../types/generated/vuln-scan-request';
 import type { VulnerabilitySettings } from '../types/generated/vulnerability-settings';
 
+const MAX_CONCURRENT_SCANS = 3;
+
 interface UseNetworkDiscoveryAutoScanResult {
   handleDeepScan: (ip: string) => Promise<void>;
 }
@@ -223,7 +225,11 @@ export function useNetworkDiscoveryAutoScan(
     }
   }, [data?.status?.scanning]);
 
-  // Auto-scan devices after discovery completes (only if port scanning is enabled)
+  // Auto-scan devices after discovery completes (only if port scanning is enabled).
+  // This effect re-runs whenever a scan starts or ends and on every discovery
+  // poll, so it fills the free scan slots and a later run takes the rest. A
+  // device is marked only when its scan starts: marking ahead of a timer lost
+  // every device after the first batch when a re-run cleared the timer (#3092).
   useEffect(() => {
     if (!autoScanSettings.portScanEnabled) {
       return;
@@ -231,62 +237,32 @@ export function useNetworkDiscoveryAutoScan(
     if (!data?.status || data.status.scanning) {
       return;
     }
-    if (!data.devices || data.devices.length === 0) {
+    const freeSlots = MAX_CONCURRENT_SCANS - scanningDevices.size;
+    if (freeSlots <= 0 || !data.devices) {
       return;
     }
 
-    const devicesToScan = data.devices.filter((device) => {
-      if (!device.ip) {
-        return false;
-      }
-      if (autoScannedDevices.current.has(device.ip)) {
-        return false;
-      }
-      return !scanningDevices.has(device.ip);
-    });
-
+    const devicesToScan = data.devices
+      .filter(
+        (device) =>
+          device.ip &&
+          !autoScannedDevices.current.has(device.ip) &&
+          !scanningDevices.has(device.ip),
+      )
+      .slice(0, freeSlots);
     if (devicesToScan.length === 0) {
       return;
     }
 
-    for (const device of devicesToScan) {
-      autoScannedDevices.current.add(device.ip);
-    }
-
     logger.info(LogComponents.DISCOVERY, 'Auto-scanning devices for open ports', {
       count: devicesToScan.length,
-      portScanEnabled: autoScanSettings.portScanEnabled,
     });
-
-    // Fixes #906: Track all timeout IDs for proper cleanup
-    const timeoutIds: ReturnType<typeof setTimeout>[] = [];
-    const MAX_CONCURRENT_SCANS = 3;
-
-    const scanNextBatch = (start: number): void => {
-      const batch = devicesToScan.slice(start, start + MAX_CONCURRENT_SCANS);
-      if (batch.length === 0) {
-        return;
-      }
-      for (const device of batch) {
-        handleDeepScan(device.ip).catch(() => {
-          // Errors handled in handleDeepScan
-        });
-      }
-      const next = start + MAX_CONCURRENT_SCANS;
-      if (next < devicesToScan.length) {
-        const tid = setTimeout(() => scanNextBatch(next), 1000);
-        timeoutIds.push(tid);
-      }
-    };
-
-    const initialTimeoutId = setTimeout(() => scanNextBatch(0), 500);
-    timeoutIds.push(initialTimeoutId);
-
-    return (): void => {
-      for (const tid of timeoutIds) {
-        clearTimeout(tid);
-      }
-    };
+    for (const device of devicesToScan) {
+      autoScannedDevices.current.add(device.ip);
+      handleDeepScan(device.ip).catch(() => {
+        // Errors handled in handleDeepScan
+      });
+    }
   }, [
     data?.status,
     data?.devices,
@@ -340,10 +316,6 @@ export function useNetworkDiscoveryAutoScan(
       return;
     }
 
-    for (const device of devicesToVulnScan) {
-      vulnScannedDevices.current.add(device.ip);
-    }
-
     logger.info(
       LogComponents.DISCOVERY,
       'Auto-triggering vulnerability scans for devices with discovery info',
@@ -360,6 +332,9 @@ export function useNetworkDiscoveryAutoScan(
       if (!device) {
         return;
       }
+      // Marked when queued, not before: a re-run clears the pending timers and
+      // must find the devices it has not reached yet (#3092).
+      vulnScannedDevices.current.add(device.ip);
       triggerVulnScan(device.ip, device).catch(() => {
         // Errors handled in triggerVulnScan
       });
