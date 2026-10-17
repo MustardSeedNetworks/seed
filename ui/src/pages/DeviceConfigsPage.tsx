@@ -4,23 +4,34 @@
  * The list is the devices backed up over SSH or NETCONF (P-D1); the detail is
  * the selected device's backup attempts, newest first, and the selected
  * attempt's change from the configuration before it (P-D2), with added and
- * removed lines highlighted. Targets and runs are API-driven until the backup
- * management UI (#3121) lands. Below them, an admin runs the TFTP server that
- * devices push and pull files over (P-D4).
+ * removed lines highlighted. An operator adds, edits and removes devices,
+ * runs a backup of one or all, and confirms or forgets each device's SSH host
+ * key (UI-SEED-45). Below them, an admin runs the TFTP server that devices
+ * push and pull files over (P-D4).
  */
 
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DeviceConfigsPreview } from '../components/previews/DeviceConfigsPreview';
+import { Button } from '../components/ui/Button';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { GatedPreview } from '../components/ui/GatedPreview';
 import { useRole } from '../contexts/RoleContext';
 import {
+  type BackupRunState,
+  deleteDeviceConfigTarget,
+  saveDeviceConfigTarget,
+  useBackupRun,
   useDeviceConfigBackups,
   useDeviceConfigDiff,
   useDeviceConfigTargets,
 } from '../hooks/useDeviceConfigs';
 import { cn } from '../styles/theme';
-import type { DeviceConfigBackup, DeviceConfigTarget } from '../types/deviceConfigs';
+import type {
+  DeviceConfigBackup,
+  DeviceConfigTarget,
+  DeviceConfigTargetInput,
+} from '../types/deviceConfigs';
 import {
   DetailEmpty,
   DetailFacts,
@@ -30,6 +41,8 @@ import {
   RecordRow,
 } from '../ui/ListDetail';
 import { DiffView } from './deviceConfigs/DiffView';
+import { HostKey } from './deviceConfigs/HostKey';
+import { TargetForm } from './deviceConfigs/TargetForm';
 import { TftpSession } from './deviceConfigs/TftpSession';
 
 export function DeviceConfigsPage(): JSX.Element {
@@ -41,17 +54,33 @@ export function DeviceConfigsPage(): JSX.Element {
 }
 
 function DeviceConfigsBody(): JSX.Element {
-  const { t } = useTranslation(['pages', 'common']);
+  const { t } = useTranslation(['pages']);
   // A saved configuration carries the device's secrets, so every read is
   // operator+; a viewer is told so instead of being shown a 403.
   const { canWrite } = useRole();
-  const { targets, loading, error } = useDeviceConfigTargets(canWrite);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [query, setQuery] = useState('');
-
   if (!canWrite) {
     return <DetailEmpty>{t('deviceConfigs.operatorOnly')}</DetailEmpty>;
   }
+  return <DeviceConfigsManager />;
+}
+
+/** The form's subject: a new device, or the one being edited. */
+type Editing = { target?: DeviceConfigTarget } | null;
+
+function DeviceConfigsManager(): JSX.Element {
+  const { t } = useTranslation(['pages', 'common']);
+  const { targets, loading, error, reload } = useDeviceConfigTargets();
+  const [backupsVersion, setBackupsVersion] = useState(0);
+  // A finished run can add attempts and record a device's pending host key.
+  const { run, start } = useBackupRun(() => {
+    reload();
+    setBackupsVersion((v) => v + 1);
+  });
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [editing, setEditing] = useState<Editing>(null);
+  const [removing, setRemoving] = useState<DeviceConfigTarget | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
 
   const needle = query.trim().toLowerCase();
   const shown = targets.filter(
@@ -61,23 +90,59 @@ function DeviceConfigsBody(): JSX.Element {
       target.host.toLowerCase().includes(needle),
   );
   const selected = shown.find((target) => target.id === selectedId) ?? shown[0] ?? null;
+  const running = run.kind === 'running';
+
+  const save = async (input: DeviceConfigTargetInput): Promise<void> => {
+    const saved = await saveDeviceConfigTarget(input, editing?.target?.id);
+    setEditing(null);
+    setSelectedId(saved.id);
+    reload();
+  };
+
+  const remove = async (target: DeviceConfigTarget): Promise<void> => {
+    setRemoving(null);
+    try {
+      await deleteDeviceConfigTarget(target.id);
+      setRemoveError(null);
+      reload();
+    } catch (err: unknown) {
+      setRemoveError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const listError = error ?? removeError;
 
   return (
     <>
-      {error ? (
+      {listError ? (
         <div
           role="alert"
           className="rounded-md border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error-strong"
         >
-          {error}
+          {listError}
         </div>
       ) : null}
 
-      <p className="body-small">
-        {loading
-          ? t('common:status.loading')
-          : t('deviceConfigs.deviceCount', { count: targets.length })}
-      </p>
+      <div className="flex flex-wrap items-center gap-default">
+        <p className="body-small min-w-0 flex-1">
+          {loading
+            ? t('common:status.loading')
+            : t('deviceConfigs.deviceCount', { count: targets.length })}
+        </p>
+        <Button
+          data-testid="config-run-all"
+          variant="outline"
+          size="sm"
+          disabled={running || targets.length === 0}
+          onClick={(): void => void start()}
+        >
+          {t('deviceConfigs.run.all')}
+        </Button>
+        <Button data-testid="config-target-add" size="sm" onClick={(): void => setEditing({})}>
+          {t('deviceConfigs.addDevice')}
+        </Button>
+      </div>
+      <RunStatus run={run} />
 
       <ListDetail>
         <RecordPane
@@ -108,7 +173,16 @@ function DeviceConfigsBody(): JSX.Element {
         </RecordPane>
 
         {selected ? (
-          <TargetDetail key={selected.id} target={selected} />
+          <TargetDetail
+            key={selected.id}
+            target={selected}
+            backupsVersion={backupsVersion}
+            running={running}
+            onRun={(): void => void start([selected.id])}
+            onEdit={(): void => setEditing({ target: selected })}
+            onRemove={(): void => setRemoving(selected)}
+            onHostKeyChanged={reload}
+          />
         ) : (
           <DetailEmpty>
             {targets.length === 0
@@ -119,14 +193,84 @@ function DeviceConfigsBody(): JSX.Element {
       </ListDetail>
 
       <TftpSession />
+
+      {editing ? (
+        <TargetForm
+          target={editing.target}
+          onSubmit={save}
+          onCancel={(): void => setEditing(null)}
+        />
+      ) : null}
+      <ConfirmModal
+        isOpen={removing !== null}
+        title={t('deviceConfigs.remove.title', { name: removing?.name ?? '' })}
+        message={t('deviceConfigs.remove.message')}
+        confirmLabel={t('deviceConfigs.remove.confirm')}
+        cancelLabel={t('common:buttons.cancel')}
+        onConfirm={(): void => {
+          if (removing) {
+            void remove(removing);
+          }
+        }}
+        onCancel={(): void => setRemoving(null)}
+      />
     </>
   );
 }
 
+function RunStatus({ run }: { run: BackupRunState }): JSX.Element | null {
+  const { t } = useTranslation(['pages']);
+  switch (run.kind) {
+    case 'idle':
+      return null;
+    case 'running':
+      return (
+        <p data-testid="config-run-status" role="status" className="body-small">
+          {t('deviceConfigs.run.running')}
+        </p>
+      );
+    case 'finished':
+      return (
+        <p data-testid="config-run-status" role="status" className="body-small">
+          {t('deviceConfigs.run.finished', {
+            succeeded: run.result.succeeded,
+            failed: run.result.failed,
+          })}
+        </p>
+      );
+    case 'failed':
+      return (
+        <p
+          data-testid="config-run-status"
+          role="alert"
+          className="body-small text-status-error-strong"
+        >
+          {t('deviceConfigs.run.failed', { reason: run.message })}
+        </p>
+      );
+  }
+}
+
 /** Keyed by target, so a new device starts on its own newest backup. */
-function TargetDetail({ target }: { target: DeviceConfigTarget }): JSX.Element {
+function TargetDetail({
+  target,
+  backupsVersion,
+  running,
+  onRun,
+  onEdit,
+  onRemove,
+  onHostKeyChanged,
+}: {
+  target: DeviceConfigTarget;
+  backupsVersion: number;
+  running: boolean;
+  onRun: () => void;
+  onEdit: () => void;
+  onRemove: () => void;
+  onHostKeyChanged: () => void;
+}): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
-  const { backups, error } = useDeviceConfigBackups(target.id);
+  const { backups, error } = useDeviceConfigBackups(target.id, backupsVersion);
   const [pickedId, setPickedId] = useState<string | null>(null);
 
   // The newest saved configuration is what an operator opens the page for.
@@ -142,6 +286,24 @@ function TargetDetail({ target }: { target: DeviceConfigTarget }): JSX.Element {
       title={target.name}
       meta={`${target.host}:${target.port} · ${t(`deviceConfigs.platform.${target.platform}`)}`}
     >
+      <div className="flex flex-wrap gap-compact">
+        <Button data-testid="config-run-one" size="sm" disabled={running} onClick={onRun}>
+          {t('deviceConfigs.run.one')}
+        </Button>
+        <Button data-testid="config-target-edit" variant="outline" size="sm" onClick={onEdit}>
+          {t('deviceConfigs.edit')}
+        </Button>
+        <Button
+          data-testid="config-target-remove"
+          variant="outline"
+          tone="red"
+          size="sm"
+          onClick={onRemove}
+        >
+          {t('deviceConfigs.remove.action')}
+        </Button>
+      </div>
+      <HostKey target={target} onChanged={onHostKeyChanged} />
       <BackupsBody
         backups={backups}
         error={error}

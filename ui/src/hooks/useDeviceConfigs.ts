@@ -1,20 +1,27 @@
 /**
- * Data hooks for the configuration backup reads (P-D1, P-D2, UI-SEED-25).
+ * Data hooks for configuration backup (P-D1, P-D2, UI-SEED-25, UI-SEED-45).
  *
  * Three reads chained by selection: the backup targets, one target's backup
  * attempts (newest first), and one attempt's change from the configuration
- * before it. Every read is operator+, so the page asks only for an operator.
+ * before it. Every read and write is operator+, so the page asks only for an
+ * operator. A run is a job: it is started here and followed on the shared job
+ * event stream, and its end re-reads the targets and backups it changed.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ApiError, api } from '../api/client';
+import { isTerminalJobState } from '../lib/jobsClient';
 import type {
   DeviceConfigBackup,
   DeviceConfigBackupList,
   DeviceConfigDiff,
+  DeviceConfigRunResult,
   DeviceConfigTarget,
+  DeviceConfigTargetInput,
   DeviceConfigTargetList,
 } from '../types/deviceConfigs';
+import type { JobResponse } from '../types/generated/job-response';
+import { useJobEvents } from './useJobEvents';
 
 const TARGETS = '/api/v1/device-config-targets';
 const BACKUPS = '/api/v1/device-configs';
@@ -23,22 +30,49 @@ function message(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
+function targetPath(id: string): string {
+  return `${TARGETS}/${encodeURIComponent(id)}`;
+}
+
+export function saveDeviceConfigTarget(
+  input: DeviceConfigTargetInput,
+  id?: string,
+): Promise<DeviceConfigTarget> {
+  return id
+    ? api.put<DeviceConfigTarget>(targetPath(id), input)
+    : api.post<DeviceConfigTarget>(TARGETS, input);
+}
+
+/** Deleting a target deletes its saved configurations with it. */
+export function deleteDeviceConfigTarget(id: string): Promise<void> {
+  return api.delete<void>(targetPath(id));
+}
+
+/** Pins the pending key; the fingerprint is the one the operator was shown. */
+export function confirmDeviceConfigHostKey(id: string, fingerprint: string): Promise<void> {
+  return api.put<void>(`${targetPath(id)}/host-key`, { fingerprint });
+}
+
+/** Forgets the pinned key, so the next backup holds the device's key for confirmation. */
+export function forgetDeviceConfigHostKey(id: string): Promise<void> {
+  return api.delete<void>(`${targetPath(id)}/host-key`);
+}
+
 export interface UseDeviceConfigTargetsResult {
   targets: DeviceConfigTarget[];
   loading: boolean;
   error: string | null;
+  reload: () => void;
 }
 
-export function useDeviceConfigTargets(enabled: boolean): UseDeviceConfigTargetsResult {
+export function useDeviceConfigTargets(): UseDeviceConfigTargetsResult {
   const [targets, setTargets] = useState<DeviceConfigTarget[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [version, setVersion] = useState(0);
+  const reload = useCallback((): void => setVersion((v) => v + 1), []);
 
   useEffect(() => {
-    if (!enabled) {
-      setLoading(false);
-      return;
-    }
     let cancelled = false;
     setLoading(true);
     api
@@ -46,6 +80,7 @@ export function useDeviceConfigTargets(enabled: boolean): UseDeviceConfigTargets
       .then((resp) => {
         if (!cancelled) {
           setTargets(resp.targets);
+          setError(null);
         }
       })
       .catch((err: unknown) => {
@@ -61,9 +96,60 @@ export function useDeviceConfigTargets(enabled: boolean): UseDeviceConfigTargets
     return (): void => {
       cancelled = true;
     };
-  }, [enabled]);
+  }, [version]);
 
-  return { targets, loading, error };
+  return { targets, loading, error, reload };
+}
+
+/** A run's progress: idle, running as a job, or finished with its counts. */
+export type BackupRunState =
+  | { kind: 'idle' }
+  | { kind: 'running'; jobId: string }
+  | { kind: 'finished'; result: DeviceConfigRunResult }
+  | { kind: 'failed'; message: string };
+
+export interface UseBackupRunResult {
+  run: BackupRunState;
+  /** Backs up the given targets, or every target when none are given. */
+  start: (targetIds?: string[]) => Promise<void>;
+}
+
+function isRunResult(value: unknown): value is DeviceConfigRunResult {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as DeviceConfigRunResult).succeeded === 'number' &&
+    typeof (value as DeviceConfigRunResult).failed === 'number'
+  );
+}
+
+/** Starts backup runs and calls onFinished when the running one ends. */
+export function useBackupRun(onFinished: () => void): UseBackupRunResult {
+  const [run, setRun] = useState<BackupRunState>({ kind: 'idle' });
+  const runningId = run.kind === 'running' ? run.jobId : null;
+
+  useJobEvents((job: JobResponse) => {
+    if (job.id !== runningId || !isTerminalJobState(job.state)) {
+      return;
+    }
+    if (job.state === 'succeeded' && isRunResult(job.result)) {
+      setRun({ kind: 'finished', result: job.result });
+    } else {
+      setRun({ kind: 'failed', message: job.error || job.state });
+    }
+    onFinished();
+  });
+
+  const start = async (targetIds?: string[]): Promise<void> => {
+    try {
+      const job = await api.post<JobResponse>(`${BACKUPS}/run`, targetIds ? { targetIds } : {});
+      setRun({ kind: 'running', jobId: job.id });
+    } catch (err: unknown) {
+      setRun({ kind: 'failed', message: message(err) });
+    }
+  };
+
+  return { run, start };
 }
 
 export interface UseDeviceConfigBackupsResult {
@@ -72,7 +158,11 @@ export interface UseDeviceConfigBackupsResult {
   error: string | null;
 }
 
-export function useDeviceConfigBackups(targetId: string | null): UseDeviceConfigBackupsResult {
+/** Re-reads whenever version changes, so a finished run shows its attempts. */
+export function useDeviceConfigBackups(
+  targetId: string | null,
+  version = 0,
+): UseDeviceConfigBackupsResult {
   const [backups, setBackups] = useState<DeviceConfigBackup[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -98,7 +188,7 @@ export function useDeviceConfigBackups(targetId: string | null): UseDeviceConfig
     return (): void => {
       cancelled = true;
     };
-  }, [targetId]);
+  }, [targetId, version]);
 
   return { backups, error };
 }

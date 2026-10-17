@@ -1,10 +1,13 @@
 /**
- * Device configs (UI-SEED-25): the newest saved backup opens with its change
- * highlighted line by line, a failed attempt explains itself without asking
- * for a diff, the first configuration says there is nothing to compare, and
- * a viewer is never sent to the operator-only reads.
+ * Device configs (UI-SEED-25, UI-SEED-45): the newest saved backup opens with
+ * its change highlighted line by line, a failed attempt explains itself
+ * without asking for a diff, the first configuration says there is nothing to
+ * compare, and a viewer is never sent to the operator-only reads. An operator
+ * runs a backup and sees its counts when the job ends, trusts a pending host
+ * key by the fingerprint shown, forgets a pinned one, and removes a device
+ * only after confirming.
  */
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -12,11 +15,21 @@ import type {
   DeviceConfigDiff,
   DeviceConfigTarget,
 } from '../types/deviceConfigs';
+import type { JobResponse } from '../types/generated/job-response';
 import { parseUnifiedDiff } from './deviceConfigs/DiffView';
 
 const license = { features: ['compliance_advanced'] };
 let canWrite = true;
 const requested: string[] = [];
+const writes: { method: string; path: string; body?: unknown }[] = [];
+let onJob: (job: JobResponse) => void = () => undefined;
+
+vi.mock('../hooks/useJobEvents', () => ({
+  useJobEvents: (listener: (job: JobResponse) => void) => {
+    onJob = listener;
+    return { status: 'open' };
+  },
+}));
 
 vi.mock('../contexts/LicenseContext', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -31,16 +44,17 @@ vi.mock('../contexts/RoleContext', async (importOriginal) => ({
   useRole: () => ({ canWrite, role: canWrite ? 'operator' : 'viewer', loading: false }),
 }));
 
-const targets: DeviceConfigTarget[] = [
-  {
-    id: 'dct-00000000000a',
-    name: 'core-01',
-    host: '10.44.10.1',
-    port: 22,
-    platform: 'cisco-ios',
-    updatedAt: '2026-10-15T10:00:00Z',
-  },
-];
+const core: DeviceConfigTarget = {
+  id: 'dct-00000000000a',
+  name: 'core-01',
+  host: '10.44.10.1',
+  port: 22,
+  platform: 'cisco-ios',
+  credentialsId: 'cred-ssh',
+  hostKeySha256: 'SHA256:pinnedpinnedpinned',
+  updatedAt: '2026-10-15T10:00:00Z',
+};
+let targets: DeviceConfigTarget[] = [core];
 
 const backups: DeviceConfigBackup[] = [
   {
@@ -105,6 +119,18 @@ vi.mock('../api/client', async (importOriginal) => {
         // The target's first configuration has nothing before it.
         throw new actual.ApiError(404, { error: 'Not found' }, undefined, null);
       },
+      post: async (path: string, body?: unknown): Promise<unknown> => {
+        writes.push({ method: 'POST', path, body });
+        return { id: 'job-7', kind: 'device-config-backup', state: 'queued', progress: 0 };
+      },
+      put: async (path: string, body?: unknown): Promise<unknown> => {
+        writes.push({ method: 'PUT', path, body });
+        return undefined;
+      },
+      delete: async (path: string): Promise<unknown> => {
+        writes.push({ method: 'DELETE', path });
+        return undefined;
+      },
     },
   };
 });
@@ -127,7 +153,9 @@ describe('DeviceConfigsPage', () => {
   beforeEach(() => {
     license.features = ['compliance_advanced'];
     canWrite = true;
+    targets = [core];
     requested.length = 0;
+    writes.length = 0;
   });
 
   it('opens the newest saved backup with added and removed lines highlighted', async () => {
@@ -194,5 +222,107 @@ describe('DeviceConfigsPage', () => {
     );
     expect(screen.getByTestId('config-diff')).toBeInTheDocument();
     expect(requested).toEqual([]);
+  });
+
+  it('backs up the selected device and re-reads its backups when the job ends', async () => {
+    const user = userEvent.setup();
+    render(<DeviceConfigsPage />);
+    await screen.findByTestId('config-diff');
+
+    await user.click(screen.getByTestId('config-run-one'));
+
+    expect(writes).toEqual([
+      { method: 'POST', path: '/api/v1/device-configs/run', body: { targetIds: [core.id] } },
+    ]);
+    expect(await screen.findByTestId('config-run-status')).toHaveTextContent('Backing up…');
+    expect(screen.getByTestId('config-run-one')).toBeDisabled();
+
+    const reads = requested.length;
+    // Another job's end is not this run's.
+    act(() => onJob({ id: 'job-other', kind: 'x', state: 'succeeded', progress: 1 }));
+    expect(screen.getByTestId('config-run-status')).toHaveTextContent('Backing up…');
+    act(() =>
+      onJob({
+        id: 'job-7',
+        kind: 'device-config-backup',
+        state: 'succeeded',
+        progress: 1,
+        result: { results: [], succeeded: 1, failed: 0 },
+      }),
+    );
+
+    expect(screen.getByTestId('config-run-status')).toHaveTextContent(
+      'Backup finished: 1 saved, 0 failed.',
+    );
+    await waitFor(() =>
+      expect(requested.slice(reads)).toEqual(
+        expect.arrayContaining([
+          '/api/v1/device-config-targets',
+          `/api/v1/device-configs?targetId=${core.id}`,
+        ]),
+      ),
+    );
+    expect(screen.getByTestId('config-run-one')).toBeEnabled();
+  });
+
+  it('backs up every device with no target list', async () => {
+    const user = userEvent.setup();
+    render(<DeviceConfigsPage />);
+    await screen.findByTestId('config-diff');
+
+    await user.click(screen.getByTestId('config-run-all'));
+
+    expect(writes).toEqual([{ method: 'POST', path: '/api/v1/device-configs/run', body: {} }]);
+  });
+
+  it('trusts a pending host key by the fingerprint it shows', async () => {
+    const user = userEvent.setup();
+    targets = [{ ...core, hostKeySha256: undefined, pendingHostKeySha256: 'SHA256:newkey' }];
+    render(<DeviceConfigsPage />);
+
+    expect(await screen.findByTestId('config-host-key-pending')).toHaveTextContent('SHA256:newkey');
+    await user.click(screen.getByTestId('config-host-key-confirm'));
+
+    expect(writes).toEqual([
+      {
+        method: 'PUT',
+        path: `/api/v1/device-config-targets/${core.id}/host-key`,
+        body: { fingerprint: 'SHA256:newkey' },
+      },
+    ]);
+  });
+
+  it('forgets a pinned host key, and says when there is none yet', async () => {
+    const user = userEvent.setup();
+    render(<DeviceConfigsPage />);
+
+    expect(await screen.findByTestId('config-host-key-pinned')).toHaveTextContent(
+      'SHA256:pinnedpinnedpinned',
+    );
+    targets = [{ ...core, hostKeySha256: undefined }];
+    await user.click(screen.getByTestId('config-host-key-forget'));
+
+    expect(writes).toEqual([
+      { method: 'DELETE', path: `/api/v1/device-config-targets/${core.id}/host-key` },
+    ]);
+    expect(await screen.findByTestId('config-host-key-none')).toBeInTheDocument();
+  });
+
+  it('removes a device only after the operator confirms', async () => {
+    const user = userEvent.setup();
+    render(<DeviceConfigsPage />);
+    await screen.findByTestId('config-diff');
+
+    await user.click(screen.getByTestId('config-target-remove'));
+    expect(screen.getByText('Its saved configurations are deleted with it.')).toBeInTheDocument();
+    expect(writes).toEqual([]);
+
+    targets = [];
+    await user.click(screen.getByTestId('confirm-modal-confirm'));
+
+    expect(writes).toEqual([
+      { method: 'DELETE', path: `/api/v1/device-config-targets/${core.id}` },
+    ]);
+    expect(await screen.findByText('No devices are backed up yet.')).toBeInTheDocument();
   });
 });

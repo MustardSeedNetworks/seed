@@ -703,7 +703,7 @@
       }
     },
     "deviceConfigs": {
-      "description": "Revise las configuraciones que Seed guardó de sus dispositivos por SSH o NETCONF, de la más reciente a la más antigua. Seleccione una copia guardada para ver qué cambió desde la anterior: las líneas añadidas en verde, las eliminadas en rojo. Un intento fallido muestra por qué no guardó nada.",
+      "description": "Añada los dispositivos cuya configuración Seed guarda por SSH o NETCONF, haga una copia de uno o de todos y revise lo que guardó, de la más reciente a la más antigua. Seleccione una copia guardada para ver qué cambió desde la anterior: las líneas añadidas en verde, las eliminadas en rojo. Un intento fallido muestra por qué no guardó nada.",
       "terms": {
         "backup": {
           "term": "Copia de seguridad",
@@ -712,6 +712,10 @@
         "diff": {
           "term": "Cambio",
           "description": "Las líneas añadidas y eliminadas desde la configuración guardada anterior del dispositivo, con algunas líneas sin cambios alrededor como contexto."
+        },
+        "hostKey": {
+          "term": "Clave de host SSH",
+          "description": "La clave con la que un dispositivo demuestra quién es. La primera copia la registra y no guarda nada hasta que un operador la comprueba en el dispositivo y confía en ella. Una copia que encuentra otra clave se detiene. Olvide la clave después de sustituir un dispositivo."
         },
         "tftp": {
           "term": "Servidor TFTP",
