@@ -34,10 +34,22 @@ asks the device for the dry-run diff:
 
 | Platform | Dry run | Diff source |
 | --- | --- | --- |
-| Junos | `configure private`, `load merge\|replace terminal`, `show \| compare`, `rollback 0` | device |
-| EOS | `configure session <id>`, load, `show session-config diffs`, `abort` | device |
+| Junos | `configure private`, `load merge\|override terminal`, `show \| compare`, `rollback 0` | device |
+| EOS | `configure session <id>`, (`rollback clean-config` for replace), load, `show session-config diffs`, `abort` | device |
 | NETCONF | `<edit-config>` into `candidate`, `<validate>`, read back, `<discard-changes>` | device |
 | IOS / IOS-XE | none on the device | Seed, against the fresh backup; labelled **predicted** |
+
+Junos and EOS are driven in an interactive shell, the only way either CLI
+reads a load from the session. Replace means the candidate becomes the whole
+configuration, which is `load override` on Junos (its `load replace` only
+replaces stanzas marked `replace:`) and a session started from
+`rollback clean-config` on EOS. The device reads a CLI candidate as typed
+input, so a candidate with a control character (`^D` ends a Junos load, `^Z`
+leaves EOS configuration mode) is refused, and so is an EOS line that starts
+with a command which would end the session or run in exec mode (`commit`,
+`end`, `exit`, `abort`, `configure`, `do` and the like). Device errors are
+reported by candidate line number and the device's message, without the
+configuration text the device quotes back.
 
 The plan stores the pre-push backup id, the running configuration's SHA-256,
 the candidate and the diff, with the candidate and diff encrypted under the

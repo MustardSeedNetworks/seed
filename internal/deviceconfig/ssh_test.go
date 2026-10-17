@@ -37,6 +37,8 @@ type deviceOpts struct {
 	commands                map[string]string
 	// netconf, when set, serves the netconf subsystem on the channel.
 	netconf func(ch ssh.Channel)
+	// shell, when set, serves an interactive shell on the channel.
+	shell func(ch ssh.Channel)
 }
 
 func startSSHDevice(t *testing.T, opts deviceOpts) sshDevice {
@@ -101,33 +103,51 @@ func serveSSH(conn net.Conn, cfg *ssh.ServerConfig, opts deviceOpts) {
 			return
 		}
 		for req := range chReqs {
-			// The subsystem payload is an SSH string naming the subsystem.
-			if req.Type == "subsystem" && opts.netconf != nil && string(req.Payload[4:]) == "netconf" {
-				_ = req.Reply(true, nil)
-				go ssh.DiscardRequests(chReqs)
-				opts.netconf(ch)
-				_ = ch.Close()
+			if serveRequest(ch, req, chReqs, opts) {
 				break
 			}
-			if req.Type != "exec" {
-				_ = req.Reply(false, nil)
-				continue
-			}
-			_ = req.Reply(true, nil)
-			// The exec payload is an SSH string: a uint32 length and the bytes.
-			status := uint32(0)
-			if out, ok := opts.commands[string(req.Payload[4:])]; ok {
-				_, _ = ch.Write([]byte(out))
-			} else {
-				_, _ = ch.Stderr().Write([]byte("% Invalid input detected"))
-				status = 1
-			}
-			payload := make([]byte, 4)
-			binary.BigEndian.PutUint32(payload, status)
-			_, _ = ch.SendRequest("exit-status", false, payload)
-			_ = ch.Close()
 		}
 	}
+}
+
+// serveRequest answers one channel request and reports whether the channel
+// is finished with.
+func serveRequest(ch ssh.Channel, req *ssh.Request, chReqs <-chan *ssh.Request, opts deviceOpts) bool {
+	// A subsystem or exec payload is an SSH string: a uint32 length and the
+	// bytes.
+	switch {
+	case req.Type == "subsystem" && opts.netconf != nil && string(req.Payload[4:]) == "netconf":
+		_ = req.Reply(true, nil)
+		go ssh.DiscardRequests(chReqs)
+		opts.netconf(ch)
+		_ = ch.Close()
+		return true
+	case req.Type == "pty-req" && opts.shell != nil:
+		_ = req.Reply(true, nil)
+		return false
+	case req.Type == "shell" && opts.shell != nil:
+		_ = req.Reply(true, nil)
+		go ssh.DiscardRequests(chReqs)
+		opts.shell(ch)
+		_ = ch.Close()
+		return true
+	case req.Type != "exec":
+		_ = req.Reply(false, nil)
+		return false
+	}
+	_ = req.Reply(true, nil)
+	status := uint32(0)
+	if out, ok := opts.commands[string(req.Payload[4:])]; ok {
+		_, _ = ch.Write([]byte(out))
+	} else {
+		_, _ = ch.Stderr().Write([]byte("% Invalid input detected"))
+		status = 1
+	}
+	payload := make([]byte, 4)
+	binary.BigEndian.PutUint32(payload, status)
+	_, _ = ch.SendRequest("exit-status", false, payload)
+	_ = ch.Close()
+	return false
 }
 
 func (d sshDevice) request(t *testing.T, password, command, pinned string) deviceconfig.FetchRequest {

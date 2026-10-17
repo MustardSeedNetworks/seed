@@ -341,6 +341,7 @@ func TestPlanCheckRefusesBeforeALogin(t *testing.T) {
 		pushTarget("dct-nxos", "10.0.0.4", deviceconfig.PlatformCiscoNXOS),
 		pushTarget("dct-junos", "10.0.0.5", deviceconfig.PlatformJuniperJunos),
 		pushTarget("dct-nc", "10.0.0.6", deviceconfig.PlatformNETCONF),
+		pushTarget("dct-eos", "10.0.0.7", deviceconfig.PlatformAristaEOS),
 	)
 	tests := []struct {
 		name string
@@ -358,7 +359,20 @@ func TestPlanCheckRefusesBeforeALogin(t *testing.T) {
 		{"pushing off", planRequest("dct-off", deviceconfig.PushMerge, "x"), "not enabled"},
 		{"host key unconfirmed", planRequest("dct-unpinned", deviceconfig.PushMerge, "x"), "host key"},
 		{"NX-OS is read-only", planRequest("dct-nxos", deviceconfig.PushMerge, "x"), "read-only"},
-		{"Junos not yet", planRequest("dct-junos", deviceconfig.PushMerge, "x"), "not available yet"},
+		{
+			"Junos load ended early",
+			planRequest("dct-junos", deviceconfig.PushMerge, "system {\n\x04\ncommit\n}"),
+			"line 2 contains a control character",
+		},
+		{"IOS escape key", planRequest("dct-ios", deviceconfig.PushMerge, "hostname a\x1b"), "control character"},
+		{"EOS ctrl-Z", planRequest("dct-eos", deviceconfig.PushMerge, "hostname a\x1a"), "control character"},
+		{
+			"EOS commit",
+			planRequest("dct-eos", deviceconfig.PushMerge, "hostname a\n   commit"),
+			`line 2 starts with "commit"`,
+		},
+		{"EOS end", planRequest("dct-eos", deviceconfig.PushMerge, "hostname a\nend"), `"end"`},
+		{"EOS exec command", planRequest("dct-eos", deviceconfig.PushMerge, "do reload now"), `"do"`},
 		{"NETCONF text", planRequest("dct-nc", deviceconfig.PushMerge, "hostname x"), "outside its elements"},
 		{
 			"NETCONF element escape",
@@ -383,6 +397,11 @@ func TestPlanCheckRefusesBeforeALogin(t *testing.T) {
 	}
 	require.NoError(t, f.pushes.Check(context.Background(),
 		planRequest("dct-nc", deviceconfig.PushMerge, "<system>\n <host-name>x</host-name>\n</system>\n<snmp/>")))
+	require.NoError(t, f.pushes.Check(context.Background(),
+		planRequest("dct-junos", deviceconfig.PushMerge, "system {\r\n\tcommit {\r\n\t\tsynchronize;\r\n\t}\r\n}\r\n")),
+		"Junos text may name commit: it is configuration, not a command")
+	require.NoError(t, f.pushes.Check(context.Background(),
+		planRequest("dct-eos", deviceconfig.PushMerge, "! comment\ninterface Ethernet1\n   description uplink\n")))
 	require.Empty(t, f.fetch.requests, "a check never logs in")
 }
 
