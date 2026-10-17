@@ -434,6 +434,48 @@
     "nameRequired": "Name is required.",
     "saveFailed": "Failed to save"
   },
+  "ipam": {
+    "label": "IP addresses",
+    "title": "IP addresses",
+    "description": "How full each network and DHCP scope is, from the addresses seen in use in the last day.",
+    "addScope": "Add DHCP scope",
+    "readOnly": "Read-only — operator role required to add or delete a DHCP scope",
+    "loadFailed": "Could not load address use: {{reason}}",
+    "networkCount_one": "{{count}} network",
+    "networkCount_other": "{{count}} networks",
+    "scopeCount_one": "{{count}} DHCP scope",
+    "scopeCount_other": "{{count}} DHCP scopes",
+    "noNetworks": "No network known yet. Run a discovery scan or add a target network in Settings.",
+    "percent": "{{value}}%",
+    "source": {
+      "local": "This interface's subnet",
+      "configured": "Target network",
+      "learned": "Learned network"
+    },
+    "dhcpScope": "DHCP scope",
+    "exhaustion": {
+      "near": "Nearly full",
+      "full": "Full"
+    },
+    "confirmDelete": "Delete DHCP scope {{range}}?",
+    "deleteFailed": "Could not delete the scope: {{reason}}",
+    "labelSize": "Addresses",
+    "labelUsed": "In use",
+    "labelFree": "Free",
+    "labelUtilization": "Utilization",
+    "inUseHeading_one": "{{count}} address in use",
+    "inUseHeading_other": "{{count}} addresses in use",
+    "noneInUse": "No address here was seen in use in the last day.",
+    "emptyPrompt": "Select a network or scope to see the addresses in use.",
+    "formTitle": "Add DHCP scope",
+    "fieldName": "Name (optional)",
+    "fieldStart": "First address",
+    "fieldEnd": "Last address",
+    "formHint": "The range a DHCP server leases from, both ends included. Seed counts an address as used when discovery or a router's ARP table saw it in the last day.",
+    "rangeRequired": "Enter the first and last address.",
+    "invalidRange": "A DHCP scope is two IPv4 addresses, the first one lower.",
+    "overlaps": "This range overlaps another DHCP scope."
+  },
   "reports": {
     "description": "Aggregated SLA dashboard, compliance tracking, and historical reporting.",
     "label": "Reports",

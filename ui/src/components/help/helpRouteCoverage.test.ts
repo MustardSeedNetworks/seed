@@ -51,6 +51,7 @@ const pageFiles = {
   '/logs': 'LogsPage',
   '/polling-targets': 'PollingTargetsPage',
   '/device-groups': 'DeviceGroupsPage',
+  '/ipam': 'IpamPage',
   '/topology': 'TopologyPage',
   '/interfaces': 'InterfacesPage',
   '/device-configs': 'DeviceConfigsPage',
@@ -60,8 +61,8 @@ const pageFiles = {
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 describe('GUI help — current card coverage', () => {
-  it('keeps all 30 sections with translated bodies', () => {
-    expect(new Set(helpSections.map((section) => section.id)).size).toBe(30);
+  it('keeps all 31 sections with translated bodies', () => {
+    expect(new Set(helpSections.map((section) => section.id)).size).toBe(31);
     for (const language of ['en', 'es']) {
       const translate = i18next.getFixedT(language, ['help', 'cards', 'pages', 'common'] as const);
       for (const section of helpSections) {

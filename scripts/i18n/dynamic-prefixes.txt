@@ -203,7 +203,8 @@ validation:fields.
 # InterfacesPage also reads t(`interfaces.status.${operStatus}`), and its
 # history panel t(`interfaces.history.window.${range}`). DeviceGroupsPage
 # reads t(`deviceGroups.severity.${severity}`). DeviceConfigsPage reads
-# t(`deviceConfigs.platform.${platform}`) and .status.${status}.
+# t(`deviceConfigs.platform.${platform}`) and .status.${status}. IpamPage
+# reads t(`ipam.source.${source}`) and t(`ipam.exhaustion.${exhaustion}`).
 pages:alerts.
 pages:dashboard.
 pages:deviceConfigs.
@@ -211,6 +212,7 @@ pages:deviceGroups.
 pages:flows.
 pages:groups.
 pages:interfaces.
+pages:ipam.
 pages:link.
 pages:logs.
 pages:network.

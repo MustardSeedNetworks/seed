@@ -33,6 +33,7 @@
     "alerts": "Alerts",
     "pollingTargets": "Polling Targets",
     "deviceGroups": "Device Groups",
+    "ipam": "IP Addresses",
     "topology": "Topology",
     "interfaces": "Interfaces",
     "deviceConfigs": "Device Configs",
@@ -665,6 +666,19 @@
         "scope": {
           "term": "Scope",
           "description": "Limiting an alert rule or a report to one group's members. Without a group, they cover every target."
+        }
+      }
+    },
+    "ipam": {
+      "description": "See how full each network and DHCP scope is. An address counts as in use when discovery found a device on it, or a polled router's ARP table held it, in the last day. Networks are this interface's subnet, the target networks in Settings and the networks discovery learned. A DHCP scope is entered here by an operator; Seed raises an alert when one is 90% in use and again when it is full.",
+      "terms": {
+        "scope": {
+          "term": "DHCP scope",
+          "description": "The address range a DHCP server leases from. Scopes may not overlap, so no address is counted twice."
+        },
+        "utilization": {
+          "term": "Utilization",
+          "description": "Addresses seen in use as a share of the assignable addresses. A subnet's network and broadcast addresses are not assignable and are not counted."
         }
       }
     },

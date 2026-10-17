@@ -16,6 +16,7 @@ import {
   Boxes,
   EthernetPort,
   FileDiff,
+  Grid3X3,
   Network,
   Route,
   ScrollText,
@@ -288,6 +289,32 @@ export const reportingSections: HelpSection[] = [
           {
             term: 'content.deviceGroups.terms.scope.term',
             description: 'content.deviceGroups.terms.scope.description',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'ipam',
+    titleKey: 'sections.ipam',
+    icon: <Grid3X3 className={ICON} />,
+    keywords: ['ipam', 'ip addresses', 'subnet', 'utilization', 'dhcp', 'scope', 'exhaustion'],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'content.ipam.description',
+      },
+      {
+        kind: 'terms',
+        heading: 'content.common.terms',
+        items: [
+          {
+            term: 'content.ipam.terms.scope.term',
+            description: 'content.ipam.terms.scope.description',
+          },
+          {
+            term: 'content.ipam.terms.utilization.term',
+            description: 'content.ipam.terms.utilization.description',
           },
         ],
       },

@@ -18,6 +18,7 @@ import {
   Boxes,
   EthernetPort,
   FileDiff,
+  Grid3X3,
   LayoutDashboard,
   Network,
   Route,
@@ -57,6 +58,7 @@ const PollingTargetsPage = lazy(() =>
 const DeviceGroupsPage = lazy(() =>
   import('./pages/DeviceGroupsPage').then((m) => ({ default: m.DeviceGroupsPage })),
 );
+const IpamPage = lazy(() => import('./pages/IpamPage').then((m) => ({ default: m.IpamPage })));
 const TopologyPage = lazy(() =>
   import('./pages/TopologyPage').then((m) => ({ default: m.TopologyPage })),
 );
@@ -117,6 +119,7 @@ type PageI18nKey =
   | 'logs'
   | 'pollingTargets'
   | 'deviceGroups'
+  | 'ipam'
   | 'topology'
   | 'interfaces'
   | 'deviceConfigs'
@@ -247,6 +250,15 @@ const staticPages: PageDef[] = [
     iconColorClass: 'text-module-security',
     component: DeviceGroupsPage,
     help: 'deviceGroups',
+  },
+  {
+    path: '/ipam',
+    group: 'monitoring',
+    i18nKey: 'ipam',
+    icon: Grid3X3,
+    iconColorClass: 'text-module-security',
+    component: IpamPage,
+    help: 'ipam',
   },
   {
     path: '/topology',
