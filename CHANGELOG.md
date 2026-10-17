@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.275.0](https://github.com/MustardSeedNetworks/seed/compare/v0.274.0...v0.275.0) (2026-10-17)
+
+
+### Features
+
+* **deviceconfig:** plan a configuration push as a dry run (P-D3) ([#3571](https://github.com/MustardSeedNetworks/seed/issues/3571)) ([ff2b10b](https://github.com/MustardSeedNetworks/seed/commit/ff2b10b2c599002f37832a9d184b0a56e6fd554c))
+
+
+### Documentation
+
+* **adr:** record the configuration push design (ADR-0035) ([#3568](https://github.com/MustardSeedNetworks/seed/issues/3568)) ([6bfe090](https://github.com/MustardSeedNetworks/seed/commit/6bfe090749b60da8768ab551c876c920d2d35907))
+
 ## [0.274.0](https://github.com/MustardSeedNetworks/seed/compare/v0.273.0...v0.274.0) (2026-10-17)
 
 
