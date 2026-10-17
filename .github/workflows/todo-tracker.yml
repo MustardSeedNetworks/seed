@@ -17,12 +17,6 @@ on:
     # Run weekly on Monday at 9am UTC
     - cron: '0 9 * * 1'
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '**/*.go'
-      - '**/*.ts'
-      - '**/*.tsx'
 
 permissions:
   contents: read
