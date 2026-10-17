@@ -69,18 +69,6 @@ func TestMergeIOS(t *testing.T) {
 	}
 }
 
-func TestPredictIOSReplace(t *testing.T) {
-	t.Parallel()
-	backup := Backup{Config: "hostname edge\r\n!\r\narchive\r\n path flash:a\r\n!\r\nntp server 192.0.2.1\r\nend\r\n"}
-	res, err := predictIOS(backup, PushReplace, "hostname edge\narchive\n path flash:a\nend\n")
-	require.NoError(t, err)
-	require.Equal(t, 0, res.Added)
-	require.Equal(t, 1, res.Removed)
-	require.Contains(t, res.Diff, "-ntp server 192.0.2.1")
-	require.Contains(t, res.Diff, "--- running")
-	require.Contains(t, res.Diff, "+++ predicted")
-}
-
 func TestIndentXML(t *testing.T) {
 	t.Parallel()
 	in := `<configuration xmlns:junos="http://xml.juniper.net/junos/"><system junos:changed="1">` +

@@ -39,6 +39,11 @@ asks the device for the dry-run diff:
 | NETCONF | `<edit-config>` into `candidate`, `<validate>`, read back, `<discard-changes>` | device |
 | IOS / IOS-XE | none on the device | Seed, against the fresh backup; labelled **predicted** |
 
+IOS takes a merge only until delivery slice 5. Its replace is
+`configure replace` from a file on the device's flash, so the candidate has
+to be copied there first, and that copy is the SCP sink slice 5 builds. Until
+then an IOS replace is refused at plan time.
+
 Junos and EOS are driven in an interactive shell, the only way either CLI
 reads a load from the session. Replace means the candidate becomes the whole
 configuration, which is `load override` on Junos (its `load replace` only
@@ -79,21 +84,36 @@ Seed confirms, so a push that cuts Seed off undoes itself:
 | EOS | `configure session <id>`, `commit timer 00:05:00` | reverts unless the session is committed |
 | IOS / IOS-XE | `configure terminal revert timer 5` (needs `archive`) | reverts unless `configure confirm` |
 
+The EOS session is named after the apply's commit id, so the confirm
+(`configure session <id> commit`) and the rollback
+(`configure session <id> abort`) from a later login touch only that session.
+IOS types the candidate under the revert timer, with each line live as it is
+entered; a line the device rejects ends the commit with an immediate
+`configure revert now` rather than leaving the earlier lines live until the
+timer. EOS and IOS keep a startup configuration, so the confirm is followed by
+`write memory`. A confirmed push whose save fails stays confirmed, and its
+outcome says a reload loses the change.
+
 After apply, Seed opens a **new** session, which proves management access
 survived, and dry-runs the same candidate again: a device that holds the
-planned change has nothing left to change, so an empty diff is the check.
-Only then does it confirm, and on the CLI platforms that keep one, save the
-startup configuration. The NETCONF commit carries a `<persist>` token so
-the confirming commit can come from that new session (RFC 6241 §8.4). If the
+planned change has nothing left to change, so an empty diff is the check. Only
+then does it confirm, and on the CLI platforms that keep one, save the startup
+configuration. The NETCONF commit carries a `<persist>` token so the
+confirming commit can come from that new session (RFC 6241 §8.4). If the
 post-check fails, Seed rolls back explicitly while it can still reach the
 device, and otherwise lets the timer expire. NETCONF rolls back with
-`<cancel-commit>` naming the token. Junos rolls back by committing
-`rollback 1`, which is the configuration before the push only while the
-pending commit is the newest, so Seed first reads `show system commit` and
-leaves the revert to the timer if someone else has committed since. A commit
-that fails or whose result is unknown is never rolled back by Seed: undoing
-"the last commit" then could undo someone else's, and the timer covers a
-commit that did land.
+`<cancel-commit>` naming the token. Junos rolls back by committing `rollback
+1`, which is the configuration before the push only while the pending commit
+is the newest, so Seed first reads `show system commit` and leaves the revert
+to the timer if someone else has committed since. IOS rolls back with
+`configure revert now`, sent only while `show archive config rollback timer`
+reports a pending timer. The IOS post-check reads the running configuration
+from the new login and predicts the candidate against it, as the plan did
+against the backup; a candidate written in another form than the running
+configuration's own (an abbreviated command, say) never predicts empty, so it
+is rolled back rather than confirmed. A commit that fails or whose result is
+unknown is never rolled back by Seed from a later login: undoing "the last commit" then could
+undo someone else's, and the timer covers a commit that did land.
 
 A target that lacks the revert mechanism (IOS without `archive`, a NETCONF
 server without `:candidate` and `:confirmed-commit:1.1` in its `<hello>`) is
@@ -162,8 +182,10 @@ alert fires on the new configuration.
    NETCONF and IOS/IOS-XE; then the Junos and EOS dry runs, which are refused
    at plan time until they land.
 3. Apply, confirmed commit, post-check and rollback for Junos and NETCONF.
-4. EOS and IOS/IOS-XE.
-5. SCP image staging, verification and boot set; reload as its own action.
+4. EOS apply, and IOS/IOS-XE merge apply.
+5. SCP image staging, verification and boot set; reload as its own action;
+   IOS/IOS-XE replace, which stages the candidate over the same SCP sink and
+   applies it with `configure replace flash:<file> time 5`.
 
 Tests drive an in-process `x/crypto/ssh` server that scripts each platform's
 dialogue, and the apply use-case is driven over a stand-in device through

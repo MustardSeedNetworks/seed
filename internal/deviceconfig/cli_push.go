@@ -1,21 +1,26 @@
 package deviceconfig
 
-// The Junos and EOS push dialogues (ADR-0035) drive the device's own CLI in an
-// interactive shell: the candidate is loaded into a private candidate (Junos)
-// or a configuration session (EOS), where the device prints its own diff and
-// a dry run throws the candidate away. Both are scoped to this login, so
-// nothing another user is editing is touched, and a Junos private candidate
-// dies with the session if the discard never arrives. A Junos push commits
-// from the private candidate with a commit the device reverts by itself.
+// The Junos, EOS and IOS push dialogues (ADR-0035) drive the device's own CLI
+// in an interactive shell. For a dry run the candidate is loaded into a
+// private candidate (Junos) or a configuration session (EOS), where the device
+// prints its own diff and the candidate is thrown away. Both are scoped to
+// this login, so nothing another user is editing is touched, and a Junos
+// private candidate dies with the session if the discard never arrives. A
+// push commits under a timer the device reverts by itself on: Junos from the
+// private candidate, EOS from a session named after the commit, and IOS by
+// typing the candidate under a revert timer.
 
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"golang.org/x/crypto/ssh"
@@ -59,29 +64,55 @@ func eosSessionControl(word string) bool {
 	return false
 }
 
+// iosModeControl reports whether an IOS candidate line starting with word
+// would leave configuration mode or run an exec command. A final "end", as
+// "show running-config" prints, is the exception: Seed ends the load itself.
+func iosModeControl(word string) bool {
+	return word == "do" || word == "end" || word == "exit"
+}
+
 // checkCLICandidate refuses a CLI candidate that could do more than load
 // configuration. The device reads it as typed input, so a control character
-// is a keystroke (^D ends a Junos load and ^Z leaves EOS configuration mode),
-// and an EOS line is a command.
+// is a keystroke (^D ends a Junos load and ^Z leaves EOS and IOS
+// configuration mode), and an EOS or IOS line is a command.
 func checkCLICandidate(platform Platform, candidate string) error {
-	for i, line := range strings.Split(strings.ReplaceAll(candidate, "\r\n", "\n"), "\n") {
+	lines := strings.Split(strings.ReplaceAll(candidate, "\r\n", "\n"), "\n")
+	last := lastIOSLine(lines)
+	for i, line := range lines {
 		for _, r := range line {
 			if unicode.IsControl(r) && r != '\t' {
 				return fmt.Errorf("candidate line %d contains a control character", i+1)
 			}
 		}
-		if platform != PlatformAristaEOS {
-			continue
+		word, _, _ := strings.Cut(strings.TrimSpace(line), " ")
+		var control bool
+		switch platform {
+		case PlatformAristaEOS:
+			control = eosSessionControl(word)
+		case PlatformCiscoIOS:
+			control = iosModeControl(word) && (i != last || word != "end")
+		case PlatformJuniperJunos, PlatformCiscoNXOS, PlatformNETCONF:
 		}
-		if word, _, _ := strings.Cut(strings.TrimSpace(line), " "); eosSessionControl(word) {
+		if control {
 			return fmt.Errorf(
-				"candidate line %d starts with %q, which would leave the configuration session",
+				"candidate line %d starts with %q, which would leave configuration mode",
 				i+1,
 				word,
 			)
 		}
 	}
 	return nil
+}
+
+// lastIOSLine returns the index of the last line that is neither blank nor a
+// "!" separator, or -1.
+func lastIOSLine(lines []string) int {
+	for i, line := range slices.Backward(lines) {
+		if t := strings.TrimSpace(line); t != "" && t != "!" {
+			return i
+		}
+	}
+	return -1
 }
 
 // cliShell is one interactive CLI session. Output is read until it ends at
@@ -409,52 +440,196 @@ func trimEditBanner(out string) string {
 // Replace starts the session from a clean configuration, so the candidate
 // becomes the whole configuration.
 func eosDryRun(session *ssh.Session, req DeviceRequest) (DryRunResult, error) {
-	s, err := openCLIShell(session)
+	s, err := openPrivileged(session)
 	if err != nil {
 		return DryRunResult{}, err
-	}
-	if strings.HasSuffix(strings.TrimSpace(s.last), ">") {
-		if err = s.eosEnable(); err != nil {
-			return DryRunResult{}, err
-		}
 	}
 	name, err := eosSessionName()
 	if err != nil {
 		return DryRunResult{}, err
 	}
-	if err = s.eosCommand("configure session " + name); err != nil {
-		return DryRunResult{}, err
+	var res DryRunResult
+	err = s.eosSession(name, func() error {
+		if loadErr := s.eosLoad(req.Mode, req.Candidate); loadErr != nil {
+			return loadErr
+		}
+		diff, runErr := s.run("show session-config diffs | no-more")
+		if runErr != nil {
+			return runErr
+		}
+		if msgs := cliErrors(diff); len(msgs) > 0 {
+			return fmt.Errorf("%w: show session-config diffs%s", ErrCommand, joinMessages(msgs))
+		}
+		res = deviceDiff(diff)
+		return nil
+	})
+	return res, err
+}
+
+// eosSession runs fn in a new configuration session and aborts the session
+// afterwards. A configuration session outlives the login on EOS, so it is
+// aborted explicitly even after a failure.
+func (s *cliShell) eosSession(name string, fn func() error) error {
+	if err := s.cliCommand("configure session " + name); err != nil {
+		return err
 	}
-	res, err := eosPreview(s, req.Mode, req.Candidate)
-	// A configuration session outlives the login on EOS, so it is aborted
-	// explicitly even after a failure.
-	abortErr := s.eosCommand("abort")
+	err := fn()
+	abortErr := s.cliCommand("abort")
 	_ = s.send("exit\n")
+	return errors.Join(err, abortErr)
+}
+
+// eosCommit loads the candidate into a session named after the commit and
+// commits it under a timer: EOS reverts the session unless it is committed
+// again, by name, before the timer runs out. A candidate the device rejects
+// is aborted with its session and never committed.
+func eosCommit(session *ssh.Session, req DeviceRequest) error {
+	s, err := openPrivileged(session)
+	if err != nil {
+		return err
+	}
+	if err = s.cliCommand("configure session " + req.CommitID); err != nil {
+		return err
+	}
+	if err = s.eosLoad(req.Mode, req.Candidate); err != nil {
+		return errors.Join(err, s.cliCommand("abort"))
+	}
+	err = s.cliCommand("commit timer " + time.Time{}.Add(ConfirmWindow).Format(time.TimeOnly))
+	_ = s.send("exit\n")
+	return err
+}
+
+// eosConfirm commits the pending session again, which ends its timer, and
+// saves the startup configuration.
+func eosConfirm(session *ssh.Session, req DeviceRequest) error {
+	s, err := openPrivileged(session)
+	if err != nil {
+		return err
+	}
+	if err = s.cliCommand("configure session " + req.CommitID + " commit"); err != nil {
+		return err
+	}
+	return s.saveStartup()
+}
+
+// eosRollback aborts the pending session, which reverts it now. The session
+// is named after this push's commit, so nothing anyone else committed is
+// undone with it.
+func eosRollback(session *ssh.Session, req DeviceRequest) error {
+	s, err := openPrivileged(session)
+	if err != nil {
+		return err
+	}
+	err = s.cliCommand("configure session " + req.CommitID + " abort")
+	_ = s.send("exit\n")
+	return err
+}
+
+// eosLoad types the candidate into the open session. Replace starts the
+// session from a clean configuration first.
+func (s *cliShell) eosLoad(mode PushMode, candidate string) error {
+	if mode == PushReplace {
+		if err := s.cliCommand("rollback clean-config"); err != nil {
+			return err
+		}
+	}
+	return s.typeCandidate(candidate, "(config-s-")
+}
+
+// iosDryRun predicts the candidate against the configuration the device runs
+// now. IOS has no preview; after an apply this is the post-check, which a
+// device holding the change passes with nothing left to change.
+func iosDryRun(session *ssh.Session, req DeviceRequest) (DryRunResult, error) {
+	running, err := runCommand(session, "show running-config")
 	if err != nil {
 		return DryRunResult{}, err
 	}
-	if abortErr != nil {
-		return DryRunResult{}, abortErr
-	}
-	return res, nil
+	return predictIOS(Backup{Config: running}, req.Candidate)
 }
 
-func eosPreview(s *cliShell, mode PushMode, candidate string) (DryRunResult, error) {
-	if mode == PushReplace {
-		if err := s.eosCommand("rollback clean-config"); err != nil {
-			return DryRunResult{}, err
-		}
+// iosCommit types the candidate under a revert timer: IOS restores the
+// configuration it archived when the timer started unless "configure
+// confirm" arrives first. A candidate the device rejects has been entered up
+// to the rejected line, so it is reverted at once rather than at the timer.
+func iosCommit(session *ssh.Session, req DeviceRequest) error {
+	if req.Mode != PushMerge {
+		return fmt.Errorf("%w: cisco-ios applies a merge only", ErrCommand)
 	}
-	// The candidate is sent whole and read back once, at a comment line Seed
-	// adds after it: a round trip per line would not finish a chassis
-	// configuration inside the device timeout.
+	s, err := openPrivileged(session)
+	if err != nil {
+		return err
+	}
+	timer := "configure terminal revert timer " + strconv.Itoa(int(ConfirmWindow.Minutes()))
+	if err = s.cliCommand(timer); err != nil {
+		return err
+	}
+	loadErr := s.typeCandidate(req.Candidate, "(config")
+	if loadErr == nil {
+		err = s.cliCommand("end")
+	} else {
+		// A rejected line can have left configuration mode already, so the
+		// end is allowed to fail.
+		_ = s.cliCommand("end")
+		err = s.cliCommand("configure revert now")
+	}
+	_ = s.send("exit\n")
+	return errors.Join(loadErr, err)
+}
+
+// iosConfirm confirms the pending change, which ends its revert timer, and
+// saves the startup configuration.
+func iosConfirm(session *ssh.Session, _ DeviceRequest) error {
+	s, err := openPrivileged(session)
+	if err != nil {
+		return err
+	}
+	if err = s.cliCommand("configure confirm"); err != nil {
+		return err
+	}
+	return s.saveStartup()
+}
+
+// iosRollback reverts the pending change now. Without a pending timer there
+// is nothing of Seed's to revert, and "configure revert now" is not sent.
+func iosRollback(session *ssh.Session, _ DeviceRequest) error {
+	s, err := openPrivileged(session)
+	if err != nil {
+		return err
+	}
+	if err = s.cliCommand("show archive config rollback timer"); err != nil {
+		return fmt.Errorf("%w: no revert timer is pending on the device", ErrCommand)
+	}
+	err = s.cliCommand("configure revert now")
+	_ = s.send("exit\n")
+	return err
+}
+
+// saveStartup writes the running configuration to the startup
+// configuration, so a confirmed push survives a reload.
+func (s *cliShell) saveStartup() error {
+	err := s.cliCommand("write memory")
+	_ = s.send("exit\n")
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrStartupNotSaved, err)
+	}
+	return nil
+}
+
+// typeCandidate types the candidate in configuration mode. It is sent whole
+// and read back once, at a comment line Seed adds after it: a round trip per
+// line would not finish a chassis configuration inside the device timeout.
+// Blank and "!" lines are not sent, and neither is a final "end". The device
+// must still be in configuration mode, which mode names, afterwards.
+func (s *cliShell) typeCandidate(candidate, mode string) error {
 	var (
 		b    strings.Builder
 		sent []int
 	)
-	for i, line := range strings.Split(strings.ReplaceAll(candidate, "\r\n", "\n"), "\n") {
+	lines := strings.Split(strings.ReplaceAll(candidate, "\r\n", "\n"), "\n")
+	last := lastIOSLine(lines)
+	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
-		if trimmed == "" || strings.HasPrefix(trimmed, "!") {
+		if trimmed == "" || strings.HasPrefix(trimmed, "!") || (i == last && trimmed == "end") {
 			continue
 		}
 		b.WriteString(strings.TrimRight(line, " \t") + "\n")
@@ -462,67 +637,69 @@ func eosPreview(s *cliShell, mode PushMode, candidate string) (DryRunResult, err
 	}
 	marker, err := eosSessionName()
 	if err != nil {
-		return DryRunResult{}, err
+		return err
 	}
 	marker = "! " + marker + "\n"
 	all, i, err := s.sendThrough(b.String()+marker, marker)
 	if err != nil {
-		return DryRunResult{}, err
-	}
-	if msgs := s.eosLoadErrors(all[:i], sent); len(msgs) > 0 {
-		return DryRunResult{}, fmt.Errorf("%w: the device rejected the candidate%s", ErrCommand, joinMessages(msgs))
-	}
-	if !strings.Contains(s.last, "(config-s-") {
-		return DryRunResult{}, fmt.Errorf("%w: the candidate left the configuration session", ErrCommand)
-	}
-	diff, err := s.run("show session-config diffs | no-more")
-	if err != nil {
-		return DryRunResult{}, err
-	}
-	if msgs := eosErrors(diff); len(msgs) > 0 {
-		return DryRunResult{}, fmt.Errorf("%w: show session-config diffs%s", ErrCommand, joinMessages(msgs))
-	}
-	return deviceDiff(diff), nil
-}
-
-// eosEnable raises a login that lands in unprivileged exec mode. A push
-// credential with an enable password is refused: it should log in at
-// privilege 15.
-func (s *cliShell) eosEnable() error {
-	if err := s.send("enable\n"); err != nil {
 		return err
 	}
-	either := regexp.MustCompile(s.prompt.String() + "|" + enablePassword.String())
-	if _, err := s.expect(either); err != nil {
-		return err
+	if msgs := s.loadErrors(all[:i], sent); len(msgs) > 0 {
+		return fmt.Errorf("%w: the device rejected the candidate%s", ErrCommand, joinMessages(msgs))
 	}
-	if !strings.HasSuffix(strings.TrimSpace(s.last), "#") {
-		_ = s.send("\x03")
-		return &PlanRefusedError{
-			Reason: "the push credential needs privilege 15: the device asked for an enable password",
-		}
+	if !strings.Contains(s.last, mode) {
+		return fmt.Errorf("%w: the candidate left configuration mode", ErrCommand)
 	}
 	return nil
 }
 
-func (s *cliShell) eosCommand(command string) error {
+// openPrivileged opens the CLI at privilege 15, raising a login that lands in
+// unprivileged exec mode. A push credential with an enable password is
+// refused: it should log in at privilege 15.
+func openPrivileged(session *ssh.Session) (*cliShell, error) {
+	s, err := openCLIShell(session)
+	if err != nil {
+		return nil, err
+	}
+	if !strings.HasSuffix(strings.TrimSpace(s.last), ">") {
+		return s, nil
+	}
+	if err = s.send("enable\n"); err != nil {
+		return nil, err
+	}
+	either := regexp.MustCompile(s.prompt.String() + "|" + enablePassword.String())
+	if _, err = s.expect(either); err != nil {
+		return nil, err
+	}
+	if !strings.HasSuffix(strings.TrimSpace(s.last), "#") {
+		_ = s.send("\x03")
+		return nil, &PlanRefusedError{
+			Reason: "the push credential needs privilege 15: the device asked for an enable password",
+		}
+	}
+	return s, nil
+}
+
+// cliCommand runs an EOS or IOS command and reports the device's error if it
+// printed one.
+func (s *cliShell) cliCommand(command string) error {
 	out, err := s.run(command)
 	if err != nil {
 		return err
 	}
-	if msgs := eosErrors(out); len(msgs) > 0 {
+	if msgs := cliErrors(out); len(msgs) > 0 {
 		return fmt.Errorf("%w: %s%s", ErrCommand, command, joinMessages(msgs))
 	}
 	return nil
 }
 
-// eosErrors returns the "% " lines of a command's output, without any token
-// of configuration text the device quoted back.
-func eosErrors(out string) []string {
+// cliErrors returns the "%" lines of an EOS or IOS command's output, without
+// any token of configuration text the device quoted back.
+func cliErrors(out string) []string {
 	var msgs []string
 	for line := range strings.SplitSeq(out, "\n") {
 		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "% ") {
+		if strings.HasPrefix(line, "%") {
 			msg, _, _ := strings.Cut(line, " (at token")
 			msgs = append(msgs, msg)
 		}
@@ -530,10 +707,10 @@ func eosErrors(out string) []string {
 	return msgs
 }
 
-// eosLoadErrors names each rejected candidate line by its line number. Every
+// loadErrors names each rejected candidate line by its line number. Every
 // line the device read is echoed after a prompt, so an error belongs to the
 // line echoed last; sent maps the n-th line sent to its candidate line.
-func (s *cliShell) eosLoadErrors(out string, sent []int) []string {
+func (s *cliShell) loadErrors(out string, sent []int) []string {
 	// The prompt before the first line was read with the previous command.
 	var (
 		msgs []string
@@ -544,7 +721,7 @@ func (s *cliShell) eosLoadErrors(out string, sent []int) []string {
 			n++
 			continue
 		}
-		if msg := eosErrors(line); len(msg) > 0 && n < len(sent) {
+		if msg := cliErrors(line); len(msg) > 0 && n < len(sent) {
 			msgs = append(msgs, "line "+strconv.Itoa(sent[n])+": "+msg[0])
 		}
 	}

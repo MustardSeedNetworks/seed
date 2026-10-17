@@ -54,9 +54,8 @@ type pushDialogue struct {
 	commit, confirm, rollback func(*ssh.Session, DeviceRequest) error
 }
 
-// dialogueFor returns a platform's dialogue. IOS has none yet (Pushes
-// predicts its diff; it applies in a later slice of ADR-0035, as EOS does),
-// and NX-OS is read-only.
+// dialogueFor returns a platform's dialogue. NX-OS is read-only and has
+// none.
 func dialogueFor(p Platform) pushDialogue {
 	switch p {
 	case PlatformNETCONF:
@@ -66,8 +65,10 @@ func dialogueFor(p Platform) pushDialogue {
 	case PlatformJuniperJunos:
 		return pushDialogue{dryRun: junosDryRun, commit: junosCommit, confirm: junosConfirm, rollback: junosRollback}
 	case PlatformAristaEOS:
-		return pushDialogue{dryRun: eosDryRun}
-	case PlatformCiscoIOS, PlatformCiscoNXOS:
+		return pushDialogue{dryRun: eosDryRun, commit: eosCommit, confirm: eosConfirm, rollback: eosRollback}
+	case PlatformCiscoIOS:
+		return pushDialogue{dryRun: iosDryRun, commit: iosCommit, confirm: iosConfirm, rollback: iosRollback}
+	case PlatformCiscoNXOS:
 	}
 	return pushDialogue{}
 }

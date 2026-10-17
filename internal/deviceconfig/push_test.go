@@ -420,6 +420,14 @@ func TestPlanCheckRefusesBeforeALogin(t *testing.T) {
 			"line 2 contains a control character",
 		},
 		{"IOS escape key", planRequest("dct-ios", deviceconfig.PushMerge, "hostname a\x1b"), "control character"},
+		{"IOS replace", planRequest("dct-ios", deviceconfig.PushReplace, "hostname a"), "merge only"},
+		{
+			"IOS exit",
+			planRequest("dct-ios", deviceconfig.PushMerge, "hostname a\nexit\nreload"),
+			`line 2 starts with "exit"`,
+		},
+		{"IOS exec command", planRequest("dct-ios", deviceconfig.PushMerge, "do reload"), `"do"`},
+		{"IOS end before the last line", planRequest("dct-ios", deviceconfig.PushMerge, "end\nreload\n"), `"end"`},
 		{"EOS ctrl-Z", planRequest("dct-eos", deviceconfig.PushMerge, "hostname a\x1a"), "control character"},
 		{
 			"EOS commit",

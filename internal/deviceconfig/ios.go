@@ -1,10 +1,11 @@
 package deviceconfig
 
 // IOS and IOS-XE offer no dry run, so Seed predicts the change from the fresh
-// backup (ADR-0035): a replace is the candidate itself, and a merge is the
-// candidate's lines folded into the running configuration's sections the way
-// the parser would take them. The prediction is labelled as such; the
-// post-check after apply is what proves the result.
+// backup (ADR-0035): the candidate's lines folded into the running
+// configuration's sections the way the parser would take them. The prediction
+// is labelled as such; the post-check after apply is what proves the result.
+// IOS takes a merge only: its replace is "configure replace" from a file on
+// the device, which needs the SCP staging of ADR-0035 delivery slice 5.
 
 import (
 	"strings"
@@ -16,20 +17,17 @@ type iosNode struct {
 	children []*iosNode
 }
 
-// predictIOS predicts the diff a candidate would make to backup's running
-// configuration. A target without an archive path is refused: the revert
-// timer apply depends on needs one.
-func predictIOS(backup Backup, mode PushMode, candidate string) (DryRunResult, error) {
+// predictIOS predicts the diff merging a candidate would make to backup's
+// running configuration. A target without an archive path is refused: the
+// revert timer apply depends on needs one.
+func predictIOS(backup Backup, candidate string) (DryRunResult, error) {
 	running := parseIOS(backup.Config)
 	if !iosHasArchivePath(running) {
 		return DryRunResult{}, &PlanRefusedError{
 			Reason: "the revert timer needs an archive path; configure \"archive\" with \" path flash:seed-archive\" first",
 		}
 	}
-	next := parseIOS(candidate)
-	if mode == PushMerge {
-		next = mergeIOS(running, next)
-	}
+	next := mergeIOS(running, parseIOS(candidate))
 	return lineDiff("running", renderIOS(running), "predicted", renderIOS(next))
 }
 
