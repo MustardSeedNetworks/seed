@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.274.0](https://github.com/MustardSeedNetworks/seed/compare/v0.273.0...v0.274.0) (2026-10-17)
+
+
+### Features
+
+* **alerts:** send alerts to an SNMP trap receiver ([#3561](https://github.com/MustardSeedNetworks/seed/issues/3561)) ([84a369e](https://github.com/MustardSeedNetworks/seed/commit/84a369e81609963e270a6402e39a060da5fa95d8)), closes [#3037](https://github.com/MustardSeedNetworks/seed/issues/3037)
+* **snmptrap:** accept SNMPv3 informs as an authoritative engine ([#3567](https://github.com/MustardSeedNetworks/seed/issues/3567)) ([cce002b](https://github.com/MustardSeedNetworks/seed/commit/cce002b353aff99958c8237ac54b215794b367f2)), closes [#1376](https://github.com/MustardSeedNetworks/seed/issues/1376)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-virtual to v3.14.14 ([#3564](https://github.com/MustardSeedNetworks/seed/issues/3564)) ([e41b39a](https://github.com/MustardSeedNetworks/seed/commit/e41b39a4f437235cdd3f76cf26277ec14f009793))
+* **deps:** update go dependencies ([#3565](https://github.com/MustardSeedNetworks/seed/issues/3565)) ([117f5f2](https://github.com/MustardSeedNetworks/seed/commit/117f5f2d09ff5ab75a64cbddd442a5ee2d1f2a04))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3566](https://github.com/MustardSeedNetworks/seed/issues/3566)) ([a582298](https://github.com/MustardSeedNetworks/seed/commit/a5822989eca3fa6177138f9b00571c63966bf603))
+* **deps:** update dependency @types/node to v26.6.5 ([#3563](https://github.com/MustardSeedNetworks/seed/issues/3563)) ([70b1cf3](https://github.com/MustardSeedNetworks/seed/commit/70b1cf36f631d09f3657c220db181d48d8e9b30a))
+
 ## [0.273.0](https://github.com/MustardSeedNetworks/seed/compare/v0.272.1...v0.273.0) (2026-10-16)
 
 
