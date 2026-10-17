@@ -4,8 +4,9 @@
  * The list is the devices backed up over SSH or NETCONF (P-D1); the detail is
  * the selected device's backup attempts, newest first, and the selected
  * attempt's change from the configuration before it (P-D2), with added and
- * removed lines highlighted. Read-only: targets and runs are API-driven until
- * the backup management UI (#3121) lands.
+ * removed lines highlighted. Targets and runs are API-driven until the backup
+ * management UI (#3121) lands. Below them, an admin runs the TFTP server that
+ * devices push and pull files over (P-D4).
  */
 
 import { type JSX, useState } from 'react';
@@ -29,6 +30,7 @@ import {
   RecordRow,
 } from '../ui/ListDetail';
 import { DiffView } from './deviceConfigs/DiffView';
+import { TftpSession } from './deviceConfigs/TftpSession';
 
 export function DeviceConfigsPage(): JSX.Element {
   return (
@@ -115,6 +117,8 @@ function DeviceConfigsBody(): JSX.Element {
           </DetailEmpty>
         )}
       </ListDetail>
+
+      <TftpSession />
     </>
   );
 }

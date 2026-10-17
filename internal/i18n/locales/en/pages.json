@@ -192,7 +192,27 @@
     "labelComparedWith": "Compared with",
     "labelChanges": "Changes",
     "changeCounts": "+{{added}} −{{removed}} lines",
-    "unchanged": "No change since the previous backup."
+    "unchanged": "No change since the previous backup.",
+    "tftp": {
+      "title": "TFTP server",
+      "adminOnly": "An admin starts the TFTP server that devices fetch and send files through.",
+      "stopped": "Not running. Devices fetch files from the tftp folder in seed's data directory. A session stops by itself after 10 idle minutes.",
+      "labelInterface": "Interface",
+      "allowUpload": "Allow uploads",
+      "allowUploadWarning": "Any host on that segment can then write files.",
+      "start": "Start",
+      "stop": "Stop",
+      "running": "Running. Stops by itself after {{minutes}} idle minutes, and by {{until}} at the latest.",
+      "labelListening": "Listening on",
+      "labelServes": "Serves",
+      "labelUploads": "Uploads",
+      "uploadsInto": "Allowed, saved into {{directory}}",
+      "uploadsOff": "Off",
+      "labelAllowFrom": "Allowed from",
+      "anyHost": "Any host on the segment",
+      "labelStarted": "Started",
+      "labelTransfers": "Active transfers"
+    }
   },
   "link": {
     "description": "Physical link state, cable diagnostics, and Wi-Fi association for the active interface.",

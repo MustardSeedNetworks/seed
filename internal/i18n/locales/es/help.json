@@ -712,6 +712,10 @@
         "diff": {
           "term": "Cambio",
           "description": "Las líneas añadidas y eliminadas desde la configuración guardada anterior del dispositivo, con algunas líneas sin cambios alrededor como contexto."
+        },
+        "tftp": {
+          "term": "Servidor TFTP",
+          "description": "Un administrador lo inicia en una interfaz para que los dispositivos descarguen archivos de Seed, o los envíen si se permiten subidas. TFTP no tiene contraseña, así que cualquier equipo de ese segmento puede usarlo mientras está en marcha. Se detiene tras 10 minutos inactivo."
         }
       }
     },
