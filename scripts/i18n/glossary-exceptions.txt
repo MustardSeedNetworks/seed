@@ -16,3 +16,6 @@
 
 # --- "Pro" used as adjective "professional", not the tier brand
 help.content.gettingStarted.proTips.title
+
+# --- "Free" meaning unassigned addresses, not the Free licence tier
+pages.ipam.labelFree
