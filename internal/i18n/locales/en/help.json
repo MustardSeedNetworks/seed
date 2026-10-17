@@ -712,6 +712,10 @@
         "diff": {
           "term": "Change",
           "description": "The lines added and removed since the device's previous saved configuration, with a few unchanged lines around each for context."
+        },
+        "tftp": {
+          "term": "TFTP server",
+          "description": "An admin starts it on one interface so devices can fetch files from Seed, or send them when uploads are allowed. TFTP has no password, so any host on that segment can use it while it runs. It stops after 10 idle minutes."
         }
       }
     },

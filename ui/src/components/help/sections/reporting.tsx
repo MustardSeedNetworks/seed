@@ -357,7 +357,7 @@ export const reportingSections: HelpSection[] = [
     id: 'deviceConfigs',
     titleKey: 'sections.deviceConfigs',
     icon: <FileDiff className={ICON} />,
-    keywords: ['configuration', 'backup', 'diff', 'changes', 'ssh', 'netconf'],
+    keywords: ['configuration', 'backup', 'diff', 'changes', 'ssh', 'netconf', 'tftp'],
     blocks: [
       {
         kind: 'paragraph',
@@ -374,6 +374,10 @@ export const reportingSections: HelpSection[] = [
           {
             term: 'content.deviceConfigs.terms.diff.term',
             description: 'content.deviceConfigs.terms.diff.description',
+          },
+          {
+            term: 'content.deviceConfigs.terms.tftp.term',
+            description: 'content.deviceConfigs.terms.tftp.description',
           },
         ],
       },

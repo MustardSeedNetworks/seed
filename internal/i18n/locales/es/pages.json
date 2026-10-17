@@ -192,7 +192,27 @@
     "labelComparedWith": "Comparada con",
     "labelChanges": "Cambios",
     "changeCounts": "+{{added}} −{{removed}} líneas",
-    "unchanged": "Sin cambios desde la copia anterior."
+    "unchanged": "Sin cambios desde la copia anterior.",
+    "tftp": {
+      "title": "Servidor TFTP",
+      "adminOnly": "Un administrador inicia el servidor TFTP con el que los dispositivos descargan y envían archivos.",
+      "stopped": "Detenido. Los dispositivos descargan archivos de la carpeta tftp del directorio de datos de seed. Una sesión se detiene sola tras 10 minutos inactiva.",
+      "labelInterface": "Interfaz",
+      "allowUpload": "Permitir subidas",
+      "allowUploadWarning": "Cualquier equipo de ese segmento podrá escribir archivos.",
+      "start": "Iniciar",
+      "stop": "Detener",
+      "running": "En ejecución. Se detiene sola tras {{minutes}} minutos inactiva y, como muy tarde, a las {{until}}.",
+      "labelListening": "Escucha en",
+      "labelServes": "Sirve",
+      "labelUploads": "Subidas",
+      "uploadsInto": "Permitidas, guardadas en {{directory}}",
+      "uploadsOff": "Desactivadas",
+      "labelAllowFrom": "Permitido desde",
+      "anyHost": "Cualquier equipo del segmento",
+      "labelStarted": "Iniciada",
+      "labelTransfers": "Transferencias activas"
+    }
   },
   "link": {
     "description": "Estado del enlace físico, diagnóstico de cableado y asociación Wi-Fi de la interfaz activa.",
