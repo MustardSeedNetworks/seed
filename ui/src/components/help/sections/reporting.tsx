@@ -14,6 +14,7 @@ import {
   ArrowLeftRight,
   BarChart3,
   Boxes,
+  CalendarClock,
   EthernetPort,
   FileDiff,
   Grid3X3,
@@ -315,6 +316,40 @@ export const reportingSections: HelpSection[] = [
           {
             term: 'content.ipam.terms.utilization.term',
             description: 'content.ipam.terms.utilization.description',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'lifecycle',
+    titleKey: 'sections.lifecycle',
+    icon: <CalendarClock className={ICON} />,
+    keywords: [
+      'lifecycle',
+      'eox',
+      'end of life',
+      'end of sale',
+      'end of support',
+      'cisco',
+      'inventory',
+    ],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'content.lifecycle.description',
+      },
+      {
+        kind: 'terms',
+        heading: 'content.common.terms',
+        items: [
+          {
+            term: 'content.lifecycle.terms.status.term',
+            description: 'content.lifecycle.terms.status.description',
+          },
+          {
+            term: 'content.lifecycle.terms.notListed.term',
+            description: 'content.lifecycle.terms.notListed.description',
           },
         ],
       },

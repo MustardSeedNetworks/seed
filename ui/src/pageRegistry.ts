@@ -16,6 +16,7 @@ import {
   BarChart3,
   Bell,
   Boxes,
+  CalendarClock,
   EthernetPort,
   FileDiff,
   Grid3X3,
@@ -59,6 +60,9 @@ const DeviceGroupsPage = lazy(() =>
   import('./pages/DeviceGroupsPage').then((m) => ({ default: m.DeviceGroupsPage })),
 );
 const IpamPage = lazy(() => import('./pages/IpamPage').then((m) => ({ default: m.IpamPage })));
+const LifecyclePage = lazy(() =>
+  import('./pages/LifecyclePage').then((m) => ({ default: m.LifecyclePage })),
+);
 const TopologyPage = lazy(() =>
   import('./pages/TopologyPage').then((m) => ({ default: m.TopologyPage })),
 );
@@ -120,6 +124,7 @@ type PageI18nKey =
   | 'pollingTargets'
   | 'deviceGroups'
   | 'ipam'
+  | 'lifecycle'
   | 'topology'
   | 'interfaces'
   | 'deviceConfigs'
@@ -259,6 +264,15 @@ const staticPages: PageDef[] = [
     iconColorClass: 'text-module-security',
     component: IpamPage,
     help: 'ipam',
+  },
+  {
+    path: '/lifecycle',
+    group: 'monitoring',
+    i18nKey: 'lifecycle',
+    icon: CalendarClock,
+    iconColorClass: 'text-module-security',
+    component: LifecyclePage,
+    help: 'lifecycle',
   },
   {
     path: '/topology',

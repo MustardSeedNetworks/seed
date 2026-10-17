@@ -65,6 +65,7 @@ import { ConfigBackupsSection } from './sections/ConfigBackupsSection';
 import { DeviceIdentitySettings } from './sections/DeviceIdentitySettings';
 import { DiscoverySettings } from './sections/DiscoverySettings';
 import { DnsSettings } from './sections/DnsSettings';
+import { EoxFeedSettings } from './sections/EoxFeedSettings';
 import { GuestNetworkAuditSettings } from './sections/GuestNetworkAuditSettings';
 import { HealthChecksSettings } from './sections/HealthChecksSettings';
 import { InterfacesSettings } from './sections/InterfacesSettings';
@@ -606,6 +607,11 @@ export function SettingsDrawer({
 
           {/* Network Interfaces (multi_interface, seed#1192) */}
           <InterfacesSettings />
+
+          {/* Opt-in EoX feed (P-D9) — admin-only, as GET/PUT /lifecycle/feed are. */}
+          <RequireAdmin>
+            <EoxFeedSettings />
+          </RequireAdmin>
 
           {/* Config Backups Section (implements #494) */}
           <ConfigBackupsSection />

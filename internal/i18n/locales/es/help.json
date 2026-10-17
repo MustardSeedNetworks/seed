@@ -34,6 +34,7 @@
     "pollingTargets": "Objetivos de sondeo",
     "deviceGroups": "Grupos de dispositivos",
     "ipam": "Direcciones IP",
+    "lifecycle": "Ciclo de vida del hardware",
     "topology": "Topología",
     "interfaces": "Interfaces",
     "deviceConfigs": "Configuraciones",
@@ -679,6 +680,19 @@
         "utilization": {
           "term": "Ocupación",
           "description": "Las direcciones vistas en uso como proporción de las asignables. Las direcciones de red y de difusión de una subred no son asignables y no se cuentan."
+        }
+      }
+    },
+    "lifecycle": {
+      "description": "Vea qué hardware ha pasado, o se acerca a, los hitos de fin de vida de su fabricante. El descubrimiento inventaría las piezas de cada dispositivo por ENTITY-MIB; el ID de producto de cada pieza se busca en los datos EoX de Cisco, que un operador importa aquí como una respuesta descargada de la API EoX. Un administrador puede en su lugar activar la fuente EoX en Configuración, que obtiene los mismos datos con su propio cliente de la API de Cisco. La fuente está desactivada hasta que un administrador la activa, así que una instalación aislada nunca se conecta al exterior.",
+      "terms": {
+        "status": {
+          "term": "Estado",
+          "description": "El último hito cuya fecha ya pasó: fin de venta, fin del mantenimiento de software, fin del soporte de seguridad o fin del soporte. Las piezas que pasaron el fin del soporte de seguridad se marcan como críticas; ya no reciben correcciones de seguridad."
+        },
+        "notListed": {
+          "term": "No listado",
+          "description": "Los datos EoX no tienen registro del producto: no tiene un fin de vida anunciado, o los datos no lo cubren."
         }
       }
     },
