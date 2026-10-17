@@ -629,7 +629,10 @@ CREATE TABLE device_config_push_plans (
 				diff_enc       BLOB NOT NULL CHECK (CAST(diff_enc AS TEXT) GLOB 'enc:v[0-9]*:*'),
 				diff_sha256    TEXT NOT NULL,
 				added          INTEGER NOT NULL CHECK (added >= 0),
-				removed        INTEGER NOT NULL CHECK (removed >= 0),
+				removed        INTEGER NOT NULL CHECK (removed >= 0), applied_at TEXT, applied_by TEXT
+	CHECK (applied_by IS NULL OR applied_by <> ''), apply_outcome TEXT
+	CHECK (apply_outcome IS NULL OR apply_outcome IN
+		('confirmed','rolled_back','reverting','config_drifted','failed')),
 				CHECK (added + removed > 0),
 				FOREIGN KEY (client_id, target_id)
 					REFERENCES device_config_targets(client_id, id) ON DELETE CASCADE

@@ -4,11 +4,13 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/deviceconfig"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
@@ -22,33 +24,60 @@ const dcAdmin = "admin1"
 // carries a secret, as a real diff can.
 const pushDiff = "--- running\n+++ candidate\n-<community>n0t-public</community>\n+<community>s3cr3t-ro</community>\n"
 
-// recordingDryRun stands in for the device's dry run and records the logins.
-type recordingDryRun struct {
+// recordingDevice stands in for the device side of a push and records each
+// step. A dry run before a commit answers pushDiff; after it, the post-check,
+// it finds the change made.
+type recordingDevice struct {
 	mu       sync.Mutex
-	requests []deviceconfig.DryRunRequest
+	requests []deviceconfig.DeviceRequest
+	steps    []string
 }
 
-func (d *recordingDryRun) DryRun(_ context.Context, req deviceconfig.DryRunRequest) (deviceconfig.DryRunResult, error) {
+func (d *recordingDevice) record(step string, req deviceconfig.DeviceRequest) bool {
 	d.mu.Lock()
 	defer d.mu.Unlock()
+	committed := slices.Contains(d.steps, "commit")
 	d.requests = append(d.requests, req)
+	d.steps = append(d.steps, step)
+	return committed
+}
+
+func (d *recordingDevice) DryRun(_ context.Context, req deviceconfig.DeviceRequest) (deviceconfig.DryRunResult, error) {
+	if d.record("dry-run", req) {
+		return deviceconfig.DryRunResult{}, nil
+	}
 	return deviceconfig.DryRunResult{Diff: pushDiff, Added: 1, Removed: 1}, nil
 }
 
+func (d *recordingDevice) Commit(_ context.Context, req deviceconfig.DeviceRequest) error {
+	d.record("commit", req)
+	return nil
+}
+
+func (d *recordingDevice) Confirm(_ context.Context, req deviceconfig.DeviceRequest) error {
+	d.record("confirm", req)
+	return nil
+}
+
+func (d *recordingDevice) Rollback(_ context.Context, req deviceconfig.DeviceRequest) error {
+	d.record("rollback", req)
+	return nil
+}
+
 // newDeviceConfigPushTestServer is newDeviceConfigTestServer with the push
-// use-case wired over dryRun and an admin seeded.
-func newDeviceConfigPushTestServer(t *testing.T) (*Server, *database.DB, *recordingDryRun) {
+// use-case wired over a recording device and an admin seeded.
+func newDeviceConfigPushTestServer(t *testing.T) (*Server, *database.DB, *recordingDevice) {
 	t.Helper()
 	s, db := newDeviceConfigTestServer(t)
 	seedRoledUser(t, db, dcAdmin, roles.Admin)
-	dryRun := &recordingDryRun{}
-	pushes, err := app.NewDeviceConfigPushes(s.persistence, s.deviceConfigs, dryRun)
+	device := &recordingDevice{}
+	pushes, err := app.NewDeviceConfigPushes(s.persistence, s.deviceConfigs, device)
 	if err != nil {
 		t.Fatalf("build push use-case: %v", err)
 	}
 	s.deviceConfigPushes = pushes
 	s.registerDeviceConfigPushKind()
-	return s, db, dryRun
+	return s, db, device
 }
 
 // pushReadyTarget creates a NETCONF target on the switch at 10.0.0.1, pins its
@@ -254,6 +283,7 @@ func TestDeviceConfigPushNeedsAdminAndPro(t *testing.T) {
 		{http.MethodPut, target},
 		{http.MethodDelete, target},
 		{http.MethodPost, deviceConfigPushesPath},
+		{http.MethodPost, deviceConfigPushesPath + "/dcp-0123456789ab/apply"},
 	}
 	call := func(method, path string) *httptest.ResponseRecorder {
 		req := httptest.NewRequest(method, path, strings.NewReader(`{}`))
@@ -287,14 +317,127 @@ func TestDeviceConfigPushNeedsAdminAndPro(t *testing.T) {
 	}
 }
 
-func TestJobsRouteRefusesPushPlans(t *testing.T) {
+func TestJobsRouteRefusesPushJobs(t *testing.T) {
 	s, _, _ := newDeviceConfigPushTestServer(t)
-	req := httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/jobs",
-		strings.NewReader(`{"kind":"`+deviceConfigPushPlanJobKind+`","params":{}}`))
+	for _, kind := range []string{deviceConfigPushPlanJobKind, deviceConfigPushApplyJobKind} {
+		req := httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/jobs",
+			strings.NewReader(`{"kind":"`+kind+`","params":{}}`))
+		rec := httptest.NewRecorder()
+		s.handleJobs(rec, req)
+		if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), deviceConfigPushesPath) {
+			t.Errorf("POST /jobs %s: %d %s, want 400 naming the push route", kind, rec.Code, rec.Body.String())
+		}
+	}
+}
+
+func callPushApply(t *testing.T, s *Server, req *http.Request, planID string) *httptest.ResponseRecorder {
+	t.Helper()
+	req.SetPathValue("planId", planID)
 	rec := httptest.NewRecorder()
-	s.handleJobs(rec, req)
-	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), deviceConfigPushesPath) {
-		t.Errorf("POST /jobs %s: %d %s, want 400 naming the plan route", deviceConfigPushPlanJobKind, rec.Code,
-			rec.Body.String())
+	s.handleDeviceConfigPushApply(rec, req)
+	return rec
+}
+
+// applyRequest is the admin's apply of planID by the diff hash sha.
+func applyRequest(planID, sha string) *http.Request {
+	return withClaim(newAuthedRequest(http.MethodPost, deviceConfigPushesPath+"/"+planID+"/apply",
+		[]byte(`{"planSha256":"`+sha+`"}`), dcAdmin))
+}
+
+// TestDeviceConfigPushApplyThroughTheAPI is the slice's acceptance through
+// the API: the admin applies the plan they read by its diff hash; the job
+// commits with the push credential, post-checks, confirms and backs up; the
+// plan then reads as confirmed, and a second apply is a 409.
+func TestDeviceConfigPushApplyThroughTheAPI(t *testing.T) {
+	s, db, device := newDeviceConfigPushTestServer(t)
+	tgt, _ := pushReadyTarget(t, s)
+	planID := planPush(t, s, tgt.ID).PlanID
+	plan := decodeInto[deviceconfig.Plan](t, callPushPlan(t, s, dcAdmin, planID))
+
+	rec := callPushApply(t, s, applyRequest(planID, plan.DiffSHA256), planID)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("apply: %d %s", rec.Code, rec.Body.String())
+	}
+	jobID := decodeJob(t, rec.Body).ID
+	var job jobs.Job
+	waitFor(t, "apply finishes", func() bool {
+		job, _ = s.jobsRunner().Get(jobID)
+		return job.State.Terminal()
+	})
+	res, ok := job.Result.(deviceconfig.ApplyResult)
+	if job.State != jobs.StateSucceeded || !ok || res.Outcome != deviceconfig.ApplyConfirmed {
+		t.Fatalf("apply job %s (%s) result %+v, want confirmed", job.State, job.Err, job.Result)
+	}
+	if want := []string{"dry-run", "commit", "dry-run", "confirm"}; !slices.Equal(device.steps, want) {
+		t.Errorf("device steps = %v, want %v", device.steps, want)
+	}
+	if commit := device.requests[1]; commit.Password != "wr1te" || commit.CommitID == "" ||
+		commit.CommitID != device.requests[3].CommitID {
+		t.Errorf("commit %+v / confirm %+v, want the push login and one commit id", commit, device.requests[3])
+	}
+
+	got := decodeInto[deviceconfig.Plan](t, callPushPlan(t, s, dcOperator, planID))
+	if got.ApplyOutcome != deviceconfig.ApplyConfirmed || got.AppliedBy != dcAdmin || got.AppliedAt == nil {
+		t.Errorf("plan after apply = %+v", got)
+	}
+	again := callPushApply(t, s, applyRequest(planID, plan.DiffSHA256), planID)
+	if again.Code != http.StatusConflict {
+		t.Errorf("second apply: %d %s, want 409", again.Code, again.Body.String())
+	}
+
+	var actions []string
+	rows, err := db.Query(t.Context(), `SELECT action, new_value_json FROM audit_log WHERE resource_type = ?
+		ORDER BY id`, deviceconfig.PushAuditResource)
+	if err != nil {
+		t.Fatalf("read push audit: %v", err)
+	}
+	defer func() { _ = rows.Close() }()
+	for rows.Next() {
+		var action, detail string
+		if err = rows.Scan(&action, &detail); err != nil {
+			t.Fatalf("scan push audit: %v", err)
+		}
+		if strings.Contains(detail, "s3cr3t-ro") {
+			t.Errorf("audit %s carries configuration text: %s", action, detail)
+		}
+		actions = append(actions, action)
+	}
+	if err = rows.Err(); err != nil {
+		t.Fatalf("iterate push audit: %v", err)
+	}
+	if want := []string{
+		"device_config.push.plan_created", "device_config.push.apply_started", "device_config.push.confirmed",
+	}; !slices.Equal(actions, want) {
+		t.Errorf("push audit = %v, want %v", actions, want)
+	}
+}
+
+// TestDeviceConfigPushApplyRefusals: a token never applies, and a hash that
+// is not the plan's is a 400; neither reaches the device or spends the plan.
+func TestDeviceConfigPushApplyRefusals(t *testing.T) {
+	s, _, device := newDeviceConfigPushTestServer(t)
+	tgt, _ := pushReadyTarget(t, s)
+	planID := planPush(t, s, tgt.ID).PlanID
+	plan := decodeInto[deviceconfig.Plan](t, callPushPlan(t, s, dcAdmin, planID))
+
+	pat := applyRequest(planID, plan.DiffSHA256)
+	pat = pat.WithContext(auth.WithAPITokenAuth(pat.Context()))
+	if rec := callPushApply(t, s, pat, planID); rec.Code != http.StatusForbidden ||
+		!strings.Contains(rec.Body.String(), "personal access token") {
+		t.Errorf("apply by token: %d %s, want 403", rec.Code, rec.Body.String())
+	}
+	if rec := callPushApply(t, s, applyRequest(planID, strings.Repeat("0", 64)), planID); rec.Code !=
+		http.StatusBadRequest || !strings.Contains(rec.Body.String(), "planSha256") {
+		t.Errorf("apply with another hash: %d %s, want 400", rec.Code, rec.Body.String())
+	}
+	const unknown = "dcp-0123456789ab"
+	if rec := callPushApply(t, s, applyRequest(unknown, plan.DiffSHA256), unknown); rec.Code != http.StatusNotFound {
+		t.Errorf("apply of an unknown plan: %d %s, want 404", rec.Code, rec.Body.String())
+	}
+	if slices.Contains(device.steps, "commit") {
+		t.Errorf("a refused apply reached the device: %v", device.steps)
+	}
+	if got := decodeInto[deviceconfig.Plan](t, callPushPlan(t, s, dcAdmin, planID)); got.AppliedAt != nil {
+		t.Errorf("a refused apply spent the plan: %+v", got)
 	}
 }

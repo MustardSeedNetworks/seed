@@ -58,25 +58,80 @@ func (m *memPlans) ListPlans(_ context.Context, _, targetID string, limit int) (
 
 func (m *memPlans) PrunePlans(context.Context, string, string, int) error { return nil }
 
-// memDryRun answers every dry run with res or err, recording the requests.
-type memDryRun struct {
+func (m *memPlans) ClaimApply(_ context.Context, clientID, id, user string, now time.Time) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, p := range m.plans {
+		if p.ID == id && p.ClientID == clientID && p.AppliedAt == nil && now.Before(p.ExpiresAt) {
+			m.plans[i].AppliedAt, m.plans[i].AppliedBy = &now, user
+			return nil
+		}
+	}
+	return deviceconfig.ErrPlanSpent
+}
+
+func (m *memPlans) FinishApply(_ context.Context, clientID, id string, outcome deviceconfig.ApplyOutcome) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, p := range m.plans {
+		if p.ID == id && p.ClientID == clientID {
+			m.plans[i].ApplyOutcome = outcome
+		}
+	}
+	return nil
+}
+
+// memDevice is the device side of a push. A dry run answers res or err, or
+// after a commit afterRes or afterErr, which is the post-check. Every login
+// is recorded.
+type memDevice struct {
 	mu       sync.Mutex
 	res      deviceconfig.DryRunResult
 	err      error
-	requests []deviceconfig.DryRunRequest
+	afterRes deviceconfig.DryRunResult
+	afterErr error
+	// commitErr, confirmErr and rollbackErr fail that step.
+	commitErr, confirmErr, rollbackErr error
+	requests                           []deviceconfig.DeviceRequest
+	steps                              []string
 	// gate, when set, holds each dry run until it is closed.
 	gate chan struct{}
 }
 
-func (m *memDryRun) DryRun(_ context.Context, req deviceconfig.DryRunRequest) (deviceconfig.DryRunResult, error) {
+func (m *memDevice) DryRun(_ context.Context, req deviceconfig.DeviceRequest) (deviceconfig.DryRunResult, error) {
 	m.mu.Lock()
 	m.requests = append(m.requests, req)
+	m.steps = append(m.steps, "dry-run")
 	gate := m.gate
+	committed := slices.Contains(m.steps, "commit")
 	m.mu.Unlock()
 	if gate != nil {
 		<-gate
 	}
+	if committed {
+		return m.afterRes, m.afterErr
+	}
 	return m.res, m.err
+}
+
+func (m *memDevice) step(name string, req deviceconfig.DeviceRequest, err error) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.requests = append(m.requests, req)
+	m.steps = append(m.steps, name)
+	return err
+}
+
+func (m *memDevice) Commit(_ context.Context, req deviceconfig.DeviceRequest) error {
+	return m.step("commit", req, m.commitErr)
+}
+
+func (m *memDevice) Confirm(_ context.Context, req deviceconfig.DeviceRequest) error {
+	return m.step("confirm", req, m.confirmErr)
+}
+
+func (m *memDevice) Rollback(_ context.Context, req deviceconfig.DeviceRequest) error {
+	return m.step("rollback", req, m.rollbackErr)
 }
 
 type memAudit struct {
@@ -107,7 +162,7 @@ const iosRunning = "hostname edge\n!\narchive\n path flash:seed-archive\n!\n" +
 type pushFixture struct {
 	repo   *memRepo
 	plans  *memPlans
-	dryRun *memDryRun
+	device *memDevice
 	audit  *memAudit
 	fetch  *scriptedFetcher
 	pushes *deviceconfig.Pushes
@@ -132,13 +187,13 @@ func newPushFixture(t *testing.T, running string, targets ...deviceconfig.Target
 	f := pushFixture{
 		repo:   newMemRepo(targets...),
 		plans:  &memPlans{},
-		dryRun: &memDryRun{},
+		device: &memDevice{},
 		audit:  &memAudit{},
 		fetch:  &scriptedFetcher{answers: answers},
 	}
 	svc, err := deviceconfig.NewService(f.repo, pushCreds(), prefixCipher{}, f.fetch, &memAlerts{})
 	require.NoError(t, err)
-	f.pushes, err = deviceconfig.NewPushes(svc, f.plans, f.dryRun, f.audit.record)
+	f.pushes, err = deviceconfig.NewPushes(svc, f.plans, f.device, f.audit.record)
 	require.NoError(t, err)
 	return f
 }
@@ -171,7 +226,7 @@ func TestPlanPredictsAnIOSMerge(t *testing.T) {
 	require.Equal(t, 1, res.Removed)
 
 	require.Len(t, f.repo.backups, 1, "the plan starts from a fresh backup")
-	require.Empty(t, f.dryRun.requests, "IOS has no dry run to ask for")
+	require.Empty(t, f.device.requests, "IOS has no dry run to ask for")
 	for _, req := range f.fetch.requests {
 		require.Equal(t, "show running-config", req.Command, "the only command sent is the backup's")
 	}
@@ -251,15 +306,15 @@ func TestPlanDryRunsNETCONFWithThePushCredential(t *testing.T) {
 	t.Parallel()
 	f := newPushFixture(t, "<system><host-name>edge</host-name></system>\n",
 		pushTarget("dct-1", "10.0.0.1", deviceconfig.PlatformNETCONF))
-	f.dryRun.res = deviceconfig.DryRunResult{Diff: "--- running\n+++ candidate\n-a\n+b\n", Added: 1, Removed: 1}
+	f.device.res = deviceconfig.DryRunResult{Diff: "--- running\n+++ candidate\n-a\n+b\n", Added: 1, Removed: 1}
 
 	candidate := `<system><host-name>core</host-name></system>`
 	res, err := f.pushes.Plan(context.Background(), planRequest("dct-1", deviceconfig.PushReplace, candidate))
 	require.NoError(t, err)
 	require.Equal(t, deviceconfig.PlanReady, res.Outcome)
 
-	require.Len(t, f.dryRun.requests, 1)
-	req := f.dryRun.requests[0]
+	require.Len(t, f.device.requests, 1)
+	req := f.device.requests[0]
 	require.Equal(t, "pusher", req.User)
 	require.Equal(t, "wr1te", req.Password)
 	require.Equal(t, "SHA256:10.0.0.1", req.PinnedHostKey)
@@ -276,7 +331,7 @@ func TestPlanDeviceFailures(t *testing.T) {
 	t.Run("the device refuses the dry run", func(t *testing.T) {
 		t.Parallel()
 		f := newPushFixture(t, "<a/>\n", pushTarget("dct-1", "10.0.0.1", deviceconfig.PlatformNETCONF))
-		f.dryRun.err = &deviceconfig.PlanRefusedError{Reason: "no confirmed-commit"}
+		f.device.err = &deviceconfig.PlanRefusedError{Reason: "no confirmed-commit"}
 		res, err := f.pushes.Plan(context.Background(), planRequest("dct-1", deviceconfig.PushMerge, "<a/>"))
 		require.NoError(t, err)
 		require.Equal(t, deviceconfig.PlanRefused, res.Outcome)
@@ -285,7 +340,7 @@ func TestPlanDeviceFailures(t *testing.T) {
 	t.Run("the dry run fails", func(t *testing.T) {
 		t.Parallel()
 		f := newPushFixture(t, "<a/>\n", pushTarget("dct-1", "10.0.0.1", deviceconfig.PlatformNETCONF))
-		f.dryRun.err = fmt.Errorf("%w: lock: lock-denied", deviceconfig.ErrCommand)
+		f.device.err = fmt.Errorf("%w: lock: lock-denied", deviceconfig.ErrCommand)
 		_, err := f.pushes.Plan(context.Background(), planRequest("dct-1", deviceconfig.PushMerge, "<a/>"))
 		require.ErrorIs(t, err, deviceconfig.ErrCommand)
 		require.Equal(t, []string{"device_config.push.plan_failed"}, f.audit.actions())
@@ -308,8 +363,8 @@ func TestPlanDeviceFailures(t *testing.T) {
 func TestPlanOneJobPerTarget(t *testing.T) {
 	t.Parallel()
 	f := newPushFixture(t, "<a/>\n", pushTarget("dct-1", "10.0.0.1", deviceconfig.PlatformNETCONF))
-	f.dryRun.gate = make(chan struct{})
-	f.dryRun.res = deviceconfig.DryRunResult{Diff: "-a\n+b\n", Added: 1, Removed: 1}
+	f.device.gate = make(chan struct{})
+	f.device.res = deviceconfig.DryRunResult{Diff: "-a\n+b\n", Added: 1, Removed: 1}
 
 	first := make(chan error, 1)
 	go func() {
@@ -317,14 +372,14 @@ func TestPlanOneJobPerTarget(t *testing.T) {
 		first <- err
 	}()
 	require.Eventually(t, func() bool {
-		f.dryRun.mu.Lock()
-		defer f.dryRun.mu.Unlock()
-		return len(f.dryRun.requests) == 1
+		f.device.mu.Lock()
+		defer f.device.mu.Unlock()
+		return len(f.device.requests) == 1
 	}, 5*time.Second, 10*time.Millisecond)
 
 	_, err := f.pushes.Plan(context.Background(), planRequest("dct-1", deviceconfig.PushMerge, "<b/>"))
 	require.ErrorIs(t, err, deviceconfig.ErrPushBusy)
-	close(f.dryRun.gate)
+	close(f.device.gate)
 	require.NoError(t, <-first)
 
 	_, err = f.pushes.Plan(context.Background(), planRequest("dct-1", deviceconfig.PushMerge, "<b/>"))
@@ -446,6 +501,6 @@ func TestSetPushCredentials(t *testing.T) {
 
 func TestNewPushesNeedsEveryDependency(t *testing.T) {
 	t.Parallel()
-	_, err := deviceconfig.NewPushes(nil, &memPlans{}, &memDryRun{}, (&memAudit{}).record)
+	_, err := deviceconfig.NewPushes(nil, &memPlans{}, &memDevice{}, (&memAudit{}).record)
 	require.ErrorIs(t, err, deviceconfig.ErrUnavailable)
 }

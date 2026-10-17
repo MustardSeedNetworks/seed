@@ -369,6 +369,9 @@ func writeDeviceConfigError(w http.ResponseWriter, r *http.Request, err error) {
 		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, ve.Msg)
 	case errors.Is(err, deviceconfig.ErrNotFound):
 		writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "Not found")
+	case errors.Is(err, deviceconfig.ErrPlanSpent):
+		writeError(w, r, http.StatusConflict, ErrCodeConflict,
+			"The push plan was already applied or has expired; plan again")
 	case errors.Is(err, deviceconfig.ErrUnavailable):
 		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail,
 			"Configuration backup store unavailable")

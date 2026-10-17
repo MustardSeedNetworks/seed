@@ -59,6 +59,10 @@ const (
 	// MaxCandidateBytes caps a candidate. A whole chassis configuration for
 	// replace fits.
 	MaxCandidateBytes = 2 << 20
+	// ConfirmWindow is how long a device waits for an applied commit to be
+	// confirmed before reverting it: room for the post-check's login and
+	// read, and short enough that a push which cut Seed off is soon undone.
+	ConfirmWindow = 5 * time.Minute
 	// planRetention is how many plans a target keeps.
 	planRetention = 50
 )
@@ -95,6 +99,11 @@ type Plan struct {
 	Diff        string `json:"diff,omitempty"`
 	CandidateCT string `json:"-"`
 	DiffCT      string `json:"-"`
+	// AppliedAt is set when an apply claims the plan, which happens once.
+	// ApplyOutcome stays empty while that apply runs.
+	AppliedAt    *time.Time   `json:"appliedAt,omitempty"`
+	AppliedBy    string       `json:"appliedBy,omitempty"`
+	ApplyOutcome ApplyOutcome `json:"applyOutcome,omitempty"`
 }
 
 // PlanStore keeps push plans.
@@ -107,10 +116,15 @@ type PlanStore interface {
 	ListPlans(ctx context.Context, clientID, targetID string, limit int) ([]Plan, error)
 	// PrunePlans keeps the target's newest keep plans.
 	PrunePlans(ctx context.Context, clientID, targetID string, keep int) error
+	// ClaimApply marks a plan applied by user at now, and answers
+	// ErrPlanSpent unless the plan was unapplied and unexpired at now.
+	ClaimApply(ctx context.Context, clientID, id, user string, now time.Time) error
+	// FinishApply records how an applied plan's apply ended.
+	FinishApply(ctx context.Context, clientID, id string, outcome ApplyOutcome) error
 }
 
-// DryRunRequest is one login to preview a candidate on a device.
-type DryRunRequest struct {
+// DeviceRequest is one login to the device a push is for.
+type DeviceRequest struct {
 	Host          string
 	Port          int
 	User          string
@@ -119,6 +133,9 @@ type DryRunRequest struct {
 	Platform      Platform
 	Mode          PushMode
 	Candidate     string
+	// CommitID names an applied commit, so a NETCONF confirmed commit can be
+	// confirmed or cancelled from a later session (RFC 6241 §8.4 persist).
+	CommitID string
 }
 
 // DryRunResult is the device's account of what the candidate would change.
@@ -128,10 +145,18 @@ type DryRunResult struct {
 	Removed int
 }
 
-// DryRunner asks a device what a candidate would change and changes nothing.
-// A device that cannot take a push safely answers *PlanRefusedError.
-type DryRunner interface {
-	DryRun(ctx context.Context, req DryRunRequest) (DryRunResult, error)
+// PushDevice is the device side of a push. Each method is one login.
+type PushDevice interface {
+	// DryRun asks what the candidate would change and changes nothing. A
+	// device that cannot take a push safely answers *PlanRefusedError.
+	DryRun(ctx context.Context, req DeviceRequest) (DryRunResult, error)
+	// Commit applies the candidate under a confirmed commit that the device
+	// reverts by itself unless Confirm arrives within ConfirmWindow.
+	Commit(ctx context.Context, req DeviceRequest) error
+	// Confirm makes the pending commit permanent.
+	Confirm(ctx context.Context, req DeviceRequest) error
+	// Rollback undoes the pending commit now rather than at the timer.
+	Rollback(ctx context.Context, req DeviceRequest) error
 }
 
 // PushAuditEvent is one push action for the audit log. Detail never carries
@@ -175,7 +200,7 @@ type PlanResult struct {
 type Pushes struct {
 	backups *Service
 	plans   PlanStore
-	dryRun  DryRunner
+	device  PushDevice
 	audit   func(context.Context, PushAuditEvent) error
 
 	mu   sync.Mutex
@@ -184,12 +209,12 @@ type Pushes struct {
 
 // NewPushes builds the use-case. Every dependency is required.
 func NewPushes(
-	backups *Service, plans PlanStore, dryRun DryRunner, audit func(context.Context, PushAuditEvent) error,
+	backups *Service, plans PlanStore, device PushDevice, audit func(context.Context, PushAuditEvent) error,
 ) (*Pushes, error) {
-	if backups == nil || plans == nil || dryRun == nil || audit == nil {
+	if backups == nil || plans == nil || device == nil || audit == nil {
 		return nil, ErrUnavailable
 	}
-	return &Pushes{backups: backups, plans: plans, dryRun: dryRun, audit: audit, busy: map[string]struct{}{}}, nil
+	return &Pushes{backups: backups, plans: plans, device: device, audit: audit, busy: map[string]struct{}{}}, nil
 }
 
 // Check refuses a plan request that can be refused without a login: an
@@ -202,10 +227,7 @@ func (p *Pushes) Check(ctx context.Context, req PlanRequest) error {
 }
 
 func (p *Pushes) check(ctx context.Context, req PlanRequest) (Target, error) {
-	t, err := p.backups.repo.GetTarget(ctx, req.ClientID, req.TargetID)
-	if errors.Is(err, ErrNotFound) {
-		return Target{}, ValidationError{Msg: fmt.Sprintf("no backup target %q", req.TargetID)}
-	}
+	t, err := p.pushTarget(ctx, req.ClientID, req.TargetID)
 	if err != nil {
 		return Target{}, err
 	}
@@ -216,23 +238,39 @@ func (p *Pushes) check(ctx context.Context, req PlanRequest) (Target, error) {
 		return Target{}, ValidationError{Msg: "candidate is required"}
 	case len(req.Candidate) > MaxCandidateBytes:
 		return Target{}, ValidationError{Msg: fmt.Sprintf("candidate exceeds %d bytes", MaxCandidateBytes)}
-	case t.PushCredentialsID == "":
-		return Target{}, ValidationError{Msg: "pushing is not enabled on this target"}
-	case t.HostKeySHA256 == "":
-		return Target{}, ValidationError{Msg: "the target's host key must be confirmed before a push"}
 	}
 	switch t.Platform {
-	case PlatformCiscoNXOS:
-		return Target{}, ValidationError{
-			Msg: "cisco-nxos is read-only: it has no device-side revert, so a push that cut Seed off could not be undone",
-		}
 	case PlatformNETCONF:
 		err = checkXMLCandidate(req.Candidate)
 	case PlatformCiscoIOS, PlatformJuniperJunos, PlatformAristaEOS:
 		err = checkCLICandidate(t.Platform, req.Candidate)
+	case PlatformCiscoNXOS:
 	}
 	if err != nil {
 		return Target{}, ValidationError{Msg: err.Error()}
+	}
+	return t, nil
+}
+
+// pushTarget returns a target that may be pushed to: pushing on, its host key
+// pinned, and not NX-OS.
+func (p *Pushes) pushTarget(ctx context.Context, clientID, targetID string) (Target, error) {
+	t, err := p.backups.repo.GetTarget(ctx, clientID, targetID)
+	if errors.Is(err, ErrNotFound) {
+		return Target{}, ValidationError{Msg: fmt.Sprintf("no backup target %q", targetID)}
+	}
+	if err != nil {
+		return Target{}, err
+	}
+	switch {
+	case t.PushCredentialsID == "":
+		return Target{}, ValidationError{Msg: "pushing is not enabled on this target"}
+	case t.HostKeySHA256 == "":
+		return Target{}, ValidationError{Msg: "the target's host key must be confirmed before a push"}
+	case t.Platform == PlatformCiscoNXOS:
+		return Target{}, ValidationError{
+			Msg: "cisco-nxos is read-only: it has no device-side revert, so a push that cut Seed off could not be undone",
+		}
 	}
 	return t, nil
 }
@@ -321,29 +359,38 @@ func (p *Pushes) freshBackup(ctx context.Context, t Target) (Backup, error) {
 }
 
 func (p *Pushes) deviceDryRun(ctx context.Context, t Target, req PlanRequest) (DryRunResult, error) {
-	cred, err := p.backups.creds.Get(ctx, t.PushCredentialsID, t.ClientID)
+	dr, err := p.deviceRequest(ctx, t, req.Mode, req.Candidate)
 	if err != nil {
-		return DryRunResult{}, fmt.Errorf("read push credential: %w", err)
-	}
-	if cred.Kind != polling.CredentialKindSSH {
-		return DryRunResult{}, fmt.Errorf("push credential %s is %s, not SSH", cred.ID, cred.Kind)
-	}
-	password, err := p.backups.cipher.DecryptValue(cred.SSHPasswordCT)
-	if err != nil {
-		return DryRunResult{}, fmt.Errorf("decrypt SSH password: %w", err)
+		return DryRunResult{}, err
 	}
 	ctx, cancel := context.WithTimeout(ctx, deviceTimeout)
 	defer cancel()
-	return p.dryRun.DryRun(ctx, DryRunRequest{
+	return p.device.DryRun(ctx, dr)
+}
+
+// deviceRequest is a login to t with its push credential, never the backup's.
+func (p *Pushes) deviceRequest(ctx context.Context, t Target, mode PushMode, candidate string) (DeviceRequest, error) {
+	cred, err := p.backups.creds.Get(ctx, t.PushCredentialsID, t.ClientID)
+	if err != nil {
+		return DeviceRequest{}, fmt.Errorf("read push credential: %w", err)
+	}
+	if cred.Kind != polling.CredentialKindSSH {
+		return DeviceRequest{}, fmt.Errorf("push credential %s is %s, not SSH", cred.ID, cred.Kind)
+	}
+	password, err := p.backups.cipher.DecryptValue(cred.SSHPasswordCT)
+	if err != nil {
+		return DeviceRequest{}, fmt.Errorf("decrypt SSH password: %w", err)
+	}
+	return DeviceRequest{
 		Host:          t.Host,
 		Port:          t.Port,
 		User:          cred.SSHUser,
 		Password:      password,
 		PinnedHostKey: t.HostKeySHA256,
 		Platform:      t.Platform,
-		Mode:          req.Mode,
-		Candidate:     req.Candidate,
-	})
+		Mode:          mode,
+		Candidate:     candidate,
+	}, nil
 }
 
 func (p *Pushes) store(

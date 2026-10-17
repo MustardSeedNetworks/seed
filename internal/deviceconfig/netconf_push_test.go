@@ -2,9 +2,11 @@ package deviceconfig_test
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -34,6 +36,7 @@ type netconfDatastores struct {
 
 	mu         sync.Mutex
 	operations []string
+	messages   []string
 	candidate  string
 	done       chan struct{}
 }
@@ -72,6 +75,7 @@ func (d *netconfDatastores) answer(msg string) (string, string) {
 	var op string
 	for _, name := range []string{
 		"lock", "unlock", "edit-config", "validate", "discard-changes", "close-session", "get-config",
+		"cancel-commit", "commit",
 	} {
 		if strings.Contains(msg, "<"+name+">") || strings.Contains(msg, "<"+name+"/>") {
 			op = name
@@ -82,6 +86,7 @@ func (d *netconfDatastores) answer(msg string) (string, string) {
 		op = "get-config candidate"
 	}
 	d.operations = append(d.operations, op)
+	d.messages = append(d.messages, msg)
 	if tag, ok := d.fail[op]; ok {
 		return op, `<rpc-error><error-type>protocol</error-type><error-tag>` + tag +
 			`</error-tag><error-severity>error</error-severity></rpc-error>`
@@ -95,6 +100,8 @@ func (d *netconfDatastores) answer(msg string) (string, string) {
 		d.candidate = d.candidateAfterEdit
 	case "discard-changes":
 		d.candidate = d.running
+	case "commit":
+		d.running = d.candidate
 	}
 	return op, "<ok/>"
 }
@@ -105,12 +112,12 @@ func (d *netconfDatastores) ops() []string {
 	return append([]string(nil), d.operations...)
 }
 
-func startNETCONFDatastores(t *testing.T, d *netconfDatastores) deviceconfig.DryRunRequest {
+func startNETCONFDatastores(t *testing.T, d *netconfDatastores) deviceconfig.DeviceRequest {
 	t.Helper()
 	d.done = make(chan struct{})
 	dev := startSSHDevice(t, deviceOpts{password: "wr1te", netconf: d.serve})
 	fr := dev.request(t, "wr1te", "", dev.fingerprint)
-	return deviceconfig.DryRunRequest{
+	return deviceconfig.DeviceRequest{
 		Host: fr.Host, Port: fr.Port, User: "pusher", Password: "wr1te", PinnedHostKey: dev.fingerprint,
 		Platform: deviceconfig.PlatformNETCONF, Mode: deviceconfig.PushMerge,
 		Candidate: `<system><host-name>core</host-name></system>`,
@@ -202,10 +209,85 @@ func TestNETCONFDryRunFailures(t *testing.T) {
 	}
 }
 
+// TestNETCONFCommitConfirmAndCancel: the commit is a confirmed commit with a
+// timeout and a persist token, made under the candidate lock; the confirm and
+// the cancel name that token from a new session.
+func TestNETCONFCommitConfirmAndCancel(t *testing.T) {
+	t.Parallel()
+	const commitID = "seed-0123456789abcdef"
+	tests := []struct {
+		name string
+		step func(deviceconfig.SSHFetcher, context.Context, deviceconfig.DeviceRequest) error
+		ops  []string
+		// op is the operation whose message carries body.
+		op   string
+		body string
+	}{
+		{
+			name: "commit",
+			step: deviceconfig.SSHFetcher.Commit,
+			ops:  []string{"lock", "edit-config", "validate", "commit", "discard-changes", "unlock", "close-session"},
+			op:   "commit",
+			body: `<commit><confirmed/><confirm-timeout>300</confirm-timeout><persist>` + commitID + `</persist></commit>`,
+		},
+		{
+			name: "confirm",
+			step: deviceconfig.SSHFetcher.Confirm,
+			ops:  []string{"commit", "close-session"},
+			op:   "commit",
+			body: `<commit><persist-id>` + commitID + `</persist-id></commit>`,
+		},
+		{
+			name: "cancel",
+			step: deviceconfig.SSHFetcher.Rollback,
+			ops:  []string{"cancel-commit", "close-session"},
+			op:   "cancel-commit",
+			body: `<cancel-commit><persist-id>` + commitID + `</persist-id></cancel-commit>`,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			d := &netconfDatastores{
+				capabilities: []string{base10, capCandidate, capConfirmed, capValidate},
+				running:      "<a/>", candidateAfterEdit: "<b/>",
+			}
+			req := startNETCONFDatastores(t, d)
+			req.CommitID = commitID
+
+			require.NoError(t, tc.step(deviceconfig.SSHFetcher{}, fetchCtx(t), req))
+			<-d.done
+			ops := d.ops()
+			require.Equal(t, tc.ops, ops)
+			d.mu.Lock()
+			defer d.mu.Unlock()
+			require.Contains(t, d.messages[slices.Index(ops, tc.op)], tc.body)
+		})
+	}
+}
+
+func TestNETCONFCommitRefusedLeavesTheCandidateDiscarded(t *testing.T) {
+	t.Parallel()
+	d := &netconfDatastores{
+		capabilities: []string{base10, capCandidate, capConfirmed},
+		running:      "<a/>", candidateAfterEdit: "<b/>", fail: map[string]string{"commit": "operation-failed"},
+	}
+	req := startNETCONFDatastores(t, d)
+	req.CommitID = "seed-0123456789abcdef"
+
+	err := deviceconfig.SSHFetcher{}.Commit(fetchCtx(t), req)
+	require.ErrorIs(t, err, deviceconfig.ErrCommand)
+	require.ErrorContains(t, err, "commit: operation-failed")
+	<-d.done
+	require.Equal(t, []string{"lock", "edit-config", "commit", "discard-changes", "unlock", "close-session"}, d.ops())
+	require.Equal(t, "<a/>", d.running)
+	require.Equal(t, "<a/>", d.candidate)
+}
+
 func TestDryRunRefusesAPlatformWithoutOne(t *testing.T) {
 	t.Parallel()
 	for _, p := range []deviceconfig.Platform{deviceconfig.PlatformCiscoIOS, deviceconfig.PlatformCiscoNXOS} {
-		_, err := deviceconfig.SSHFetcher{}.DryRun(fetchCtx(t), deviceconfig.DryRunRequest{Platform: p})
+		_, err := deviceconfig.SSHFetcher{}.DryRun(fetchCtx(t), deviceconfig.DeviceRequest{Platform: p})
 		_, ok := errors.AsType[*deviceconfig.PlanRefusedError](err)
 		require.True(t, ok, "%s: %v", p, err)
 	}

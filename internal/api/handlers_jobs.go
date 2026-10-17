@@ -128,6 +128,10 @@ func (s *Server) handleJobs(w http.ResponseWriter, r *http.Request) {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation,
 			"Plan a configuration push with POST "+deviceConfigPushesPath, "")
 		return
+	case deviceConfigPushApplyJobKind:
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation,
+			"Apply a configuration push with POST "+deviceConfigPushesPath+"/{planId}/apply", "")
+		return
 	case wmiJobKind:
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation,
 			"Start a Windows inventory run with POST "+wmiRunsPath, "")
