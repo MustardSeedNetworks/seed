@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.277.0](https://github.com/MustardSeedNetworks/seed/compare/v0.276.0...v0.277.0) (2026-10-17)
+
+
+### Features
+
+* **deviceconfig:** apply a push plan on EOS and IOS (P-D3) ([#3579](https://github.com/MustardSeedNetworks/seed/issues/3579)) ([3dc4ccc](https://github.com/MustardSeedNetworks/seed/commit/3dc4ccce7a41cbb1f9adc7e3a727d35429aff008))
+* **deviceconfig:** apply a push plan on Junos and NETCONF (P-D3) ([#3576](https://github.com/MustardSeedNetworks/seed/issues/3576)) ([aec3926](https://github.com/MustardSeedNetworks/seed/commit/aec3926fb745c17ece9b7b56ae3a77bf9bb0e373))
+* **ui:** add the TFTP session card to device configs ([#3578](https://github.com/MustardSeedNetworks/seed/issues/3578)) ([7e4a266](https://github.com/MustardSeedNetworks/seed/commit/7e4a26645a50e43d80d8a1e971c4da3c11c1ec64)), closes [#3124](https://github.com/MustardSeedNetworks/seed/issues/3124)
+
 ## [0.276.0](https://github.com/MustardSeedNetworks/seed/compare/v0.275.0...v0.276.0) (2026-10-17)
 
 
