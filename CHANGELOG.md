@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.278.0](https://github.com/MustardSeedNetworks/seed/compare/v0.277.1...v0.278.0) (2026-10-17)
+
+
+### Features
+
+* **deviceconfig:** replace an IOS configuration over SCP (P-D3) ([#3584](https://github.com/MustardSeedNetworks/seed/issues/3584)) ([92c0458](https://github.com/MustardSeedNetworks/seed/commit/92c04583ec8dcdd5fdc09e949f7786ad1827ab07))
+* **ui:** manage configuration backup devices from device configs ([#3582](https://github.com/MustardSeedNetworks/seed/issues/3582)) ([1b1e897](https://github.com/MustardSeedNetworks/seed/commit/1b1e897fc65adf4b774d431b925aab2607c932b1))
+
+
+### Bug Fixes
+
+* **probe:** record nothing for a probe run that Stop cancels ([#3588](https://github.com/MustardSeedNetworks/seed/issues/3588)) ([3c4baf2](https://github.com/MustardSeedNetworks/seed/commit/3c4baf21214e68710716c066693cbe65d54d1012)), closes [#3586](https://github.com/MustardSeedNetworks/seed/issues/3586)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3587](https://github.com/MustardSeedNetworks/seed/issues/3587)) ([19f678e](https://github.com/MustardSeedNetworks/seed/commit/19f678e3d52e0bcea183a3341c4931177941f543))
+
 ## [0.277.1](https://github.com/MustardSeedNetworks/seed/compare/v0.277.0...v0.277.1) (2026-10-17)
 
 
