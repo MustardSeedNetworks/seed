@@ -26,7 +26,22 @@ export interface DeviceConfigTarget {
   host: string;
   port: number;
   platform: DeviceConfigPlatform;
+  /** The SSH credential in the vault the backup signs in with. */
+  credentialsId: string;
+  /** The SSH host key fingerprint every backup must match. */
+  hostKeySha256?: string;
+  /** The key the device presented while none was pinned, awaiting confirmation. */
+  pendingHostKeySha256?: string;
   updatedAt: string;
+}
+
+/** The target POST/PUT body. A port left out takes the platform's default. */
+export interface DeviceConfigTargetInput {
+  name: string;
+  host: string;
+  port?: number;
+  platform: DeviceConfigPlatform;
+  credentialsId: string;
 }
 
 export interface DeviceConfigTargetList {
@@ -47,6 +62,12 @@ export interface DeviceConfigBackup {
 export interface DeviceConfigBackupList {
   count: number;
   backups: DeviceConfigBackup[];
+}
+
+/** The finished backup run's job result. */
+export interface DeviceConfigRunResult {
+  succeeded: number;
+  failed: number;
 }
 
 /** A backup's change from the target's previous configuration. */

@@ -49,7 +49,7 @@ export function ConfirmModal({
           <Button variant="outline" onClick={onCancel}>
             {cancelLabel}
           </Button>
-          <Button tone={confirmTone} onClick={onConfirm}>
+          <Button tone={confirmTone} onClick={onConfirm} data-testid="confirm-modal-confirm">
             {confirmLabel}
           </Button>
         </div>

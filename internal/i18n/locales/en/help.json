@@ -703,7 +703,7 @@
       }
     },
     "deviceConfigs": {
-      "description": "Review the configurations Seed saved from your devices over SSH or NETCONF, newest first. Select a saved backup to see what changed since the one before it: added lines are green, removed lines red. A failed attempt shows why it saved nothing.",
+      "description": "Add the devices Seed backs up over SSH or NETCONF, run a backup of one or all, and review what it saved, newest first. Select a saved backup to see what changed since the one before it: added lines are green, removed lines red. A failed attempt shows why it saved nothing.",
       "terms": {
         "backup": {
           "term": "Backup",
@@ -712,6 +712,10 @@
         "diff": {
           "term": "Change",
           "description": "The lines added and removed since the device's previous saved configuration, with a few unchanged lines around each for context."
+        },
+        "hostKey": {
+          "term": "SSH host key",
+          "description": "The key a device proves itself with. The first backup records it and saves nothing until an operator checks it on the device and trusts it. A backup that meets a different key stops. Forget the key after replacing a device."
         },
         "tftp": {
           "term": "TFTP server",
