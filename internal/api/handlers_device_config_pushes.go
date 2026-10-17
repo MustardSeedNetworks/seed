@@ -199,7 +199,7 @@ func (s *Server) handleDeviceConfigPushApply(w http.ResponseWriter, r *http.Requ
 			"reason", "scope",
 			"username", usernameFromContext(r),
 			"client_ip", GetClientIP(r),
-			"path", r.URL.Path,
+			"path", singleLogLine(r.URL.Path),
 			"method", r.Method,
 		)
 		writeError(w, r, http.StatusForbidden, ErrCodeForbidden,
