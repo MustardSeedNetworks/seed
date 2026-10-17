@@ -12,6 +12,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
@@ -196,26 +198,48 @@ func NewDeviceConfigPushes(
 	persist func() *Persistence, backups *deviceconfig.Service, device deviceconfig.PushDevice,
 ) (*deviceconfig.Pushes, error) {
 	db := lazyHandle(persist)
-	return deviceconfig.NewPushes(backups, deviceConfigRepo{db: db}, device,
-		func(ctx context.Context, e deviceconfig.PushAuditEvent) error {
-			d := db()
-			if d == nil {
-				return deviceconfig.ErrUnavailable
-			}
-			detail, err := json.Marshal(e.Detail)
-			if err != nil {
-				return fmt.Errorf("encode push audit detail: %w", err)
-			}
-			return d.RecordAuditLog(ctx, &database.AuditLogEntry{
-				Action:       e.Action,
-				User:         e.User,
-				ResourceType: deviceconfig.PushAuditResource,
-				ResourceID:   e.TargetID,
-				NewValueJSON: string(detail),
-				IPAddress:    e.Remote,
-				UserAgent:    e.UserAgent,
-			})
+	return deviceconfig.NewPushes(backups, deviceConfigRepo{db: db}, device, pushAudit(db))
+}
+
+// NewDeviceConfigImages builds the image use-case (P-D3) over the database's
+// image records. Image files are kept in device-images beside the database
+// file, created on first use.
+func NewDeviceConfigImages(persist func() *Persistence) (*deviceconfig.Images, error) {
+	db := lazyHandle(persist)
+	return deviceconfig.NewImages(deviceConfigRepo{db: db}, func() (*os.Root, error) {
+		d := db()
+		if d == nil {
+			return nil, deviceconfig.ErrUnavailable
+		}
+		dir := filepath.Join(filepath.Dir(d.Path()), "device-images")
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			return nil, fmt.Errorf("create image directory: %w", err)
+		}
+		return os.OpenRoot(dir)
+	}, pushAudit(db))
+}
+
+// pushAudit records push and image events in the database audit log.
+func pushAudit(db func() *database.DB) func(context.Context, deviceconfig.PushAuditEvent) error {
+	return func(ctx context.Context, e deviceconfig.PushAuditEvent) error {
+		d := db()
+		if d == nil {
+			return deviceconfig.ErrUnavailable
+		}
+		detail, err := json.Marshal(e.Detail)
+		if err != nil {
+			return fmt.Errorf("encode push audit detail: %w", err)
+		}
+		return d.RecordAuditLog(ctx, &database.AuditLogEntry{
+			Action:       e.Action,
+			User:         e.User,
+			ResourceType: e.ResourceType,
+			ResourceID:   e.ResourceID,
+			NewValueJSON: string(detail),
+			IPAddress:    e.Remote,
+			UserAgent:    e.UserAgent,
 		})
+	}
 }
 
 func (a deviceConfigRepo) InsertPlan(ctx context.Context, p *deviceconfig.Plan) error {
@@ -268,4 +292,28 @@ func (a deviceConfigRepo) FinishApply(
 		return err
 	}
 	return repo.FinishApply(ctx, clientID, id, outcome)
+}
+
+func (a deviceConfigRepo) InsertImage(ctx context.Context, img *deviceconfig.Image) error {
+	repo, err := a.repo()
+	if err != nil {
+		return err
+	}
+	return repo.InsertImage(ctx, img)
+}
+
+func (a deviceConfigRepo) ListImages(ctx context.Context, clientID string) ([]deviceconfig.Image, error) {
+	repo, err := a.repo()
+	if err != nil {
+		return nil, err
+	}
+	return repo.ListImages(ctx, clientID)
+}
+
+func (a deviceConfigRepo) DeleteImage(ctx context.Context, clientID, id string) error {
+	repo, err := a.repo()
+	if err != nil {
+		return err
+	}
+	return repo.DeleteImage(ctx, clientID, id)
 }

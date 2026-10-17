@@ -767,6 +767,20 @@ CREATE TABLE device_groups (
 				UNIQUE (client_id, name)
 			) STRICT;
 
+-- table: device_images
+CREATE TABLE device_images (
+				id          TEXT NOT NULL PRIMARY KEY,
+				client_id   TEXT NOT NULL REFERENCES clients(id),
+				name        TEXT NOT NULL CHECK (name <> ''),
+				platform    TEXT NOT NULL CHECK (platform IN ('cisco-ios','arista-eos','juniper-junos')),
+				size        INTEGER NOT NULL CHECK (size > 0),
+				sha256      TEXT NOT NULL CHECK (length(sha256) = 64),
+				sha512      TEXT NOT NULL CHECK (length(sha512) = 128),
+				uploaded_by TEXT NOT NULL CHECK (uploaded_by <> ''),
+				uploaded_at TEXT NOT NULL,
+				UNIQUE (client_id, name)
+			) STRICT;
+
 -- table: device_vulnerabilities
 CREATE TABLE "device_vulnerabilities" (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,

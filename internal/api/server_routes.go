@@ -51,6 +51,7 @@ func (s *Server) setupRoutes() {
 		s.tftpRoutes(),
 		s.deviceConfigRoutes(),
 		s.deviceConfigPushRoutes(),
+		s.deviceImageRoutes(),
 		s.wmiRoutes(),
 		s.ipamRoutes(),
 		s.lifecycleRoutes(),

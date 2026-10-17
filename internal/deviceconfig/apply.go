@@ -99,7 +99,9 @@ func (p *Pushes) Apply(ctx context.Context, req ApplyRequest) (ApplyResult, erro
 		return ApplyResult{}, err
 	}
 
-	event := PushAuditEvent{User: req.User, TargetID: t.ID, Remote: req.Remote, UserAgent: req.UserAgent}
+	event := PushAuditEvent{
+		User: req.User, ResourceType: PushAuditResource, ResourceID: t.ID, Remote: req.Remote, UserAgent: req.UserAgent,
+	}
 	detail := map[string]any{
 		"plan_id": plan.ID, "mode": plan.Mode, "diff_sha256": plan.DiffSHA256,
 		"added": plan.Added, "removed": plan.Removed,

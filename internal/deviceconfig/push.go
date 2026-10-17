@@ -162,15 +162,17 @@ type PushDevice interface {
 // PushAuditEvent is one push action for the audit log. Detail never carries
 // configuration text: the audit log is read more widely than the backups.
 type PushAuditEvent struct {
-	Action    string
-	User      string
-	TargetID  string
-	Remote    string
-	UserAgent string
-	Detail    map[string]any
+	Action       string
+	User         string
+	ResourceType string
+	ResourceID   string
+	Remote       string
+	UserAgent    string
+	Detail       map[string]any
 }
 
-// PushAuditResource is the audit log resource type of every push event.
+// PushAuditResource is the audit log resource type of a push event, whose
+// resource is the target.
 const PushAuditResource = "device_config_push"
 
 // PlanRequest is an admin's request to plan a push. User, Remote and
@@ -298,8 +300,13 @@ func (p *Pushes) Plan(ctx context.Context, req PlanRequest) (PlanResult, error) 
 		action, detail = "device_config.push.plan_refused", map[string]any{"mode": req.Mode, "reason": res.Reason}
 	}
 	if auditErr := p.audit(ctx, PushAuditEvent{
-		Action: action, User: req.User, TargetID: req.TargetID, Remote: req.Remote, UserAgent: req.UserAgent,
-		Detail: detail,
+		Action:       action,
+		User:         req.User,
+		ResourceType: PushAuditResource,
+		ResourceID:   req.TargetID,
+		Remote:       req.Remote,
+		UserAgent:    req.UserAgent,
+		Detail:       detail,
 	}); auditErr != nil {
 		return PlanResult{}, errors.Join(err, fmt.Errorf("audit push plan: %w", auditErr))
 	}
