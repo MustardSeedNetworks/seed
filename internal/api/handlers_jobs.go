@@ -116,13 +116,17 @@ func (s *Server) handleJobs(w http.ResponseWriter, r *http.Request) {
 			ErrCodeValidation, "Job kind is required", "")
 		return
 	}
-	// A configuration backup or a Windows inventory run belongs to the
-	// caller's client, which this tenant-blind route cannot carry; each has its
-	// own route.
+	// A configuration backup, a push plan or a Windows inventory run belongs
+	// to the caller's client, which this tenant-blind route cannot carry; each
+	// has its own route.
 	switch req.Kind {
 	case deviceConfigJobKind:
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation,
 			"Start a configuration backup with POST "+deviceConfigRunPath, "")
+		return
+	case deviceConfigPushPlanJobKind:
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation,
+			"Plan a configuration push with POST "+deviceConfigPushesPath, "")
 		return
 	case wmiJobKind:
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation,

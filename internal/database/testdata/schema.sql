@@ -99,8 +99,14 @@ CREATE INDEX idx_bluetooth_devices_last_seen ON bluetooth_devices(last_seen);
 -- index: idx_clients_slug
 CREATE INDEX idx_clients_slug ON clients(slug);
 
+-- index: idx_device_config_push_plans_target
+CREATE INDEX idx_device_config_push_plans_target ON device_config_push_plans(client_id, target_id, created_at);
+
 -- index: idx_device_config_targets_credentials
 CREATE INDEX idx_device_config_targets_credentials ON device_config_targets(client_id, credentials_id);
+
+-- index: idx_device_config_targets_push_credentials
+CREATE INDEX idx_device_config_targets_push_credentials ON device_config_targets(client_id, push_credentials_id);
 
 -- index: idx_device_credentials_client
 CREATE INDEX idx_device_credentials_client ON device_credentials(client_id);
@@ -607,6 +613,28 @@ CREATE TABLE device_config_backups (
 					REFERENCES device_config_targets(client_id, id) ON DELETE CASCADE
 			) STRICT;
 
+-- table: device_config_push_plans
+CREATE TABLE device_config_push_plans (
+				id             TEXT NOT NULL PRIMARY KEY,
+				client_id      TEXT NOT NULL,
+				target_id      TEXT NOT NULL,
+				created_by     TEXT NOT NULL CHECK (created_by <> ''),
+				created_at     TEXT NOT NULL,
+				expires_at     TEXT NOT NULL CHECK (expires_at > created_at),
+				mode           TEXT NOT NULL CHECK (mode IN ('merge','replace')),
+				diff_source    TEXT NOT NULL CHECK (diff_source IN ('device','predicted')),
+				backup_id      TEXT NOT NULL,
+				running_sha256 TEXT NOT NULL,
+				candidate_enc  BLOB NOT NULL CHECK (CAST(candidate_enc AS TEXT) GLOB 'enc:v[0-9]*:*'),
+				diff_enc       BLOB NOT NULL CHECK (CAST(diff_enc AS TEXT) GLOB 'enc:v[0-9]*:*'),
+				diff_sha256    TEXT NOT NULL,
+				added          INTEGER NOT NULL CHECK (added >= 0),
+				removed        INTEGER NOT NULL CHECK (removed >= 0),
+				CHECK (added + removed > 0),
+				FOREIGN KEY (client_id, target_id)
+					REFERENCES device_config_targets(client_id, id) ON DELETE CASCADE
+			) STRICT;
+
 -- table: device_config_targets
 CREATE TABLE "device_config_targets" (
 				id              TEXT NOT NULL PRIMARY KEY,
@@ -620,9 +648,12 @@ CREATE TABLE "device_config_targets" (
 				pending_host_key_sha256 TEXT CHECK (pending_host_key_sha256 IS NULL OR pending_host_key_sha256 GLOB 'SHA256:*'),
 				created_at      TEXT NOT NULL,
 				updated_at      TEXT NOT NULL,
+				push_credentials_id TEXT CHECK (push_credentials_id IS NULL OR push_credentials_id <> credentials_id),
 				UNIQUE (client_id, id),
 				UNIQUE (client_id, host, port),
 				FOREIGN KEY (client_id, credentials_id)
+					REFERENCES device_credentials(client_id, id) ON DELETE RESTRICT,
+				FOREIGN KEY (client_id, push_credentials_id)
 					REFERENCES device_credentials(client_id, id) ON DELETE RESTRICT
 			) STRICT;
 

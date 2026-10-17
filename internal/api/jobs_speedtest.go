@@ -111,6 +111,7 @@ func (s *Server) registerJobKinds() {
 	)
 	s.registerDefaultPacketCaptureKind()
 	s.registerDeviceConfigKind()
+	s.registerDeviceConfigPushKind()
 	s.registerAutotestKind()
 	s.registerWMIKind()
 }

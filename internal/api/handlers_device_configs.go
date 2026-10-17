@@ -267,21 +267,9 @@ func (s *Server) handleDeviceConfigBackups(w http.ResponseWriter, r *http.Reques
 	if !ok {
 		return
 	}
-	q := r.URL.Query()
-	targetID := q.Get("targetId")
-	if !deviceConfigTargetIDPattern.MatchString(targetID) {
-		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, "targetId is required")
+	targetID, limit, ok := deviceConfigListQuery(w, r)
+	if !ok {
 		return
-	}
-	limit := deviceConfigListDefault
-	if raw := q.Get("limit"); raw != "" {
-		n, err := strconv.Atoi(raw)
-		if err != nil || n < 1 || n > deviceConfigListMax {
-			writeError(w, r, http.StatusBadRequest, ErrCodeValidation,
-				fmt.Sprintf("limit must be between 1 and %d", deviceConfigListMax))
-			return
-		}
-		limit = n
 	}
 	list, err := s.deviceConfigs.ListBackups(r.Context(), clientID, targetID, limit)
 	if err != nil {
@@ -292,6 +280,28 @@ func (s *Server) handleDeviceConfigBackups(w http.ResponseWriter, r *http.Reques
 		jsonKeyCount: len(list),
 		"backups":    list,
 	})
+}
+
+// deviceConfigListQuery reads a target history's ?targetId=&limit=, answering
+// 400 itself when either is malformed.
+func deviceConfigListQuery(w http.ResponseWriter, r *http.Request) (string, int, bool) {
+	q := r.URL.Query()
+	targetID := q.Get("targetId")
+	if !deviceConfigTargetIDPattern.MatchString(targetID) {
+		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, "targetId is required")
+		return "", 0, false
+	}
+	limit := deviceConfigListDefault
+	if raw := q.Get("limit"); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 1 || n > deviceConfigListMax {
+			writeError(w, r, http.StatusBadRequest, ErrCodeValidation,
+				fmt.Sprintf("limit must be between 1 and %d", deviceConfigListMax))
+			return "", 0, false
+		}
+		limit = n
+	}
+	return targetID, limit, true
 }
 
 func (s *Server) handleDeviceConfigBackupByID(w http.ResponseWriter, r *http.Request) {

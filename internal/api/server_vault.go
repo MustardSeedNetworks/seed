@@ -7,8 +7,8 @@ import (
 )
 
 // initVaultUseCases wires the use-cases that need the keyring owning the
-// credential DEK: the vault itself, configuration backup, which decrypts the
-// vault's SSH passwords to log in, and Windows inventory, which decrypts its
+// credential DEK: the vault itself, configuration backup and push, which
+// decrypt the vault's SSH passwords to log in, and Windows inventory, which decrypts its
 // WinRM passwords. Without a config there is no keyring, so
 // both stay nil and their handlers report 503 — the alternative is a CRUD
 // surface that would persist plaintext.
@@ -31,6 +31,9 @@ func (s *Server) initVaultUseCases() {
 		alertWriter,
 	); backupErr == nil {
 		s.deviceConfigs = svc
+		if pushes, pushErr := app.NewDeviceConfigPushes(s.persistence, svc, deviceconfig.SSHFetcher{}); pushErr == nil {
+			s.deviceConfigPushes = pushes
+		}
 	}
 	if svc, wmiErr := app.NewWMIInventory(s.persistence, keyring, wmi.WSManCollector{}); wmiErr == nil {
 		s.wmiInventory = svc

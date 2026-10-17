@@ -173,9 +173,13 @@ type Target struct {
 	HostKeySHA256 string   `json:"hostKeySha256,omitempty"`
 	// PendingHostKeySHA256 is the key the device last presented while nothing
 	// was pinned, waiting for an operator to confirm it.
-	PendingHostKeySHA256 string    `json:"pendingHostKeySha256,omitempty"`
-	CreatedAt            time.Time `json:"createdAt"`
-	UpdatedAt            time.Time `json:"updatedAt"`
+	PendingHostKeySHA256 string `json:"pendingHostKeySha256,omitempty"`
+	// PushCredentialsID is the credential a configuration push logs in with
+	// (ADR-0035). Empty means pushing is off, the default; it is never the
+	// backup credential, so the backup login never gains write access.
+	PushCredentialsID string    `json:"pushCredentialsId,omitempty"`
+	CreatedAt         time.Time `json:"createdAt"`
+	UpdatedAt         time.Time `json:"updatedAt"`
 }
 
 // Backup is one attempt to back up a target. Config is set only when a single
@@ -214,6 +218,9 @@ type TargetStore interface {
 	ConfirmHostKey(ctx context.Context, clientID, id, fingerprint string) error
 	// ClearHostKey forgets both the pinned and the pending key.
 	ClearHostKey(ctx context.Context, clientID, id string) error
+	// SetPushCredentials sets the credential a push logs in with; empty turns
+	// pushing off.
+	SetPushCredentials(ctx context.Context, clientID, id, credentialsID string) error
 }
 
 // BackupStore keeps backup attempts.
@@ -351,7 +358,8 @@ func (s *Service) GetTarget(ctx context.Context, clientID, id string) (Target, e
 
 // SaveTarget validates and writes a target. Moving a target to another host or
 // port drops its pinned and pending keys, since they belonged to the old
-// address; anything else keeps them.
+// address; anything else keeps them. The push credential is kept: enabling a
+// push is an admin's separate decision (SetPushCredentials).
 func (s *Service) SaveTarget(ctx context.Context, in TargetInput) (Target, error) {
 	t := Target{
 		ID:            in.ID,
@@ -378,6 +386,10 @@ func (s *Service) SaveTarget(ctx context.Context, in TargetInput) (Target, error
 			t.HostKeySHA256 = prev.HostKeySHA256
 			t.PendingHostKeySHA256 = prev.PendingHostKeySHA256
 		}
+		if prev.PushCredentialsID != "" && prev.PushCredentialsID == t.CredentialsID {
+			return Target{}, ValidationError{Msg: "credentialsId is the target's push credential"}
+		}
+		t.PushCredentialsID = prev.PushCredentialsID
 		t.CreatedAt = prev.CreatedAt
 	}
 	if err := s.repo.SaveTarget(ctx, &t); err != nil {
@@ -400,17 +412,42 @@ func (s *Service) validateTarget(ctx context.Context, t Target) error {
 			Msg: "platform must be one of cisco-ios, cisco-nxos, arista-eos, juniper-junos, netconf",
 		}
 	}
-	cred, err := s.creds.Get(ctx, t.CredentialsID, t.ClientID)
+	return s.checkSSHCredential(ctx, t.ClientID, t.CredentialsID, "credentialsId")
+}
+
+// checkSSHCredential refuses an id that does not name one of the client's SSH
+// credentials; field names the request field in the message.
+func (s *Service) checkSSHCredential(ctx context.Context, clientID, id, field string) error {
+	cred, err := s.creds.Get(ctx, id, clientID)
 	if errors.Is(err, polling.ErrCredentialsNotFound) {
-		return ValidationError{Msg: "credentialsId does not name a stored credential"}
+		return ValidationError{Msg: field + " does not name a stored credential"}
 	}
 	if err != nil {
 		return err
 	}
 	if cred.Kind != polling.CredentialKindSSH {
-		return ValidationError{Msg: "credentialsId must name an SSH credential"}
+		return ValidationError{Msg: field + " must name an SSH credential"}
 	}
 	return nil
+}
+
+// SetPushCredentials enables pushing to a target with credentialsID, or turns
+// it off when credentialsID is empty. The push credential must be an SSH
+// credential other than the backup's.
+func (s *Service) SetPushCredentials(ctx context.Context, clientID, id, credentialsID string) error {
+	if credentialsID != "" {
+		t, err := s.repo.GetTarget(ctx, clientID, id)
+		if err != nil {
+			return err
+		}
+		if credentialsID == t.CredentialsID {
+			return ValidationError{Msg: "the push credential must not be the backup credential"}
+		}
+		if err = s.checkSSHCredential(ctx, clientID, credentialsID, "credentialsId"); err != nil {
+			return err
+		}
+	}
+	return s.repo.SetPushCredentials(ctx, clientID, id, credentialsID)
 }
 
 // DeleteTarget removes a target and its backup history.
@@ -651,19 +688,25 @@ func diffConfigs(prev Backup, prevConfig string, cur Backup, curConfig string) D
 		PreviousBackupID: prev.ID,
 		PreviousTakenAt:  prev.TakenAt,
 	}
-	m := difflib.NewMatcher(difflib.SplitLines(prevConfig), difflib.SplitLines(curConfig))
-	for _, op := range m.GetOpCodes() {
+	d.Added, d.Removed = countChanges(difflib.SplitLines(prevConfig), difflib.SplitLines(curConfig))
+	return d
+}
+
+// countChanges counts the lines added and removed from a to b.
+func countChanges(a, b []string) (int, int) {
+	var added, removed int
+	for _, op := range difflib.NewMatcher(a, b).GetOpCodes() {
 		switch op.Tag {
 		case 'r':
-			d.Removed += op.I2 - op.I1
-			d.Added += op.J2 - op.J1
+			removed += op.I2 - op.I1
+			added += op.J2 - op.J1
 		case 'd':
-			d.Removed += op.I2 - op.I1
+			removed += op.I2 - op.I1
 		case 'i':
-			d.Added += op.J2 - op.J1
+			added += op.J2 - op.J1
 		}
 	}
-	return d
+	return added, removed
 }
 
 // unifiedDiff renders the change between two stored configurations, each side

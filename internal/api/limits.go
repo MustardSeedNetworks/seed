@@ -23,4 +23,8 @@ const (
 	// The API spends about 2 KB on each product, and an estate runs to a
 	// few thousand product IDs once its modules and optics are counted.
 	MaxBodySizeEoXImport int64 = 8 * 1024 * 1024
+
+	// MaxBodySizeConfigPush is for a configuration push plan (4 MB): a
+	// candidate of up to deviceconfig.MaxCandidateBytes, JSON-escaped.
+	MaxBodySizeConfigPush int64 = 4 * 1024 * 1024
 )

@@ -286,6 +286,7 @@ type Server struct {
 	snmpBrowser        *snmppoller.Browser         // On-demand subtree walks, the MIB browser (P-E5)
 	deviceCredentials  *credentials.Service        // Device-credential CRUD use-case (#1799)
 	deviceConfigs      *deviceconfig.Service       // Device configuration backup use-case (P-D1)
+	deviceConfigPushes *deviceconfig.Pushes        // Device configuration push use-case (P-D3)
 	deviceGroups       *devicegroups.Service       // Device-group CRUD use-case (P-D10)
 	wmiInventory       *wmi.Service                // Windows inventory use-case (P-D11)
 	autotestResults    autotest.Store              // AutoTest run records (P-E2)

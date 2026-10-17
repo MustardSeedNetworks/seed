@@ -10,7 +10,8 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/deviceconfig"
 )
 
-// DeviceConfigRepository owns device_config_targets and device_config_backups (P-D1).
+// DeviceConfigRepository owns device_config_targets, device_config_backups
+// (P-D1) and device_config_push_plans (P-D3).
 // Every query is scoped to the client, so another client's target or backup is
 // indistinguishable from one that does not exist.
 type DeviceConfigRepository struct {
@@ -22,22 +23,24 @@ type DeviceConfigRepository struct {
 var ErrDeviceConfigTargetConflict = errors.New("device_config_targets: a target already uses this host and port")
 
 const deviceConfigTargetColumns = `id, client_id, name, host, port, platform,
-	credentials_id, host_key_sha256, pending_host_key_sha256, created_at, updated_at`
+	credentials_id, host_key_sha256, pending_host_key_sha256, created_at, updated_at, push_credentials_id`
 
 func scanDeviceConfigTarget(row interface{ Scan(...any) error }) (deviceconfig.Target, error) {
 	var (
 		t                    deviceconfig.Target
 		platform             string
 		hostKey, pendingKey  sql.NullString
+		pushCredentials      sql.NullString
 		createdAt, updatedAt string
 	)
 	if err := row.Scan(&t.ID, &t.ClientID, &t.Name, &t.Host, &t.Port, &platform,
-		&t.CredentialsID, &hostKey, &pendingKey, &createdAt, &updatedAt); err != nil {
+		&t.CredentialsID, &hostKey, &pendingKey, &createdAt, &updatedAt, &pushCredentials); err != nil {
 		return deviceconfig.Target{}, err
 	}
 	t.Platform = deviceconfig.Platform(platform)
 	t.HostKeySHA256 = hostKey.String
 	t.PendingHostKeySHA256 = pendingKey.String
+	t.PushCredentialsID = pushCredentials.String
 	t.CreatedAt = parseCredentialTime(createdAt)
 	t.UpdatedAt = parseCredentialTime(updatedAt)
 	return t, nil
@@ -90,16 +93,18 @@ func (r *DeviceConfigRepository) SaveTarget(ctx context.Context, t *deviceconfig
 	if t.ID == "" {
 		t.ID = "dct-" + randomID()
 		res, err = r.db.Exec(ctx, `INSERT INTO device_config_targets (`+deviceConfigTargetColumns+`)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			t.ID, t.ClientID, t.Name, t.Host, t.Port, string(t.Platform),
-			t.CredentialsID, nullIfEmpty(t.HostKeySHA256), nullIfEmpty(t.PendingHostKeySHA256), now, now)
+			t.CredentialsID, nullIfEmpty(t.HostKeySHA256), nullIfEmpty(t.PendingHostKeySHA256), now, now,
+			nullIfEmpty(t.PushCredentialsID))
 	} else {
 		res, err = r.db.Exec(ctx, `UPDATE device_config_targets SET
 				name = ?, host = ?, port = ?, platform = ?, credentials_id = ?,
-				host_key_sha256 = ?, pending_host_key_sha256 = ?, updated_at = ?
+				host_key_sha256 = ?, pending_host_key_sha256 = ?, push_credentials_id = ?, updated_at = ?
 			WHERE id = ? AND client_id = ?`,
 			t.Name, t.Host, t.Port, string(t.Platform), t.CredentialsID,
-			nullIfEmpty(t.HostKeySHA256), nullIfEmpty(t.PendingHostKeySHA256), now, t.ID, t.ClientID)
+			nullIfEmpty(t.HostKeySHA256), nullIfEmpty(t.PendingHostKeySHA256), nullIfEmpty(t.PushCredentialsID),
+			now, t.ID, t.ClientID)
 	}
 	if err != nil {
 		if isUniqueConstraintError(err) {
@@ -151,6 +156,18 @@ func (r *DeviceConfigRepository) ClearHostKey(ctx context.Context, clientID, id 
 		WHERE id = ? AND client_id = ?`, time.Now().UTC().Format(time.RFC3339), id, clientID)
 	if err != nil {
 		return fmt.Errorf("clear device_config_targets host key: %w", err)
+	}
+	return requireOneRow(res)
+}
+
+// SetPushCredentials sets the credential a push logs in with; empty turns
+// pushing off.
+func (r *DeviceConfigRepository) SetPushCredentials(ctx context.Context, clientID, id, credentialsID string) error {
+	res, err := r.db.Exec(ctx, `UPDATE device_config_targets SET push_credentials_id = ?, updated_at = ?
+		WHERE id = ? AND client_id = ?`,
+		nullIfEmpty(credentialsID), time.Now().UTC().Format(time.RFC3339), id, clientID)
+	if err != nil {
+		return fmt.Errorf("set device_config_targets push credential: %w", err)
 	}
 	return requireOneRow(res)
 }
