@@ -508,10 +508,17 @@ jobs:
       # different: if it fails silently the Security tab keeps showing an older
       # scan, so the dashboard says "clean" because nothing new arrived rather
       # than because nothing was found. A stale security view is worse than an
-      # absent one, so this step fails loudly.
+      # absent one, so this step fails loudly on pull_request.
+      #
+      # Not on merge_group, and not on a gh-readonly-queue ref. GitHub
+      # deletes that ref before upload-sarif posts, and the code-scanning
+      # API then fails the step with "ref not found". That failed Security
+      # Scanning, CI Complete, and dropped the PR (#3568, #3573, #3590).
+      # The scan above still ran; skipping the upload does not weaken the
+      # gate. Same condition as the shared Semgrep upload (.github#174).
       - name: Upload gosec results
         uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
-        if: always() && hashFiles('gosec-results.sarif') != ''
+        if: always() && github.event_name != 'merge_group' && !startsWith(github.ref, 'refs/heads/gh-readonly-queue/') && hashFiles('gosec-results.sarif') != ''
         with:
           sarif_file: gosec-results.sarif
 
@@ -559,22 +566,21 @@ jobs:
           severity: "CRITICAL,HIGH"
           exit-code: "0"
 
-      # The SCAN above stays continue-on-error -- it is a visibility feed, not a
-      # second gate (gosec runs blocking inside golangci-lint). The UPLOAD is
-      # different: if it fails silently the Security tab keeps showing an older
-      # scan, so the dashboard says "clean" because nothing new arrived rather
-      # than because nothing was found. A stale security view is worse than an
-      # absent one, so this step fails loudly.
+      # Inline upload, same failure as gosec: the queue ref is gone by the
+      # time this runs, so the upload cannot succeed on merge_group or on
+      # refs/heads/gh-readonly-queue/..., and a failed upload fails this job
+      # and CI Complete. The CRITICAL/HIGH gate below still reads the local
+      # SARIF and still fails the job.
       - name: Upload Trivy results
         uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
-        if: always() && hashFiles('trivy-results.sarif') != ''
+        if: always() && github.event_name != 'merge_group' && !startsWith(github.ref, 'refs/heads/gh-readonly-queue/') && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: trivy-results.sarif
 
       - name: Fail on CRITICAL/HIGH findings
         # Reads the SARIF Trivy just produced and fails CI if any CRITICAL or
-        # HIGH-severity result is present. We do this in a separate step so
-        # the SARIF is always uploaded for security tab visibility.
+        # HIGH-severity result is present. Independent of the upload, so the
+        # gate still runs on merge_group where the upload is skipped.
         if: always() && hashFiles('trivy-results.sarif') != ''
         run: |
           if jq -e '.runs[].results[] | select(.level=="error" or .properties.security_severity == "high" or .properties.security_severity == "critical")' trivy-results.sarif >/dev/null; then
@@ -608,8 +614,12 @@ jobs:
   # isn't worth the added complexity.
   # Defined once in MustardSeedNetworks/.github (fleet-shared); ci-complete
   # still needs: [semgrep]. Edit the pinned version / config policy there.
+  #
+  # .github#174 skips the shared SARIF upload on merge_group and on
+  # gh-readonly-queue refs. The scan and the ERROR gate still run. A called
+  # workflow sees this caller's event name, so no new input is required.
   semgrep:
-    uses: MustardSeedNetworks/.github/.github/workflows/semgrep.yml@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+    uses: MustardSeedNetworks/.github/.github/workflows/semgrep.yml@8f012be52b47d0be45104b0ed8d3eb72f20840f5 # .github#174
     permissions:
       contents: read
       # v1.8.0 publishes the all-severity SARIF to code scanning. The
@@ -707,6 +717,13 @@ jobs:
 
       - name: Verify release workflow dispatch contract
         run: ./scripts/test-check-release-workflow-contract.sh
+
+      # The two guards below are not exercised by a pull_request run: the
+      # SARIF failure only happens after the merge queue deletes its ref,
+      # and the enqueue race only happens when CI Complete has not been
+      # created yet. The script is what fails if either regresses.
+      - name: Verify merge-queue CI reliability guards
+        run: ./scripts/test-ci-merge-queue-reliability.sh
 
       - name: Verify the deployment validator
         run: ./scripts/test-deploy-validate.sh

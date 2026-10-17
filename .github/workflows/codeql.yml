@@ -45,9 +45,11 @@ jobs:
         uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           category: "/language:${{ matrix.language }}"
-          # Keep the SARIF local. failure-only does not upload alerts;
-          # the next steps remove the one HIBP result and upload the rest.
-          upload: failure-only
+          # Keep the SARIF local. failure-only does not upload alerts on
+          # success; the next steps remove the one HIBP result and upload
+          # the rest. On merge_group the code-scanning API rejects the
+          # deleted queue ref, so a failure upload must not run either.
+          upload: ${{ github.event_name == 'merge_group' && 'never' || 'failure-only' }}
           output: ${{ runner.temp }}/codeql-sarif
 
       - name: Drop the HIBP weak-hash result
@@ -56,7 +58,12 @@ jobs:
           SARIF: ${{ runner.temp }}/codeql-sarif/go.sarif
         run: python3 scripts/codeql-drop-hibp-weak-hash.py "$SARIF"
 
+      # Skip on merge_group. This workflow is not triggered there today;
+      # the condition is so a later trigger cannot fail the job when the
+      # queue ref has already been deleted ("ref not found"). Analysis
+      # above still runs whenever the job does.
       - name: Upload CodeQL results
+        if: github.event_name != 'merge_group'
         uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           sarif_file: ${{ runner.temp }}/codeql-sarif
