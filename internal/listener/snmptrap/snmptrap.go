@@ -1,8 +1,8 @@
 // Package snmptrap is the passive SNMP trap receiver.
 //
 // It binds UDP/162 (the operator may remap it) and accepts SNMPv1 and SNMPv2c
-// traps and informs, and SNMPv3 traps authenticated by a user in the
-// credential vault. Each notification is normalized into a [Parsed] struct and
+// traps and informs, and SNMPv3 traps and informs authenticated by a user in
+// the credential vault. Each notification is normalized into a [Parsed] struct and
 // published as a [listener.Event] of kind [Name] through the configured
 // [listener.Sink].
 //
@@ -11,8 +11,9 @@
 // rest of RFC 3414 for a receiver, so this package owns the socket instead
 // (ADR-0022, amended for P-B4): a v3 trap is accepted only at the security
 // level its user is stored with, and only inside the sender's time window.
-// SNMPv3 informs need Seed to act as an authoritative engine and are dropped
-// until that lands (seed#1376).
+// For a v3 inform Seed is the authoritative engine: it answers discovery with
+// its persisted snmpEngineID, holds the sender to its own time window and
+// acknowledges under its own engine (engine.go).
 package snmptrap
 
 import (
@@ -53,7 +54,7 @@ const (
 var (
 	errSecurityLevel   = errors.New("security level differs from the stored credential")
 	errNotInTimeWindow = errors.New("outside the sender's time window (RFC 3414 3.2.7)")
-	errV3Inform        = errors.New("SNMPv3 informs are not accepted yet")
+	errNoEngine        = errors.New("SNMPv3 informs need Seed's engine, which has not booted")
 	errNotNotification = errors.New("not a trap or inform PDU")
 )
 
@@ -68,6 +69,7 @@ type Listener struct {
 	bindAddr    string
 	sink        listener.Sink
 	credentials CredentialSource
+	engineStore EngineStore
 	logger      *slog.Logger
 	now         func() time.Time
 
@@ -81,15 +83,29 @@ type Listener struct {
 	userLevels  map[string][]gosnmp.SnmpV3MsgFlags
 	refreshedAt time.Time
 	engines     engineClocks
+
+	// probe decodes the unauthenticated messages of users not in the vault,
+	// which is how a discovery probe arrives.
+	probe *gosnmp.GoSNMP
+
+	// Seed's own engine, set by Start. An empty engineID drops v3 informs.
+	engineID         string
+	engineBoots      uint32
+	bootedAt         time.Time
+	responders       map[responderKey]*gosnmp.UsmSecurityParameters
+	unknownEngineIDs uint32
+	notInTimeWindows uint32
 }
 
 // Config wires the listener. BindAddr defaults to ":162". Sink is required.
 // Credentials may be nil, in which case every SNMPv3 message is dropped.
+// Engine may be nil, in which case SNMPv3 informs are dropped.
 // Logger / Now default to [slog.Default] + [time.Now] UTC.
 type Config struct {
 	BindAddr    string
 	Sink        listener.Sink
 	Credentials CredentialSource
+	Engine      EngineStore
 	Logger      *slog.Logger
 	Now         func() time.Time
 }
@@ -112,9 +128,15 @@ func New(cfg Config) (*Listener, error) {
 		bindAddr:    cfg.BindAddr,
 		sink:        cfg.Sink,
 		credentials: cfg.Credentials,
+		engineStore: cfg.Engine,
 		logger:      cfg.Logger,
 		now:         cfg.Now,
 		engines:     engineClocks{},
+		probe: &gosnmp.GoSNMP{
+			Version:            gosnmp.Version3,
+			SecurityModel:      gosnmp.UserSecurityModel,
+			SecurityParameters: &gosnmp.UsmSecurityParameters{},
+		},
 	}
 	l.setUsers(nil)
 	return l, nil
@@ -124,8 +146,9 @@ func New(cfg Config) (*Listener, error) {
 // [engine.Engine].
 func (*Listener) Name() string { return Name }
 
-// Start binds the socket and spawns the receive goroutine. A bind failure is
-// returned synchronously. Idempotent.
+// Start binds the socket, boots Seed's SNMP engine and spawns the receive
+// goroutine. A bind failure is returned synchronously; an engine that cannot
+// boot only disables v3 informs. Idempotent.
 func (l *Listener) Start(ctx context.Context) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -139,6 +162,14 @@ func (l *Listener) Start(ctx context.Context) error {
 	conn, err := net.ListenUDP("udp", addr)
 	if err != nil {
 		return fmt.Errorf("snmptrap: bind %s: %w", l.bindAddr, err)
+	}
+	// Every start is a new boot, so the responders' salt counters may begin
+	// again (RFC 3826 3.1.2.1 needs them unique per key and boot).
+	l.responders = map[responderKey]*gosnmp.UsmSecurityParameters{}
+	if l.engineStore != nil {
+		if bootErr := l.bootEngine(ctx); bootErr != nil {
+			l.logger.WarnContext(ctx, "snmptrap: SNMPv3 informs disabled, engine did not boot", "error", bootErr)
+		}
 	}
 	l.conn = conn
 	l.started = true
@@ -198,15 +229,30 @@ func (l *Listener) serve(ctx context.Context, conn *net.UDPConn) {
 func (l *Listener) receive(ctx context.Context, conn *net.UDPConn, msg []byte, src *net.UDPAddr) {
 	l.refreshUsers(ctx)
 	pkt, err := l.decoder.UnmarshalTrap(msg, true)
-	if err == nil {
-		err = l.admit(pkt)
-	}
 	if err != nil {
+		// A discovery probe names no user, so only the probe decoder reads it.
+		if probe, probeErr := l.probe.UnmarshalTrap(msg, true); probeErr == nil && l.discovery(ctx, conn, probe, src) {
+			return
+		}
+		l.logger.DebugContext(ctx, "snmptrap: datagram dropped", "source", src.String(), "error", err)
+		return
+	}
+	if l.discovery(ctx, conn, pkt, src) {
+		return
+	}
+	if err = l.admit(pkt); err != nil {
+		if errors.Is(err, errNotInTimeWindow) && pkt.Version == gosnmp.Version3 && pkt.PDUType == gosnmp.InformRequest {
+			l.reportNotInTimeWindow(ctx, conn, pkt, src)
+		}
 		l.logger.DebugContext(ctx, "snmptrap: datagram dropped", "source", src.String(), "error", err)
 		return
 	}
 	l.publish(ctx, pkt, src)
-	if pkt.PDUType == gosnmp.InformRequest {
+	switch {
+	case pkt.PDUType != gosnmp.InformRequest:
+	case pkt.Version == gosnmp.Version3:
+		l.acknowledgeV3(ctx, conn, pkt, src)
+	default:
 		l.acknowledge(ctx, conn, pkt, src)
 	}
 }
@@ -220,8 +266,8 @@ func (l *Listener) admit(pkt *gosnmp.SnmpPacket) error {
 	if pkt.Version != gosnmp.Version3 {
 		return nil
 	}
-	if inform {
-		return errV3Inform
+	if inform && l.engineID == "" {
+		return errNoEngine
 	}
 
 	usm, ok := pkt.SecurityParameters.(*gosnmp.UsmSecurityParameters)
@@ -238,6 +284,10 @@ func (l *Listener) admit(pkt *gosnmp.SnmpPacket) error {
 	if level == gosnmp.NoAuthNoPriv {
 		// The time fields of an unauthenticated message prove nothing.
 		return nil
+	}
+	if inform {
+		// discovery has already sent away an inform for any other engine.
+		return l.inOwnWindow(usm.AuthoritativeEngineBoots, usm.AuthoritativeEngineTime)
 	}
 	return l.engines.admit(usm.AuthoritativeEngineID,
 		usm.AuthoritativeEngineBoots, usm.AuthoritativeEngineTime, l.now())
@@ -358,7 +408,9 @@ func (c engineClocks) admit(engineID string, boots, engineTime uint32, now time.
 
 // Parsed carries the structured fields the trap parser extracted.
 // Version is "v1", "v2c", or "v3"; Community is set for v1/v2c, User and the
-// hex EngineID of the sending engine for v3. Varbinds preserves the
+// hex EngineID of the sending engine for v3. A v3 trap's sender is its
+// authoritative engine; a v3 inform is authoritative at Seed, so its sender is
+// named by the contextEngineID (RFC 3413 3.3). Varbinds preserves the
 // original PDUs so downstream consumers can re-decode against
 // vendor-specific schemas without re-receiving the trap.
 type Parsed struct {
@@ -397,7 +449,11 @@ func Parse(pkt *gosnmp.SnmpPacket) Parsed {
 		out.Version = "v3"
 		if usm, ok := pkt.SecurityParameters.(*gosnmp.UsmSecurityParameters); ok {
 			out.User = usm.UserName
-			out.EngineID = hex.EncodeToString([]byte(usm.AuthoritativeEngineID))
+			sender := usm.AuthoritativeEngineID
+			if pkt.PDUType == gosnmp.InformRequest {
+				sender = pkt.ContextEngineID
+			}
+			out.EngineID = hex.EncodeToString([]byte(sender))
 		}
 	}
 

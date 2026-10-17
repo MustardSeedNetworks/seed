@@ -9,6 +9,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/listener/flow"
 	"github.com/MustardSeedNetworks/seed/internal/listener/microburst"
 	listenersink "github.com/MustardSeedNetworks/seed/internal/listener/sink"
+	"github.com/MustardSeedNetworks/seed/internal/listener/snmptrap"
 	"github.com/MustardSeedNetworks/seed/internal/listener/voip"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -22,6 +23,7 @@ type ListenerPersistence struct {
 	FlowIndicators flow.IndicatorSource
 	Microbursts    microburst.Store
 	VoIP           voip.Store
+	SNMPEngine     snmptrap.EngineStore
 }
 
 // NewListenerPersistence binds the listener ports to persist.
@@ -33,5 +35,6 @@ func NewListenerPersistence(persist *Persistence) ListenerPersistence {
 		FlowIndicators: db.FlowRecords(),
 		Microbursts:    db.Microbursts(),
 		VoIP:           db.VoIPStreams(),
+		SNMPEngine:     db.SNMPEngine(),
 	}
 }

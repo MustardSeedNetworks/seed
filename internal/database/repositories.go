@@ -235,6 +235,18 @@ func (db *DB) AutotestResults() *AutotestResultsRepository {
 	return db.autotestResults
 }
 
+// SNMPEngine returns the repository holding Seed's SNMP engine identity
+// (P-B4).
+func (db *DB) SNMPEngine() *SNMPEngineRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.snmpEngine == nil {
+		db.snmpEngine = &SNMPEngineRepository{db: db}
+	}
+	return db.snmpEngine
+}
+
 // VoIPStreams returns the repository the VoIP analyser writes into.
 func (db *DB) VoIPStreams() *VoIPStreamsRepository {
 	db.mu.Lock()

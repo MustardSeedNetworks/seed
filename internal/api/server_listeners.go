@@ -87,6 +87,7 @@ func (s *Server) initListeners(store app.ListenerPersistence) {
 			BindAddr:    addr,
 			Sink:        store.Events,
 			Credentials: s.snmpCreds,
+			Engine:      store.SNMPEngine,
 			Logger:      logger,
 		})
 		if err != nil {

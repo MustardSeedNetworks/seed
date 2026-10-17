@@ -1091,6 +1091,13 @@ CREATE TABLE settings (
 				updated_at TEXT NOT NULL
 			) STRICT;
 
+-- table: snmp_engine
+CREATE TABLE snmp_engine (
+				id        INTEGER NOT NULL PRIMARY KEY CHECK (id = 1),
+				engine_id BLOB    NOT NULL CHECK (length(engine_id) BETWEEN 5 AND 32),
+				boots     INTEGER NOT NULL CHECK (boots BETWEEN 1 AND 2147483647)
+			) STRICT;
+
 -- table: snmp_observations
 CREATE TABLE snmp_observations (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
