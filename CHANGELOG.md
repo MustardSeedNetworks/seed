@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.281.0](https://github.com/MustardSeedNetworks/seed/compare/v0.280.0...v0.281.0) (2026-10-17)
+
+
+### Features
+
+* **bluetooth:** scan Bluetooth LE devices on macOS through the helper (P-E3) ([#3601](https://github.com/MustardSeedNetworks/seed/issues/3601)) ([f9481db](https://github.com/MustardSeedNetworks/seed/commit/f9481db24782e3566e1bf672f59df4775fbf271d))
+* **ui:** show hardware end-of-life status on a lifecycle page ([#3600](https://github.com/MustardSeedNetworks/seed/issues/3600)) ([0c8aeda](https://github.com/MustardSeedNetworks/seed/commit/0c8aeda88ee3b1a2d7f650f9cd5183c71f14abb0)), closes [#3460](https://github.com/MustardSeedNetworks/seed/issues/3460)
+
+
+### Bug Fixes
+
+* **ci:** keep merge-queue runs green when SARIF upload and CI Complete race ([#3598](https://github.com/MustardSeedNetworks/seed/issues/3598)) ([d3280e0](https://github.com/MustardSeedNetworks/seed/commit/d3280e0603dd52faee5a97f8a3978ccd86d1168c))
+
 ## [0.280.0](https://github.com/MustardSeedNetworks/seed/compare/v0.279.0...v0.280.0) (2026-10-17)
 
 
