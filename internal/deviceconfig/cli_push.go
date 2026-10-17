@@ -1,11 +1,12 @@
 package deviceconfig
 
-// The Junos and EOS dry runs (ADR-0035) drive the device's own CLI in an
+// The Junos and EOS push dialogues (ADR-0035) drive the device's own CLI in an
 // interactive shell: the candidate is loaded into a private candidate (Junos)
-// or a configuration session (EOS), the device prints its own diff, and the
-// candidate is thrown away. Both are scoped to this login, so nothing another
-// user is editing is touched, and a Junos private candidate dies with the
-// session if the discard never arrives.
+// or a configuration session (EOS), where the device prints its own diff and
+// a dry run throws the candidate away. Both are scoped to this login, so
+// nothing another user is editing is touched, and a Junos private candidate
+// dies with the session if the discard never arrives. A Junos push commits
+// from the private candidate with a commit the device reverts by itself.
 
 import (
 	"crypto/rand"
@@ -210,52 +211,116 @@ func (s *cliShell) run(command string) (string, error) {
 	return all[i+len(command)+1:], nil
 }
 
-// junosDryRun loads candidate into a private candidate, has the device
-// compare it with the running configuration, and rolls it back. Replace is
-// Junos's "load override": the candidate becomes the whole configuration.
-func junosDryRun(session *ssh.Session, mode PushMode, candidate string) (DryRunResult, error) {
+// junosDryRun loads the candidate into a private candidate, has the device
+// compare it with the running configuration, and rolls it back.
+func junosDryRun(session *ssh.Session, req DeviceRequest) (DryRunResult, error) {
+	var res DryRunResult
+	err := junosPrivate(session, func(s *cliShell) error {
+		if err := s.junosLoad(req.Mode, req.Candidate); err != nil {
+			return err
+		}
+		diff, err := s.run("show | compare | no-more")
+		if err != nil {
+			return err
+		}
+		if msgs := junosErrors(diff); len(msgs) > 0 {
+			return fmt.Errorf("%w: show | compare%s", ErrCommand, joinMessages(msgs))
+		}
+		res = deviceDiff(trimEditBanner(diff))
+		return nil
+	})
+	return res, err
+}
+
+// junosCommit loads the candidate and commits it with "commit confirmed",
+// which Junos rolls back by itself unless a commit follows in time.
+func junosCommit(session *ssh.Session, req DeviceRequest) error {
+	return junosPrivate(session, func(s *cliShell) error {
+		if err := s.junosLoad(req.Mode, req.Candidate); err != nil {
+			return err
+		}
+		return s.junosCommitCommand("commit confirmed " + strconv.Itoa(int(ConfirmWindow.Minutes())))
+	})
+}
+
+// junosConfirm confirms a pending "commit confirmed": any commit does.
+func junosConfirm(session *ssh.Session, _ DeviceRequest) error {
+	return junosPrivate(session, func(s *cliShell) error { return s.junosCommitCommand("commit") })
+}
+
+// junosRollback commits rollback 1, the configuration before the pending
+// commit, which also ends its timer. That holds only while the pending commit
+// is the newest: a commit someone else made on the device since then would be
+// undone with it, so the commit history is checked first.
+func junosRollback(session *ssh.Session, _ DeviceRequest) error {
+	return junosPrivate(session, func(s *cliShell) error {
+		history, err := s.run("run show system commit | no-more")
+		if err != nil {
+			return err
+		}
+		if !junosNewestCommitPending(history) {
+			return fmt.Errorf("%w: the newest commit on the device is no longer the pending one", ErrCommand)
+		}
+		if err = s.junosCommand("rollback 1"); err != nil {
+			return err
+		}
+		return s.junosCommitCommand("commit")
+	})
+}
+
+// junosNewestCommitPending reports whether entry 0 of "show system commit" is
+// a confirmed commit still waiting: "0   2026-10-17 05:01:02 UTC by pusher
+// via cli commit confirmed, rollback in 5mins".
+func junosNewestCommitPending(history string) bool {
+	for line := range strings.SplitSeq(history, "\n") {
+		if fields := strings.Fields(line); len(fields) > 0 && fields[0] == "0" {
+			return strings.Contains(line, "commit confirmed, rollback in")
+		}
+	}
+	return false
+}
+
+// junosPrivate runs fn in a private candidate and leaves it empty. Leaving
+// with changes would stop at a yes/no question; a failed rollback leaves them
+// to be discarded with the session instead.
+func junosPrivate(session *ssh.Session, fn func(*cliShell) error) error {
 	s, err := openCLIShell(session)
 	if err != nil {
-		return DryRunResult{}, err
+		return err
 	}
 	out, err := s.run("configure private")
 	if err != nil {
-		return DryRunResult{}, err
+		return err
 	}
 	// Junos refuses a private candidate while the shared one has uncommitted
-	// changes, so this is also what keeps a plan off someone else's work.
+	// changes, so this is also what keeps a push off someone else's work.
 	if msgs := junosErrors(out); len(msgs) > 0 {
-		return DryRunResult{}, &PlanRefusedError{
-			Reason: "the device refused a private candidate: " + strings.Join(msgs, "; "),
-		}
+		return &PlanRefusedError{Reason: "the device refused a private candidate: " + strings.Join(msgs, "; ")}
 	}
-	res, err := junosPreview(s, mode, candidate)
-	// Leaving with changes would stop at a yes/no question; a failed rollback
-	// leaves them to be discarded with the session instead.
+	err = fn(s)
 	cleanupErr := s.junosCommand("rollback 0")
 	if cleanupErr == nil {
 		cleanupErr = s.junosCommand("exit configuration-mode")
 	}
 	_ = s.send("exit\n")
 	if err != nil {
-		return DryRunResult{}, err
+		return err
 	}
-	if cleanupErr != nil {
-		return DryRunResult{}, cleanupErr
-	}
-	return res, nil
+	return cleanupErr
 }
 
-func junosPreview(s *cliShell, mode PushMode, candidate string) (DryRunResult, error) {
+// junosLoad loads the candidate. Replace is Junos's "load override": the
+// candidate becomes the whole configuration.
+func (s *cliShell) junosLoad(mode PushMode, candidate string) error {
 	verb := "merge"
 	if mode == PushReplace {
 		verb = "override"
 	}
 	if err := s.send("load " + verb + " terminal\n"); err != nil {
-		return DryRunResult{}, err
+		return err
 	}
 	if _, err := s.expect(junosLoadReady); err != nil {
-		return DryRunResult{}, err
+		return err
 	}
 	text := strings.ReplaceAll(candidate, "\r\n", "\n")
 	if !strings.HasSuffix(text, "\n") {
@@ -265,21 +330,27 @@ func junosPreview(s *cliShell, mode PushMode, candidate string) (DryRunResult, e
 	const done = "load complete"
 	all, i, err := s.sendThrough(text+"\x04", done)
 	if err != nil {
-		return DryRunResult{}, err
+		return err
 	}
 	// "load complete (2 errors)": the rejected lines were reported above it.
 	if summary, _, _ := strings.Cut(all[i+len(done):], "\n"); strings.TrimSpace(summary) != "" {
-		return DryRunResult{}, fmt.Errorf("%w: the device rejected the candidate (%s%s)%s",
+		return fmt.Errorf("%w: the device rejected the candidate (%s%s)%s",
 			ErrCommand, done, summary, joinMessages(junosLoadErrors(all[:i])))
 	}
-	diff, err := s.run("show | compare | no-more")
+	return nil
+}
+
+// junosCommitCommand runs a commit and requires Junos to report it complete:
+// a commit check failure prints its errors and no "commit complete".
+func (s *cliShell) junosCommitCommand(command string) error {
+	out, err := s.run(command)
 	if err != nil {
-		return DryRunResult{}, err
+		return err
 	}
-	if msgs := junosErrors(diff); len(msgs) > 0 {
-		return DryRunResult{}, fmt.Errorf("%w: show | compare%s", ErrCommand, joinMessages(msgs))
+	if msgs := junosErrors(out); len(msgs) > 0 || !strings.Contains(out, "commit complete") {
+		return fmt.Errorf("%w: %s did not complete%s", ErrCommand, command, joinMessages(msgs))
 	}
-	return deviceDiff(trimEditBanner(diff)), nil
+	return nil
 }
 
 // junosCommand runs a configuration-mode command that prints nothing useful
@@ -337,7 +408,7 @@ func trimEditBanner(out string) string {
 // diff the session against the running configuration, and aborts the session.
 // Replace starts the session from a clean configuration, so the candidate
 // becomes the whole configuration.
-func eosDryRun(session *ssh.Session, mode PushMode, candidate string) (DryRunResult, error) {
+func eosDryRun(session *ssh.Session, req DeviceRequest) (DryRunResult, error) {
 	s, err := openCLIShell(session)
 	if err != nil {
 		return DryRunResult{}, err
@@ -354,7 +425,7 @@ func eosDryRun(session *ssh.Session, mode PushMode, candidate string) (DryRunRes
 	if err = s.eosCommand("configure session " + name); err != nil {
 		return DryRunResult{}, err
 	}
-	res, err := eosPreview(s, mode, candidate)
+	res, err := eosPreview(s, req.Mode, req.Candidate)
 	// A configuration session outlives the login on EOS, so it is aborted
 	// explicitly even after a failure.
 	abortErr := s.eosCommand("abort")

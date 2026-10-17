@@ -27,73 +27,132 @@ const (
 	netconfCapValidate11      = "urn:ietf:params:netconf:capability:validate:1.1"
 )
 
-// netconfDryRun previews candidate on the session's netconf subsystem.
-func netconfDryRun(session *ssh.Session, mode PushMode, candidate string) (DryRunResult, error) {
+// openNETCONFPush starts the netconf subsystem and refuses a server that
+// cannot revert a commit by itself.
+func openNETCONFPush(session *ssh.Session) (*netconfRPC, error) {
 	stdin, err := session.StdinPipe()
 	if err != nil {
-		return DryRunResult{}, fmt.Errorf("%w: %w", ErrCommand, err)
+		return nil, fmt.Errorf("%w: %w", ErrCommand, err)
 	}
 	stdout, err := session.StdoutPipe()
 	if err != nil {
-		return DryRunResult{}, fmt.Errorf("%w: %w", ErrCommand, err)
+		return nil, fmt.Errorf("%w: %w", ErrCommand, err)
 	}
 	if err = session.RequestSubsystem("netconf"); err != nil {
-		return DryRunResult{}, fmt.Errorf("%w: the device refused the netconf subsystem (is NETCONF enabled?): %w",
+		return nil, fmt.Errorf("%w: the device refused the netconf subsystem (is NETCONF enabled?): %w",
 			ErrCommand, err)
 	}
 
 	nc := &netconfSession{r: bufio.NewReader(stdout), w: stdin}
 	if err = nc.hello(); err != nil {
-		return DryRunResult{}, err
+		return nil, err
 	}
 	for _, c := range []string{netconfCapCandidate, netconfCapConfirmedCommit} {
 		if !nc.capabilities[c] {
-			return DryRunResult{}, &PlanRefusedError{
+			return nil, &PlanRefusedError{
 				Reason: "the NETCONF server does not advertise " + c + ", which a push with automatic revert needs",
 			}
 		}
 	}
-	rpc := &netconfRPC{nc: nc}
-	// A device does not grant the candidate lock while another session has
-	// uncommitted changes in it, so the lock is also what keeps a plan from
-	// discarding someone else's work.
-	if _, err = rpc.call("lock", `<lock><target><candidate/></target></lock>`); err != nil {
-		return DryRunResult{}, err
-	}
-	res, err := previewCandidate(rpc, mode, candidate)
-	_, discardErr := rpc.call("discard-changes", `<discard-changes/>`)
-	_, unlockErr := rpc.call("unlock", `<unlock><target><candidate/></target></unlock>`)
-	// The reply is not awaited, as in a backup.
-	_ = rpc.send("close-session", `<close-session/>`)
-	if err != nil {
-		return DryRunResult{}, err
-	}
-	if err = errors.Join(discardErr, unlockErr); err != nil {
-		return DryRunResult{}, err
-	}
-	return res, nil
+	return &netconfRPC{nc: nc}, nil
 }
 
-func previewCandidate(rpc *netconfRPC, mode PushMode, candidate string) (DryRunResult, error) {
-	running, err := rpc.getConfig("running")
+// netconfDryRun previews the candidate on the session's netconf subsystem.
+func netconfDryRun(session *ssh.Session, req DeviceRequest) (DryRunResult, error) {
+	var res DryRunResult
+	err := withCandidateLock(session, func(rpc *netconfRPC) error {
+		running, err := rpc.getConfig("running")
+		if err != nil {
+			return err
+		}
+		if err = loadCandidate(rpc, req); err != nil {
+			return err
+		}
+		after, err := rpc.getConfig("candidate")
+		if err != nil {
+			return err
+		}
+		res, err = lineDiff("running", indentXML(running), "candidate", indentXML(after))
+		return err
+	})
+	return res, err
+}
+
+// netconfCommit loads the candidate and commits it under a confirmed commit
+// the device reverts after ConfirmWindow. The persist token lets a later
+// session confirm or cancel it.
+func netconfCommit(session *ssh.Session, req DeviceRequest) error {
+	return withCandidateLock(session, func(rpc *netconfRPC) error {
+		if err := loadCandidate(rpc, req); err != nil {
+			return err
+		}
+		_, err := rpc.call("commit", `<commit><confirmed/><confirm-timeout>`+
+			strconv.Itoa(int(ConfirmWindow.Seconds()))+`</confirm-timeout><persist>`+
+			escapeXML(req.CommitID)+`</persist></commit>`)
+		return err
+	})
+}
+
+// netconfConfirm confirms the persisted commit from this session.
+func netconfConfirm(session *ssh.Session, req DeviceRequest) error {
+	return netconfPersisted(session, "commit", `<commit><persist-id>`+escapeXML(req.CommitID)+`</persist-id></commit>`)
+}
+
+// netconfRollback cancels the persisted commit, which restores the running
+// configuration from before it (RFC 6241 §8.4.4.1).
+func netconfRollback(session *ssh.Session, req DeviceRequest) error {
+	return netconfPersisted(session, "cancel-commit",
+		`<cancel-commit><persist-id>`+escapeXML(req.CommitID)+`</persist-id></cancel-commit>`)
+}
+
+func netconfPersisted(session *ssh.Session, op, body string) error {
+	rpc, err := openNETCONFPush(session)
 	if err != nil {
-		return DryRunResult{}, err
+		return err
 	}
-	if _, err = rpc.call("edit-config", `<edit-config><target><candidate/></target>`+
-		`<default-operation>`+string(mode)+`</default-operation>`+
-		`<config>`+candidate+`</config></edit-config>`); err != nil {
-		return DryRunResult{}, err
+	_, err = rpc.call(op, body)
+	// The reply is not awaited, as in a backup.
+	_ = rpc.send("close-session", `<close-session/>`)
+	return err
+}
+
+// withCandidateLock runs fn with the candidate datastore locked, and leaves
+// the candidate as running was: whatever fn loaded and did not commit is
+// discarded. A device does not grant the lock while another session has
+// uncommitted changes in the candidate, so the lock is also what keeps a push
+// from discarding someone else's work.
+func withCandidateLock(session *ssh.Session, fn func(*netconfRPC) error) error {
+	rpc, err := openNETCONFPush(session)
+	if err != nil {
+		return err
+	}
+	if _, err = rpc.call("lock", `<lock><target><candidate/></target></lock>`); err != nil {
+		return err
+	}
+	err = fn(rpc)
+	_, discardErr := rpc.call("discard-changes", `<discard-changes/>`)
+	_, unlockErr := rpc.call("unlock", `<unlock><target><candidate/></target></unlock>`)
+	_ = rpc.send("close-session", `<close-session/>`)
+	if err != nil {
+		return err
+	}
+	return errors.Join(discardErr, unlockErr)
+}
+
+// loadCandidate edits the candidate datastore and validates it where the
+// server can.
+func loadCandidate(rpc *netconfRPC, req DeviceRequest) error {
+	if _, err := rpc.call("edit-config", `<edit-config><target><candidate/></target>`+
+		`<default-operation>`+string(req.Mode)+`</default-operation>`+
+		`<config>`+req.Candidate+`</config></edit-config>`); err != nil {
+		return err
 	}
 	if rpc.nc.capabilities[netconfCapValidate10] || rpc.nc.capabilities[netconfCapValidate11] {
-		if _, err = rpc.call("validate", `<validate><source><candidate/></source></validate>`); err != nil {
-			return DryRunResult{}, err
+		if _, err := rpc.call("validate", `<validate><source><candidate/></source></validate>`); err != nil {
+			return err
 		}
 	}
-	after, err := rpc.getConfig("candidate")
-	if err != nil {
-		return DryRunResult{}, err
-	}
-	return lineDiff("running", indentXML(running), "candidate", indentXML(after))
+	return nil
 }
 
 // netconfRPC numbers the operations of one session.

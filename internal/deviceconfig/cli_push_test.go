@@ -2,6 +2,7 @@ package deviceconfig_test
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -67,6 +68,14 @@ type fakeJunos struct {
 	sharedModified bool
 
 	loaded string
+	// commitFails makes every commit fail its check. committed is every
+	// commit made, newest last; pending is a commit confirmed not yet
+	// confirmed.
+	commitFails bool
+	committed   []string
+	pending     bool
+	// history is "show system commit" entry 0.
+	history string
 }
 
 func (j *fakeJunos) serve(ch ssh.Channel) {
@@ -119,6 +128,16 @@ func (j *fakeJunos) serve(ch ssh.Channel) {
 			j.loaded = ""
 			j.mu.Unlock()
 			out = "load complete\r\n"
+		case "rollback 1":
+			j.mu.Lock()
+			j.loaded = "rollback 1"
+			j.mu.Unlock()
+			out = "load complete\r\n"
+		case "commit confirmed 5", "commit":
+			out = j.commit(line)
+		case "run show system commit | no-more":
+			out = "0   2026-10-17 05:01:02 UTC by pusher via cli " + j.history + "\r\n" +
+				"1   2026-10-16 09:00:00 UTC by admin via cli\r\n"
 		case "exit configuration-mode":
 			out, config = "Exiting configuration mode\r\n", false
 		case "exit":
@@ -128,6 +147,28 @@ func (j *fakeJunos) serve(ch ssh.Channel) {
 		}
 		_, _ = io.WriteString(ch, out+prompt())
 	}
+}
+
+func (j *fakeJunos) commit(command string) string {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	if j.commitFails {
+		return "error: configuration check-out failed\r\nerror: commit failed: (statements constraint check failed)\r\n"
+	}
+	j.committed = append(j.committed, j.loaded)
+	j.loaded = ""
+	j.pending = command != "commit"
+	if j.pending {
+		return "commit confirmed will be automatically rolled back in 5 minutes unless confirmed\r\n" +
+			"commit complete\r\n\r\n# commit confirmed will be rolled back in 5 minutes"
+	}
+	return "commit complete"
+}
+
+func (j *fakeJunos) state() ([]string, bool) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return append([]string(nil), j.committed...), j.pending
 }
 
 func (j *fakeJunos) candidate() string {
@@ -237,11 +278,11 @@ func (e *fakeEOS) held() []string {
 	return append([]string(nil), e.lines...)
 }
 
-func startShell(t *testing.T, serve func(ssh.Channel), platform deviceconfig.Platform) deviceconfig.DryRunRequest {
+func startShell(t *testing.T, serve func(ssh.Channel), platform deviceconfig.Platform) deviceconfig.DeviceRequest {
 	t.Helper()
 	dev := startSSHDevice(t, deviceOpts{password: "wr1te", shell: serve})
 	fr := dev.request(t, "wr1te", "", dev.fingerprint)
-	return deviceconfig.DryRunRequest{
+	return deviceconfig.DeviceRequest{
 		Host: fr.Host, Port: fr.Port, User: "pusher", Password: "wr1te", PinnedHostKey: dev.fingerprint,
 		Platform: platform, Mode: deviceconfig.PushMerge,
 	}
@@ -331,6 +372,97 @@ func TestJunosDryRunFailures(t *testing.T) {
 		}, j.recorded())
 		require.Empty(t, j.candidate())
 	})
+}
+
+// TestJunosCommitConfirmAndRollback: a commit is a commit confirmed with the
+// device's own revert, from a private candidate; confirming and rolling back
+// are commits from new logins, and a rollback first checks the pending commit
+// is still the newest.
+func TestJunosCommitConfirmAndRollback(t *testing.T) {
+	t.Parallel()
+	const candidate = "system {\n    host-name core;\n}"
+	pending := "commit confirmed, rollback in 5mins"
+	tests := []struct {
+		name      string
+		step      func(deviceconfig.SSHFetcher, context.Context, deviceconfig.DeviceRequest) error
+		history   string
+		commands  []string
+		committed []string
+		pending   bool
+		err       string
+	}{
+		{
+			name:      "commit",
+			step:      deviceconfig.SSHFetcher.Commit,
+			commands:  []string{"configure private", "load merge terminal", "commit confirmed 5"},
+			committed: []string{candidate + "\n"},
+			pending:   true,
+		},
+		{
+			name:      "confirm",
+			step:      deviceconfig.SSHFetcher.Confirm,
+			commands:  []string{"configure private", "commit"},
+			committed: []string{""},
+		},
+		{
+			name:      "rollback",
+			step:      deviceconfig.SSHFetcher.Rollback,
+			history:   pending,
+			commands:  []string{"configure private", "run show system commit | no-more", "rollback 1", "commit"},
+			committed: []string{"rollback 1"},
+		},
+		{
+			name:     "rollback after someone else committed",
+			step:     deviceconfig.SSHFetcher.Rollback,
+			history:  "commit",
+			commands: []string{"configure private", "run show system commit | no-more"},
+			err:      "no longer the pending one",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			j := &fakeJunos{done: make(chan struct{}), history: tc.history}
+			req := startShell(t, j.serve, deviceconfig.PlatformJuniperJunos)
+			req.Candidate = candidate
+
+			err := tc.step(deviceconfig.SSHFetcher{}, fetchCtx(t), req)
+			if tc.err != "" {
+				require.ErrorIs(t, err, deviceconfig.ErrCommand)
+				require.ErrorContains(t, err, tc.err)
+			} else {
+				require.NoError(t, err)
+			}
+			<-j.done
+			require.Equal(t, append(tc.commands, "rollback 0", "exit configuration-mode", "exit"), j.recorded())
+			committed, isPending := j.state()
+			require.Equal(t, tc.committed, committed)
+			require.Equal(t, tc.pending, isPending)
+		})
+	}
+}
+
+func TestJunosCommitThatFailsItsCheck(t *testing.T) {
+	t.Parallel()
+	j := &fakeJunos{done: make(chan struct{}), commitFails: true}
+	req := startShell(t, j.serve, deviceconfig.PlatformJuniperJunos)
+	req.Candidate = "system {\n    host-name core;\n}"
+
+	err := deviceconfig.SSHFetcher{}.Commit(fetchCtx(t), req)
+	require.ErrorIs(t, err, deviceconfig.ErrCommand)
+	require.ErrorContains(t, err, "commit confirmed 5 did not complete: error: configuration check-out failed")
+	<-j.done
+	require.Empty(t, j.candidate(), "the private candidate is rolled back")
+	committed, _ := j.state()
+	require.Empty(t, committed)
+}
+
+func TestEOSApplyIsNotBuiltYet(t *testing.T) {
+	t.Parallel()
+	err := deviceconfig.SSHFetcher{}.Commit(fetchCtx(t),
+		deviceconfig.DeviceRequest{Platform: deviceconfig.PlatformAristaEOS})
+	require.ErrorIs(t, err, deviceconfig.ErrCommand)
+	require.ErrorContains(t, err, "cannot commit a push on arista-eos")
 }
 
 const eosDiff = "--- system:/running-config\r\n+++ session:/seed-plan-session-config\r\n" +

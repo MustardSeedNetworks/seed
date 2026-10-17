@@ -91,3 +91,43 @@ func TestDeviceConfigPushPlans(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, list, "plans go with their target")
 }
+
+func TestDeviceConfigPushApplyIsClaimedOnce(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+	ctx := context.Background()
+	repo := db.DeviceConfigs()
+
+	tgt := newDeviceConfigTarget(saveSSHCredential(t, db, database.DefaultClientID), "10.0.0.1")
+	require.NoError(t, repo.SaveTarget(ctx, tgt))
+	created := time.Date(2026, 10, 17, 3, 0, 0, 0, time.UTC)
+	p := &deviceconfig.Plan{
+		ClientID: database.DefaultClientID, TargetID: tgt.ID, CreatedBy: "admin",
+		CreatedAt: created, ExpiresAt: created.Add(deviceconfig.PlanLifetime), Mode: deviceconfig.PushMerge,
+		DiffSource: deviceconfig.DiffFromDevice, BackupID: "dcb-000000000001", RunningSHA256: "aa",
+		DiffSHA256: "bb", Added: 1, Removed: 1, CandidateCT: "enc:v1:cand", DiffCT: "enc:v1:diff",
+	}
+	require.NoError(t, repo.InsertPlan(ctx, p))
+
+	expired := created.Add(deviceconfig.PlanLifetime)
+	require.ErrorIs(t, repo.ClaimApply(ctx, database.DefaultClientID, p.ID, "admin", expired),
+		deviceconfig.ErrPlanSpent, "a plan is not applied at its expiry")
+	require.ErrorIs(t, repo.ClaimApply(ctx, "tenant-x", p.ID, "admin", created), deviceconfig.ErrPlanSpent)
+
+	at := created.Add(time.Minute)
+	require.NoError(t, repo.ClaimApply(ctx, database.DefaultClientID, p.ID, "admin", at))
+	require.ErrorIs(t, repo.ClaimApply(ctx, database.DefaultClientID, p.ID, "admin", at),
+		deviceconfig.ErrPlanSpent, "a plan is applied at most once")
+	got, err := repo.GetPlan(ctx, database.DefaultClientID, p.ID)
+	require.NoError(t, err)
+	require.Equal(t, at, *got.AppliedAt)
+	require.Equal(t, "admin", got.AppliedBy)
+	require.Empty(t, got.ApplyOutcome, "no outcome while the apply runs")
+
+	require.NoError(t, repo.FinishApply(ctx, database.DefaultClientID, p.ID, deviceconfig.ApplyRolledBack))
+	list, err := repo.ListPlans(ctx, database.DefaultClientID, tgt.ID, 10)
+	require.NoError(t, err)
+	require.Equal(t, deviceconfig.ApplyRolledBack, list[0].ApplyOutcome)
+	require.ErrorContains(t, repo.FinishApply(ctx, database.DefaultClientID, p.ID, "maybe"),
+		"CHECK constraint failed")
+}

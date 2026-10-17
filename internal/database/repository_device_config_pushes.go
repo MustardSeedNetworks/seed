@@ -11,17 +11,19 @@ import (
 )
 
 const deviceConfigPlanColumns = `id, client_id, target_id, created_by, created_at, expires_at, mode,
-	diff_source, backup_id, running_sha256, diff_sha256, added, removed`
+	diff_source, backup_id, running_sha256, diff_sha256, added, removed, applied_at, applied_by, apply_outcome`
 
 func scanDeviceConfigPlan(row interface{ Scan(...any) error }, extra ...any) (deviceconfig.Plan, error) {
 	var (
-		p                    deviceconfig.Plan
-		createdAt, expiresAt string
-		mode, source         string
+		p                                deviceconfig.Plan
+		createdAt, expiresAt             string
+		mode, source                     string
+		appliedAt, appliedBy, applyState sql.NullString
 	)
 	dest := append([]any{
 		&p.ID, &p.ClientID, &p.TargetID, &p.CreatedBy, &createdAt, &expiresAt, &mode,
 		&source, &p.BackupID, &p.RunningSHA256, &p.DiffSHA256, &p.Added, &p.Removed,
+		&appliedAt, &appliedBy, &applyState,
 	}, extra...)
 	if err := row.Scan(dest...); err != nil {
 		return deviceconfig.Plan{}, err
@@ -30,6 +32,12 @@ func scanDeviceConfigPlan(row interface{ Scan(...any) error }, extra ...any) (de
 	p.ExpiresAt = parseBackupTime(expiresAt)
 	p.Mode = deviceconfig.PushMode(mode)
 	p.DiffSource = deviceconfig.DiffSource(source)
+	if appliedAt.Valid {
+		at := parseBackupTime(appliedAt.String)
+		p.AppliedAt = &at
+	}
+	p.AppliedBy = appliedBy.String
+	p.ApplyOutcome = deviceconfig.ApplyOutcome(applyState.String)
 	return p, nil
 }
 
@@ -37,7 +45,8 @@ func scanDeviceConfigPlan(row interface{ Scan(...any) error }, extra ...any) (de
 // diff are stored as their ciphertext.
 func (r *DeviceConfigRepository) InsertPlan(ctx context.Context, p *deviceconfig.Plan) error {
 	p.ID = "dcp-" + randomID()
-	_, err := r.db.Exec(ctx, `INSERT INTO device_config_push_plans (`+deviceConfigPlanColumns+`,
+	_, err := r.db.Exec(ctx, `INSERT INTO device_config_push_plans (id, client_id, target_id, created_by,
+			created_at, expires_at, mode, diff_source, backup_id, running_sha256, diff_sha256, added, removed,
 			candidate_enc, diff_enc)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		p.ID, p.ClientID, p.TargetID, p.CreatedBy, p.CreatedAt.UTC().Format(time.RFC3339),
@@ -99,6 +108,37 @@ func (r *DeviceConfigRepository) PrunePlans(ctx context.Context, clientID, targe
 		clientID, targetID, clientID, targetID, keep)
 	if err != nil {
 		return fmt.Errorf("prune device_config_push_plans: %w", err)
+	}
+	return nil
+}
+
+// ClaimApply marks a plan applied, only if it is unapplied and unexpired at
+// now. Timestamps are RFC 3339 UTC, so they compare as text.
+func (r *DeviceConfigRepository) ClaimApply(ctx context.Context, clientID, id, user string, now time.Time) error {
+	at := now.UTC().Format(time.RFC3339)
+	res, err := r.db.Exec(ctx, `UPDATE device_config_push_plans SET applied_at = ?, applied_by = ?
+		WHERE id = ? AND client_id = ? AND applied_at IS NULL AND expires_at > ?`, at, user, id, clientID, at)
+	if err != nil {
+		return fmt.Errorf("claim device_config_push_plans apply: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("claim device_config_push_plans apply: %w", err)
+	}
+	if n == 0 {
+		return deviceconfig.ErrPlanSpent
+	}
+	return nil
+}
+
+// FinishApply records the outcome of a claimed plan's apply.
+func (r *DeviceConfigRepository) FinishApply(
+	ctx context.Context, clientID, id string, outcome deviceconfig.ApplyOutcome,
+) error {
+	_, err := r.db.Exec(ctx, `UPDATE device_config_push_plans SET apply_outcome = ?
+		WHERE id = ? AND client_id = ? AND applied_at IS NOT NULL`, string(outcome), id, clientID)
+	if err != nil {
+		return fmt.Errorf("finish device_config_push_plans apply: %w", err)
 	}
 	return nil
 }

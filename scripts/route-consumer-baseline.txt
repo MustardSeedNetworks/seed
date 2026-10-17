@@ -17,6 +17,7 @@
 /api/v1/device-credentials/{credentialId} # PAT-only allow-list (owner 2026-09-04) until the SE-2 credential picker
 /api/v1/device-config-pushes              # scheduled: UI #3570; P-D3 plan backend (#3499) landed first, API-driven until then
 /api/v1/device-config-pushes/{planId}     # scheduled: UI #3570; P-D3 plan backend (#3499) landed first, API-driven until then
+/api/v1/device-config-pushes/{planId}/apply # scheduled: UI #3570; P-D3 apply backend (#3499) landed first, API-driven until then
 /api/v1/device-config-targets/{targetId}/push # scheduled: UI #3570; P-D3 plan backend (#3499) landed first, API-driven until then
 /api/v1/device-configs/run                # scheduled: UI #3121; P-D1 backend (#348) landed first, API-driven until then
 /api/v1/discovery/engine                  # PAT-only allow-list (owner 2026-09-04)

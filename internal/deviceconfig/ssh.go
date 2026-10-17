@@ -47,30 +47,68 @@ func (SSHFetcher) Fetch(ctx context.Context, req FetchRequest) (FetchResult, err
 	return FetchResult{Output: output}, nil
 }
 
-// DryRun previews a candidate on the device and changes nothing. IOS has no
-// device dialogue (Pushes predicts its diff) and NX-OS is read-only.
-func (SSHFetcher) DryRun(ctx context.Context, req DryRunRequest) (DryRunResult, error) {
-	var dryRun func(*ssh.Session, PushMode, string) (DryRunResult, error)
-	switch req.Platform {
+// pushDialogue is how one platform takes each step of a push, on a session
+// the caller has logged in. A step it lacks is nil.
+type pushDialogue struct {
+	dryRun                    func(*ssh.Session, DeviceRequest) (DryRunResult, error)
+	commit, confirm, rollback func(*ssh.Session, DeviceRequest) error
+}
+
+// dialogueFor returns a platform's dialogue. IOS has none yet (Pushes
+// predicts its diff; it applies in a later slice of ADR-0035, as EOS does),
+// and NX-OS is read-only.
+func dialogueFor(p Platform) pushDialogue {
+	switch p {
 	case PlatformNETCONF:
-		dryRun = netconfDryRun
+		return pushDialogue{
+			dryRun: netconfDryRun, commit: netconfCommit, confirm: netconfConfirm, rollback: netconfRollback,
+		}
 	case PlatformJuniperJunos:
-		dryRun = junosDryRun
+		return pushDialogue{dryRun: junosDryRun, commit: junosCommit, confirm: junosConfirm, rollback: junosRollback}
 	case PlatformAristaEOS:
-		dryRun = eosDryRun
+		return pushDialogue{dryRun: eosDryRun}
 	case PlatformCiscoIOS, PlatformCiscoNXOS:
+	}
+	return pushDialogue{}
+}
+
+// DryRun previews a candidate on the device and changes nothing.
+func (SSHFetcher) DryRun(ctx context.Context, req DeviceRequest) (DryRunResult, error) {
+	dryRun := dialogueFor(req.Platform).dryRun
+	if dryRun == nil {
 		return DryRunResult{}, &PlanRefusedError{Reason: string(req.Platform) + " has no device dry run"}
-	default:
-		return DryRunResult{}, &PlanRefusedError{Reason: string(req.Platform) + " is not a supported platform"}
 	}
 	var res DryRunResult
 	err := withSession(ctx, req.Host, req.Port, req.User, req.Password, req.PinnedHostKey,
 		func(session *ssh.Session) error {
 			var runErr error
-			res, runErr = dryRun(session, req.Mode, req.Candidate)
+			res, runErr = dryRun(session, req)
 			return runErr
 		})
 	return res, err
+}
+
+// Commit applies the candidate under a confirmed commit.
+func (SSHFetcher) Commit(ctx context.Context, req DeviceRequest) error {
+	return pushStep(ctx, req, "commit", dialogueFor(req.Platform).commit)
+}
+
+// Confirm makes the pending commit permanent.
+func (SSHFetcher) Confirm(ctx context.Context, req DeviceRequest) error {
+	return pushStep(ctx, req, "confirm", dialogueFor(req.Platform).confirm)
+}
+
+// Rollback undoes the pending commit.
+func (SSHFetcher) Rollback(ctx context.Context, req DeviceRequest) error {
+	return pushStep(ctx, req, "roll back", dialogueFor(req.Platform).rollback)
+}
+
+func pushStep(ctx context.Context, req DeviceRequest, step string, fn func(*ssh.Session, DeviceRequest) error) error {
+	if fn == nil {
+		return fmt.Errorf("%w: cannot %s a push on %s", ErrCommand, step, req.Platform)
+	}
+	return withSession(ctx, req.Host, req.Port, req.User, req.Password, req.PinnedHostKey,
+		func(session *ssh.Session) error { return fn(session, req) })
 }
 
 // withSession checks the host key against the pin, logs in with password or

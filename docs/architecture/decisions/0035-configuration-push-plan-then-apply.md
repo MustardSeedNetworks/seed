@@ -57,10 +57,15 @@ credential keyring because both can carry secrets. A plan expires after 15
 minutes. An empty diff ends the plan with nothing to apply.
 
 **Apply** — `POST /api/v1/device-config-pushes/{id}/apply` `{planSha256}`,
-where `planSha256` is the hash of the diff the admin was shown. Seed re-reads
-the running configuration first; if its SHA-256 differs from the plan's, apply
-answers `409 config_drifted` and the admin plans again. A plan is applied at
-most once.
+where `planSha256` is the hash of the diff the admin was shown; another hash
+is a 400. A plan is applied at most once: the request claims it, and an
+applied or expired plan answers 409. Apply is a job, like plan, because it
+takes several logins. The job re-reads the running configuration first
+through the backup path; if its SHA-256 differs from the plan's, the job ends
+`config_drifted` without touching the device and the admin plans again. Every
+claimed apply ends in one recorded outcome: `confirmed`, `rolled_back`,
+`reverting` (Seed could neither confirm nor roll back, so the device's timer
+reverts), `config_drifted` or `failed`.
 
 ### 2. Rollback is the device's job, not Seed's
 
@@ -75,12 +80,20 @@ Seed confirms, so a push that cuts Seed off undoes itself:
 | IOS / IOS-XE | `configure terminal revert timer 5` (needs `archive`) | reverts unless `configure confirm` |
 
 After apply, Seed opens a **new** session, which proves management access
-survived, re-reads the running configuration and checks that the planned
-change is present. Only then does it confirm, and on the CLI platforms save
-the startup configuration. The NETCONF commit carries a `<persist>` token so
+survived, and dry-runs the same candidate again: a device that holds the
+planned change has nothing left to change, so an empty diff is the check.
+Only then does it confirm, and on the CLI platforms that keep one, save the
+startup configuration. The NETCONF commit carries a `<persist>` token so
 the confirming commit can come from that new session (RFC 6241 §8.4). If the
 post-check fails, Seed rolls back explicitly while it can still reach the
-device, and otherwise lets the timer expire.
+device, and otherwise lets the timer expire. NETCONF rolls back with
+`<cancel-commit>` naming the token. Junos rolls back by committing
+`rollback 1`, which is the configuration before the push only while the
+pending commit is the newest, so Seed first reads `show system commit` and
+leaves the revert to the timer if someone else has committed since. A commit
+that fails or whose result is unknown is never rolled back by Seed: undoing
+"the last commit" then could undo someone else's, and the timer covers a
+commit that did land.
 
 A target that lacks the revert mechanism (IOS without `archive`, a NETCONF
 server without `:candidate` and `:confirmed-commit:1.1` in its `<hello>`) is
@@ -153,9 +166,10 @@ alert fires on the new configuration.
 5. SCP image staging, verification and boot set; reload as its own action.
 
 Tests drive an in-process `x/crypto/ssh` server that scripts each platform's
-dialogue, including a session dropped after apply (the timer reverts), a
-post-check mismatch (explicit rollback), drift between plan and apply (409)
-and a token on apply (403).
+dialogue, and the apply use-case is driven over a stand-in device through
+each outcome: a session dropped after apply (the timer reverts), a
+post-check mismatch (explicit rollback), drift between plan and apply
+(`config_drifted`), a second apply (409) and a token on apply (403).
 
 ## Consequences
 

@@ -7,14 +7,16 @@ package api
 //   POST   /api/v1/device-config-pushes                   plan a push (a job; a dry run)
 //   GET    /api/v1/device-config-pushes?targetId=&limit=  a target's plans
 //   GET    /api/v1/device-config-pushes/{planId}          one plan, with candidate and diff
+//   POST   /api/v1/device-config-pushes/{planId}/apply    apply a plan (a job; changes the device)
 //
-// Every route is Pro (config_push). Enabling pushing and planning are admin
-// only; a personal access token may plan, since a plan changes nothing on a
-// device (the apply that will is refused to tokens). Reading plans is
-// operator+, as reading backups is: a diff carries configuration text.
+// Every route is Pro (config_push). Enabling pushing, planning and applying
+// are admin only. A personal access token may plan, since a plan changes
+// nothing on a device, but never apply, so a leaked token can prepare a change
+// and not make one. Reading plans is operator+, as reading backups is: a diff
+// carries configuration text.
 //
-// A plan is a job, started here for the reason POST /device-configs/run is:
-// the job's client comes from this request's session.
+// A plan and an apply are jobs, started here for the reason POST
+// /device-configs/run is: the job's client comes from this request's session.
 
 import (
 	"context"
@@ -24,6 +26,7 @@ import (
 
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
 
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/deviceconfig"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -33,8 +36,9 @@ import (
 const (
 	deviceConfigPushesPath = APIVersionPrefix + "/device-config-pushes"
 
-	deviceConfigPushPlanJobKind = "device-config-push-plan"
-	configPushFeature           = "config_push"
+	deviceConfigPushPlanJobKind  = "device-config-push-plan"
+	deviceConfigPushApplyJobKind = "device-config-push-apply"
+	configPushFeature            = "config_push"
 )
 
 var deviceConfigPlanIDPattern = regexp.MustCompile(`^dcp-[0-9a-f]{12}$`)
@@ -68,6 +72,16 @@ func (s *Server) deviceConfigPushRoutes() []route.Route {
 			Feature: configPushFeature,
 			Auth:    true,
 		},
+		{
+			Path:    APIVersionPrefix + "/device-config-pushes/{planId}/apply",
+			Handler: s.handleDeviceConfigPushApply,
+			Methods: []string{http.MethodPost},
+			Scope:   admin,
+			Feature: configPushFeature,
+			Limiter: limitEndpoint,
+			Auth:    true,
+			CSRF:    true,
+		},
 	}
 }
 
@@ -82,6 +96,17 @@ type pushPlanInput struct {
 	TargetID  string                `json:"targetId"`
 	Mode      deviceconfig.PushMode `json:"mode"`
 	Candidate string                `json:"candidate"`
+}
+
+// pushApplyInput is the apply POST body: the hash of the diff the admin was
+// shown, so what is applied is what was read.
+type pushApplyInput struct {
+	PlanSHA256 string `json:"planSha256"`
+}
+
+// pushApplyJob is the apply's job params, a Go value like pushPlanJob.
+type pushApplyJob struct {
+	Request deviceconfig.ApplyRequest
 }
 
 // pushPlanJob is the plan's job params, a Go value for the reason
@@ -161,6 +186,52 @@ func (s *Server) handleDeviceConfigPushes(w http.ResponseWriter, r *http.Request
 	})
 }
 
+func (s *Server) handleDeviceConfigPushApply(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("planId")
+	if !deviceConfigPlanIDPattern.MatchString(id) {
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Missing or invalid push plan id")
+		return
+	}
+	if auth.IsAPITokenAuth(r.Context()) {
+		// A token's credential scope is what is short, hence reason=scope.
+		logging.FromContext(r.Context()).WarnContext(r.Context(), "Forbidden: a token cannot apply a push",
+			"event", "auth.forbidden",
+			"reason", "scope",
+			"username", usernameFromContext(r),
+			"client_ip", GetClientIP(r),
+			"path", singleLogLine(r.URL.Path),
+			"method", r.Method,
+		)
+		writeError(w, r, http.StatusForbidden, ErrCodeForbidden,
+			"A personal access token cannot apply a configuration push; sign in to apply")
+		return
+	}
+	clientID, ok := s.deviceConfigPushCaller(w, r)
+	if !ok {
+		return
+	}
+	var in pushApplyInput
+	if !decodeJSONStrict(w, r, &in, MaxBodySizeJSON) {
+		return
+	}
+	req := deviceconfig.ApplyRequest{
+		ClientID:   clientID,
+		PlanID:     id,
+		DiffSHA256: in.PlanSHA256,
+		User:       usernameFromContext(r),
+		Remote:     s.getClientIP(r),
+		UserAgent:  r.UserAgent(),
+	}
+	if err := s.deviceConfigPushes.CheckApply(r.Context(), req); err != nil {
+		writeDeviceConfigError(w, r, err)
+		return
+	}
+	s.submitClientJob(w, r, clientID, deviceConfigPushApplyJobKind, pushApplyJob{Request: req}, func(jobID string) {
+		s.auditDeviceConfig(r, "device_config.push.apply", "Configuration push apply started",
+			"job_id", jobID, "plan_id", id)
+	})
+}
+
 func (s *Server) listDeviceConfigPushPlans(w http.ResponseWriter, r *http.Request) {
 	if !s.requireRole(w, r, roles.Operator) {
 		return
@@ -237,9 +308,30 @@ func newDeviceConfigPushPlanHandler(svc func() *deviceconfig.Pushes) jobs.Handle
 	}
 }
 
+// newDeviceConfigPushApplyHandler returns the job handler for an apply.
+// Params that are not a pushApplyJob came through POST /jobs.
+func newDeviceConfigPushApplyHandler(svc func() *deviceconfig.Pushes) jobs.Handler {
+	return func(ctx context.Context, params any, _ func(float64)) (any, error) {
+		p, ok := params.(pushApplyJob)
+		if !ok {
+			return nil, fmt.Errorf("apply a configuration push with POST %s/{planId}/apply", deviceConfigPushesPath)
+		}
+		pushes := svc()
+		if pushes == nil {
+			return nil, deviceconfig.ErrUnavailable
+		}
+		return pushes.Apply(ctx, p.Request)
+	}
+}
+
 func (s *Server) registerDeviceConfigPushKind() {
-	if err := s.jobsRunner().Register(deviceConfigPushPlanJobKind,
-		newDeviceConfigPushPlanHandler(func() *deviceconfig.Pushes { return s.deviceConfigPushes })); err != nil {
-		logging.GetLogger().Error("failed to register config-push job kind", "error", err)
+	pushes := func() *deviceconfig.Pushes { return s.deviceConfigPushes }
+	for kind, handler := range map[string]jobs.Handler{
+		deviceConfigPushPlanJobKind:  newDeviceConfigPushPlanHandler(pushes),
+		deviceConfigPushApplyJobKind: newDeviceConfigPushApplyHandler(pushes),
+	} {
+		if err := s.jobsRunner().Register(kind, handler); err != nil {
+			logging.GetLogger().Error("failed to register config-push job kind", "kind", kind, "error", err)
+		}
 	}
 }

@@ -189,14 +189,14 @@ func (a deviceConfigRepo) LatestConfig(
 }
 
 // NewDeviceConfigPushes builds the configuration push use-case (P-D3) over the
-// backup use-case, the database's plan store, and the dry runner
+// backup use-case, the database's plan store, and the device side of a push
 // (deviceconfig.SSHFetcher in production). Push events go to the database
 // audit log; with no database wired the use-case's stores answer 503 first.
 func NewDeviceConfigPushes(
-	persist func() *Persistence, backups *deviceconfig.Service, dryRun deviceconfig.DryRunner,
+	persist func() *Persistence, backups *deviceconfig.Service, device deviceconfig.PushDevice,
 ) (*deviceconfig.Pushes, error) {
 	db := lazyHandle(persist)
-	return deviceconfig.NewPushes(backups, deviceConfigRepo{db: db}, dryRun,
+	return deviceconfig.NewPushes(backups, deviceConfigRepo{db: db}, device,
 		func(ctx context.Context, e deviceconfig.PushAuditEvent) error {
 			d := db()
 			if d == nil {
@@ -250,4 +250,22 @@ func (a deviceConfigRepo) PrunePlans(ctx context.Context, clientID, targetID str
 		return err
 	}
 	return repo.PrunePlans(ctx, clientID, targetID, keep)
+}
+
+func (a deviceConfigRepo) ClaimApply(ctx context.Context, clientID, id, user string, now time.Time) error {
+	repo, err := a.repo()
+	if err != nil {
+		return err
+	}
+	return repo.ClaimApply(ctx, clientID, id, user, now)
+}
+
+func (a deviceConfigRepo) FinishApply(
+	ctx context.Context, clientID, id string, outcome deviceconfig.ApplyOutcome,
+) error {
+	repo, err := a.repo()
+	if err != nil {
+		return err
+	}
+	return repo.FinishApply(ctx, clientID, id, outcome)
 }
