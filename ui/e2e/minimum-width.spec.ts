@@ -45,6 +45,7 @@ const PAGES = [
   { name: 'logs', path: '/logs' },
   { name: 'polling-targets', path: '/polling-targets' },
   { name: 'device-groups', path: '/device-groups' },
+  { name: 'ipam', path: '/ipam' },
   { name: 'topology', path: '/topology' },
   { name: 'interfaces', path: '/interfaces' },
   { name: 'device-configs', path: '/device-configs' },

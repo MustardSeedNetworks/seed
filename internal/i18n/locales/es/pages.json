@@ -434,6 +434,48 @@
     "nameRequired": "El nombre es obligatorio.",
     "saveFailed": "No se pudo guardar"
   },
+  "ipam": {
+    "label": "Direcciones IP",
+    "title": "Direcciones IP",
+    "description": "Ocupación de cada red y ámbito DHCP, según las direcciones vistas en uso en el último día.",
+    "addScope": "Añadir ámbito DHCP",
+    "readOnly": "Solo lectura: se requiere el rol de operador para añadir o eliminar un ámbito DHCP",
+    "loadFailed": "No se pudo cargar el uso de direcciones: {{reason}}",
+    "networkCount_one": "{{count}} red",
+    "networkCount_other": "{{count}} redes",
+    "scopeCount_one": "{{count}} ámbito DHCP",
+    "scopeCount_other": "{{count}} ámbitos DHCP",
+    "noNetworks": "Aún no hay redes conocidas. Ejecute un escaneo de descubrimiento o añada una red de destino en Configuración.",
+    "percent": "{{value}} %",
+    "source": {
+      "local": "Subred de esta interfaz",
+      "configured": "Red de destino",
+      "learned": "Red aprendida"
+    },
+    "dhcpScope": "Ámbito DHCP",
+    "exhaustion": {
+      "near": "Casi lleno",
+      "full": "Lleno"
+    },
+    "confirmDelete": "¿Eliminar el ámbito DHCP {{range}}?",
+    "deleteFailed": "No se pudo eliminar el ámbito: {{reason}}",
+    "labelSize": "Direcciones",
+    "labelUsed": "En uso",
+    "labelFree": "Libres",
+    "labelUtilization": "Ocupación",
+    "inUseHeading_one": "{{count}} dirección en uso",
+    "inUseHeading_other": "{{count}} direcciones en uso",
+    "noneInUse": "No se vio ninguna dirección en uso aquí en el último día.",
+    "emptyPrompt": "Seleccione una red o un ámbito para ver las direcciones en uso.",
+    "formTitle": "Añadir ámbito DHCP",
+    "fieldName": "Nombre (opcional)",
+    "fieldStart": "Primera dirección",
+    "fieldEnd": "Última dirección",
+    "formHint": "El rango que concede un servidor DHCP, con ambos extremos incluidos. Seed cuenta una dirección como usada cuando el descubrimiento o la tabla ARP de un router la vio en el último día.",
+    "rangeRequired": "Introduzca la primera y la última dirección.",
+    "invalidRange": "Un ámbito DHCP son dos direcciones IPv4, la primera menor.",
+    "overlaps": "Este rango se solapa con otro ámbito DHCP."
+  },
   "reports": {
     "description": "Panel de SLA agregado, seguimiento de cumplimiento e informes históricos.",
     "label": "Informes",

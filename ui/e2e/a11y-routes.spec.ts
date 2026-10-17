@@ -30,6 +30,7 @@ const ROUTES = [
   '/logs',
   '/polling-targets',
   '/device-groups',
+  '/ipam',
   '/topology',
   '/interfaces',
   '/device-configs',

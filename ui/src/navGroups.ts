@@ -37,6 +37,7 @@ import {
   Boxes,
   EthernetPort,
   FileDiff,
+  Grid3X3,
   LayoutDashboard,
   Network,
   Route,
@@ -101,6 +102,7 @@ export function useNavGroups(): SidebarNavGroup[] {
         { path: '/alerts', label: t('alerts.label'), icon: Bell },
         { path: '/polling-targets', label: t('pollingTargets.label'), icon: Target },
         { path: '/device-groups', label: t('deviceGroups.label'), icon: Boxes },
+        { path: '/ipam', label: t('ipam.label'), icon: Grid3X3 },
       ],
     },
     {

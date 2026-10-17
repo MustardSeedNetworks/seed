@@ -33,6 +33,7 @@
     "alerts": "Alertas",
     "pollingTargets": "Objetivos de sondeo",
     "deviceGroups": "Grupos de dispositivos",
+    "ipam": "Direcciones IP",
     "topology": "Topología",
     "interfaces": "Interfaces",
     "deviceConfigs": "Configuraciones",
@@ -665,6 +666,19 @@
         "scope": {
           "term": "Ámbito",
           "description": "Limitar una regla de alerta o un informe a los miembros de un grupo. Sin grupo, cubren todos los destinos."
+        }
+      }
+    },
+    "ipam": {
+      "description": "Vea la ocupación de cada red y ámbito DHCP. Una dirección cuenta como en uso cuando el descubrimiento encontró un dispositivo en ella, o la tabla ARP de un router sondeado la tenía, en el último día. Las redes son la subred de esta interfaz, las redes de destino de Configuración y las redes que aprendió el descubrimiento. Un operador introduce aquí los ámbitos DHCP; Seed genera una alerta cuando uno está al 90 % y otra cuando está lleno.",
+      "terms": {
+        "scope": {
+          "term": "Ámbito DHCP",
+          "description": "El rango de direcciones que concede un servidor DHCP. Los ámbitos no pueden solaparse, así que ninguna dirección se cuenta dos veces."
+        },
+        "utilization": {
+          "term": "Ocupación",
+          "description": "Las direcciones vistas en uso como proporción de las asignables. Las direcciones de red y de difusión de una subred no son asignables y no se cuentan."
         }
       }
     },
