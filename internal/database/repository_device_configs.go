@@ -11,7 +11,7 @@ import (
 )
 
 // DeviceConfigRepository owns device_config_targets, device_config_backups
-// (P-D1) and device_config_push_plans (P-D3).
+// (P-D1), device_config_push_plans and device_images (P-D3).
 // Every query is scoped to the client, so another client's target or backup is
 // indistinguishable from one that does not exist.
 type DeviceConfigRepository struct {

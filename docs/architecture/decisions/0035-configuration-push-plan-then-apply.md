@@ -136,7 +136,15 @@ time.
 ### 3. Operating system images are staged, never reloaded automatically
 
 1. The admin uploads an image with the vendor's published hash; an upload
-   whose hash does not match is rejected.
+   whose hash does not match is rejected. The request body is the image
+   itself, streamed to disk rather than held in memory, and the hash is the
+   vendor's hex SHA-256 (Juniper) or SHA-512 (Cisco, Arista); MD5 and SHA-1
+   are refused. Seed keeps both digests, since step 4 asks the device for the
+   one its platform computes. Images live in `device-images` beside the
+   database, named by id, with a record per image; the name is the file name
+   the device will get, unique per client. Images are for IOS/IOS-XE, EOS and
+   Junos only: NX-OS is read-only and a NETCONF target has no CLI to stage
+   with.
 2. Seed pre-checks the platform, the running version (`show version`) and the
    free flash space.
 3. Seed copies the image as an SCP sink (`scp -t`) over the existing
@@ -192,8 +200,9 @@ alert fires on the new configuration.
    at plan time until they land.
 3. Apply, confirmed commit, post-check and rollback for Junos and NETCONF.
 4. EOS apply, and IOS/IOS-XE merge apply.
-5. IOS/IOS-XE replace over the SCP sink (5a); then SCP image staging,
-   verification and boot set (5b); reload as its own action (5c).
+5. IOS/IOS-XE replace over the SCP sink (5a); then image upload with the
+   vendor hash (5b-1), and pre-checks, SCP staging, verification and boot
+   set (5b-2); reload as its own action (5c).
 
 Tests drive an in-process `x/crypto/ssh` server that scripts each platform's
 dialogue, and the apply use-case is driven over a stand-in device through

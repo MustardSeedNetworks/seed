@@ -2009,6 +2009,31 @@ body:
   {
     "auth": true,
     "csrf": true,
+    "feature": "config_push",
+    "maxBodyBytes": 4294967296,
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "path": "/api/v1/device-images",
+    "rateLimited": true,
+    "scope": "admin"
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "feature": "config_push",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "DELETE"
+    ],
+    "path": "/api/v1/device-images/{imageId}",
+    "rateLimited": false,
+    "scope": "admin"
+  },
+  {
+    "auth": true,
+    "csrf": true,
     "feature": "server_monitoring",
     "maxBodyBytes": 262144,
     "methods": [

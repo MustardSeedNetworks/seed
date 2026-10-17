@@ -504,6 +504,9 @@ func (s *Server) initDiscoveryUseCases() {
 	s.pollingTargets = app.NewPollingTargets(s.persistence, s.pollingTargetLimit)
 	s.deviceGroups = app.NewDeviceGroups(s.persistence)
 	s.autotestResults = app.NewAutotestResults(s.persistence)
+	if images, err := app.NewDeviceConfigImages(s.persistence); err == nil {
+		s.deviceImages = images
+	}
 	s.initVaultUseCases()
 	s.alertInbox = app.NewAlertInbox(s.persistence)
 }
