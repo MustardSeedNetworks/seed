@@ -42,6 +42,7 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0032](0032-fdb-access-port-edges.md) | Forwarding-database edges — one MAC on a port no neighbour protocol claims | Accepted |
 | [0033](0033-interface-counter-pipeline.md) | Interface counter pipeline — rates in `metrics`, not counters in observations | Accepted |
 | [0034](0034-windows-inventory-over-ws-management.md) | Windows inventory over WS-Management on HTTPS, with a pinned certificate | Accepted |
+| [0035](0035-configuration-push-plan-then-apply.md) | Configuration push — plan, then apply under a device-side revert | Accepted |
 
 Fleet decisions recorded outside this repository: the API style. Seed, stem and
 niac serve REST/JSON over foundation's shared route registrar, and trellis
