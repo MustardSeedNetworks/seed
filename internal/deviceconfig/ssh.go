@@ -48,10 +48,20 @@ func (SSHFetcher) Fetch(ctx context.Context, req FetchRequest) (FetchResult, err
 }
 
 // pushDialogue is how one platform takes each step of a push, on a session
-// the caller has logged in. A step it lacks is nil.
+// the caller has logged in. Commit gets the login itself, because an IOS
+// replace copies the candidate over SCP before it opens the CLI. A step the
+// platform lacks is nil.
 type pushDialogue struct {
-	dryRun                    func(*ssh.Session, DeviceRequest) (DryRunResult, error)
-	commit, confirm, rollback func(*ssh.Session, DeviceRequest) error
+	dryRun            func(*ssh.Session, DeviceRequest) (DryRunResult, error)
+	commit            func(*ssh.Client, DeviceRequest) error
+	confirm, rollback func(*ssh.Session, DeviceRequest) error
+}
+
+// inSession adapts a step that needs only one session to a commit.
+func inSession(step func(*ssh.Session, DeviceRequest) error) func(*ssh.Client, DeviceRequest) error {
+	return func(client *ssh.Client, req DeviceRequest) error {
+		return onSession(client, func(session *ssh.Session) error { return step(session, req) })
+	}
 }
 
 // dialogueFor returns a platform's dialogue. NX-OS is read-only and has
@@ -60,12 +70,16 @@ func dialogueFor(p Platform) pushDialogue {
 	switch p {
 	case PlatformNETCONF:
 		return pushDialogue{
-			dryRun: netconfDryRun, commit: netconfCommit, confirm: netconfConfirm, rollback: netconfRollback,
+			dryRun: netconfDryRun, commit: inSession(netconfCommit), confirm: netconfConfirm, rollback: netconfRollback,
 		}
 	case PlatformJuniperJunos:
-		return pushDialogue{dryRun: junosDryRun, commit: junosCommit, confirm: junosConfirm, rollback: junosRollback}
+		return pushDialogue{
+			dryRun: junosDryRun, commit: inSession(junosCommit), confirm: junosConfirm, rollback: junosRollback,
+		}
 	case PlatformAristaEOS:
-		return pushDialogue{dryRun: eosDryRun, commit: eosCommit, confirm: eosConfirm, rollback: eosRollback}
+		return pushDialogue{
+			dryRun: eosDryRun, commit: inSession(eosCommit), confirm: eosConfirm, rollback: eosRollback,
+		}
 	case PlatformCiscoIOS:
 		return pushDialogue{dryRun: iosDryRun, commit: iosCommit, confirm: iosConfirm, rollback: iosRollback}
 	case PlatformCiscoNXOS:
@@ -91,7 +105,12 @@ func (SSHFetcher) DryRun(ctx context.Context, req DeviceRequest) (DryRunResult, 
 
 // Commit applies the candidate under a confirmed commit.
 func (SSHFetcher) Commit(ctx context.Context, req DeviceRequest) error {
-	return pushStep(ctx, req, "commit", dialogueFor(req.Platform).commit)
+	commit := dialogueFor(req.Platform).commit
+	if commit == nil {
+		return fmt.Errorf("%w: cannot commit a push on %s", ErrCommand, req.Platform)
+	}
+	return withClient(ctx, req.Host, req.Port, req.User, req.Password, req.PinnedHostKey,
+		func(client *ssh.Client) error { return commit(client, req) })
 }
 
 // Confirm makes the pending commit permanent.
@@ -112,13 +131,31 @@ func pushStep(ctx context.Context, req DeviceRequest, step string, fn func(*ssh.
 		func(session *ssh.Session) error { return fn(session, req) })
 }
 
-// withSession checks the host key against the pin, logs in with password or
-// keyboard-interactive authentication (network operating systems offer one or
-// the other for the same password), and runs fn on one session. The host key
-// is checked during key exchange, before any authentication method runs, so
-// an unpinned or mismatched key never receives the password.
+// withSession logs in as withClient does and runs fn on one session.
 func withSession(
 	ctx context.Context, host string, port int, user, password, pinned string, fn func(*ssh.Session) error,
+) error {
+	return withClient(ctx, host, port, user, password, pinned,
+		func(client *ssh.Client) error { return onSession(client, fn) })
+}
+
+// onSession runs fn on a new session of client.
+func onSession(client *ssh.Client, fn func(*ssh.Session) error) error {
+	session, err := client.NewSession()
+	if err != nil {
+		return fmt.Errorf("%w: open session: %w", ErrCommand, err)
+	}
+	defer func() { _ = session.Close() }()
+	return fn(session)
+}
+
+// withClient checks the host key against the pin, logs in with password or
+// keyboard-interactive authentication (network operating systems offer one or
+// the other for the same password), and runs fn on the login. The host key
+// is checked during key exchange, before any authentication method runs, so
+// an unpinned or mismatched key never receives the password.
+func withClient(
+	ctx context.Context, host string, port int, user, password, pinned string, fn func(*ssh.Client) error,
 ) error {
 	addr := net.JoinHostPort(host, strconv.Itoa(port))
 	var dialer net.Dialer
@@ -164,13 +201,7 @@ func withSession(
 	client := ssh.NewClient(sshConn, chans, reqs)
 	defer func() { _ = client.Close() }()
 
-	session, err := client.NewSession()
-	if err != nil {
-		return fmt.Errorf("%w: open session: %w", ErrCommand, err)
-	}
-	defer func() { _ = session.Close() }()
-
-	err = fn(session)
+	err = fn(client)
 	if ctx.Err() != nil {
 		return fmt.Errorf("%w: %w", ErrUnreachable, ctx.Err())
 	}

@@ -4,8 +4,8 @@ package deviceconfig
 // backup (ADR-0035): the candidate's lines folded into the running
 // configuration's sections the way the parser would take them. The prediction
 // is labelled as such; the post-check after apply is what proves the result.
-// IOS takes a merge only: its replace is "configure replace" from a file on
-// the device, which needs the SCP staging of ADR-0035 delivery slice 5.
+// A replace makes the candidate the whole configuration, so its prediction is
+// the candidate itself.
 
 import (
 	"strings"
@@ -17,18 +17,43 @@ type iosNode struct {
 	children []*iosNode
 }
 
-// predictIOS predicts the diff merging a candidate would make to backup's
-// running configuration. A target without an archive path is refused: the
-// revert timer apply depends on needs one.
-func predictIOS(backup Backup, candidate string) (DryRunResult, error) {
+// predictIOS predicts the diff a candidate would make to backup's running
+// configuration. A target without an archive path is refused: the revert
+// timer apply depends on needs one. So is a replace that would remove it,
+// which would leave the next push refused.
+func predictIOS(backup Backup, mode PushMode, candidate string) (DryRunResult, error) {
+	const refusal = "the revert timer needs an archive path; configure \"archive\" with \" path flash:seed-archive\""
 	running := parseIOS(backup.Config)
 	if !iosHasArchivePath(running) {
-		return DryRunResult{}, &PlanRefusedError{
-			Reason: "the revert timer needs an archive path; configure \"archive\" with \" path flash:seed-archive\" first",
-		}
+		return DryRunResult{}, &PlanRefusedError{Reason: refusal + " first"}
 	}
-	next := mergeIOS(running, parseIOS(candidate))
-	return lineDiff("running", renderIOS(running), "predicted", renderIOS(next))
+	if mode == PushMerge {
+		return lineDiff("running", renderIOS(running), "predicted", renderIOS(mergeIOS(running, parseIOS(candidate))))
+	}
+	next := parseIOS(iosConfigOnly(candidate))
+	if !iosHasArchivePath(next) {
+		return DryRunResult{}, &PlanRefusedError{Reason: refusal + " in the replacement too"}
+	}
+	return lineDiff("running", renderIOS(parseIOS(iosConfigOnly(backup.Config))), "candidate", renderIOS(next))
+}
+
+// iosConfigOnly drops what "show running-config" prints around and between
+// the configuration: its banner lines, comments, and the final "end". A
+// replacement is compared with the running configuration without them, so a
+// candidate saved from "show running-config" an hour ago is not a change.
+func iosConfigOnly(text string) string {
+	var b strings.Builder
+	for line := range strings.SplitSeq(strings.ReplaceAll(text, "\r\n", "\n"), "\n") {
+		trimmed := strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(trimmed, "!"), trimmed == "end", trimmed == "Building configuration...",
+			strings.HasPrefix(trimmed, "Current configuration :"):
+			continue
+		}
+		b.WriteString(line)
+		b.WriteByte('\n')
+	}
+	return b.String()
 }
 
 // parseIOS reads a configuration into its sections by indentation. Comment

@@ -39,10 +39,11 @@ asks the device for the dry-run diff:
 | NETCONF | `<edit-config>` into `candidate`, `<validate>`, read back, `<discard-changes>` | device |
 | IOS / IOS-XE | none on the device | Seed, against the fresh backup; labelled **predicted** |
 
-IOS takes a merge only until delivery slice 5. Its replace is
-`configure replace` from a file on the device's flash, so the candidate has
-to be copied there first, and that copy is the SCP sink slice 5 builds. Until
-then an IOS replace is refused at plan time.
+An IOS replace predicts the candidate itself as the new configuration. Both
+sides are compared without what `show running-config` prints around the
+configuration (its banner lines, `!` comments and the final `end`), so a
+candidate saved from the device is not a change. A replacement without the
+`archive` path is refused at plan time: the next push would need it.
 
 Junos and EOS are driven in an interactive shell, the only way either CLI
 reads a load from the session. Replace means the candidate becomes the whole
@@ -82,7 +83,8 @@ Seed confirms, so a push that cuts Seed off undoes itself:
 | Junos | `commit confirmed 5` | reverts unless confirmed by `commit` |
 | NETCONF | `<commit><confirmed/><persist>id</persist>` | reverts unless confirmed with `<persist-id>` |
 | EOS | `configure session <id>`, `commit timer 00:05:00` | reverts unless the session is committed |
-| IOS / IOS-XE | `configure terminal revert timer 5` (needs `archive`) | reverts unless `configure confirm` |
+| IOS / IOS-XE merge | `configure terminal revert timer 5` (needs `archive`) | reverts unless `configure confirm` |
+| IOS / IOS-XE replace | SCP to `flash:<id>.cfg`, `configure replace flash:<id>.cfg force time 5` | as merge |
 
 The EOS session is named after the apply's commit id, so the confirm
 (`configure session <id> commit`) and the rollback
@@ -90,7 +92,14 @@ The EOS session is named after the apply's commit id, so the confirm
 IOS types the candidate under the revert timer, with each line live as it is
 entered; a line the device rejects ends the commit with an immediate
 `configure revert now` rather than leaving the earlier lines live until the
-timer. EOS and IOS keep a startup configuration, so the confirm is followed by
+timer. An IOS replace copies the candidate to flash as an SCP sink (the device
+needs `ip scp server enable`), replaces from it with `force`, which skips the
+yes/no question, and requires `Rollback Done`; a replace that fails is reverted
+at once if it started the timer. The copy carries the whole configuration,
+secrets included, so the same login deletes it whatever the replace did: the
+revert restores from the archive, not from the copy. A copy that cannot be
+deleted fails the commit, and the timer reverts the replace. EOS and IOS
+keep a startup configuration, so the confirm is followed by
 `write memory`. A confirmed push whose save fails stays confirmed, and its
 outcome says a reload loses the change.
 
@@ -183,9 +192,8 @@ alert fires on the new configuration.
    at plan time until they land.
 3. Apply, confirmed commit, post-check and rollback for Junos and NETCONF.
 4. EOS apply, and IOS/IOS-XE merge apply.
-5. SCP image staging, verification and boot set; reload as its own action;
-   IOS/IOS-XE replace, which stages the candidate over the same SCP sink and
-   applies it with `configure replace flash:<file> time 5`.
+5. IOS/IOS-XE replace over the SCP sink (5a); then SCP image staging,
+   verification and boot set (5b); reload as its own action (5c).
 
 Tests drive an in-process `x/crypto/ssh` server that scripts each platform's
 dialogue, and the apply use-case is driven over a stand-in device through

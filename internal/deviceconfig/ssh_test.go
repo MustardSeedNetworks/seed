@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -39,6 +40,8 @@ type deviceOpts struct {
 	netconf func(ch ssh.Channel)
 	// shell, when set, serves an interactive shell on the channel.
 	shell func(ch ssh.Channel)
+	// scp, when set, serves "scp -t <path>" on the channel.
+	scp func(ch ssh.Channel, path string)
 }
 
 func startSSHDevice(t *testing.T, opts deviceOpts) sshDevice {
@@ -137,9 +140,15 @@ func serveRequest(ch ssh.Channel, req *ssh.Request, chReqs <-chan *ssh.Request, 
 	}
 	_ = req.Reply(true, nil)
 	status := uint32(0)
-	if out, ok := opts.commands[string(req.Payload[4:])]; ok {
+	command := string(req.Payload[4:])
+	path, isSCP := strings.CutPrefix(command, "scp -t ")
+	out, known := opts.commands[command]
+	switch {
+	case isSCP && opts.scp != nil:
+		opts.scp(ch, path)
+	case known:
 		_, _ = ch.Write([]byte(out))
-	} else {
+	default:
 		_, _ = ch.Stderr().Write([]byte("% Invalid input detected"))
 		status = 1
 	}

@@ -1,6 +1,7 @@
 package deviceconfig_test
 
 import (
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -258,10 +259,37 @@ func TestPlanPredictsAnIOSMerge(t *testing.T) {
 	}
 }
 
+// TestPlanPredictsAnIOSReplace: the replacement is the predicted
+// configuration, compared without what "show running-config" prints around
+// it, so a candidate saved from the device is not a change.
+func TestPlanPredictsAnIOSReplace(t *testing.T) {
+	t.Parallel()
+	const saved = "Building configuration...\n\nCurrent configuration : 120 bytes\n!\n" +
+		"! Last configuration change at 09:00:00 UTC Fri Oct 16 2026\n!\n"
+	f := newPushFixture(t, saved+iosRunning, pushTarget("dct-1", "10.0.0.1", deviceconfig.PlatformCiscoIOS))
+
+	res, err := f.pushes.Plan(context.Background(), planRequest("dct-1", deviceconfig.PushReplace,
+		"hostname edge\narchive\n path flash:seed-archive\ninterface Gi1/0/1\n description old\nend\n"))
+	require.NoError(t, err)
+	require.Equal(t, deviceconfig.PlanReady, res.Outcome)
+	require.Equal(t, 0, res.Added)
+	require.Equal(t, 1, res.Removed, "a line the replacement lacks is removed")
+	plan, err := f.pushes.GetPlan(context.Background(), client, res.PlanID)
+	require.NoError(t, err)
+	require.Contains(t, plan.Diff, "- switchport mode access")
+	require.Equal(t, deviceconfig.DiffPredicted, plan.DiffSource)
+	require.Empty(t, f.device.requests, "IOS has no dry run to ask for")
+
+	res, err = f.pushes.Plan(context.Background(), planRequest("dct-1", deviceconfig.PushReplace, saved+iosRunning))
+	require.NoError(t, err)
+	require.Equal(t, deviceconfig.PlanNoChange, res.Outcome)
+}
+
 func TestPlanOutcomesThatStoreNothing(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name      string
+		mode      deviceconfig.PushMode
 		running   string
 		candidate string
 		outcome   deviceconfig.PlanOutcome
@@ -283,12 +311,22 @@ func TestPlanOutcomesThatStoreNothing(t *testing.T) {
 			reason:    "archive path",
 			action:    "device_config.push.plan_refused",
 		},
+		{
+			name:      "a replacement without the archive path",
+			mode:      deviceconfig.PushReplace,
+			running:   iosRunning,
+			candidate: "hostname core\n",
+			outcome:   deviceconfig.PlanRefused,
+			reason:    "in the replacement too",
+			action:    "device_config.push.plan_refused",
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			f := newPushFixture(t, tc.running, pushTarget("dct-1", "10.0.0.1", deviceconfig.PlatformCiscoIOS))
-			res, err := f.pushes.Plan(context.Background(), planRequest("dct-1", deviceconfig.PushMerge, tc.candidate))
+			mode := cmp.Or(tc.mode, deviceconfig.PushMerge)
+			res, err := f.pushes.Plan(context.Background(), planRequest("dct-1", mode, tc.candidate))
 			require.NoError(t, err)
 			require.Equal(t, tc.outcome, res.Outcome)
 			require.Contains(t, res.Reason, tc.reason)
@@ -420,7 +458,6 @@ func TestPlanCheckRefusesBeforeALogin(t *testing.T) {
 			"line 2 contains a control character",
 		},
 		{"IOS escape key", planRequest("dct-ios", deviceconfig.PushMerge, "hostname a\x1b"), "control character"},
-		{"IOS replace", planRequest("dct-ios", deviceconfig.PushReplace, "hostname a"), "merge only"},
 		{
 			"IOS exit",
 			planRequest("dct-ios", deviceconfig.PushMerge, "hostname a\nexit\nreload"),

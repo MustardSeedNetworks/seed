@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"strings"
 	"sync"
 	"testing"
@@ -711,6 +712,105 @@ type fakeIOS struct {
 	saved   bool
 	// noArchive refuses the revert timer, as IOS does without an archive path.
 	noArchive bool
+	// flash holds the files on the device by path, and copies every file
+	// copied to it. scpRefused is the reason the SCP server refuses a copy,
+	// as IOS does without "ip scp server enable".
+	flash      map[string]string
+	copies     []string
+	scpRefused string
+}
+
+// startIOS serves d's CLI and its SCP server on one device.
+func startIOS(t *testing.T, d *fakeIOS) deviceconfig.DeviceRequest {
+	t.Helper()
+	dev := startSSHDevice(t, deviceOpts{password: "wr1te", shell: d.serve, scp: d.scp})
+	fr := dev.request(t, "wr1te", "", dev.fingerprint)
+	return deviceconfig.DeviceRequest{
+		Host: fr.Host, Port: fr.Port, User: "pusher", Password: "wr1te", PinnedHostKey: dev.fingerprint,
+		Platform: deviceconfig.PlatformCiscoIOS, Mode: deviceconfig.PushReplace, CommitID: "seed-c1",
+	}
+}
+
+// scp is the sink side of one copy.
+func (d *fakeIOS) scp(ch ssh.Channel, path string) {
+	if d.scpRefused != "" {
+		_, _ = io.WriteString(ch, "\x01"+d.scpRefused+"\n")
+		return
+	}
+	r := bufio.NewReader(ch)
+	_, _ = ch.Write([]byte{0})
+	header, err := r.ReadString('\n')
+	if err != nil {
+		return
+	}
+	var (
+		perm, name string
+		size       int
+	)
+	if _, err = fmt.Sscanf(header, "C%s %d %s", &perm, &size, &name); err != nil || perm != "0600" {
+		_, _ = io.WriteString(ch, "\x01bad header\n")
+		return
+	}
+	_, _ = ch.Write([]byte{0})
+	body := make([]byte, size+1)
+	if _, err = io.ReadFull(r, body); err != nil || body[size] != 0 {
+		return
+	}
+	d.mu.Lock()
+	d.flash[path] = string(body[:size])
+	d.copies = append(d.copies, string(body[:size]))
+	d.mu.Unlock()
+	_, _ = ch.Write([]byte{0})
+}
+
+// replace is configure replace: the timer archives the running
+// configuration, and the file's lines become it. A rejected line stops the
+// replace with the lines before it applied and the timer running.
+func (d *fakeIOS) replace(file string) string {
+	text, ok := d.flash[file]
+	switch {
+	case !ok:
+		return "%Error opening " + file + " (No such file or directory)\r\n"
+	case d.noArchive:
+		return "%Archive feature not enabled\r\n"
+	}
+	d.archive, d.pending, d.running = append([]string(nil), d.running...), true, nil
+	for line := range strings.SplitSeq(text, "\n") {
+		line = strings.TrimSpace(line)
+		switch {
+		case line == "", line == "end", strings.HasPrefix(line, "!"):
+		case strings.HasPrefix(line, "bogus"):
+			return "%Rollback failed: a line was rejected\r\n"
+		default:
+			d.running = append(d.running, line)
+		}
+	}
+	return "Total number of passes: 1\r\nRollback Done\r\n"
+}
+
+// fileCommand answers the commands that name a file on flash, and reports
+// whether cmd was one.
+func (d *fakeIOS) fileCommand(cmd string) (string, bool) {
+	if file, ok := strings.CutPrefix(cmd, "configure replace "); ok {
+		if file, ok = strings.CutSuffix(file, " force time 5"); ok {
+			return d.replace(file), true
+		}
+	}
+	file, ok := strings.CutPrefix(cmd, "delete /force ")
+	if !ok {
+		return "", false
+	}
+	if _, ok = d.flash[file]; !ok {
+		return "%Error deleting " + file + " (No such file or directory)\r\n", true
+	}
+	delete(d.flash, file)
+	return "", true
+}
+
+func (d *fakeIOS) files() map[string]string {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return maps.Clone(d.flash)
 }
 
 func (d *fakeIOS) serve(channel ssh.Channel) {
@@ -760,6 +860,9 @@ func (d *fakeIOS) answer(cmd, mode string) (string, string) {
 			d.running = append(d.running, cmd)
 		}
 		return "", mode
+	}
+	if out, ok := d.fileCommand(cmd); ok {
+		return out, mode
 	}
 	switch cmd {
 	case "configure terminal revert timer 5":
@@ -842,7 +945,7 @@ func TestIOSCommitConfirmAndRollback(t *testing.T) {
 		{
 			name:     "rollback with no timer pending",
 			step:     deviceconfig.SSHFetcher.Rollback,
-			commands: []string{"show archive config rollback timer"},
+			commands: []string{"show archive config rollback timer", "exit"},
 			running:  []string{"hostname edge"},
 			err:      "no revert timer is pending",
 		},
@@ -901,15 +1004,88 @@ func TestIOSCommitFailures(t *testing.T) {
 		require.ErrorContains(t, err, "%Archive feature not enabled")
 		require.Equal(t, []string{"configure terminal revert timer 5"}, d.recorded(), "nothing is typed")
 	})
-	t.Run("replace", func(t *testing.T) {
+}
+
+// TestIOSReplace: a replace copies the candidate to flash under the commit's
+// name, replaces the running configuration from it under the revert timer,
+// and deletes the copy, which carries the whole configuration, whatever the
+// replace did.
+func TestIOSReplace(t *testing.T) {
+	t.Parallel()
+	const file = "flash:seed-c1.cfg"
+	t.Run("commit", func(t *testing.T) {
 		t.Parallel()
-		d := &fakeIOS{done: make(chan struct{})}
-		req := startShell(t, d.serve, deviceconfig.PlatformCiscoIOS)
-		req.Mode, req.Candidate = deviceconfig.PushReplace, "hostname core\n"
+		d := &fakeIOS{done: make(chan struct{}), running: []string{"hostname edge"}, flash: map[string]string{}}
+		req := startIOS(t, d)
+		req.Candidate = "hostname core\r\n!\nenable secret 9 $9$abc\nend"
+
+		require.NoError(t, deviceconfig.SSHFetcher{}.Commit(fetchCtx(t), req))
+		<-d.done
+		require.Equal(t, []string{"configure replace " + file + " force time 5", "delete /force " + file, "exit"},
+			d.recorded())
+		running, pending, saved := d.state()
+		require.Equal(t, []string{"hostname core", "enable secret 9 $9$abc"}, running)
+		require.True(t, pending, "the revert timer runs until the confirm")
+		require.False(t, saved)
+		require.Empty(t, d.files(), "the copy is deleted")
+		require.Equal(t, []string{"hostname core\n!\nenable secret 9 $9$abc\nend\n"}, d.copies)
+	})
+	t.Run("no archive", func(t *testing.T) {
+		t.Parallel()
+		d := &fakeIOS{
+			done: make(chan struct{}), running: []string{"hostname edge"}, flash: map[string]string{}, noArchive: true,
+		}
+		req := startIOS(t, d)
+		req.Candidate = "hostname core\n"
 
 		err := deviceconfig.SSHFetcher{}.Commit(fetchCtx(t), req)
-		require.ErrorContains(t, err, "merge only")
-		require.Empty(t, d.recorded())
+		require.ErrorContains(t, err, "%Archive feature not enabled")
+		<-d.done
+		require.Equal(t, []string{
+			"configure replace " + file + " force time 5",
+			"show archive config rollback timer",
+			"delete /force " + file,
+			"exit",
+		}, d.recorded())
+		running, pending, _ := d.state()
+		require.Equal(t, []string{"hostname edge"}, running)
+		require.False(t, pending)
+		require.Empty(t, d.files())
+	})
+	t.Run("a rejected line is reverted at once", func(t *testing.T) {
+		t.Parallel()
+		d := &fakeIOS{done: make(chan struct{}), running: []string{"hostname edge"}, flash: map[string]string{}}
+		req := startIOS(t, d)
+		req.Candidate = "hostname core\nbogus secret-token\n"
+
+		err := deviceconfig.SSHFetcher{}.Commit(fetchCtx(t), req)
+		require.ErrorIs(t, err, deviceconfig.ErrCommand)
+		require.ErrorContains(t, err, "configure replace did not complete: %Rollback failed")
+		require.NotContains(t, err.Error(), "secret-token")
+		<-d.done
+		require.Contains(t, d.recorded(), "configure revert now")
+		running, pending, _ := d.state()
+		require.Equal(t, []string{"hostname edge"}, running)
+		require.False(t, pending)
+		require.Empty(t, d.files())
+	})
+	t.Run("the device refuses the copy", func(t *testing.T) {
+		t.Parallel()
+		d := &fakeIOS{
+			done: make(chan struct{}), running: []string{"hostname edge"}, flash: map[string]string{},
+			scpRefused: "Privilege denied",
+		}
+		req := startIOS(t, d)
+		req.Candidate = "hostname core\n"
+
+		err := deviceconfig.SSHFetcher{}.Commit(fetchCtx(t), req)
+		require.ErrorIs(t, err, deviceconfig.ErrCommand)
+		require.ErrorContains(t, err, "the device refused the copy: Privilege denied")
+		<-d.done
+		require.Equal(t, []string{"delete /force " + file, "exit"}, d.recorded(), "nothing is replaced")
+		running, pending, _ := d.state()
+		require.Equal(t, []string{"hostname edge"}, running)
+		require.False(t, pending)
 	})
 }
 
@@ -936,4 +1112,10 @@ func TestIOSDryRunIsTheRunningConfigurationsPrediction(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, res.Added)
 	require.Equal(t, 1, res.Removed)
+
+	req.Mode = deviceconfig.PushReplace
+	req.Candidate = "hostname edge\narchive\n path flash:seed-archive\ninterface Gi1/0/1\n description uplink\n"
+	res, err = deviceconfig.SSHFetcher{}.DryRun(fetchCtx(t), req)
+	require.NoError(t, err)
+	require.Equal(t, 0, res.Added+res.Removed, "a device running the replacement has nothing left to change")
 }
