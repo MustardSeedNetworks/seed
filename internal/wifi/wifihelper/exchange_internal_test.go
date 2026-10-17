@@ -10,6 +10,7 @@ import (
 	"net"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 // Test names here are deliberately short: t.TempDir() embeds the name and unix
@@ -112,6 +113,43 @@ func TestScanErrProp(t *testing.T) {
 	}
 	if err.Error() != "corewlan: Location Services authorization required" {
 		t.Errorf("Scan() error = %q, want the helper's reason", err)
+	}
+}
+
+func TestBLETrip(t *testing.T) {
+	t.Parallel()
+
+	server, client := connectedPair(t)
+	seen := replyOnce(t, client, Response{Peripherals: []Peripheral{{
+		Identifier: "5A1C0F2E-6B4D-4E8A-9C1F-3D2B7A6E9F01", RSSI: -61,
+	}}})
+
+	s := newServerWithConn(server, slog.New(slog.DiscardHandler))
+
+	peripherals, err := s.ScanBLE(time.Second)
+	if err != nil {
+		t.Fatalf("ScanBLE() unexpected error: %v", err)
+	}
+	if op := <-seen; op != OpBLEScan {
+		t.Errorf("helper saw op %q, want %q", op, OpBLEScan)
+	}
+	if len(peripherals) != 1 || peripherals[0].Identifier != "5A1C0F2E-6B4D-4E8A-9C1F-3D2B7A6E9F01" {
+		t.Fatalf("ScanBLE() = %+v, want the helper's peripheral", peripherals)
+	}
+}
+
+// A helper without the Bluetooth grant must say so, not report a quiet room.
+func TestBLEErrProp(t *testing.T) {
+	t.Parallel()
+
+	server, client := connectedPair(t)
+	replyOnce(t, client, Response{Error: "corebluetooth: Bluetooth authorization required"})
+
+	s := newServerWithConn(server, slog.New(slog.DiscardHandler))
+
+	if _, err := s.ScanBLE(time.Second); err == nil ||
+		err.Error() != "corebluetooth: Bluetooth authorization required" {
+		t.Fatalf("ScanBLE() error = %v, want the helper's reason", err)
 	}
 }
 

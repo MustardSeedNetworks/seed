@@ -2,12 +2,11 @@
 
 package enumerate
 
-// bluetooth_darwin.go implements Bluetooth scanning on macOS using system_profiler
-// and blueutil (if available) for basic device discovery.
-//
-// Note: Full BLE scanning on macOS requires CoreBluetooth framework access,
-// which needs a signed app with appropriate entitlements. This implementation
-// provides basic classic Bluetooth discovery via system tools.
+// bluetooth_darwin.go implements Bluetooth scanning on macOS. Paired and
+// connected devices come from system_profiler and blueutil (if installed).
+// Advertising LE devices come from CoreBluetooth, which answers only a signed
+// bundle the user granted Bluetooth to in their login session — never the root
+// daemon — so the Seed Wi-Fi Helper runs that scan and returns what it heard.
 
 import (
 	"bufio"
@@ -32,11 +31,17 @@ const (
 	keyValueSplitParts = 2
 )
 
+// errNoBLEHelper means no Seed Wi-Fi Helper is connected, so no LE scan can
+// run. It is an error rather than an empty result: an operator must start the
+// helper, not conclude the room is quiet.
+var errNoBLEHelper = errors.New(
+	"bluetooth LE scan needs the Seed Wi-Fi Helper running in a logged-in user session")
+
 // scanPlatform performs Bluetooth scanning on macOS.
 func (s *BluetoothScanner) scanPlatform(
 	ctx context.Context,
 	_ string,
-	_ *BluetoothScanConfig,
+	config *BluetoothScanConfig,
 ) ([]BluetoothDevice, error) {
 	ctx, cancel := context.WithTimeout(ctx, darwinBTScanTimeoutSecs*time.Second)
 	defer cancel()
@@ -55,7 +60,35 @@ func (s *BluetoothScanner) scanPlatform(
 		devices = mergeBluetoothDevices(devices, blueDevices)
 	}
 
-	return devices, nil
+	if !config.IncludeBLE {
+		return devices, nil
+	}
+
+	// CoreBluetooth hides addresses, so a paired LE device heard advertising
+	// cannot be matched to its system_profiler entry and is listed under each.
+	le, err := s.scanBLE(config)
+	if err != nil {
+		return nil, err
+	}
+	return append(devices, le...), nil
+}
+
+// scanBLE has the helper listen for LE advertisements. A missing grant or a
+// powered-off radio comes back as the helper's error.
+func (s *BluetoothScanner) scanBLE(config *BluetoothScanConfig) ([]BluetoothDevice, error) {
+	s.mu.RLock()
+	helper := s.bleHelper
+	s.mu.RUnlock()
+
+	if helper == nil {
+		return nil, errNoBLEHelper
+	}
+
+	found, err := helper.ScanBLE(bleScanDuration(config))
+	if err != nil {
+		return nil, fmt.Errorf("bluetooth LE scan via helper: %w", err)
+	}
+	return devicesFromPeripherals(found, time.Now()), nil
 }
 
 // scanSystemProfiler uses system_profiler to get Bluetooth device info.

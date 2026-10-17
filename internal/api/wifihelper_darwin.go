@@ -7,7 +7,8 @@ package api
 // un-redacts SSID and BSSID in CoreWLAN results — per user, to a signed
 // application bundle, in a logged-in GUI session. Seed runs as root from a
 // LaunchDaemon and can hold no such grant, so the helper does the scanning and
-// the daemon consumes it over this socket.
+// the daemon consumes it over this socket. The CoreBluetooth grant works the
+// same way, so the helper runs Bluetooth LE scans too.
 
 import (
 	"fmt"
@@ -62,6 +63,14 @@ func (s *Server) startWiFiHelper() {
 		"event", "wifi.helper.listening", "path", path)
 }
 
+// attachBLEHelper hands the helper to the Bluetooth scanner, which is built
+// after the socket is listening.
+func (s *Server) attachBLEHelper() {
+	if srv, ok := s.wifiHelper.(*wifihelper.Server); ok {
+		s.bluetoothScan.SetBLEHelper(srv)
+	}
+}
+
 // stopWiFiHelper releases the socket.
 func (s *Server) stopWiFiHelper() error {
 	if s.wifiHelper == nil {
@@ -70,6 +79,9 @@ func (s *Server) stopWiFiHelper() error {
 
 	s.wifiScan.SetHelper(nil)
 	s.wifiMgr.SetHelper(nil)
+	if s.bluetoothScan != nil {
+		s.bluetoothScan.SetBLEHelper(nil)
+	}
 	if err := s.wifiHelper.Close(); err != nil {
 		return fmt.Errorf("close wifi helper: %w", err)
 	}

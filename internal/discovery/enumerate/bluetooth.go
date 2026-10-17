@@ -31,6 +31,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/wifihelper"
 )
 
 // Bluetooth configuration constants.
@@ -108,6 +109,13 @@ type BluetoothStore interface {
 	RememberBluetoothDevices(ctx context.Context, devices []BluetoothDevice) error
 }
 
+// BLEHelper runs Bluetooth LE scans in the macOS user session, where the
+// CoreBluetooth grant lives; the root daemon cannot hold it. No other platform
+// needs one.
+type BLEHelper interface {
+	ScanBLE(d time.Duration) ([]wifihelper.Peripheral, error)
+}
+
 // BluetoothScanner discovers Bluetooth devices.
 type BluetoothScanner struct {
 	mu                sync.RWMutex
@@ -115,6 +123,7 @@ type BluetoothScanner struct {
 	config            *BluetoothScanConfig
 	oui               *resolve.OUIDatabase
 	store             BluetoothStore
+	bleHelper         BLEHelper
 	lastScan          *BluetoothScanResult
 	lastScanTime      time.Time
 	authorizedDevices map[string]bool // Authorized MAC addresses
@@ -151,6 +160,14 @@ func (s *BluetoothScanner) SetStore(store BluetoothStore) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.store = store
+}
+
+// SetBLEHelper registers the helper LE scans are delegated to. Passing nil
+// clears it. Platforms that scan in-process ignore it.
+func (s *BluetoothScanner) SetBLEHelper(h BLEHelper) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.bleHelper = h
 }
 
 // SetAuthorizedDevices sets the list of authorized Bluetooth addresses.

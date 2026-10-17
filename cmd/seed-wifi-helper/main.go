@@ -1,13 +1,14 @@
 //go:build darwin
 
-// Command seed-wifi-helper answers the seed daemon's Wi-Fi requests from within
-// a user's login session.
+// Command seed-wifi-helper answers the seed daemon's Wi-Fi and Bluetooth LE
+// requests from within a user's login session.
 //
 // macOS grants Location Services authorization — which is what un-redacts SSID
 // and BSSID in CoreWLAN results — per user, to a signed application bundle, and
 // only in a logged-in GUI session. Seed itself runs as root from a LaunchDaemon
 // and can hold no such grant. This helper runs as a LaunchAgent inside the
 // session, holds the grant, and does the scanning on the daemon's behalf.
+// CoreBluetooth is granted the same way, so LE scans run here too.
 //
 // It ships inside an application bundle because an unbundled executable cannot
 // be granted the permission at all.
@@ -22,6 +23,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/corebluetooth"
 	"github.com/MustardSeedNetworks/foundation/pkg/corewlan"
 
 	"github.com/MustardSeedNetworks/seed/internal/wifi/wifihelper"
@@ -51,6 +53,7 @@ func main() {
 	defer stop()
 
 	reportAuthorization(ctx, log)
+	reportBluetoothAuthorization(ctx, log)
 	run(ctx, *socketPath, log)
 }
 
@@ -79,6 +82,29 @@ func reportAuthorization(ctx context.Context, log *slog.Logger) {
 		slog.String("event", "wifi.helper.unauthorized"),
 		slog.String("status", status.String()),
 		slog.String("remedy", "enable Seed Wi-Fi Helper in System Settings > Privacy & Security > Location Services"))
+}
+
+// reportBluetoothAuthorization records the Bluetooth grant, asking for it first
+// when the operator has not yet decided. CoreBluetooth has no request call:
+// creating a central manager, which a scan does, is what shows the prompt. So a
+// short scan at login puts the question in front of the operator then, rather
+// than at the first scan the daemon asks for.
+func reportBluetoothAuthorization(ctx context.Context, log *slog.Logger) {
+	if corebluetooth.AuthorizationStatus() == corebluetooth.AuthNotDetermined {
+		_, _ = corebluetooth.Scan(authorizationWait)
+	}
+
+	status := corebluetooth.AuthorizationStatus()
+	if status == corebluetooth.AuthAllowedAlways {
+		log.InfoContext(ctx, "bluetooth authorized",
+			slog.String("event", "ble.helper.authorized"))
+		return
+	}
+
+	log.WarnContext(ctx, "bluetooth not authorized; LE scans will report the missing grant",
+		slog.String("event", "ble.helper.unauthorized"),
+		slog.String("status", status.String()),
+		slog.String("remedy", "enable Seed Wi-Fi Helper in System Settings > Privacy & Security > Bluetooth"))
 }
 
 // run keeps a session with the daemon for as long as the process lives.
