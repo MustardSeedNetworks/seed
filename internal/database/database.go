@@ -93,6 +93,7 @@ type DB struct {
 	microbursts       *MicroburstsRepository
 	bluetoothDevices  *BluetoothDevicesRepository
 	autotestResults   *AutotestResultsRepository
+	snmpEngine        *SNMPEngineRepository
 	voipStreams       *VoIPStreamsRepository
 	topology          *TopologyRepository
 	alertRules        *AlertRulesRepository

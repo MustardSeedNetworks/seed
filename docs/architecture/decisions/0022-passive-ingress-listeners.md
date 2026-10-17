@@ -2,6 +2,7 @@
 
 **Status:** Accepted — 2026-06-10 · as-built (documents `internal/listener`, shipped during the V1.0 NMS expansion)
 · amended 2026-10-04 (SNMPv3 traps, P-B4; flow collector, P-C1)
+· amended 2026-10-17 (SNMPv3 informs, P-B4)
 
 ## Context
 
@@ -72,8 +73,9 @@ a port.
   default bind `:514`, remappable for unprivileged hosts. **TLS/TCP syslog
   (RFC 5425) is deferred** — it is a separate `Listener` type, not a flag on this
   one.
-- **`internal/listener/snmptrap`** — SNMP traps over UDP/162: v1 and v2c traps
-  and informs, and SNMPv3 traps (see the 2026-10-04 amendment below). Event kind
+- **`internal/listener/snmptrap`** — SNMP traps over UDP/162: v1, v2c and
+  SNMPv3 traps and informs (see the 2026-10-04 and 2026-10-17 amendments
+  below). Event kind
   `snmp-trap` for every version.
 - **`internal/listener/sink`** — default `Sink` over `database.ListenerEvents()`
   (`listener_events`, migration `00001_init.sql`).
@@ -123,15 +125,59 @@ decode. It also:
   behind the receiver's running estimate of that engine's clock, or from an
   earlier boot, is dropped. Replays inside the window are still accepted, as
   the RFC allows.
-- **Drops v3 informs for now.** For an inform, Seed is the authoritative
-  engine. Supporting informs needs a persisted snmpEngineID and
-  snmpEngineBoots, and the discovery and notInTimeWindow reports. That is the
-  second slice of seed#1376. Informs at v1 and v2c are still acknowledged.
+- **Dropped v3 informs.** For an inform, Seed is the authoritative engine,
+  which this slice did not build. The 2026-10-17 amendment below replaces this
+  point. Informs at v1 and v2c were acknowledged.
 
 A dropped datagram is logged at debug level with its reason and is never
 persisted. The trap listener's event kind is now `snmp-trap` for every
 version. Migration `00016` renames stored events and alert rules that used the
 old `snmp-trap-v2c`.
+
+## Amendment 2026-10-17: SNMPv3 informs (P-B4, seed#1376)
+
+For an inform the receiver is the authoritative engine (RFC 3414 1.5.1).
+gosnmp has no authoritative-engine support, so the listener adds it around
+gosnmp's decoder (`internal/listener/snmptrap/engine.go`).
+
+- **Seed has a persisted engine.** `snmp_engine` (migration `00036`) holds one
+  snmpEngineID and the snmpEngineBoots count. The ID is generated on the trap
+  listener's first start in RFC 3411's octets format under Mustard Seed
+  Networks' IANA enterprise number 67249 (`80 01 06 B1 05` and 12 random
+  octets), and it never changes after that. Boots is incremented on every
+  start and latches at 2147483647. snmpEngineTime counts seconds since that
+  start. A store that fails at start disables v3 informs and leaves the rest
+  of the listener running.
+- **Discovery is answered.** A GetRequest or inform that names any engine
+  other than Seed's, including the empty-engine probe of RFC 3414 §4, gets a
+  noAuthNoPriv `usmStatsUnknownEngineIDs` report. The report carries Seed's
+  engine ID, boots and time. A probe names no user, so a second decoder with
+  no credentials reads it. Nothing it decodes is published.
+- **Seed's own clock is enforced.** An authenticated inform is admitted only
+  when its boots equals Seed's and its time is within 150 seconds of Seed's
+  (RFC 3414 3.2.7 a). Otherwise Seed answers with an authNoPriv
+  `usmStatsNotInTimeWindows` report, from which the sender resynchronizes and
+  resends. The stale copy is never published. The vault users and stored
+  security level apply exactly as they do for traps.
+- **The response is Seed's own message.** An admitted inform is published and
+  answered with a Response at its own security level, signed and encrypted
+  under keys localized to Seed's engine. The security parameters that sign
+  replies live for one boot per credential, not one message. gosnmp starts
+  every copy's privacy salt counter at the same value, and a repeated salt
+  under one key within a boot repeats the AES keystream (RFC 3826 3.1.2.1).
+- **The event names the sender.** A v3 inform's authoritative engine is Seed,
+  so its event's `engineId` is the contextEngineID (RFC 3413 3.3), the
+  originator's own engine.
+
+Verified against net-snmp 5.9.4's `snmpinform` at authPriv (SHA-256/AES)
+and authNoPriv (SHA-512): discovery, then inform, then response. With `-Z`
+set to an earlier boot or an old time, the sender got the report, resent and
+was answered, and the event was stored once. After a daemon restart, boots
+was 2 under the same engine ID. A wrong privacy passphrase, or an authPriv
+user sending at noAuthNoPriv, timed out and stored nothing.
+
+v3 traps that Seed _sends_ (P-B3's alert channel) could reuse this engine.
+They are not built.
 
 ## Amendment 2026-10-04: the flow collector (P-C1, seed#3082)
 

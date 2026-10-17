@@ -134,12 +134,20 @@ func linkDownVarbinds() []gosnmp.SnmpPDU {
 // cleanup.
 func startListener(t *testing.T, creds snmptrap.CredentialSource, clock *manualClock) (string, *fakeSink) {
 	t.Helper()
-	addr := pickPort(t)
-	sink := &fakeSink{}
-	cfg := snmptrap.Config{BindAddr: addr, Sink: sink, Credentials: creds, Logger: silentLogger()}
+	cfg := snmptrap.Config{Credentials: creds}
 	if clock != nil {
 		cfg.Now = clock.Now
 	}
+	return startListenerWith(t, cfg)
+}
+
+// startListenerWith binds a listener over cfg on a free port with a fresh
+// sink, and stops it at cleanup.
+func startListenerWith(t *testing.T, cfg snmptrap.Config) (string, *fakeSink) {
+	t.Helper()
+	addr := pickPort(t)
+	sink := &fakeSink{}
+	cfg.BindAddr, cfg.Sink, cfg.Logger = addr, sink, silentLogger()
 	l, err := snmptrap.New(cfg)
 	if err != nil {
 		t.Fatalf("New: %v", err)
@@ -334,9 +342,10 @@ func TestV3Trap_CredentialRefresh(t *testing.T) {
 	}
 }
 
-// TestV3Inform_NotAcknowledged pins slice 1: a v3 inform needs Seed to be an
-// authoritative engine, so it is neither published nor answered.
-func TestV3Inform_NotAcknowledged(t *testing.T) {
+// TestV3Inform_NotAcknowledgedWithoutEngine: a v3 inform needs Seed to be an
+// authoritative engine, so with no engine store it is neither published nor
+// answered.
+func TestV3Inform_NotAcknowledgedWithoutEngine(t *testing.T) {
 	vault := &fakeCredentials{}
 	vault.set(alicePriv())
 	addr, sink := startListener(t, vault, nil)
