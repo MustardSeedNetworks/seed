@@ -21,7 +21,6 @@ src/i18n/dnt.ts                                                      # do-not-tr
 src/components/settings/SettingsSectionHeader.tsx   # story only
 src/components/ui/Alert.tsx                         # story + i18n test only
 src/components/ui/Combobox.tsx                      # story only
-src/components/ui/ConfirmModal.tsx                  # story only
 src/components/ui/DeviceSelector.tsx                # story + i18n test only
 src/components/ui/InputModal.tsx                    # story only
 src/components/ui/InterfaceSelector.tsx             # story + identity test only
