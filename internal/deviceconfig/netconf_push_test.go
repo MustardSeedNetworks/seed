@@ -284,11 +284,14 @@ func TestNETCONFCommitRefusedLeavesTheCandidateDiscarded(t *testing.T) {
 	require.Equal(t, "<a/>", d.candidate)
 }
 
-func TestDryRunRefusesAPlatformWithoutOne(t *testing.T) {
+// TestNXOSHasNoPushDialogue: NX-OS is read-only, so no step reaches it.
+func TestNXOSHasNoPushDialogue(t *testing.T) {
 	t.Parallel()
-	for _, p := range []deviceconfig.Platform{deviceconfig.PlatformCiscoIOS, deviceconfig.PlatformCiscoNXOS} {
-		_, err := deviceconfig.SSHFetcher{}.DryRun(fetchCtx(t), deviceconfig.DeviceRequest{Platform: p})
-		_, ok := errors.AsType[*deviceconfig.PlanRefusedError](err)
-		require.True(t, ok, "%s: %v", p, err)
-	}
+	req := deviceconfig.DeviceRequest{Platform: deviceconfig.PlatformCiscoNXOS}
+	_, err := deviceconfig.SSHFetcher{}.DryRun(fetchCtx(t), req)
+	_, ok := errors.AsType[*deviceconfig.PlanRefusedError](err)
+	require.True(t, ok, "%v", err)
+	err = deviceconfig.SSHFetcher{}.Commit(fetchCtx(t), req)
+	require.ErrorIs(t, err, deviceconfig.ErrCommand)
+	require.ErrorContains(t, err, "cannot commit a push on cisco-nxos")
 }

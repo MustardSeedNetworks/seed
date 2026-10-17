@@ -73,6 +73,25 @@ func TestApplyConfirmsAChangeThePostCheckFinds(t *testing.T) {
 	require.ErrorIs(t, err, deviceconfig.ErrPlanSpent, "a plan is applied at most once")
 }
 
+// TestApplyAnIOSMerge: an IOS plan, predicted from the backup, applies
+// through the same commit, post-check and confirm as a device-diffed one.
+func TestApplyAnIOSMerge(t *testing.T) {
+	t.Parallel()
+	f := newPushFixture(t, iosRunning, pushTarget("dct-1", "10.0.0.1", deviceconfig.PlatformCiscoIOS))
+	plan, err := f.pushes.Plan(context.Background(), planRequest("dct-1", deviceconfig.PushMerge,
+		"interface Gi1/0/1\n description uplink to core\n"))
+	require.NoError(t, err)
+	require.Equal(t, deviceconfig.PlanReady, plan.Outcome)
+
+	res, err := f.pushes.Apply(context.Background(), deviceconfig.ApplyRequest{
+		ClientID: client, PlanID: plan.PlanID, DiffSHA256: f.plans.plans[0].DiffSHA256, User: "admin",
+	})
+	require.NoError(t, err)
+	require.Equal(t, deviceconfig.ApplyConfirmed, res.Outcome, res.Reason)
+	require.Equal(t, []string{"commit", "dry-run", "confirm"}, f.device.steps)
+	require.Equal(t, deviceconfig.PlatformCiscoIOS, f.device.requests[0].Platform)
+}
+
 func TestApplyOutcomes(t *testing.T) {
 	t.Parallel()
 	unreachable := fmt.Errorf("%w: connection reset", deviceconfig.ErrUnreachable)
@@ -115,6 +134,15 @@ func TestApplyOutcomes(t *testing.T) {
 			outcome: deviceconfig.ApplyReverting,
 			steps:   []string{"commit", "dry-run", "rollback"},
 			reason:  "the device reverts by itself",
+		},
+		{
+			name: "the startup configuration is not saved",
+			arrange: func(f pushFixture) {
+				f.device.confirmErr = fmt.Errorf("%w: write memory: %% flash full", deviceconfig.ErrStartupNotSaved)
+			},
+			outcome: deviceconfig.ApplyConfirmed,
+			steps:   []string{"commit", "dry-run", "confirm"},
+			reason:  "a reload loses the change until it is saved",
 		},
 		{
 			name:    "the confirm fails",
@@ -174,13 +202,13 @@ func TestApplyRefusesBeforeALogin(t *testing.T) {
 			check: validation("not enabled"),
 		},
 		{
-			name: "a platform apply is not built for yet",
+			name: "the target turned read-only since the plan",
 			arrange: func(f pushFixture, _ *deviceconfig.ApplyRequest) {
 				tg := f.repo.targets["dct-1"]
-				tg.Platform = deviceconfig.PlatformAristaEOS
+				tg.Platform = deviceconfig.PlatformCiscoNXOS
 				f.repo.targets["dct-1"] = tg
 			},
-			check: validation("not available on arista-eos"),
+			check: validation("read-only"),
 		},
 	}
 	for _, tc := range tests {

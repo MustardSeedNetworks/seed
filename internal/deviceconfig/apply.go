@@ -12,6 +12,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 // ApplyOutcome is how an apply ended.
@@ -26,6 +27,10 @@ const (
 	ApplyDrifted    ApplyOutcome = "config_drifted"
 	ApplyFailed     ApplyOutcome = "failed"
 )
+
+// ErrStartupNotSaved is a confirmed push whose startup configuration could
+// not be written: the change runs, and a reload loses it.
+var ErrStartupNotSaved = errors.New("the startup configuration was not saved")
 
 // ErrPlanSpent is a plan that was already applied or has expired. A plan is
 // applied at most once; the admin plans again.
@@ -74,15 +79,6 @@ func (p *Pushes) checkApply(ctx context.Context, req ApplyRequest) (Plan, Target
 	t, err := p.pushTarget(ctx, req.ClientID, plan.TargetID)
 	if err != nil {
 		return Plan{}, Target{}, err
-	}
-	// Apply is built for Junos and NETCONF so far (ADR-0035 delivery slice 3);
-	// EOS and IOS follow. pushTarget has already refused NX-OS.
-	switch t.Platform {
-	case PlatformJuniperJunos, PlatformNETCONF:
-	case PlatformAristaEOS, PlatformCiscoIOS, PlatformCiscoNXOS:
-		return Plan{}, Target{}, ValidationError{
-			Msg: "applying a push is not available on " + string(t.Platform) + " yet",
-		}
 	}
 	return plan, t, nil
 }
@@ -190,19 +186,28 @@ func (p *Pushes) apply(ctx context.Context, t Target, plan Plan) ApplyResult {
 // confirm makes the commit permanent and backs the result up, so the stored
 // configuration is the device's and P-D2 alerts on the change.
 func (p *Pushes) confirm(ctx context.Context, t Target, req DeviceRequest) ApplyResult {
-	if err := p.onDevice(ctx, req, p.device.Confirm); err != nil {
+	var notes []string
+	switch err := p.onDevice(ctx, req, p.device.Confirm); {
+	case errors.Is(err, ErrStartupNotSaved):
+		notes = append(notes, fmt.Sprintf("%v; a reload loses the change until it is saved", err))
+	case err != nil:
 		return ApplyResult{Outcome: ApplyReverting, Reason: fmt.Sprintf(
 			"the confirm failed: %v; the device reverts by itself within %s", err, ConfirmWindow)}
 	}
+	res := ApplyResult{Outcome: ApplyConfirmed}
 	after, err := p.backups.backupOne(ctx, t)
 	switch {
 	case err != nil:
-		return ApplyResult{Outcome: ApplyConfirmed, Reason: "confirmed, but the backup after it failed: " + err.Error()}
+		notes = append(notes, "the backup after it failed: "+err.Error())
 	case after.Status != StatusOK:
-		return ApplyResult{Outcome: ApplyConfirmed, Reason: fmt.Sprintf(
-			"confirmed, but the backup after it failed: %s: %s", after.Status, after.Error)}
+		notes = append(notes, fmt.Sprintf("the backup after it failed: %s: %s", after.Status, after.Error))
+	default:
+		res.BackupID = after.BackupID
 	}
-	return ApplyResult{Outcome: ApplyConfirmed, BackupID: after.BackupID}
+	if len(notes) > 0 {
+		res.Reason = "confirmed, but " + strings.Join(notes, "; ")
+	}
+	return res
 }
 
 // onDevice runs one device step under the per-device timeout.
