@@ -145,15 +145,33 @@ time.
    the device will get, unique per client. Images are for IOS/IOS-XE, EOS and
    Junos only: NX-OS is read-only and a NETCONF target has no CLI to stage
    with.
-2. Seed pre-checks the platform, the running version (`show version`) and the
-   free flash space.
+2. Seed pre-checks the platform, the running version and image
+   (`show version`; EOS names its image in `show boot-config`) and the free
+   space on the running image's file system (`dir`). It refuses an image of
+   the running image's name, too little free space, and an IOS-XE device
+   booted in install mode (`packages.conf`), which takes an image with
+   `install add` rather than a boot statement. The copy goes beside the
+   running image.
 3. Seed copies the image as an SCP sink (`scp -t`) over the existing
-   `golang.org/x/crypto/ssh` client. As with NETCONF, the protocol is small
-   enough to write in place, so there is no new dependency.
+   `golang.org/x/crypto/ssh` client, streamed from disk. As with NETCONF, the
+   protocol is small enough to write in place, so there is no new dependency.
+   EOS's SCP server takes the Linux path (`/mnt/flash/<name>` for
+   `flash:<name>`). A copy that fails part way is deleted.
 4. The device verifies the copy (`verify /sha512` on IOS and EOS,
-   `file checksum hash sha-256` on Junos). A mismatch deletes the copy.
-5. Seed sets the new boot image and keeps the running image as the fallback
-   boot entry. Seed never deletes the running image.
+   `file checksum sha-256` on Junos). A mismatch deletes the copy.
+5. Seed sets the new boot image and keeps the running image as the fallback.
+   On IOS/IOS-XE the boot statements become the new image and then the
+   running image, are saved, and are read back; statements that cannot all
+   be set are put back as they were. EOS boots a single image (`boot system`,
+   written to its boot configuration at once): the running image stays on
+   flash, and falling back means booting it from Aboot. Seed never deletes the
+   running image.
+
+Staging is a job (`POST /api/v1/device-images/{id}/stage` `{targetId}`) that
+logs in with the target's push credential and shares the push's one job per
+target. It ends `boot_set`, `refused` (a pre-check, before anything was
+copied) or `failed`, and records the running version, which the reload checks
+the device has left.
 
 Reloading is a separate admin action with its own confirmation. After the
 reload, Seed checks the device is back on the expected version. Seed cannot
@@ -201,8 +219,10 @@ alert fires on the new configuration.
 3. Apply, confirmed commit, post-check and rollback for Junos and NETCONF.
 4. EOS apply, and IOS/IOS-XE merge apply.
 5. IOS/IOS-XE replace over the SCP sink (5a); then image upload with the
-   vendor hash (5b-1), and pre-checks, SCP staging, verification and boot
-   set (5b-2); reload as its own action (5c).
+   vendor hash (5b-1); pre-checks, SCP staging, verification and boot set on
+   IOS/IOS-XE and EOS (5b-2) and on Junos (5b-3), where setting the boot image
+   is a `request system software add` of the copy and needs its own design;
+   reload as its own action (5c).
 
 Tests drive an in-process `x/crypto/ssh` server that scripts each platform's
 dialogue, and the apply use-case is driven over a stand-in device through

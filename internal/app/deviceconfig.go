@@ -191,14 +191,16 @@ func (a deviceConfigRepo) LatestConfig(
 }
 
 // NewDeviceConfigPushes builds the configuration push use-case (P-D3) over the
-// backup use-case, the database's plan store, and the device side of a push
-// (deviceconfig.SSHFetcher in production). Push events go to the database
+// backup use-case, the database's plan store, the image use-case images are
+// staged from, and the device side of a push (deviceconfig.SSHFetcher in
+// production). Push events go to the database
 // audit log; with no database wired the use-case's stores answer 503 first.
 func NewDeviceConfigPushes(
-	persist func() *Persistence, backups *deviceconfig.Service, device deviceconfig.PushDevice,
+	persist func() *Persistence, backups *deviceconfig.Service, images *deviceconfig.Images,
+	device deviceconfig.PushDevice,
 ) (*deviceconfig.Pushes, error) {
 	db := lazyHandle(persist)
-	return deviceconfig.NewPushes(backups, deviceConfigRepo{db: db}, device, pushAudit(db))
+	return deviceconfig.NewPushes(backups, deviceConfigRepo{db: db}, images, device, pushAudit(db))
 }
 
 // NewDeviceConfigImages builds the image use-case (P-D3) over the database's
@@ -308,6 +310,14 @@ func (a deviceConfigRepo) ListImages(ctx context.Context, clientID string) ([]de
 		return nil, err
 	}
 	return repo.ListImages(ctx, clientID)
+}
+
+func (a deviceConfigRepo) GetImage(ctx context.Context, clientID, id string) (deviceconfig.Image, error) {
+	repo, err := a.repo()
+	if err != nil {
+		return deviceconfig.Image{}, err
+	}
+	return repo.GetImage(ctx, clientID, id)
 }
 
 func (a deviceConfigRepo) DeleteImage(ctx context.Context, clientID, id string) error {

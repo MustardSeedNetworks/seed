@@ -5,7 +5,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"io"
+	"os"
 	"slices"
 	"strings"
 	"sync"
@@ -93,9 +96,14 @@ type memDevice struct {
 	afterErr error
 	// commitErr, confirmErr and rollbackErr fail that step.
 	commitErr, confirmErr, rollbackErr error
-	requests                           []deviceconfig.DeviceRequest
-	steps                              []string
-	// gate, when set, holds each dry run until it is closed.
+	// facts is what ImageFacts reads; factsErr, copyErr, verifyErr and
+	// bootErr fail that staging step. copied is what CopyImage received.
+	facts                                 deviceconfig.ImageFacts
+	factsErr, copyErr, verifyErr, bootErr error
+	copied                                string
+	requests                              []deviceconfig.DeviceRequest
+	steps                                 []string
+	// gate, when set, holds each dry run and image copy until it is closed.
 	gate chan struct{}
 }
 
@@ -135,6 +143,32 @@ func (m *memDevice) Rollback(_ context.Context, req deviceconfig.DeviceRequest) 
 	return m.step("rollback", req, m.rollbackErr)
 }
 
+func (m *memDevice) ImageFacts(_ context.Context, req deviceconfig.DeviceRequest) (deviceconfig.ImageFacts, error) {
+	return m.facts, m.step("facts", req, m.factsErr)
+}
+
+func (m *memDevice) CopyImage(
+	_ context.Context, req deviceconfig.DeviceRequest, img deviceconfig.DeviceImage, body io.Reader,
+) error {
+	err := m.step("copy "+img.Path(), req, m.copyErr)
+	if m.gate != nil {
+		<-m.gate
+	}
+	b, readErr := io.ReadAll(body)
+	m.mu.Lock()
+	m.copied = string(b)
+	m.mu.Unlock()
+	return errors.Join(err, readErr)
+}
+
+func (m *memDevice) VerifyImage(_ context.Context, req deviceconfig.DeviceRequest, img deviceconfig.DeviceImage) error {
+	return m.step("verify "+img.SHA512[:8], req, m.verifyErr)
+}
+
+func (m *memDevice) SetBoot(_ context.Context, req deviceconfig.DeviceRequest, img deviceconfig.DeviceImage) error {
+	return m.step("boot "+img.Path()+" then "+img.Fallback, req, m.bootErr)
+}
+
 type memAudit struct {
 	mu     sync.Mutex
 	events []deviceconfig.PushAuditEvent
@@ -163,6 +197,8 @@ const iosRunning = "hostname edge\n!\narchive\n path flash:seed-archive\n!\n" +
 type pushFixture struct {
 	repo   *memRepo
 	plans  *memPlans
+	images *deviceconfig.Images
+	store  *memImages
 	device *memDevice
 	audit  *memAudit
 	fetch  *scriptedFetcher
@@ -194,7 +230,15 @@ func newPushFixture(t *testing.T, running string, targets ...deviceconfig.Target
 	}
 	svc, err := deviceconfig.NewService(f.repo, pushCreds(), prefixCipher{}, f.fetch, &memAlerts{})
 	require.NoError(t, err)
-	f.pushes, err = deviceconfig.NewPushes(svc, f.plans, f.device, f.audit.record)
+	dir := t.TempDir()
+	f.store = &memImages{}
+	f.images, err = deviceconfig.NewImages(
+		f.store,
+		func() (*os.Root, error) { return os.OpenRoot(dir) },
+		f.audit.record,
+	)
+	require.NoError(t, err)
+	f.pushes, err = deviceconfig.NewPushes(svc, f.plans, f.images, f.device, f.audit.record)
 	require.NoError(t, err)
 	return f
 }
@@ -546,6 +590,6 @@ func TestSetPushCredentials(t *testing.T) {
 
 func TestNewPushesNeedsEveryDependency(t *testing.T) {
 	t.Parallel()
-	_, err := deviceconfig.NewPushes(nil, &memPlans{}, &memDevice{}, (&memAudit{}).record)
+	_, err := deviceconfig.NewPushes(nil, &memPlans{}, nil, &memDevice{}, (&memAudit{}).record)
 	require.ErrorIs(t, err, deviceconfig.ErrUnavailable)
 }

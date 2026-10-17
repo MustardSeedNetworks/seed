@@ -42,6 +42,8 @@ type deviceOpts struct {
 	shell func(ch ssh.Channel)
 	// scp, when set, serves "scp -t <path>" on the channel.
 	scp func(ch ssh.Channel, path string)
+	// exec, when set, answers an exec command commands does not have.
+	exec func(command string) (string, bool)
 }
 
 func startSSHDevice(t *testing.T, opts deviceOpts) sshDevice {
@@ -143,6 +145,9 @@ func serveRequest(ch ssh.Channel, req *ssh.Request, chReqs <-chan *ssh.Request, 
 	command := string(req.Payload[4:])
 	path, isSCP := strings.CutPrefix(command, "scp -t ")
 	out, known := opts.commands[command]
+	if !known && opts.exec != nil {
+		out, known = opts.exec(command)
+	}
 	switch {
 	case isSCP && opts.scp != nil:
 		opts.scp(ch, path)

@@ -31,7 +31,9 @@ func (s *Server) initVaultUseCases() {
 		alertWriter,
 	); backupErr == nil {
 		s.deviceConfigs = svc
-		if pushes, pushErr := app.NewDeviceConfigPushes(s.persistence, svc, deviceconfig.SSHFetcher{}); pushErr == nil {
+		if pushes, pushErr := app.NewDeviceConfigPushes(
+			s.persistence, svc, s.deviceImages, deviceconfig.SSHFetcher{},
+		); pushErr == nil {
 			s.deviceConfigPushes = pushes
 		}
 	}

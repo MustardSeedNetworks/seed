@@ -51,6 +51,17 @@ func (m *memImages) ListImages(_ context.Context, clientID string) ([]deviceconf
 	return out, nil
 }
 
+func (m *memImages) GetImage(_ context.Context, clientID, id string) (deviceconfig.Image, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, img := range m.images {
+		if img.ID == id && img.ClientID == clientID {
+			return img, nil
+		}
+	}
+	return deviceconfig.Image{}, deviceconfig.ErrNotFound
+}
+
 func (m *memImages) DeleteImage(_ context.Context, clientID, id string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
