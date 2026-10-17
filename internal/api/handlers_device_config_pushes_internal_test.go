@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -64,6 +65,39 @@ func (d *recordingDevice) Rollback(_ context.Context, req deviceconfig.DeviceReq
 	return nil
 }
 
+func (d *recordingDevice) ImageFacts(
+	_ context.Context, req deviceconfig.DeviceRequest,
+) (deviceconfig.ImageFacts, error) {
+	d.record("facts", req)
+	return deviceconfig.ImageFacts{
+		Version: "17.09.04a", RunningImage: "flash:cat9k-17.09.04a.bin", Dir: "flash:", FreeBytes: 1 << 30,
+	}, nil
+}
+
+func (d *recordingDevice) CopyImage(
+	_ context.Context, req deviceconfig.DeviceRequest, img deviceconfig.DeviceImage, body io.Reader,
+) error {
+	if _, err := io.Copy(io.Discard, body); err != nil {
+		return err
+	}
+	d.record("copy "+img.Path(), req)
+	return nil
+}
+
+func (d *recordingDevice) VerifyImage(
+	_ context.Context,
+	req deviceconfig.DeviceRequest,
+	_ deviceconfig.DeviceImage,
+) error {
+	d.record("verify", req)
+	return nil
+}
+
+func (d *recordingDevice) SetBoot(_ context.Context, req deviceconfig.DeviceRequest, _ deviceconfig.DeviceImage) error {
+	d.record("boot", req)
+	return nil
+}
+
 // newDeviceConfigPushTestServer is newDeviceConfigTestServer with the push
 // use-case wired over a recording device and an admin seeded.
 func newDeviceConfigPushTestServer(t *testing.T) (*Server, *database.DB, *recordingDevice) {
@@ -71,7 +105,12 @@ func newDeviceConfigPushTestServer(t *testing.T) (*Server, *database.DB, *record
 	s, db := newDeviceConfigTestServer(t)
 	seedRoledUser(t, db, dcAdmin, roles.Admin)
 	device := &recordingDevice{}
-	pushes, err := app.NewDeviceConfigPushes(s.persistence, s.deviceConfigs, device)
+	images, err := app.NewDeviceConfigImages(s.persistence)
+	if err != nil {
+		t.Fatalf("build image use-case: %v", err)
+	}
+	s.deviceImages = images
+	pushes, err := app.NewDeviceConfigPushes(s.persistence, s.deviceConfigs, images, device)
 	if err != nil {
 		t.Fatalf("build push use-case: %v", err)
 	}
@@ -85,8 +124,14 @@ func newDeviceConfigPushTestServer(t *testing.T) (*Server, *database.DB, *record
 // the push credential's id.
 func pushReadyTarget(t *testing.T, s *Server) (deviceconfig.Target, string) {
 	t.Helper()
+	return pushReadyTargetOn(t, s, deviceconfig.PlatformNETCONF)
+}
+
+// pushReadyTargetOn is pushReadyTarget for a target of another platform.
+func pushReadyTargetOn(t *testing.T, s *Server, platform deviceconfig.Platform) (deviceconfig.Target, string) {
+	t.Helper()
 	rec := callDeviceConfig(t, s.handleDeviceConfigTargets, http.MethodPost, deviceConfigTargetsPath,
-		`{"name":"core","host":"10.0.0.1","platform":"netconf","credentialsId":"`+
+		`{"name":"core","host":"10.0.0.1","platform":"`+string(platform)+`","credentialsId":"`+
 			createSSHCredential(t, s, "s3cret")+`"}`)
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("create target: %d %s", rec.Code, rec.Body.String())

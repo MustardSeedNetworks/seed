@@ -43,6 +43,12 @@ func TestDeviceImages(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, other)
 
+	got, err := repo.GetImage(ctx, database.DefaultClientID, first.ID)
+	require.NoError(t, err)
+	require.Equal(t, *first, got)
+	_, err = repo.GetImage(ctx, "tenant-x", first.ID)
+	require.ErrorIs(t, err, deviceconfig.ErrNotFound, "another client's image is not found")
+
 	require.ErrorIs(t, repo.DeleteImage(ctx, "tenant-x", first.ID), deviceconfig.ErrNotFound)
 	require.NoError(t, repo.DeleteImage(ctx, database.DefaultClientID, first.ID))
 	require.ErrorIs(t, repo.DeleteImage(ctx, database.DefaultClientID, first.ID), deviceconfig.ErrNotFound)

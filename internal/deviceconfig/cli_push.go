@@ -596,7 +596,7 @@ func iosReplace(client *ssh.Client, req DeviceRequest) error {
 	if !strings.HasSuffix(text, "\n") {
 		text += "\n"
 	}
-	copyErr := scpSink(client, file, []byte(text))
+	copyErr := scpSink(client, file, int64(len(text)), strings.NewReader(text))
 	return onSession(client, func(session *ssh.Session) error {
 		s, err := openPrivileged(session)
 		if err != nil {

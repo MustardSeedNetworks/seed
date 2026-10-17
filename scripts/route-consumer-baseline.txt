@@ -21,6 +21,7 @@
 /api/v1/device-config-targets/{targetId}/push # scheduled: UI #3570; P-D3 plan backend (#3499) landed first, API-driven until then
 /api/v1/device-images                     # scheduled: UI #3591; P-D3 image upload backend (#3499) landed first, API-driven until then
 /api/v1/device-images/{imageId}           # scheduled: UI #3591; P-D3 image upload backend (#3499) landed first, API-driven until then
+/api/v1/device-images/{imageId}/stage     # scheduled: UI #3596; P-D3 image staging backend (#3499) landed first, API-driven until then
 /api/v1/discovery/engine                  # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/capabilities     # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/device/{mac}     # PAT-only allow-list (owner 2026-09-04)

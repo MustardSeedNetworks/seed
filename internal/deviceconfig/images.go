@@ -4,7 +4,7 @@ package deviceconfig
 // uploads an image with the hash its vendor publishes; Seed hashes the bytes
 // as they arrive and keeps the image only when the two agree. Both SHA-256
 // and SHA-512 are kept, because staging asks the device to verify its copy
-// with the one its platform computes. Nothing in this file talks to a device.
+// with the one its platform computes. Staging is in stage.go.
 
 import (
 	"context"
@@ -61,6 +61,8 @@ type ImageStore interface {
 	InsertImage(ctx context.Context, img *Image) error
 	// ListImages returns the client's images, newest first.
 	ListImages(ctx context.Context, clientID string) ([]Image, error)
+	// GetImage returns one image record, or answers ErrNotFound.
+	GetImage(ctx context.Context, clientID, id string) (Image, error)
 	// DeleteImage removes an image record, or answers ErrNotFound.
 	DeleteImage(ctx context.Context, clientID, id string) error
 }
@@ -268,6 +270,24 @@ func (s *Images) removeStaleUploads(root *os.Root) {
 // ListImages returns the client's images, newest first.
 func (s *Images) ListImages(ctx context.Context, clientID string) ([]Image, error) {
 	return s.store.ListImages(ctx, clientID)
+}
+
+// open returns an image record and its file, for staging.
+func (s *Images) open(ctx context.Context, clientID, id string) (Image, *os.File, error) {
+	img, err := s.store.GetImage(ctx, clientID, id)
+	if err != nil {
+		return Image{}, nil, err
+	}
+	root, err := s.dir()
+	if err != nil {
+		return Image{}, nil, err
+	}
+	defer func() { _ = root.Close() }()
+	f, err := root.Open(img.ID)
+	if err != nil {
+		return Image{}, nil, fmt.Errorf("open image %s: %w", img.ID, err)
+	}
+	return img, f, nil
 }
 
 // DeleteImage removes an image and its file.

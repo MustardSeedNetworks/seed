@@ -12,6 +12,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 	"time"
@@ -157,6 +158,18 @@ type PushDevice interface {
 	Confirm(ctx context.Context, req DeviceRequest) error
 	// Rollback undoes the pending commit now rather than at the timer.
 	Rollback(ctx context.Context, req DeviceRequest) error
+	// ImageFacts reads what staging an image checks first: the version and
+	// image the device runs, and the free space beside that image.
+	ImageFacts(ctx context.Context, req DeviceRequest) (ImageFacts, error)
+	// CopyImage copies an image's bytes to the device as img. A copy that
+	// fails part way is deleted.
+	CopyImage(ctx context.Context, req DeviceRequest, img DeviceImage, body io.Reader) error
+	// VerifyImage has the device hash its copy. A copy that does not match
+	// is deleted and answers ErrImageCorrupt.
+	VerifyImage(ctx context.Context, req DeviceRequest, img DeviceImage) error
+	// SetBoot makes img the image the device boots next, keeping the image
+	// it runs as the fallback.
+	SetBoot(ctx context.Context, req DeviceRequest, img DeviceImage) error
 }
 
 // PushAuditEvent is one push action for the audit log. Detail never carries
@@ -202,6 +215,7 @@ type PlanResult struct {
 type Pushes struct {
 	backups *Service
 	plans   PlanStore
+	images  *Images
 	device  PushDevice
 	audit   func(context.Context, PushAuditEvent) error
 
@@ -211,12 +225,15 @@ type Pushes struct {
 
 // NewPushes builds the use-case. Every dependency is required.
 func NewPushes(
-	backups *Service, plans PlanStore, device PushDevice, audit func(context.Context, PushAuditEvent) error,
+	backups *Service, plans PlanStore, images *Images, device PushDevice,
+	audit func(context.Context, PushAuditEvent) error,
 ) (*Pushes, error) {
-	if backups == nil || plans == nil || device == nil || audit == nil {
+	if backups == nil || plans == nil || images == nil || device == nil || audit == nil {
 		return nil, ErrUnavailable
 	}
-	return &Pushes{backups: backups, plans: plans, device: device, audit: audit, busy: map[string]struct{}{}}, nil
+	return &Pushes{
+		backups: backups, plans: plans, images: images, device: device, audit: audit, busy: map[string]struct{}{},
+	}, nil
 }
 
 // Check refuses a plan request that can be refused without a login: an

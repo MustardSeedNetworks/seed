@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/deviceconfig"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
+	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
 const testImage = "cat9k_iosxe image bytes"
@@ -150,5 +152,89 @@ func TestDeviceImageUploadRefusals(t *testing.T) {
 	}
 	if rec := callDeleteImage(t, s, "dim-nope"); rec.Code != http.StatusBadRequest {
 		t.Errorf("malformed id: %d, want 400", rec.Code)
+	}
+}
+
+func callStageImage(t *testing.T, s *Server, imageID, body string) *httptest.ResponseRecorder {
+	t.Helper()
+	req := withClaim(newAuthedRequest(http.MethodPost, deviceImagesPath+"/"+imageID+"/stage", []byte(body), dcAdmin))
+	req.SetPathValue("imageId", imageID)
+	rec := httptest.NewRecorder()
+	s.handleDeviceImageStage(rec, req)
+	return rec
+}
+
+// TestDeviceImageStageThroughTheAPI is the slice's acceptance through the
+// API: an admin stages an uploaded image on an IOS target with pushing on,
+// the job copies, verifies and sets the boot image with the push login, and
+// every step is audited against the image.
+func TestDeviceImageStageThroughTheAPI(t *testing.T) {
+	s, db, device := newDeviceConfigPushTestServer(t)
+	tgt, pushCred := pushReadyTargetOn(t, s, deviceconfig.PlatformCiscoIOS)
+	const name = "cat9k_iosxe.17.12.04.SPA.bin"
+	up := uploadImage(t, s, name, imageSHA512(testImage), testImage)
+	if up.Code != http.StatusCreated {
+		t.Fatalf("upload: %d %s", up.Code, up.Body.String())
+	}
+	img := decodeInto[deviceconfig.Image](t, up)
+
+	rec := callStageImage(t, s, img.ID, `{"targetId":"`+tgt.ID+`"}`)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("stage: %d %s", rec.Code, rec.Body.String())
+	}
+	jobID := decodeJob(t, rec.Body).ID
+	var job jobs.Job
+	waitFor(t, "staging finishes", func() bool {
+		job, _ = s.jobsRunner().Get(jobID)
+		return job.State.Terminal()
+	})
+	res, ok := job.Result.(deviceconfig.StageResult)
+	if job.State != jobs.StateSucceeded || !ok || res.Outcome != deviceconfig.StageBootSet {
+		t.Fatalf("staging job = %s %+v (%s), want boot_set", job.State, job.Result, job.Err)
+	}
+	if res.BootImage != "flash:"+name || res.RunningVersion != "17.09.04a" {
+		t.Errorf("staging result = %+v", res)
+	}
+
+	device.mu.Lock()
+	steps, requests := slices.Clone(device.steps), slices.Clone(device.requests)
+	device.mu.Unlock()
+	if want := []string{"facts", "copy flash:" + name, "verify", "boot"}; !slices.Equal(steps[len(steps)-4:], want) {
+		t.Errorf("device steps = %v, want them to end %v", steps, want)
+	}
+	if last := requests[len(requests)-1]; last.Password != "wr1te" {
+		t.Errorf("staging logged in with %q, want the push credential %s", last.Password, pushCred)
+	}
+	requireImageAudit(t, db, img.ID, "device_config.image.uploaded", "device_config.image.stage_started",
+		"device_config.image.staged", "device_config.image.verified", "device_config.image.boot_set")
+}
+
+func TestDeviceImageStageRefusals(t *testing.T) {
+	s, _, _ := newDeviceConfigPushTestServer(t)
+	tgt, _ := pushReadyTarget(t, s)
+	up := uploadImage(t, s, "cat9k.bin", imageSHA512(testImage), testImage)
+	if up.Code != http.StatusCreated {
+		t.Fatalf("upload: %d %s", up.Code, up.Body.String())
+	}
+	img := decodeInto[deviceconfig.Image](t, up)
+
+	for _, tc := range []struct {
+		name, imageID, body, want string
+		code                      int
+	}{
+		{"bad image id", "nope", `{"targetId":"` + tgt.ID + `"}`, "invalid image id", http.StatusBadRequest},
+		{"no target", img.ID, `{}`, "targetId is required", http.StatusBadRequest},
+		{"unknown image", "dim-000000000000", `{"targetId":"` + tgt.ID + `"}`, "Not found", http.StatusNotFound},
+		{
+			"another platform", img.ID, `{"targetId":"` + tgt.ID + `"}`,
+			"the image is for cisco-ios and the target is netconf", http.StatusBadRequest,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := callStageImage(t, s, tc.imageID, tc.body)
+			if rec.Code != tc.code || !strings.Contains(rec.Body.String(), tc.want) {
+				t.Errorf("stage = %d %s, want %d with %q", rec.Code, rec.Body.String(), tc.code, tc.want)
+			}
+		})
 	}
 }
