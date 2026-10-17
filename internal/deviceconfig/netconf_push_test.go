@@ -202,11 +202,11 @@ func TestNETCONFDryRunFailures(t *testing.T) {
 	}
 }
 
-func TestDryRunRefusesACLIPlatform(t *testing.T) {
+func TestDryRunRefusesAPlatformWithoutOne(t *testing.T) {
 	t.Parallel()
-	_, err := deviceconfig.SSHFetcher{}.DryRun(fetchCtx(t), deviceconfig.DryRunRequest{
-		Platform: deviceconfig.PlatformJuniperJunos,
-	})
-	_, ok := errors.AsType[*deviceconfig.PlanRefusedError](err)
-	require.True(t, ok, "%v", err)
+	for _, p := range []deviceconfig.Platform{deviceconfig.PlatformCiscoIOS, deviceconfig.PlatformCiscoNXOS} {
+		_, err := deviceconfig.SSHFetcher{}.DryRun(fetchCtx(t), deviceconfig.DryRunRequest{Platform: p})
+		_, ok := errors.AsType[*deviceconfig.PlanRefusedError](err)
+		require.True(t, ok, "%s: %v", p, err)
+	}
 }

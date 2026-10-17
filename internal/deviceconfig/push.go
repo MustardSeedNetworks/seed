@@ -226,15 +226,13 @@ func (p *Pushes) check(ctx context.Context, req PlanRequest) (Target, error) {
 		return Target{}, ValidationError{
 			Msg: "cisco-nxos is read-only: it has no device-side revert, so a push that cut Seed off could not be undone",
 		}
-	case PlatformJuniperJunos, PlatformAristaEOS:
-		// ADR-0035 delivers the CLI dry runs of these platforms in a later
-		// slice; until then they are refused rather than predicted.
-		return Target{}, ValidationError{Msg: string(t.Platform) + " push is not available yet"}
 	case PlatformNETCONF:
-		if err = checkXMLCandidate(req.Candidate); err != nil {
-			return Target{}, ValidationError{Msg: err.Error()}
-		}
-	case PlatformCiscoIOS:
+		err = checkXMLCandidate(req.Candidate)
+	case PlatformCiscoIOS, PlatformJuniperJunos, PlatformAristaEOS:
+		err = checkCLICandidate(t.Platform, req.Candidate)
+	}
+	if err != nil {
+		return Target{}, ValidationError{Msg: err.Error()}
 	}
 	return t, nil
 }

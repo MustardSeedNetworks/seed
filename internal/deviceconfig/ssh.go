@@ -47,17 +47,27 @@ func (SSHFetcher) Fetch(ctx context.Context, req FetchRequest) (FetchResult, err
 	return FetchResult{Output: output}, nil
 }
 
-// DryRun previews a candidate on the device and changes nothing. Only NETCONF
-// has a dialogue so far; Pushes refuses the other platforms before a login.
+// DryRun previews a candidate on the device and changes nothing. IOS has no
+// device dialogue (Pushes predicts its diff) and NX-OS is read-only.
 func (SSHFetcher) DryRun(ctx context.Context, req DryRunRequest) (DryRunResult, error) {
-	if req.Platform != PlatformNETCONF {
-		return DryRunResult{}, &PlanRefusedError{Reason: string(req.Platform) + " has no dry run"}
+	var dryRun func(*ssh.Session, PushMode, string) (DryRunResult, error)
+	switch req.Platform {
+	case PlatformNETCONF:
+		dryRun = netconfDryRun
+	case PlatformJuniperJunos:
+		dryRun = junosDryRun
+	case PlatformAristaEOS:
+		dryRun = eosDryRun
+	case PlatformCiscoIOS, PlatformCiscoNXOS:
+		return DryRunResult{}, &PlanRefusedError{Reason: string(req.Platform) + " has no device dry run"}
+	default:
+		return DryRunResult{}, &PlanRefusedError{Reason: string(req.Platform) + " is not a supported platform"}
 	}
 	var res DryRunResult
 	err := withSession(ctx, req.Host, req.Port, req.User, req.Password, req.PinnedHostKey,
 		func(session *ssh.Session) error {
 			var runErr error
-			res, runErr = netconfDryRun(session, req.Mode, req.Candidate)
+			res, runErr = dryRun(session, req.Mode, req.Candidate)
 			return runErr
 		})
 	return res, err
