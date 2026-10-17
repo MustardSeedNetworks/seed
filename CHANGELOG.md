@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.280.0](https://github.com/MustardSeedNetworks/seed/compare/v0.279.0...v0.280.0) (2026-10-17)
+
+
+### Features
+
+* **deviceconfig:** stage images on IOS and EOS devices (P-D3) ([#3597](https://github.com/MustardSeedNetworks/seed/issues/3597)) ([ca7c4a1](https://github.com/MustardSeedNetworks/seed/commit/ca7c4a11285842f5ab35d9e03cfd01d8324f7ffa))
+
+
+### Miscellaneous
+
+* **deps:** update dependency fast-uri to v4.2.2 ([#3594](https://github.com/MustardSeedNetworks/seed/issues/3594)) ([eff9cb6](https://github.com/MustardSeedNetworks/seed/commit/eff9cb6001dbf76cb03116834223f6b5dc419aeb))
+
 ## [0.279.0](https://github.com/MustardSeedNetworks/seed/compare/v0.278.0...v0.279.0) (2026-10-17)
 
 
