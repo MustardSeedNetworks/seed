@@ -400,6 +400,7 @@ export interface AlertsConfig {
   webhook: AlertWebhookConfig;
   email: AlertEmailConfig;
   syslog: AlertSyslogConfig;
+  trap: AlertTrapConfig;
   escalations?: AlertEscalationConfig[];
 }
 export interface AlertWebhookConfig {
@@ -419,6 +420,11 @@ export interface AlertSyslogConfig {
   host: string;
   port: number;
   transport: string;
+}
+export interface AlertTrapConfig {
+  host: string;
+  port: number;
+  community: string;
 }
 export interface AlertEscalationConfig {
   rule: string;

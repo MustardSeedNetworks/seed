@@ -158,6 +158,7 @@ func ApplyAlertReceivers(cfg *config.Config, m *alertdelivery.Manager) {
 	email.To = slices.Clone(email.To)
 	ladders, ladderErr := management.EscalationLadders(cfg.Alerts.Escalations)
 	syslog := cfg.Alerts.Syslog
+	trap := cfg.Alerts.Trap
 	cfg.RUnlock()
 
 	// The settings write refuses a ladder that could not run, so this is a
@@ -202,6 +203,16 @@ func ApplyAlertReceivers(cfg *config.Config, m *alertdelivery.Manager) {
 		Port:      syslog.Port,
 		Transport: alertdelivery.SyslogTransport(syslog.Transport),
 	})
+
+	if trap.Host == "" {
+		m.ApplyTrap(alertdelivery.TrapConfig{})
+	} else if community, err := decryptSecret(cfg, trap.Community); err != nil {
+		logging.GetLogger().Error("alert trap community could not be decrypted; "+
+			"traps are off until it is set again", "error", err)
+		m.ApplyTrap(alertdelivery.TrapConfig{})
+	} else {
+		m.ApplyTrap(alertdelivery.TrapConfig{Host: trap.Host, Port: trap.Port, Community: community})
+	}
 }
 
 // decryptSecret returns stored keyring ciphertext as plaintext. A value

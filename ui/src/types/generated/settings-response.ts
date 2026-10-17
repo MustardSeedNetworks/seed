@@ -67,6 +67,7 @@ export interface AlertSettings {
   email: EmailSettings;
   escalations: EscalationLadder[];
   syslog: SyslogSettings;
+  trap: TrapSettings;
 }
 export interface WebhookSettings {
   url: string;
@@ -88,12 +89,17 @@ export interface EscalationLadder {
 }
 export interface EscalationStage {
   afterSeconds: number;
-  channels: ('webhook' | 'email' | 'syslog')[];
+  channels: ('webhook' | 'email' | 'syslog' | 'trap')[];
 }
 export interface SyslogSettings {
   host: string;
   port: number;
   transport: string;
+}
+export interface TrapSettings {
+  host: string;
+  port: number;
+  communitySet: boolean;
 }
 export interface DisplaySettings {
   showPublicIP: boolean;

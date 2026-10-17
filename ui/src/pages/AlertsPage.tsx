@@ -79,6 +79,7 @@ const DELIVERY_LABEL = {
   webhook: 'alerts.labelDeliveryWebhook',
   email: 'alerts.labelDeliveryEmail',
   syslog: 'alerts.labelDeliverySyslog',
+  trap: 'alerts.labelDeliveryTrap',
 } as const satisfies Record<AlertDelivery['channel'], string>;
 
 /** The page's own translator, so the helpers below keep its key checking. */

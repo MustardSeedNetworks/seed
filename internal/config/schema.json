@@ -2021,6 +2021,9 @@
         },
         "syslog": {
           "$ref": "#/$defs/AlertSyslogConfig"
+        },
+        "trap": {
+          "$ref": "#/$defs/AlertTrapConfig"
         }
       }
     },
@@ -2069,7 +2072,7 @@
           "minItems": 1,
           "items": {
             "type": "string",
-            "enum": ["webhook", "email", "syslog"]
+            "enum": ["webhook", "email", "syslog", "trap"]
           }
         }
       }
@@ -2100,6 +2103,30 @@
             "tcp",
             "tls"
           ],
+          "default": ""
+        }
+      }
+    },
+    "AlertTrapConfig": {
+      "type": "object",
+      "description": "SNMP trap receiver alerts are sent to as SNMPv2c notifications (SEED-ALERT-MIB). An empty host means trap sending is off and no outbound datagram is sent",
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "type": "string",
+          "description": "Trap receiver host name or address, without scheme or port; empty disables traps",
+          "default": ""
+        },
+        "port": {
+          "type": "integer",
+          "description": "Trap receiver port; 0 means the snmptrap port, 162",
+          "minimum": 0,
+          "maximum": 65535,
+          "default": 0
+        },
+        "community": {
+          "type": "string",
+          "description": "SNMPv2c community the receiver admits, stored as keyring ciphertext (enc: prefix)",
           "default": ""
         }
       }

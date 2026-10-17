@@ -42,6 +42,9 @@ func TestLadderValidate(t *testing.T) {
 		{"syslog stage", escalation.Ladder{Rule: "r", Stages: []escalation.Stage{
 			stage(5*time.Minute, alerts.ChannelSyslog),
 		}}, true},
+		{"trap stage", escalation.Ladder{Rule: "r", Stages: []escalation.Stage{
+			stage(5*time.Minute, alerts.ChannelTrap),
+		}}, true},
 		{"no rule", escalation.Ladder{Stages: []escalation.Stage{stage(time.Minute, alerts.ChannelWebhook)}}, false},
 		{"no stage", escalation.Ladder{Rule: "r"}, false},
 		{"six stages", escalation.Ladder{Rule: "r", Stages: []escalation.Stage{

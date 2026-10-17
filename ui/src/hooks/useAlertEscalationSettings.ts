@@ -22,7 +22,7 @@ import type {
 } from '../types/generated/settings-response';
 import type { SaveStatus } from '../types/settings';
 
-export const ESCALATION_CHANNELS = ['webhook', 'email', 'syslog'] as const;
+export const ESCALATION_CHANNELS = ['webhook', 'email', 'syslog', 'trap'] as const;
 
 export type EscalationChannel = (typeof ESCALATION_CHANNELS)[number];
 

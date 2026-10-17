@@ -589,6 +589,7 @@
     "channelWebhook": "Webhook",
     "channelEmail": "Correo",
     "channelSyslog": "Syslog",
+    "channelTrap": "Trap SNMP",
     "removeStage": "Quitar la etapa {{stage}}",
     "addStage": "Añadir etapa",
     "removeLadder": "Quitar escalera",

@@ -34,7 +34,7 @@ export interface Alert {
   escalatedAt?: string;
 }
 export interface AlertDelivery {
-  channel: 'webhook' | 'email' | 'syslog';
+  channel: 'webhook' | 'email' | 'syslog' | 'trap';
   status: 'pending' | 'delivered' | 'failed' | 'dropped';
   attemptedAt?: string;
   error?: string;

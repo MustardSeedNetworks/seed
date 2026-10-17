@@ -354,6 +354,7 @@ export const API_GET_BODIES: Record<string, unknown> = {
     ...SETTINGS_RESPONSE,
     alerts: {
       syslog: SETTINGS_RESPONSE.alerts.syslog,
+      trap: SETTINGS_RESPONSE.alerts.trap,
       webhook: { url: 'https://hooks.example.test/seed', secretSet: true },
       email: {
         host: 'smtp.example.test',

@@ -55,6 +55,7 @@ export function AlertEscalationSettings(): JSX.Element {
     webhook: t('alertEscalation.channelWebhook'),
     email: t('alertEscalation.channelEmail'),
     syslog: t('alertEscalation.channelSyslog'),
+    trap: t('alertEscalation.channelTrap'),
   };
 
   const editLadder = (

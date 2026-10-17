@@ -6,7 +6,7 @@ SIEMs expect to be fed (#3037). It is the third delivery channel beside the
 the same rules: off until configured, never blocks detection, bounded retry,
 and the outcome recorded on the alert.
 
-Seed also _receives_ syslog from devices (`listeners.syslog`). The two are
+Seed also _receives_ syslog from devices (`SEED_SYSLOG_BIND`). The two are
 independent: forwarding sends Seed's own alerts, not the device messages it
 collected.
 
@@ -108,9 +108,9 @@ A value containing a space, `"`, `=`, `\` or a control character is a
 double-quoted string with Go escaping (`\"`, `\\`, `\n`). Text a device
 controls therefore cannot break the line or add a field.
 
-The facts are in MSG rather than RFC 5424 structured data because a custom
-SD-ID must carry the sender's IANA Private Enterprise Number, and Mustard Seed
-Networks does not have one yet.
+The facts are in MSG as logfmt rather than RFC 5424 structured data because
+every SIEM's field extraction already parses logfmt, while a custom SD-ID
+needs per-collector parsing rules.
 
 ## Delivery behaviour
 

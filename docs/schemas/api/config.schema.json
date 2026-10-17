@@ -102,6 +102,26 @@
         "transport"
       ]
     },
+    "AlertTrapConfig": {
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "community": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "host",
+        "port",
+        "community"
+      ]
+    },
     "AlertWebhookConfig": {
       "properties": {
         "url": {
@@ -129,6 +149,9 @@
         "syslog": {
           "$ref": "#/$defs/AlertSyslogConfig"
         },
+        "trap": {
+          "$ref": "#/$defs/AlertTrapConfig"
+        },
         "escalations": {
           "items": {
             "$ref": "#/$defs/AlertEscalationConfig"
@@ -141,7 +164,8 @@
       "required": [
         "webhook",
         "email",
-        "syslog"
+        "syslog",
+        "trap"
       ]
     },
     "AuthConfig": {

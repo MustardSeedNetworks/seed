@@ -7,6 +7,7 @@ type AlertsConfig struct {
 	Webhook AlertWebhookConfig `json:"webhook"`
 	Email   AlertEmailConfig   `json:"email"`
 	Syslog  AlertSyslogConfig  `json:"syslog"`
+	Trap    AlertTrapConfig    `json:"trap"`
 	// Escalations re-send an alert nobody has acknowledged, one ladder per
 	// rule (P-B2). Empty means an alert is sent once, when it is raised.
 	Escalations []AlertEscalationConfig `json:"escalations,omitempty"`
@@ -24,7 +25,7 @@ type AlertEscalationConfig struct {
 }
 
 // AlertEscalationStage fires AfterSeconds after the alert was raised, on the
-// named channels ("webhook", "email", "syslog").
+// named channels ("webhook", "email", "syslog", "trap").
 type AlertEscalationStage struct {
 	AfterSeconds int      `json:"after_seconds"`
 	Channels     []string `json:"channels"`
@@ -76,4 +77,15 @@ type AlertSyslogConfig struct {
 	Port int `json:"port"`
 	// Transport is "udp" (the default), "tcp" or "tls".
 	Transport string `json:"transport"`
+}
+
+// AlertTrapConfig is the SNMP trap receiver alerts are sent to as SNMPv2c
+// notifications (#3037). An empty Host means trap sending is off.
+type AlertTrapConfig struct {
+	Host string `json:"host"`
+	// Port is 0 for the snmptrap port, 162.
+	Port uint16 `json:"port"`
+	// Community is keyring ciphertext (ADR-0015, the `enc:` prefix), never
+	// plaintext and never served back, like the email relay's Password.
+	Community string `json:"community"`
 }

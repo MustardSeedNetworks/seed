@@ -41,6 +41,7 @@ export const SETTINGS_RESPONSE: SettingsResponse = {
     email: { host: '', port: 0, tls: '', username: '', passwordSet: false, from: '', to: [] },
     escalations: [],
     syslog: { host: '', port: 0, transport: '' },
+    trap: { host: '', port: 0, communitySet: false },
   },
   displayOptions: { showPublicIP: true, unitSystem: 'sae' },
   identity: { name: '', location: '' },

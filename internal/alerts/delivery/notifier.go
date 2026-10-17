@@ -1,7 +1,8 @@
 // Package delivery sends alerts somewhere else: a signed JSON POST to an
 // operator-configured receiver (#368), so a customer can bridge Seed into the
 // Slack, PagerDuty or SIEM they already run, email through the operator's
-// own mail relay (#2997), and RFC 5424 syslog to their collector (#3037).
+// own mail relay (#2997), and RFC 5424 syslog and SNMP traps to their
+// collector and trap receiver (#3037).
 // Seed detects, records and displays alerts everywhere else; this is the only
 // place it sends one.
 //

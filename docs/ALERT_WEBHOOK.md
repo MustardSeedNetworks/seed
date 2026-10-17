@@ -4,9 +4,10 @@ Seed detects, records and displays alerts. The webhook is the one way it
 **sends** one: a signed JSON POST to a receiver you run, so Seed can be bridged
 into the Slack, PagerDuty, or SIEM you already have.
 
-It is one of three transports; the others are email through your own mail
-relay ([ALERT_EMAIL.md](ALERT_EMAIL.md)) and syslog to your collector
-([ALERT_SYSLOG.md](ALERT_SYSLOG.md)). Each records its own outcome on the
+It is one of four transports; the others are email through your own mail
+relay ([ALERT_EMAIL.md](ALERT_EMAIL.md)), syslog to your collector
+([ALERT_SYSLOG.md](ALERT_SYSLOG.md)) and SNMP traps to your trap receiver
+([ALERT_TRAP.md](ALERT_TRAP.md)). Each records its own outcome on the
 alert, so a working webhook cannot hide a relay that refuses every message. There is
 no per-user delivery preference, no on-call schedule and no digest batching —
 those belong to the notification system you already operate. An alert nobody

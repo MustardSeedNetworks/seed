@@ -1,0 +1,34 @@
+MUSTARD-SEED-SMI DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-IDENTITY, enterprises
+        FROM SNMPv2-SMI;
+
+mustardSeedNetworks MODULE-IDENTITY
+    LAST-UPDATED "202610160000Z"
+    ORGANIZATION "Mustard Seed Networks"
+    CONTACT-INFO
+        "Mustard Seed Networks
+         support@mustardseednetworks.com"
+    DESCRIPTION
+        "The structure of management information under the Mustard Seed
+        Networks enterprise arc, IANA Private Enterprise Number 67249. Each
+        product is given one arc under msnProducts."
+    REVISION    "202610160000Z"
+    DESCRIPTION
+        "Initial version: the product arc and Seed."
+    ::= { enterprises 67249 }
+
+msnProducts OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "The root under which each product defines its MIB modules."
+    ::= { mustardSeedNetworks 1 }
+
+msnSeed OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "Seed, the network diagnostics appliance."
+    ::= { msnProducts 1 }
+
+END

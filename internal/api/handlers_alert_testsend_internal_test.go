@@ -10,6 +10,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/gosnmp/gosnmp"
 
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
@@ -127,5 +130,43 @@ func TestAlertTestSendReachesTheSyslogCollector(t *testing.T) {
 	_ = ln.Close()
 	if code, body := send(); code != http.StatusBadGateway || !strings.Contains(body, "connect to 127.0.0.1:") {
 		t.Errorf("collector gone: %d %s, want 502 naming the connection", code, body)
+	}
+}
+
+func TestAlertTestSendReachesTheTrapReceiver(t *testing.T) {
+	pc, err := (&net.ListenConfig{}).ListenPacket(context.Background(), "udp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	defer func() { _ = pc.Close() }()
+
+	manager := alertdelivery.NewManager(nil, nil, slog.New(slog.DiscardHandler))
+	defer manager.Stop(context.Background())
+	manager.ApplyTrap(alertdelivery.TrapConfig{
+		Host: "127.0.0.1", Port: uint16(pc.LocalAddr().(*net.UDPAddr).Port), Community: "nms",
+	})
+	s := &Server{alertDelivery: manager}
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/settings/alerts/test",
+		strings.NewReader(`{"channel":"trap"}`))
+	w := httptest.NewRecorder()
+	s.handleAlertTestSend(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("working receiver: %d %s, want 200", w.Code, w.Body)
+	}
+
+	_ = pc.SetReadDeadline(time.Now().Add(5 * time.Second))
+	buf := make([]byte, 65535)
+	n, _, err := pc.ReadFrom(buf)
+	if err != nil {
+		t.Fatalf("receiver read: %v", err)
+	}
+	packet, err := (&gosnmp.GoSNMP{Version: gosnmp.Version2c}).UnmarshalTrap(buf[:n], false)
+	if err != nil {
+		t.Fatalf("decode trap: %v", err)
+	}
+	if packet.Community != "nms" || len(packet.Variables) < 2 ||
+		packet.Variables[1].Value != ".1.3.6.1.4.1.67249.1.1.1.0.1" {
+		t.Errorf("receiver got community %q varbinds %+v, want seedAlertRaised", packet.Community, packet.Variables)
 	}
 }

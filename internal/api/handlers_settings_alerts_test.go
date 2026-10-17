@@ -301,3 +301,109 @@ func TestPutSettingsStoresTheSyslogCollector(t *testing.T) {
 		t.Errorf("clearing the host left %+v behind", cfg.Alerts.Syslog)
 	}
 }
+
+func trapBody(fields map[string]any) map[string]any {
+	return map[string]any{"alerts": map[string]any{"trap": fields}}
+}
+
+// The SNMP trap receiver (#3037): the community stored as ciphertext and never
+// served back, kept across a re-point, and gone with the host when it is
+// cleared.
+func TestPutSettingsStoresTheTrapReceiverAndGetNeverServesTheCommunity(t *testing.T) {
+	cfg := config.DefaultConfig()
+	server := api.NewTestServerWithConfig(cfg)
+	defer server.Close()
+
+	w := putSettings(t, server, trapBody(map[string]any{
+		"host": " nms.example.com ", "port": 1162, "community": "trap-community",
+	}))
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 (body %s)", w.Code, w.Body)
+	}
+	if got := cfg.Alerts.Trap.Community; got == "trap-community" || !config.IsEncrypted(got) {
+		t.Errorf("stored community = %q, want keyring ciphertext", got)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/settings", http.NoBody)
+	read := httptest.NewRecorder()
+	server.HandleSettings(read, req)
+	if strings.Contains(read.Body.String(), "trap-community") {
+		t.Fatal("GET /api/v1/settings served the trap community back")
+	}
+	var settings struct {
+		Alerts struct {
+			Trap struct {
+				Host         string `json:"host"`
+				Port         int    `json:"port"`
+				CommunitySet bool   `json:"communitySet"`
+			} `json:"trap"`
+		} `json:"alerts"`
+	}
+	if err := json.NewDecoder(read.Body).Decode(&settings); err != nil {
+		t.Fatalf("decode settings: %v", err)
+	}
+	if got := settings.Alerts.Trap; got.Host != "nms.example.com" || got.Port != 1162 || !got.CommunitySet {
+		t.Errorf("GET alerts.trap = %+v", got)
+	}
+
+	repoint := putSettings(t, server, trapBody(map[string]any{"host": "nms2.example.com"}))
+	if repoint.Code != http.StatusOK {
+		t.Fatalf("re-point status = %d (body %s)", repoint.Code, repoint.Body)
+	}
+	if !config.IsEncrypted(cfg.Alerts.Trap.Community) {
+		t.Error("re-pointing the host dropped the stored community")
+	}
+
+	if cleared := putSettings(t, server, trapBody(map[string]any{"host": ""})); cleared.Code != http.StatusOK {
+		t.Fatalf("clear status = %d (body %s)", cleared.Code, cleared.Body)
+	}
+	if cfg.Alerts.Trap != (config.AlertTrapConfig{}) {
+		t.Errorf("clearing the host left %+v behind", cfg.Alerts.Trap)
+	}
+}
+
+func TestPutSettingsRefusesAnUndeliverableTrapReceiverWithItsReason(t *testing.T) {
+	cfg := config.DefaultConfig()
+	server := api.NewTestServerWithConfig(cfg)
+	defer server.Close()
+	if w := putSettings(t, server, trapBody(map[string]any{
+		"host": "nms.example.com", "community": "trap-community",
+	})); w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 (body %s)", w.Code, w.Body)
+	}
+	stored := cfg.Alerts.Trap
+
+	for name, tc := range map[string]struct {
+		fields map[string]any
+		want   string
+	}{
+		"host with port": {map[string]any{"host": "nms.example.com:162"}, "bare host name"},
+		"port too big":   {map[string]any{"port": 70000}, "alerts.trap.port 70000 is out of range"},
+		"port as text":   {map[string]any{"port": "162"}, "alerts.trap.port"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			refused := putSettings(t, server, trapBody(tc.fields))
+			if refused.Code != http.StatusBadRequest {
+				t.Fatalf("status = %d, want 400 (body %s)", refused.Code, refused.Body)
+			}
+			if got := errorText(t, refused); !strings.Contains(got, tc.want) {
+				t.Errorf("error = %q, want it to contain %q", got, tc.want)
+			}
+			if cfg.Alerts.Trap != stored {
+				t.Errorf("a refused update changed the stored receiver to %+v", cfg.Alerts.Trap)
+			}
+		})
+	}
+}
+
+func TestPutSettingsRefusesATrapReceiverWithoutACommunity(t *testing.T) {
+	server := api.NewTestServer()
+	defer server.Close()
+	w := putSettings(t, server, trapBody(map[string]any{"host": "nms.example.com"}))
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400 (body %s)", w.Code, w.Body)
+	}
+	if got := errorText(t, w); !strings.Contains(got, "community is required") {
+		t.Errorf("error = %q, want it to name the missing community", got)
+	}
+}

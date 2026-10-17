@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -16,7 +17,8 @@ import (
 
 // The alert receivers' operator half: the webhook an operator names in
 // Settings (#2605), the mail relay alerts are emailed through (#2997), the
-// syslog collector they are forwarded to (#3037), the secrets that go to the
+// syslog collector and SNMP trap receiver they are forwarded to (#3037), the
+// secrets that go to the
 // keyring on the way in, and the escalation ladders that re-send an alert
 // nobody acknowledged (P-B2).
 
@@ -36,6 +38,7 @@ type AlertSettings struct {
 	Email       EmailSettings      `json:"email"`
 	Escalations []EscalationLadder `json:"escalations"`
 	Syslog      SyslogSettings     `json:"syslog"`
+	Trap        TrapSettings       `json:"trap"`
 }
 
 // WebhookSettings is the webhook receiver.
@@ -62,6 +65,13 @@ type SyslogSettings struct {
 	Transport string `json:"transport"`
 }
 
+// TrapSettings is the SNMP trap receiver alerts are sent to.
+type TrapSettings struct {
+	Host         string `json:"host"`
+	Port         uint16 `json:"port"`
+	CommunitySet bool   `json:"communitySet"`
+}
+
 // EscalationLadder is the wire shape of one ladder in the settings read
 // model and in an update.
 type EscalationLadder struct {
@@ -74,7 +84,7 @@ type EscalationLadder struct {
 // the alert was raised.
 type EscalationStage struct {
 	AfterSeconds int      `json:"afterSeconds"`
-	Channels     []string `json:"channels"     jsonschema:"enum=webhook,enum=email,enum=syslog"`
+	Channels     []string `json:"channels"     jsonschema:"enum=webhook,enum=email,enum=syslog,enum=trap"`
 }
 
 func buildAlertSettings(cfg *config.Config) AlertSettings {
@@ -94,6 +104,9 @@ func buildAlertSettings(cfg *config.Config) AlertSettings {
 		Escalations: escalationsView(cfg.Alerts.Escalations),
 		Syslog: SyslogSettings{
 			Host: cfg.Alerts.Syslog.Host, Port: cfg.Alerts.Syslog.Port, Transport: cfg.Alerts.Syslog.Transport,
+		},
+		Trap: TrapSettings{
+			Host: cfg.Alerts.Trap.Host, Port: cfg.Alerts.Trap.Port, CommunitySet: cfg.Alerts.Trap.Community != "",
 		},
 	}
 }
@@ -185,6 +198,7 @@ func applyAlertsUpdates(updates map[string]any, cfg *config.Config, encrypt Encr
 		applyEmailUpdates(section, cfg, encrypt),
 		applyEscalationUpdates(section, cfg),
 		applySyslogUpdates(section, cfg),
+		applyTrapUpdates(section, cfg, encrypt),
 	)
 }
 
@@ -384,5 +398,67 @@ func applySyslogUpdates(section map[string]any, cfg *config.Config) error {
 		return invalid
 	}
 	cfg.Alerts.Syslog = next
+	return nil
+}
+
+// applyTrapUpdates applies alerts.trap by the email relay's rules: a receiver
+// that could never receive is refused with its reason, clearing the host turns
+// traps off and takes the stored community with it, and an omitted or empty
+// community keeps the one already stored, which the operator cannot read back.
+func applyTrapUpdates(section map[string]any, cfg *config.Config, encrypt Encrypter) error {
+	val, exists := section["trap"]
+	if !exists {
+		return nil
+	}
+	fields, ok := val.(map[string]any)
+	if !ok {
+		return errors.New("alerts.trap must be an object")
+	}
+
+	const prefix = "alerts.trap"
+	next := cfg.Alerts.Trap
+	var errs []error
+	if host, given, err := extractString(fields, "host", prefix); err != nil {
+		errs = append(errs, err)
+	} else if given {
+		next.Host = strings.TrimSpace(host)
+	}
+	port, portGiven, err := extractInt(fields, "port", prefix)
+	switch {
+	case err != nil:
+		errs = append(errs, err)
+	case !portGiven:
+	case port < 0 || port > math.MaxUint16:
+		errs = append(errs, fmt.Errorf("%s.port %d is out of range", prefix, port))
+	default:
+		next.Port = uint16(port)
+	}
+	community, communityGiven, err := extractString(fields, "community", prefix)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	if err = errors.Join(errs...); err != nil {
+		return err
+	}
+
+	if next.Host == "" {
+		cfg.Alerts.Trap = config.AlertTrapConfig{}
+		return nil
+	}
+	if communityGiven && community != "" {
+		ciphertext, encErr := encrypt.EncryptValue(community)
+		if encErr != nil {
+			// The message names the field, never the value.
+			return fmt.Errorf("encrypt alerts.trap.community: %w", encErr)
+		}
+		next.Community = ciphertext
+	}
+	// What is stored is ciphertext; ValidateTrap only needs to know one is.
+	if invalid := delivery.ValidateTrap(delivery.TrapConfig{
+		Host: next.Host, Port: next.Port, Community: next.Community,
+	}); invalid != nil {
+		return invalid
+	}
+	cfg.Alerts.Trap = next
 	return nil
 }

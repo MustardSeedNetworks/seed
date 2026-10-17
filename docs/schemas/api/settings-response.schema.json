@@ -19,6 +19,9 @@
         },
         "syslog": {
           "$ref": "#/$defs/SyslogSettings"
+        },
+        "trap": {
+          "$ref": "#/$defs/TrapSettings"
         }
       },
       "additionalProperties": false,
@@ -27,7 +30,8 @@
         "webhook",
         "email",
         "escalations",
-        "syslog"
+        "syslog",
+        "trap"
       ]
     },
     "DisplaySettings": {
@@ -119,7 +123,8 @@
             "enum": [
               "webhook",
               "email",
-              "syslog"
+              "syslog",
+              "trap"
             ]
           },
           "type": "array"
@@ -378,6 +383,26 @@
         "customTcp",
         "customHttp",
         "httpTimings"
+      ]
+    },
+    "TrapSettings": {
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "communitySet": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "host",
+        "port",
+        "communitySet"
       ]
     },
     "VLANSetting": {
