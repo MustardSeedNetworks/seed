@@ -48,7 +48,12 @@ jobs:
           # repos; only metadata about checks is published, no source.
           publish_results: true
 
+      # Skip on merge_group. This workflow is not triggered there today;
+      # the condition is so a later trigger cannot fail the job when the
+      # queue ref has already been deleted ("ref not found"). The analysis
+      # above still runs whenever the job does.
       - name: Upload SARIF to GitHub Code Scanning
+        if: github.event_name != 'merge_group'
         uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           sarif_file: results.sarif

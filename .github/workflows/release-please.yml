@@ -284,8 +284,65 @@ jobs:
             echo "It does not yet describe main; leaving it unarmed for this tick."
             exit 0
           fi
-          # Pending or failed checks wait: the release PR's own CI completing
-          # runs this workflow again (see the workflow_run trigger).
+          # `gh pr checks --required` exits 0 when every required check that
+          # has already reported has passed. CI Complete is created only
+          # after the rest of CI finishes, so during that window it is
+          # absent, not pending, and the command still exits 0. The merge
+          # queue then rejects the enqueue — "Required status check \"CI
+          # Complete\" is expected" — and the empty-queue fallback below
+          # used to run the same mutation without jump and exit 1. That
+          # reddened this job on 2026-10-16 (runs 38834932915, 38848280461,
+          # 38856679557, 38864518406, 38880890821, 38892928588, 38893249300,
+          # 38918232092) while the release PR's CI was still going.
+          #
+          # Wait until a check named exactly "CI Complete" exists and
+          # passed. Polling is the condition: Lint PR Title can be green
+          # for most of the release CI, and a fixed sleep cannot tell those
+          # apart. A failed or cancelled CI Complete will not become a pass
+          # on this SHA, so stop. If it never reports inside the budget,
+          # exit 0. The release PR's own CI completing runs this workflow
+          # again, and leaving the PR on auto-merge is an acceptable
+          # fallback. A check that has not reported is not a failed release.
+          #
+          # Tests set the CI_COMPLETE_* and ENQUEUE_EXPECTED_RETRIES knobs
+          # (scripts/test-ci-merge-queue-reliability.sh).
+          wait_seconds="${CI_COMPLETE_WAIT_SECONDS:-1500}"
+          delay="${CI_COMPLETE_INITIAL_DELAY:-15}"
+          max_delay="${CI_COMPLETE_MAX_DELAY:-60}"
+          deadline=$((SECONDS + wait_seconds))
+          ci_bucket="missing"
+          while true; do
+            checks_json="$(gh pr checks --repo "${GITHUB_REPOSITORY}" "${pr}" --json name,bucket 2>/dev/null || true)"
+            if [ -z "${checks_json}" ]; then
+              checks_json='[]'
+            fi
+            ci_bucket="$(jq -r --arg name "CI Complete" 'if any(.[]; .name == $name and .bucket == "pass") then "pass" elif any(.[]; .name == $name and .bucket == "pending") then "pending" elif any(.[]; .name == $name) then first(.[] | select(.name == $name) | .bucket) else "missing" end' <<<"${checks_json}" 2>/dev/null || true)"
+            if [ -z "${ci_bucket}" ]; then
+              ci_bucket="missing"
+            fi
+            case "${ci_bucket}" in
+              pass)
+                echo "CI Complete passed."
+                break
+                ;;
+              fail|cancel|skipping)
+                echo "CI Complete is ${ci_bucket}; not enqueuing."
+                exit 0
+                ;;
+            esac
+            if [ "${SECONDS}" -ge "${deadline}" ]; then
+              echo "::notice::CI Complete has not passed (state: ${ci_bucket}). Not failing this run. The next CI completion retries the jump; leaving the release PR on auto-merge is an acceptable fallback."
+              exit 0
+            fi
+            echo "CI Complete is ${ci_bucket}; waiting ${delay}s."
+            sleep "${delay}"
+            if [ "${delay}" -lt "${max_delay}" ]; then
+              delay=$((delay * 2))
+              if [ "${delay}" -gt "${max_delay}" ]; then
+                delay="${max_delay}"
+              fi
+            fi
+          done
           if ! gh pr checks --repo "${GITHUB_REPOSITORY}" "${pr}" --required; then
             echo "Release PR #${pr}'s required checks have not all passed; not enqueuing yet."
             exit 0
@@ -293,10 +350,37 @@ jobs:
           echo "Enqueuing #${pr} at the front of the merge queue"
           id="$(gh pr view --repo "${GITHUB_REPOSITORY}" "${pr}" --json id --jq .id)"
           position='"queued at position \(.data.enqueuePullRequest.mergeQueueEntry.position)"'
-          if gh api graphql -f id="${id}" -F jump=true -f query="${ENQUEUE}" --jq "${position}" >/tmp/enqueue.log 2>&1; then
-            cat /tmp/enqueue.log
-            exit 0
-          fi
+          delay="${CI_COMPLETE_INITIAL_DELAY:-15}"
+          retries="${ENQUEUE_EXPECTED_RETRIES:-5}"
+          attempt=1
+          while true; do
+            if gh api graphql -f id="${id}" -F jump=true -f query="${ENQUEUE}" --jq "${position}" >/tmp/enqueue.log 2>&1; then
+              cat /tmp/enqueue.log
+              exit 0
+            fi
+            # The check can pass in `gh pr checks` a moment before the merge
+            # queue will accept it. Retry that refusal. Any other refusal
+            # (the jump permission probe below) falls through. Exhausting
+            # the retries must not fail the run: the check still has not
+            # reported, and auto-merge remains an acceptable fallback.
+            if grep -F -q 'CI Complete' /tmp/enqueue.log && grep -F -q 'is expected' /tmp/enqueue.log; then
+              if [ "${attempt}" -ge "${retries}" ]; then
+                echo "::notice::Enqueue still reports that CI Complete is expected after ${attempt} attempts. Not failing this run. Leaving the release PR on auto-merge is an acceptable fallback."
+                exit 0
+              fi
+              echo "Merge queue does not see CI Complete yet (attempt ${attempt}/${retries}); retrying in ${delay}s."
+              sleep "${delay}"
+              if [ "${delay}" -lt "${max_delay}" ]; then
+                delay=$((delay * 2))
+                if [ "${delay}" -gt "${max_delay}" ]; then
+                  delay="${max_delay}"
+                fi
+              fi
+              attempt=$((attempt + 1))
+              continue
+            fi
+            break
+          done
           # Probe, to be settled by its first run (#3500): whether the msn-ci-bot
           # App may jump the queue is unverified. If it may not, the owner grants
           # it; until then a refusal must not stall releases, and an empty
