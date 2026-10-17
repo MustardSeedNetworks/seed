@@ -40,7 +40,7 @@
     ]
   },
   "overrides": {
-    "fast-uri": "4.2.1",
+    "fast-uri": "4.2.2",
     "js-yaml": "5.4.3"
   },
   "packageManager": "npm@12.2.0"
