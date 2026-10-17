@@ -151,3 +151,107 @@ describe('useNetworkDiscoveryAutoScan settings', () => {
     expect(mockSubmitJob).not.toHaveBeenCalled();
   });
 });
+
+const SEVEN_DEVICES = Array.from(
+  { length: 7 },
+  (_, i) => ({ ip: `192.0.2.${i + 1}`, mac: `00:00:5e:00:53:0${i + 1}` }) as DiscoveredDevice,
+);
+
+function portScannedIps(): string[] {
+  return mockPost.mock.calls
+    .filter(([path]) => path === PORT_SCAN_PATH)
+    .map(([, body]) => (body as { target: string }).target);
+}
+
+function vulnScannedIps(): string[] {
+  return mockSubmitJob.mock.calls.map(([req]) => (req.params as { ip: string }).ip);
+}
+
+function expectEachDeviceOnce(ips: string[]): void {
+  expect(ips).toHaveLength(SEVEN_DEVICES.length);
+  expect(new Set(ips)).toEqual(new Set(SEVEN_DEVICES.map((d) => d.ip)));
+}
+
+// The settings arrive through fetch and body parsing, which fake timers do
+// not drive, so wait for the first scan before stepping the clock.
+function firstScan(scanned: () => string[]): Promise<void> {
+  return vi.waitFor(() => expect(scanned().length).toBeGreaterThan(0));
+}
+
+// One act per second, so React commits each render, and runs each effect
+// cleanup, between timers as it does in the browser.
+async function stepSeconds(seconds: number): Promise<void> {
+  for (let s = 0; s < seconds; s++) {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+  }
+}
+
+// The hook marked every device scanned before its timers fired, and each
+// re-run of the effect (a scan starting, or a discovery poll) cleared the
+// pending timers, so only the first batch of three was ever scanned (#3092).
+describe('useNetworkDiscoveryAutoScan reaches every device', () => {
+  const data: NetworkDiscoveryData = { devices: SEVEN_DEVICES, status: DISCOVERY.status };
+
+  it('port-scans every discovered device once', async () => {
+    stubDaemon(true, false);
+    renderHook(() => useNetworkDiscoveryAutoScan(data));
+    await firstScan(portScannedIps);
+    await stepSeconds(10);
+    expectEachDeviceOnce(portScannedIps());
+  });
+
+  it('runs at most three port scans at once', async () => {
+    stubDaemon(true, false);
+    const pending: (() => void)[] = [];
+    mockPost.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          pending.push(() => resolve({ ip: '', services: [], scanTimeMs: 0 }));
+        }),
+    );
+    renderHook(() => useNetworkDiscoveryAutoScan(data));
+    await firstScan(portScannedIps);
+    await settle();
+    expect(portScannedIps()).toHaveLength(3);
+
+    await act(async () => {
+      pending.shift()?.();
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+    expect(portScannedIps()).toHaveLength(4);
+  });
+
+  it('keeps port-scanning when discovery polls mid-run', async () => {
+    stubDaemon(true, false);
+    const { rerender } = renderHook(({ d }) => useNetworkDiscoveryAutoScan(d), {
+      initialProps: { d: data },
+    });
+    await firstScan(portScannedIps);
+    for (let poll = 0; poll < 10; poll++) {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(700);
+      });
+      rerender({ d: { ...data, devices: [...SEVEN_DEVICES] } });
+    }
+    expectEachDeviceOnce(portScannedIps());
+  });
+
+  it('queues a vulnerability scan for every device when discovery polls mid-run', async () => {
+    stubDaemon(false, true);
+    const fingerprinted = SEVEN_DEVICES.map((d) => ({ ...d, osGuess: 'Linux' }));
+    const vulnData = { ...data, devices: fingerprinted };
+    const { rerender } = renderHook(({ d }) => useNetworkDiscoveryAutoScan(d), {
+      initialProps: { d: vulnData },
+    });
+    await firstScan(vulnScannedIps);
+    for (let poll = 0; poll < 10; poll++) {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(400);
+      });
+      rerender({ d: { ...vulnData, devices: [...fingerprinted] } });
+    }
+    expectEachDeviceOnce(vulnScannedIps());
+  });
+});
