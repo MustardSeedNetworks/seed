@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.279.0](https://github.com/MustardSeedNetworks/seed/compare/v0.278.0...v0.279.0) (2026-10-17)
+
+
+### Features
+
+* **deviceconfig:** upload operating system images with the vendor hash (P-D3) ([#3593](https://github.com/MustardSeedNetworks/seed/issues/3593)) ([9b495f0](https://github.com/MustardSeedNetworks/seed/commit/9b495f02c844e667823a56f1b2967a12216eda0d))
+* **ui:** show subnet and DHCP scope utilization on an IP addresses page ([#3590](https://github.com/MustardSeedNetworks/seed/issues/3590)) ([b8ea57b](https://github.com/MustardSeedNetworks/seed/commit/b8ea57b5a394169fb37ece42fc77b55b96cbfbe8))
+
 ## [0.278.0](https://github.com/MustardSeedNetworks/seed/compare/v0.277.1...v0.278.0) (2026-10-17)
 
 
