@@ -10,7 +10,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/corebluetooth"
 	"github.com/MustardSeedNetworks/foundation/pkg/corewlan"
 )
 
@@ -18,7 +20,8 @@ import (
 // connection ends or ctx is cancelled.
 //
 // This is the helper side: it runs in the user's login session, where the
-// Location Services grant lives, and does the CoreWLAN work the daemon cannot.
+// Location Services and Bluetooth grants live, and does the CoreWLAN and
+// CoreBluetooth work the daemon cannot.
 func Serve(ctx context.Context, socketPath string, log *slog.Logger) error {
 	conn, err := net.DialUnix("unix", nil, &net.UnixAddr{Name: socketPath, Net: "unix"})
 	if err != nil {
@@ -75,6 +78,8 @@ func answer(ctx context.Context, line []byte, log *slog.Logger) Response {
 		return currentResponse()
 	case OpSaved:
 		return savedResponse()
+	case OpBLEScan:
+		return bleScanResponse(req.ScanDuration())
 	default:
 		// DecodeRequest already refuses unknown ops.
 		return Response{Error: fmt.Sprintf("unsupported op %q", req.Op)}
@@ -111,6 +116,29 @@ func savedResponse() Response {
 		return Response{Error: err.Error()}
 	}
 	return Response{Names: names}
+}
+
+// bleScanResponse returns a missing Bluetooth grant or a powered-off radio as
+// the reply's error, so the daemon reports why it heard nothing.
+func bleScanResponse(d time.Duration) Response {
+	found, err := corebluetooth.Scan(d)
+	if err != nil {
+		return Response{Error: err.Error()}
+	}
+
+	peripherals := make([]Peripheral, 0, len(found))
+	for _, p := range found {
+		peripherals = append(peripherals, Peripheral{
+			Identifier:       p.Identifier,
+			Name:             p.Name,
+			RSSI:             p.RSSI,
+			Connectable:      p.Connectable,
+			TxPower:          p.TxPower,
+			ManufacturerData: p.ManufacturerData,
+			ServiceUUIDs:     p.ServiceUUIDs,
+		})
+	}
+	return Response{Peripherals: peripherals}
 }
 
 func fromCoreWLAN(n corewlan.Network) Network {

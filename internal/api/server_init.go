@@ -321,6 +321,7 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 	if s.persist != nil {
 		s.bluetoothScan.SetStore(app.NewBluetoothStore(s.persist))
 	}
+	s.attachBLEHelper()
 	logging.GetLogger().Info("Bluetooth scanner initialized")
 
 	// Initialize WiFi bridge connecting wifi to discovery

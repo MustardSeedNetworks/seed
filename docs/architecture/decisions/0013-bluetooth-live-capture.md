@@ -1,9 +1,10 @@
 # ADR-0013: Bluetooth live-scan capture port
 
-**Status:** Accepted for Linux — 2026-10-16, through seed plan row P-E3 (the owner's parity decision of
-2026-09-17 put the BLE survey in v1). macOS and Windows live scans stay Proposed. History: demoted to Proposed
-2026-09-14 (owner) as outside the charter with no plan row; originally Accepted 2026-06-05. The 2026-10-16
-amendment below replaces the Linux source this ADR first named and its degrade rule.
+**Status:** Accepted for Linux — 2026-10-16, and for macOS — 2026-10-17, through seed plan row P-E3
+(the owner's parity decision of 2026-09-17 put the BLE survey in v1). The Windows live scan stays
+Proposed. History: demoted to Proposed 2026-09-14 (owner) as outside the charter with no plan row;
+originally Accepted 2026-06-05. The 2026-10-16 amendment below replaces the Linux source this ADR
+first named and its degrade rule; the 2026-10-17 amendment names the macOS source.
 
 ## Context
 
@@ -85,6 +86,32 @@ BlueZ D-Bus. `hcitool` and `bluetoothctl` discovery are gone.
   it was first heard across scans and restarts. A scan whose devices cannot be
   stored fails rather than reporting them as new. Devices not heard for the
   inactive-device retention window age out with wired ones.
+
+## Amendment 2026-10-17: the macOS source runs in the Seed Wi-Fi Helper
+
+macOS answers CoreBluetooth only in a signed application bundle the user
+granted Bluetooth to, in their login session. The root daemon is refused with
+`CBManagerStateUnauthorized`, so it cannot scan in-process (owner decision
+2026-10-17, option A).
+
+- **Binding.** The CoreBluetooth binding is `foundation/pkg/corebluetooth`,
+  beside `pkg/corewlan`.
+- **Helper.** The Seed Wi-Fi Helper, which already holds the Location grant
+  for CoreWLAN, also runs the LE scan. The daemon sends a `bleScan` request
+  with the duration (at most one minute) over the existing verified socket,
+  and the helper replies with what it heard. Its `Info.plist` carries
+  `NSBluetoothAlwaysUsageDescription`. Without that key, macOS terminates the
+  helper when the scan starts. At login, a helper without a Bluetooth
+  decision raises the prompt.
+- **Identity.** CoreBluetooth never reveals an LE device's address. A device
+  is keyed by its CoreBluetooth identifier, a UUID that is stable on that Mac,
+  and its address type is left empty. The manufacturer ID names the vendor.
+  A paired LE device that is advertising is listed twice: once by address
+  from `system_profiler` and once by identifier. Nothing links the two.
+- **Degrade.** As on Linux, a scan that cannot listen fails with the cause.
+  That covers no helper connected, a missing grant and a powered-off radio. It
+  does not return the paired list as if it were complete. A scan configured
+  without LE still returns the paired and connected devices.
 
 ## Consequences
 

@@ -293,7 +293,11 @@ that the kernel sees the adapter:
 ls /sys/class/bluetooth
 ```
 
-**macOS:** Grant Bluetooth permissions to Terminal/application.
+**macOS:** LE scans run in the Seed Wi-Fi Helper, the same agent that reads
+Wi-Fi names. Allow Seed Wi-Fi Helper under System Settings > Privacy &
+Security > Bluetooth. The helper asks the first time it starts after
+installation. Without the grant, a Bluetooth scan fails and names the missing
+permission.
 
 **Windows:** Bluetooth scanning requires elevated privileges and compatible Bluetooth adapter.
 

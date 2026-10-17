@@ -35,5 +35,11 @@
          when deciding whether to grant it. -->
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Seed needs your location permission to read Wi-Fi network names and BSSIDs. macOS hides this information from applications that do not have it. Your location is never recorded, stored, or transmitted.</string>
+
+    <!-- CoreBluetooth answers only a bundle that says why it wants Bluetooth;
+         without this key macOS terminates the helper the moment it starts an
+         LE scan. -->
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Seed needs Bluetooth permission to list the Bluetooth Low Energy devices advertising nearby. Nothing is paired with or connected to.</string>
 </dict>
 </plist>

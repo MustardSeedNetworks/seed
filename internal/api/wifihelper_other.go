@@ -10,6 +10,8 @@ import "fmt"
 
 func (s *Server) startWiFiHelper() {}
 
+func (s *Server) attachBLEHelper() {}
+
 // stopWiFiHelper closes a helper session if one was somehow set. No platform
 // other than macOS starts one, so this is a no-op in practice — but writing it
 // in terms of the field keeps the shared Server struct honest everywhere

@@ -98,8 +98,9 @@ func (s *Server) Close() error {
 	return err
 }
 
-// exchange sends one request and reads its reply.
-func (s *Server) exchange(op Op) (Response, error) {
+// exchange sends one request and reads its reply. The deadline grows by the
+// time an LE scan was asked to listen, which the helper spends before replying.
+func (s *Server) exchange(req Request) (Response, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -107,11 +108,11 @@ func (s *Server) exchange(op Op) (Response, error) {
 		return Response{}, ErrNoHelper
 	}
 
-	if err := s.conn.SetDeadline(time.Now().Add(requestTimeout)); err != nil {
+	if err := s.conn.SetDeadline(time.Now().Add(requestTimeout + req.ScanDuration())); err != nil {
 		return Response{}, fmt.Errorf("wifihelper: set deadline: %w", err)
 	}
 
-	payload, err := json.Marshal(Request{Op: op})
+	payload, err := json.Marshal(req)
 	if err != nil {
 		return Response{}, fmt.Errorf("wifihelper: encode request: %w", err)
 	}
@@ -141,7 +142,7 @@ func (s *Server) dropLocked() {
 
 // Scan asks the helper for a Wi-Fi scan.
 func (s *Server) Scan() ([]Network, error) {
-	resp, err := s.exchange(OpScan)
+	resp, err := s.exchange(Request{Op: OpScan})
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +155,7 @@ func (s *Server) Scan() ([]Network, error) {
 // Current asks the helper for the current association, returning
 // [ErrNotAssociated] when the interface has not joined a network.
 func (s *Server) Current() (Network, error) {
-	resp, err := s.exchange(OpCurrent)
+	resp, err := s.exchange(Request{Op: OpCurrent})
 	if err != nil {
 		return Network{}, err
 	}
@@ -169,7 +170,7 @@ func (s *Server) Current() (Network, error) {
 
 // Saved asks the helper for remembered network names.
 func (s *Server) Saved() ([]string, error) {
-	resp, err := s.exchange(OpSaved)
+	resp, err := s.exchange(Request{Op: OpSaved})
 	if err != nil {
 		return nil, err
 	}
@@ -177,4 +178,17 @@ func (s *Server) Saved() ([]string, error) {
 		return nil, err
 	}
 	return resp.Names, nil
+}
+
+// ScanBLE asks the helper to listen for Bluetooth LE advertisements for d,
+// which must not exceed [MaxBLEScan].
+func (s *Server) ScanBLE(d time.Duration) ([]Peripheral, error) {
+	resp, err := s.exchange(Request{Op: OpBLEScan, ScanMillis: d.Milliseconds()})
+	if err != nil {
+		return nil, err
+	}
+	if err = resp.Err(); err != nil {
+		return nil, err
+	}
+	return resp.Peripherals, nil
 }
