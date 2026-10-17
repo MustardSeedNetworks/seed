@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.276.0](https://github.com/MustardSeedNetworks/seed/compare/v0.275.0...v0.276.0) (2026-10-17)
+
+
+### Features
+
+* **deviceconfig:** dry-run a push on Junos and EOS (P-D3) ([#3573](https://github.com/MustardSeedNetworks/seed/issues/3573)) ([a812dd4](https://github.com/MustardSeedNetworks/seed/commit/a812dd4080feb646433d4f2512c2edbf6e9ec0a3))
+
+
+### Bug Fixes
+
+* **ui:** port-scan every discovered device, three at a time ([#3575](https://github.com/MustardSeedNetworks/seed/issues/3575)) ([dd715ed](https://github.com/MustardSeedNetworks/seed/commit/dd715ed5497f638bf3d36802c0123935f2cda51f)), closes [#3092](https://github.com/MustardSeedNetworks/seed/issues/3092)
+
+
+### Miscellaneous
+
+* **deps:** update dependency msw to v3.0.3 ([#3572](https://github.com/MustardSeedNetworks/seed/issues/3572)) ([5ad6808](https://github.com/MustardSeedNetworks/seed/commit/5ad6808e213218cb62be82a539964aff3e2b0ff8))
+
 ## [0.275.0](https://github.com/MustardSeedNetworks/seed/compare/v0.274.0...v0.275.0) (2026-10-17)
 
 
