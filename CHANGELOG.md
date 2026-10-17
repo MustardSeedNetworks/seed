@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.277.1](https://github.com/MustardSeedNetworks/seed/compare/v0.277.0...v0.277.1) (2026-10-17)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.4.3 ([#3580](https://github.com/MustardSeedNetworks/seed/issues/3580)) ([5b1d3fa](https://github.com/MustardSeedNetworks/seed/commit/5b1d3fa63036cc0052a6b069768496b02c779a4b))
+* **deps:** update dependency lucide-react to v1.55.0 ([#3581](https://github.com/MustardSeedNetworks/seed/issues/3581)) ([2680174](https://github.com/MustardSeedNetworks/seed/commit/268017455d467fe223cd9dd4b895c2081cbaf456))
+
 ## [0.277.0](https://github.com/MustardSeedNetworks/seed/compare/v0.276.0...v0.277.0) (2026-10-17)
 
 
