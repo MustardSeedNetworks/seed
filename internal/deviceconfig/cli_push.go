@@ -544,17 +544,24 @@ func iosDryRun(session *ssh.Session, req DeviceRequest) (DryRunResult, error) {
 	if err != nil {
 		return DryRunResult{}, err
 	}
-	return predictIOS(Backup{Config: running}, req.Candidate)
+	return predictIOS(Backup{Config: running}, req.Mode, req.Candidate)
 }
 
-// iosCommit types the candidate under a revert timer: IOS restores the
+// iosCommit applies the candidate under a revert timer: IOS restores the
 // configuration it archived when the timer started unless "configure
-// confirm" arrives first. A candidate the device rejects has been entered up
-// to the rejected line, so it is reverted at once rather than at the timer.
-func iosCommit(session *ssh.Session, req DeviceRequest) error {
-	if req.Mode != PushMerge {
-		return fmt.Errorf("%w: cisco-ios applies a merge only", ErrCommand)
+// confirm" arrives first. A merge is typed; a replace is copied to flash and
+// read from there.
+func iosCommit(client *ssh.Client, req DeviceRequest) error {
+	if req.Mode == PushReplace {
+		return iosReplace(client, req)
 	}
+	return onSession(client, func(session *ssh.Session) error { return iosMerge(session, req) })
+}
+
+// iosMerge types the candidate under the revert timer. A candidate the device
+// rejects has been entered up to the rejected line, so it is reverted at once
+// rather than at the timer.
+func iosMerge(session *ssh.Session, req DeviceRequest) error {
 	s, err := openPrivileged(session)
 	if err != nil {
 		return err
@@ -574,6 +581,55 @@ func iosCommit(session *ssh.Session, req DeviceRequest) error {
 	}
 	_ = s.send("exit\n")
 	return errors.Join(loadErr, err)
+}
+
+// iosReplace copies the candidate to flash under the commit's name and
+// replaces the running configuration with it under the revert timer. The
+// copy carries the whole configuration, secrets included, so it is deleted
+// again whatever the replace did: the revert restores from the archive, not
+// from the copy, and a copy that cannot be deleted fails the commit, which the
+// timer then reverts. A replace that fails is reverted at once if it started
+// the timer.
+func iosReplace(client *ssh.Client, req DeviceRequest) error {
+	file := "flash:" + req.CommitID + ".cfg"
+	text := strings.ReplaceAll(req.Candidate, "\r\n", "\n")
+	if !strings.HasSuffix(text, "\n") {
+		text += "\n"
+	}
+	copyErr := scpSink(client, file, []byte(text))
+	return onSession(client, func(session *ssh.Session) error {
+		s, err := openPrivileged(session)
+		if err != nil {
+			return errors.Join(copyErr, err)
+		}
+		var replaceErr, deleteErr error
+		if copyErr == nil {
+			replaceErr = s.iosConfigureReplace(file)
+			deleteErr = s.cliCommand("delete /force " + file)
+		} else {
+			// A copy that failed part way can have left part of the file.
+			_ = s.cliCommand("delete /force " + file)
+		}
+		_ = s.send("exit\n")
+		return errors.Join(copyErr, replaceErr, deleteErr)
+	})
+}
+
+// iosConfigureReplace runs "configure replace" with "force", which skips its
+// yes/no question, and requires IOS to report the replace done.
+func (s *cliShell) iosConfigureReplace(file string) error {
+	command := "configure replace " + file + " force time " + strconv.Itoa(int(ConfirmWindow.Minutes()))
+	out, err := s.run(command)
+	if err != nil {
+		return err
+	}
+	if msgs := cliErrors(out); len(msgs) > 0 || !strings.Contains(out, "Rollback Done") {
+		return errors.Join(
+			fmt.Errorf("%w: configure replace did not complete%s", ErrCommand, joinMessages(msgs)),
+			s.iosRevertPending(),
+		)
+	}
+	return nil
 }
 
 // iosConfirm confirms the pending change, which ends its revert timer, and
@@ -596,12 +652,19 @@ func iosRollback(session *ssh.Session, _ DeviceRequest) error {
 	if err != nil {
 		return err
 	}
-	if err = s.cliCommand("show archive config rollback timer"); err != nil {
-		return fmt.Errorf("%w: no revert timer is pending on the device", ErrCommand)
-	}
-	err = s.cliCommand("configure revert now")
+	err = s.iosRevertPending()
 	_ = s.send("exit\n")
 	return err
+}
+
+// iosRevertPending reverts the change pending under a revert timer now. With
+// no timer pending there is nothing of Seed's to revert, and "configure
+// revert now" is not sent.
+func (s *cliShell) iosRevertPending() error {
+	if err := s.cliCommand("show archive config rollback timer"); err != nil {
+		return fmt.Errorf("%w: no revert timer is pending on the device", ErrCommand)
+	}
+	return s.cliCommand("configure revert now")
 }
 
 // saveStartup writes the running configuration to the startup

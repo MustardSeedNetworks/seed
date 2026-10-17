@@ -238,10 +238,6 @@ func (p *Pushes) check(ctx context.Context, req PlanRequest) (Target, error) {
 		return Target{}, ValidationError{Msg: "candidate is required"}
 	case len(req.Candidate) > MaxCandidateBytes:
 		return Target{}, ValidationError{Msg: fmt.Sprintf("candidate exceeds %d bytes", MaxCandidateBytes)}
-	case t.Platform == PlatformCiscoIOS && req.Mode == PushReplace:
-		return Target{}, ValidationError{
-			Msg: "cisco-ios takes a merge only: replacing its configuration needs the candidate copied to the device first",
-		}
 	}
 	switch t.Platform {
 	case PlatformNETCONF:
@@ -326,7 +322,7 @@ func (p *Pushes) plan(ctx context.Context, req PlanRequest) (PlanResult, error) 
 	)
 	if t.Platform == PlatformCiscoIOS {
 		source = DiffPredicted
-		dr, err = predictIOS(backup, req.Candidate)
+		dr, err = predictIOS(backup, req.Mode, req.Candidate)
 	} else {
 		source = DiffFromDevice
 		dr, err = p.deviceDryRun(ctx, t, req)
