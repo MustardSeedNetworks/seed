@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.281.1](https://github.com/MustardSeedNetworks/seed/compare/v0.281.0...v0.281.1) (2026-10-18)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3604](https://github.com/MustardSeedNetworks/seed/issues/3604)) ([8dbc8aa](https://github.com/MustardSeedNetworks/seed/commit/8dbc8aae1fbe3331db92bf3d8d2b55913f82a1fa))
+* **deps:** update module golang.org/x/vuln to v1.9.0 ([#3606](https://github.com/MustardSeedNetworks/seed/issues/3606)) ([f1e1776](https://github.com/MustardSeedNetworks/seed/commit/f1e177629a7de63450ca6e13303e0d6f94d58384))
+
 ## [0.281.0](https://github.com/MustardSeedNetworks/seed/compare/v0.280.0...v0.281.0) (2026-10-17)
 
 
