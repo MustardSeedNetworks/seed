@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.281.3](https://github.com/MustardSeedNetworks/seed/compare/v0.281.2...v0.281.3) (2026-10-18)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.104.2 ([#3611](https://github.com/MustardSeedNetworks/seed/issues/3611)) ([4eeb06c](https://github.com/MustardSeedNetworks/seed/commit/4eeb06c874f2394b958013c25d1293169d692181))
+* **deps:** update module github.com/pressly/goose/v3 to v3.29.0 ([#3612](https://github.com/MustardSeedNetworks/seed/issues/3612)) ([79984b6](https://github.com/MustardSeedNetworks/seed/commit/79984b611519878a8b0fe9cc2ff24165424b2d67))
+
 ## [0.281.2](https://github.com/MustardSeedNetworks/seed/compare/v0.281.1...v0.281.2) (2026-10-18)
 
 
