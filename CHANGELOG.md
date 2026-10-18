@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.281.2](https://github.com/MustardSeedNetworks/seed/compare/v0.281.1...v0.281.2) (2026-10-18)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-virtual to v3.14.15 ([#3609](https://github.com/MustardSeedNetworks/seed/issues/3609)) ([c6294b1](https://github.com/MustardSeedNetworks/seed/commit/c6294b161319cca79ffae5f6a24f86e631b3deef))
+* **deps:** update dependency react-hook-form to v7.90.0 ([#3610](https://github.com/MustardSeedNetworks/seed/issues/3610)) ([82d0ef8](https://github.com/MustardSeedNetworks/seed/commit/82d0ef8f2d444698363f0ecca725a15308f8cd74))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3607](https://github.com/MustardSeedNetworks/seed/issues/3607)) ([011a7cb](https://github.com/MustardSeedNetworks/seed/commit/011a7cb1145a44b3e9d83ebc79eef84e3229c5b4))
+
 ## [0.281.1](https://github.com/MustardSeedNetworks/seed/compare/v0.281.0...v0.281.1) (2026-10-18)
 
 
