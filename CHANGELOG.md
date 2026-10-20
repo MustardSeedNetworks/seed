@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.281.6](https://github.com/MustardSeedNetworks/seed/compare/v0.281.5...v0.281.6) (2026-10-20)
+
+
+### Miscellaneous
+
+* **deps:** update dependency postcss to v8.5.30 ([#3619](https://github.com/MustardSeedNetworks/seed/issues/3619)) ([6edba8a](https://github.com/MustardSeedNetworks/seed/commit/6edba8a121ad6beb1d08e91c7a487a4e8b9b1bf2))
+* **deps:** update frontend toolchain to v5.0.4 ([#3620](https://github.com/MustardSeedNetworks/seed/issues/3620)) ([fcf406e](https://github.com/MustardSeedNetworks/seed/commit/fcf406ef9968b20e5e99668017ee7bd7eb61d20f))
+
 ## [0.281.5](https://github.com/MustardSeedNetworks/seed/compare/v0.281.4...v0.281.5) (2026-10-20)
 
 
