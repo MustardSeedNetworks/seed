@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.281.7](https://github.com/MustardSeedNetworks/seed/compare/v0.281.6...v0.281.7) (2026-10-20)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-virtual to v3.14.17 ([#3623](https://github.com/MustardSeedNetworks/seed/issues/3623)) ([6d9e512](https://github.com/MustardSeedNetworks/seed/commit/6d9e51227c7e7994c9ccc332fb8a5b0c4fa45a48))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3626](https://github.com/MustardSeedNetworks/seed/issues/3626)) ([62f65fd](https://github.com/MustardSeedNetworks/seed/commit/62f65fd910faada493c740fb2292972799798112))
+* **deps:** lock file maintenance ([#3629](https://github.com/MustardSeedNetworks/seed/issues/3629)) ([a206f8d](https://github.com/MustardSeedNetworks/seed/commit/a206f8dd9b2e01419256a6a80448d5bb152726e4))
+* **deps:** update actions/create-github-app-token action to v3.3.0 ([#3624](https://github.com/MustardSeedNetworks/seed/issues/3624)) ([1a683e0](https://github.com/MustardSeedNetworks/seed/commit/1a683e0b67454dd9e94235b6fb31b017a9ee5624))
+* **deps:** update dependency @chromatic-com/storybook to v5.5.1 ([#3625](https://github.com/MustardSeedNetworks/seed/issues/3625)) ([5270701](https://github.com/MustardSeedNetworks/seed/commit/527070109a77afd0dbc594e0f7d1b857942efb99))
+* **deps:** update storybook monorepo to v10.6.2 ([#3622](https://github.com/MustardSeedNetworks/seed/issues/3622)) ([16a9a25](https://github.com/MustardSeedNetworks/seed/commit/16a9a25bf62c641feebe0a7b9fd7ca0b73cd8873))
+
 ## [0.281.6](https://github.com/MustardSeedNetworks/seed/compare/v0.281.5...v0.281.6) (2026-10-20)
 
 
