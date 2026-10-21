@@ -35,7 +35,8 @@ interface UseLifecycleFeedResult {
   status: SaveStatus;
   /** Why the load or the last save failed, for display. */
   error: string;
-  save: () => Promise<void>;
+  /** Saves the draft; resolves true once the server has accepted it. */
+  save: () => Promise<boolean>;
 }
 
 const EMPTY_DRAFT: FeedDraft = {
@@ -76,7 +77,7 @@ export function useLifecycleFeed(): UseLifecycleFeedResult {
       .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));
   }, [accept]);
 
-  const save = async (): Promise<void> => {
+  const save = async (): Promise<boolean> => {
     setStatus('saving');
     setError('');
     const update: LifecycleFeedUpdate = {
@@ -90,16 +91,18 @@ export function useLifecycleFeed(): UseLifecycleFeedResult {
     } else if (draft.clearClientSecret) {
       update.clearClientSecret = true;
     }
-    await api
+    return api
       .put<LifecycleFeedResponse>(FEED, update)
       .then((response) => {
         accept(response);
         setStatus('saved');
         setTimeout(() => setStatus('idle'), 2000);
+        return true;
       })
       .catch((err: unknown) => {
         setStatus('error');
         setError(err instanceof Error ? err.message : String(err));
+        return false;
       });
   };
 

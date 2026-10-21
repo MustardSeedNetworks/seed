@@ -66,5 +66,18 @@
     "errors": {
       "saveFailed": "No se pudo guardar la credencial. Inténtelo de nuevo u omítalo y añádala en Configuración."
     }
+  },
+  "eox": {
+    "title": "Fechas de fin de vida del hardware",
+    "subtitle": "Opcional: obténgalas de Cisco para el hardware que Seed encuentre",
+    "later": "Puede cambiarlo más tarde en Configuración.",
+    "buttons": {
+      "save": "Guardar y continuar",
+      "saving": "Guardando...",
+      "skip": "Omitir por ahora"
+    },
+    "errors": {
+      "saveFailed": "No se pudo guardar la respuesta: {{reason}}"
+    }
   }
 }
