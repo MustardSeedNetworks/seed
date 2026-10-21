@@ -7,7 +7,7 @@
 //
 // All test defaults are derived from the production DefaultConfig() to ensure
 // tests stay in sync with production defaults. The package uses lazy initialization
-// to compute expensive values (like bcrypt password hashes) only once.
+// to compute expensive values (like password hashes) only once.
 //
 // Example usage:
 //
