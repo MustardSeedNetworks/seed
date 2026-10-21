@@ -10,9 +10,12 @@ package discovery
 
 import (
 	"fmt"
+	"runtime/debug"
 	"slices"
 	"sync"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // EventType identifies the type of discovery event.
@@ -464,12 +467,17 @@ func (eb *EventBus) deliver(event *Event) {
 		}
 
 		if sub.filter == nil || sub.filter.Matches(event) {
-			// Deliver in a goroutine to prevent blocking
+			// Deliver in a goroutine to prevent blocking. The recover stays
+			// local rather than under supervise: each delivery is a one-shot
+			// goroutine with nothing to restart.
 			go func(s *Subscription, e *Event) {
 				defer func() {
 					if r := recover(); r != nil {
-						// Handler panicked - suppress and don't crash
-						_ = r // Intentionally ignoring panic details
+						logging.GetLogger().Error("discovery event subscriber panicked",
+							"subscription", s.ID(),
+							"event_type", string(e.Type),
+							"panic", r,
+							"stack", string(debug.Stack()))
 					}
 				}()
 				s.handler(e)
