@@ -35,6 +35,7 @@
     "deviceGroups": "Grupos de dispositivos",
     "ipam": "Direcciones IP",
     "lifecycle": "Ciclo de vida del hardware",
+    "ipSla": "IP SLA",
     "topology": "Topología",
     "interfaces": "Interfaces",
     "deviceConfigs": "Configuraciones",
@@ -693,6 +694,19 @@
         "notListed": {
           "term": "No listado",
           "description": "Los datos EoX no tienen registro del producto: no tiene un fin de vida anunciado, o los datos no lo cubren."
+        }
+      }
+    },
+    "ipSla": {
+      "description": "Vea las operaciones Cisco IP SLA que ejecutan sus routers y switches: el último resultado de cada una y cómo evolucionaron su ida y vuelta, jitter, pérdida y ejecuciones completadas en la última hora, día o semana. El sondeo lee las operaciones por SNMP desde CISCO-RTTMON-MIB; Seed no las configura. Una ejecución fallida o una ida y vuelta por encima del umbral de la operación también genera una alerta.",
+      "terms": {
+        "threshold": {
+          "term": "Umbral",
+          "description": "La ida y vuelta que la operación tiene configurada como demasiado lenta. Una ejecución completada por encima se marca como sobre el umbral."
+        },
+        "completed": {
+          "term": "Completadas",
+          "description": "La proporción de ejecuciones que obtuvo respuesta en cada tramo del periodo. Una ejecución que agotó el tiempo o falló cuenta en contra."
         }
       }
     },

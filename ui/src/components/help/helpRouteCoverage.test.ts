@@ -53,6 +53,7 @@ const pageFiles = {
   '/device-groups': 'DeviceGroupsPage',
   '/ipam': 'IpamPage',
   '/lifecycle': 'LifecyclePage',
+  '/ip-sla': 'IpSlaPage',
   '/topology': 'TopologyPage',
   '/interfaces': 'InterfacesPage',
   '/device-configs': 'DeviceConfigsPage',
@@ -62,8 +63,8 @@ const pageFiles = {
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 describe('GUI help — current card coverage', () => {
-  it('keeps all 32 sections with translated bodies', () => {
-    expect(new Set(helpSections.map((section) => section.id)).size).toBe(32);
+  it('keeps all 33 sections with translated bodies', () => {
+    expect(new Set(helpSections.map((section) => section.id)).size).toBe(33);
     for (const language of ['en', 'es']) {
       const translate = i18next.getFixedT(language, ['help', 'cards', 'pages', 'common'] as const);
       for (const section of helpSections) {

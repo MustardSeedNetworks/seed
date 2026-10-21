@@ -32,6 +32,7 @@ const ROUTES = [
   '/device-groups',
   '/ipam',
   '/lifecycle',
+  '/ip-sla',
   '/topology',
   '/interfaces',
   '/device-configs',

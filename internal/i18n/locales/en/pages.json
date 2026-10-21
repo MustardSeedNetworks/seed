@@ -138,19 +138,12 @@
     },
     "history": {
       "openHint": "Select an interface to see its history.",
-      "windowLabel": "Window",
-      "window": {
-        "1h": "Last hour",
-        "24h": "Last 24 hours",
-        "7d": "Last 7 days"
-      },
       "close": "Close history",
       "empty": "No rated polls in this window. A target that was just added, or stopped answering, has none yet.",
       "traffic": "Traffic",
       "errors": "Errors and discards",
       "in": "In",
-      "out": "Out",
-      "peak": "Peak {{series}} {{value}}"
+      "out": "Out"
     }
   },
   "deviceConfigs": {
@@ -515,6 +508,63 @@
     "importFirst": "No EoX data yet. Import a Cisco EoX API response, or have an admin turn on the EoX feed in Settings.",
     "bulletin": "Read the end-of-life bulletin",
     "emptyPrompt": "Select a part to see its end-of-life dates."
+  },
+  "ipSla": {
+    "label": "IP SLA",
+    "title": "IP SLA",
+    "description": "The Cisco IP SLA operations your polling targets run, with each one's latest result and its trend.",
+    "loadFailed": "Could not load IP SLA operations: {{reason}}",
+    "operationCount_one": "{{count}} operation",
+    "operationCount_other": "{{count}} operations",
+    "failingCount_one": "{{count}} failing",
+    "failingCount_other": "{{count}} failing",
+    "noOperations": "No IP SLA operation yet. Polling lists the operations a Cisco target runs once it answers SNMP with CISCO-RTTMON-MIB.",
+    "emptyPrompt": "Select an operation to see its trend.",
+    "operation": "Operation {{index}}",
+    "type": {
+      "t1": "ICMP echo",
+      "t2": "Path echo",
+      "t5": "UDP echo",
+      "t6": "TCP connect",
+      "t7": "HTTP",
+      "t8": "DNS",
+      "t9": "UDP jitter",
+      "t11": "DHCP",
+      "t12": "FTP",
+      "t16": "ICMP jitter",
+      "t19": "Ethernet ping",
+      "t20": "Ethernet jitter"
+    },
+    "typeOther": "Type {{type}}",
+    "result": {
+      "noRun": "No run yet",
+      "overThreshold": "{{rtt}}, over threshold",
+      "timeout": "Timed out",
+      "failed": "Failed (code {{sense}})"
+    },
+    "labelType": "Type",
+    "labelDestination": "Destination",
+    "labelThreshold": "Threshold",
+    "labelFrequency": "Runs",
+    "labelStatus": "Schedule",
+    "labelPolled": "Last polled",
+    "everySeconds_one": "Every second",
+    "everySeconds_other": "Every {{count}} s",
+    "statusActive": "Active",
+    "statusInactive": "Not running",
+    "labelJitter": "Jitter",
+    "labelLost": "Packets lost",
+    "lostOf": "{{lost}} of {{sent}}",
+    "labelMos": "MOS",
+    "trend": "Trend",
+    "historyFailed": "Could not load the trend: {{reason}}",
+    "historyEmpty": "No run in this window. An operation that was just added, or whose target stopped answering, has none yet.",
+    "chartTiming": "Round trip",
+    "chartOutcome": "Completed and loss",
+    "seriesRtt": "RTT",
+    "seriesJitter": "Jitter",
+    "seriesCompleted": "Completed",
+    "seriesLoss": "Loss"
   },
   "reports": {
     "description": "Aggregated SLA dashboard, compliance tracking, and historical reporting.",
