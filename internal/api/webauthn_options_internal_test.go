@@ -3,38 +3,29 @@ package api
 import (
 	"testing"
 
-	"github.com/go-webauthn/webauthn/protocol"
-	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/stretchr/testify/require"
 
-	"github.com/MustardSeedNetworks/seed/internal/auth"
+	"github.com/MustardSeedNetworks/foundation/pkg/passkey"
 )
 
 // TestWebAuthnOptionsMatchLibraryWire pins the published option types to what
-// go-webauthn serializes for Seed's relying party: the browser must receive
-// every member the library fills, so a member the transport types drop (a
-// library upgrade, a new registration option) fails here.
+// go-webauthn serializes under foundation's passkey policy: the browser must
+// receive every member the library fills, so a member the transport types
+// drop (a library upgrade, a policy change in foundation) fails here.
 func TestWebAuthnOptionsMatchLibraryWire(t *testing.T) {
-	manager, err := auth.NewWebAuthnManager(auth.WebAuthnConfig{
-		RPID: "seed.example.com", RPOrigins: []string{"https://seed.example.com:8443"},
+	service, err := passkey.New(passkey.Config{
+		RPID: "seed.example.com", Origin: "https://seed.example.com:8443", DisplayName: "Seed",
 	})
 	require.NoError(t, err)
-	user := &auth.WebAuthnUser{
-		ID:   userHandleFromID(42),
-		Name: "admin",
-		Credentials: []webauthn.Credential{{
-			ID:        []byte("enrolled-passkey"),
-			Transport: []protocol.AuthenticatorTransport{protocol.USB, protocol.NFC},
-		}},
-	}
+	user := &passkeyUser{handle: userHandleFromID(42), name: "admin"}
 
-	creation, _, err := manager.BeginRegistration(user)
+	creation, _, err := service.BeginRegistration(user)
 	require.NoError(t, err)
 	require.JSONEq(t,
 		string(mustMarshal(t, creation)),
-		string(mustMarshal(t, newWebAuthnCreationOptions(creation, user.ID))))
+		string(mustMarshal(t, newWebAuthnCreationOptions(creation, user.handle))))
 
-	assertion, _, err := manager.BeginLogin(user)
+	assertion, _, err := service.BeginLogin()
 	require.NoError(t, err)
 	require.JSONEq(t,
 		string(mustMarshal(t, assertion)),

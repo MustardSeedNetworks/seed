@@ -130,7 +130,6 @@ func (s *Server) setupTokenManager() *SetupTokenManager       { return s.setupTo
 func (s *Server) recoveryManager() *auth.RecoveryTokenManager { return s.recovery }
 func (s *Server) oauthManager() *oauth.Manager                { return s.oauthMgr }
 func (s *Server) trustedProxies() *TrustedProxies             { return s.proxies }
-func (s *Server) webAuthnManager() *auth.WebAuthnManager      { return s.webAuthn }
 func (s *Server) loginRateLimiter() *RateLimiter              { return s.loginLimiter }
 func (s *Server) endpointRateLimiter() *EndpointRateLimiter   { return s.endpointLimiter }
 func (s *Server) netManager() *netif.Manager                  { return s.netMgr }

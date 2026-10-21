@@ -67,7 +67,7 @@ func TestProductionListenerServesApplicationOnlyOverTLS(t *testing.T) {
 	if response.StatusCode != http.StatusOK || string(body) != "tls-only" {
 		t.Fatalf("HTTPS response = %d %q", response.StatusCode, body)
 	}
-	if !server.WebAuthnEnabledForTest() {
+	if !server.PasskeysEnabledForTest() {
 		t.Fatal("bound HTTPS listener did not initialize WebAuthn")
 	}
 

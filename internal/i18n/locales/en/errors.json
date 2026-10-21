@@ -16,8 +16,7 @@
     "invalidToken": "Invalid or expired multi-factor authentication token",
     "sessionExpired": "Multi-factor authentication session expired. Please retry.",
     "registrationFailed": "Passkey registration failed",
-    "assertionFailed": "Passkey verification failed",
-    "noCredentials": "No passkey credentials are registered for this account"
+    "assertionFailed": "Passkey verification failed"
   },
   "network": {
     "connectionFailed": "Connection failed",

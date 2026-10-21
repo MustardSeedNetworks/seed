@@ -34,7 +34,7 @@ func TestMFAStatusCountsPasskeys(t *testing.T) {
 	require.NoError(t, err)
 	for _, id := range []string{"key-a", "key-b"} {
 		_, err = f.db.AddWebAuthnCredential(t.Context(), user.ID, mfa.WebAuthnCredential{
-			CredentialID: []byte(id), PublicKey: []byte("public-key"),
+			CredentialID: []byte(id), Record: []byte("record"),
 		})
 		require.NoError(t, err)
 	}

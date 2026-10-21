@@ -3,6 +3,32 @@
   "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/webauthn-creation-options-response.schema.json",
   "$ref": "#/$defs/WebAuthnCreationOptionsResponse",
   "$defs": {
+    "WebAuthnAuthenticatorSelection": {
+      "properties": {
+        "requireResidentKey": {
+          "type": "boolean"
+        },
+        "residentKey": {
+          "type": "string",
+          "enum": [
+            "required"
+          ]
+        },
+        "userVerification": {
+          "type": "string",
+          "enum": [
+            "required"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "requireResidentKey",
+        "residentKey",
+        "userVerification"
+      ]
+    },
     "WebAuthnCreationOptions": {
       "properties": {
         "rp": {
@@ -23,11 +49,14 @@
         "timeout": {
           "type": "integer"
         },
-        "excludeCredentials": {
-          "items": {
-            "$ref": "#/$defs/WebAuthnCredentialDescriptor"
-          },
-          "type": "array"
+        "authenticatorSelection": {
+          "$ref": "#/$defs/WebAuthnAuthenticatorSelection"
+        },
+        "attestation": {
+          "type": "string",
+          "enum": [
+            "none"
+          ]
         }
       },
       "additionalProperties": false,
@@ -38,7 +67,8 @@
         "challenge",
         "pubKeyCredParams",
         "timeout",
-        "excludeCredentials"
+        "authenticatorSelection",
+        "attestation"
       ]
     },
     "WebAuthnCreationOptionsResponse": {
@@ -51,39 +81,6 @@
       "type": "object",
       "required": [
         "publicKey"
-      ]
-    },
-    "WebAuthnCredentialDescriptor": {
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "public-key"
-          ]
-        },
-        "id": {
-          "type": "string"
-        },
-        "transports": {
-          "items": {
-            "type": "string",
-            "enum": [
-              "usb",
-              "nfc",
-              "ble",
-              "smart-card",
-              "hybrid",
-              "internal"
-            ]
-          },
-          "type": "array"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "type",
-        "id"
       ]
     },
     "WebAuthnCredentialParameter": {
