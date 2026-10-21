@@ -61,6 +61,9 @@ beforeEach(async () => {
     status: 200,
     json: async () => ({ providers: [] }),
   })) as unknown as typeof fetch);
+  // An answered EoX feed is not asked again (FirstRunEoxStep.test.tsx), so
+  // leaving the SNMP step here is what finishes setup.
+  vi.spyOn(api, 'get').mockResolvedValue({ choice: 'off' });
 });
 
 afterEach(async () => {
