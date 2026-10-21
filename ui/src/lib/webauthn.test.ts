@@ -30,7 +30,7 @@ vi.mock('../api', () => ({
   api: { post: (path: string, body?: unknown): Promise<unknown> => mockPost(path, body) },
 }));
 
-// The options as register/begin and login/begin send them, one passkey enrolled.
+// The options as register/begin and login/begin send them.
 const CREATION_OPTIONS: WebAuthnCreationOptionsResponse = {
   publicKey: {
     rp: { name: 'Seed', id: 'localhost' },
@@ -38,7 +38,12 @@ const CREATION_OPTIONS: WebAuthnCreationOptionsResponse = {
     challenge: 'AAAAAAAAAAE',
     pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
     timeout: 300000,
-    excludeCredentials: [{ type: 'public-key', id: 'Y3JlZGlk', transports: ['usb'] }],
+    authenticatorSelection: {
+      requireResidentKey: true,
+      residentKey: 'required',
+      userVerification: 'required',
+    },
+    attestation: 'none',
   },
 };
 
@@ -47,7 +52,7 @@ const REQUEST_OPTIONS: WebAuthnRequestOptionsResponse = {
     challenge: 'AAAAAAAAAAE',
     timeout: 300000,
     rpId: 'localhost',
-    allowCredentials: [{ type: 'public-key', id: 'Y3JlZGlk' }],
+    userVerification: 'required',
   },
 };
 
@@ -123,8 +128,8 @@ describe('registerPasskey', () => {
     };
     expect(passed.publicKey.challenge).toBeInstanceOf(ArrayBuffer);
     expect(passed.publicKey.user.id).toBeInstanceOf(ArrayBuffer);
-    // The enrolled passkey is excluded, so the browser will not enrol it twice.
-    expect(passed.publicKey.excludeCredentials?.at(0)?.id).toEqual(base64UrlToBuffer('Y3JlZGlk'));
+    // A discoverable passkey is what lets sign-in skip the username.
+    expect(passed.publicKey.authenticatorSelection?.residentKey).toBe('required');
 
     const [path, body] = mockPost.mock.calls.at(-1) as [string, Record<string, unknown>];
     expect(path).toBe('/api/v1/auth/webauthn/register/finish');
@@ -152,7 +157,7 @@ describe('registerPasskey', () => {
 });
 
 describe('loginWithPasskey', () => {
-  it('sends the username as a query parameter, which is where finish reads it', async () => {
+  it('names no account: the passkey the browser offers does', async () => {
     mockPost.mockImplementation((endpoint: string) => {
       if (endpoint.endsWith('/login/begin')) {
         return Promise.resolve(REQUEST_OPTIONS);
@@ -169,16 +174,20 @@ describe('loginWithPasskey', () => {
           clientDataJSON: buf(1),
           authenticatorData: buf(2),
           signature: buf(3),
-          userHandle: null,
+          userHandle: buf(0, 0, 0, 0, 0, 0, 0, 1),
         },
       }),
     );
     vi.stubGlobal('navigator', { credentials: { create: vi.fn(), get } });
 
-    const result = await loginWithPasskey('ad min');
+    const result = await loginWithPasskey();
 
-    const [path] = mockPost.mock.calls.at(-1) as [string, unknown];
-    expect(path).toBe('/api/v1/auth/webauthn/login/finish?username=ad%20min');
+    expect(mockPost.mock.calls.at(0)).toEqual(['/api/v1/auth/webauthn/login/begin', {}]);
+    const [path, body] = mockPost.mock.calls.at(-1) as [string, Record<string, unknown>];
+    expect(path).toBe('/api/v1/auth/webauthn/login/finish');
+    expect((body.response as Record<string, string>).userHandle).toBe(
+      bufferToBase64Url(buf(0, 0, 0, 0, 0, 0, 0, 1)),
+    );
     expect(result.token).toBe('access-token');
   });
 });

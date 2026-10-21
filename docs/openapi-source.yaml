@@ -201,7 +201,7 @@ operations:
   POST /api/v1/auth/webauthn/register/begin:
     responses:
       "200":
-        description: Creation options for navigator.credentials.create(); enrolled passkeys are excluded.
+        description: Creation options for navigator.credentials.create(), asking for a discoverable, user-verifying passkey. Sets the HttpOnly seed_passkey_register cookie that binds the ceremony to this browser.
         content:
           application/json:
             schema:
@@ -215,15 +215,9 @@ operations:
             schema:
               $ref: '#/components/schemas/MFAToggleResponse'
   POST /api/v1/auth/webauthn/login/begin:
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/WebAuthnLoginBeginRequest'
     responses:
       "200":
-        description: Request options for navigator.credentials.get(), naming the account's passkeys.
+        description: Request options for navigator.credentials.get(). Sign-in is username-free, so no credentials are named. Sets the HttpOnly seed_passkey_login cookie that binds the ceremony to this browser.
         content:
           application/json:
             schema:
@@ -231,7 +225,7 @@ operations:
   POST /api/v1/auth/webauthn/login/finish:
     responses:
       "200":
-        description: The assertion verified; the session token.
+        description: The assertion verified against the ceremony the seed_passkey_login cookie names; the session token.
         content:
           application/json:
             schema:

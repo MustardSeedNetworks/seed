@@ -12,10 +12,5 @@ export interface WebAuthnRequestOptions {
   challenge: string;
   timeout: number;
   rpId: string;
-  allowCredentials: WebAuthnCredentialDescriptor[];
-}
-export interface WebAuthnCredentialDescriptor {
-  type: 'public-key';
-  id: string;
-  transports?: ('usb' | 'nfc' | 'ble' | 'smart-card' | 'hybrid' | 'internal')[];
+  userVerification: 'required';
 }

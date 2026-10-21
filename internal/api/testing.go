@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
+	"github.com/MustardSeedNetworks/foundation/pkg/passkey"
 
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/app"
@@ -116,6 +117,8 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 		logPath:       "/tmp/test.log",
 		icmpAvailable: true,
 		engines:       engine.NewRegistry(nil),
+
+		passkeyCeremonies: passkey.NewStore(),
 	}
 
 	// Initialize services

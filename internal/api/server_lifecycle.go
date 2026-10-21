@@ -226,7 +226,7 @@ func (s *Server) startHTTPS() error {
 	}
 	actualPort := tcpAddr.Port
 	s.httpServer.Addr = ln.Addr().String()
-	s.initWebAuthn(actualPort)
+	s.initPasskeys(actualPort)
 	if s.boundPort != nil {
 		s.boundPort(actualPort)
 	}

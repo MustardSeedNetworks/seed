@@ -14,7 +14,8 @@ export interface WebAuthnCreationOptions {
   challenge: string;
   pubKeyCredParams: WebAuthnCredentialParameter[];
   timeout: number;
-  excludeCredentials: WebAuthnCredentialDescriptor[];
+  authenticatorSelection: WebAuthnAuthenticatorSelection;
+  attestation: 'none';
 }
 export interface WebAuthnRelyingParty {
   name: string;
@@ -29,8 +30,8 @@ export interface WebAuthnCredentialParameter {
   type: 'public-key';
   alg: number;
 }
-export interface WebAuthnCredentialDescriptor {
-  type: 'public-key';
-  id: string;
-  transports?: ('usb' | 'nfc' | 'ble' | 'smart-card' | 'hybrid' | 'internal')[];
+export interface WebAuthnAuthenticatorSelection {
+  requireResidentKey: boolean;
+  residentKey: 'required';
+  userVerification: 'required';
 }

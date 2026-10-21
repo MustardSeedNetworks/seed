@@ -424,10 +424,6 @@ CREATE INDEX idx_voip_streams_started ON voip_streams(started_at);
 CREATE INDEX idx_vuln_status_history_vuln
 	ON vulnerability_status_history(vulnerability_id, id);
 
--- index: idx_webauthn_credential_id
-CREATE UNIQUE INDEX idx_webauthn_credential_id
-				ON webauthn_credentials(credential_id);
-
 -- index: idx_webauthn_user
 CREATE INDEX idx_webauthn_user ON webauthn_credentials(user_id);
 
@@ -1314,11 +1310,7 @@ CREATE TABLE webauthn_credentials (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id INTEGER NOT NULL,
 				credential_id BLOB NOT NULL UNIQUE,
-				public_key BLOB NOT NULL,
-				sign_count INTEGER NOT NULL DEFAULT 0,
-				attestation_type TEXT,
-				transports TEXT,
-				aaguid BLOB,
+				record BLOB NOT NULL,
 				created_at TEXT NOT NULL,
 				last_used_at TEXT,
 				FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

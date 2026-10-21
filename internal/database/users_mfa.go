@@ -128,14 +128,9 @@ func (db *DB) AddWebAuthnCredential(
 
 	now := time.Now().UTC().Format(time.RFC3339)
 	res, err := db.writeConn.ExecContext(ctx, `
-		INSERT INTO webauthn_credentials (
-			user_id, credential_id, public_key, sign_count,
-			attestation_type, transports, aaguid, created_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-	`,
-		userID, cred.CredentialID, cred.PublicKey, int64(cred.SignCount),
-		cred.AttestationType, cred.Transports, cred.AAGUID, now,
-	)
+		INSERT INTO webauthn_credentials (user_id, credential_id, record, created_at)
+		VALUES (?, ?, ?, ?)
+	`, userID, cred.CredentialID, cred.Record, now)
 	if err != nil {
 		return 0, fmt.Errorf("add webauthn credential: %w", err)
 	}
@@ -155,8 +150,7 @@ func (db *DB) ListWebAuthnCredentials(
 	}
 
 	rows, err := db.readConn.QueryContext(ctx, `
-		SELECT id, user_id, credential_id, public_key, sign_count,
-		       attestation_type, transports, aaguid, created_at, last_used_at
+		SELECT id, user_id, credential_id, record, created_at, last_used_at
 		FROM webauthn_credentials
 		WHERE user_id = ?
 		ORDER BY created_at ASC
@@ -169,29 +163,15 @@ func (db *DB) ListWebAuthnCredentials(
 	var out []mfa.WebAuthnCredential
 	for rows.Next() {
 		var (
-			c          mfa.WebAuthnCredential
-			signCount  int64
-			attest     sql.NullString
-			transports sql.NullString
-			createdAt  string
-			lastUsed   sql.NullString
+			c         mfa.WebAuthnCredential
+			createdAt string
+			lastUsed  sql.NullString
 		)
 		if scanErr := rows.Scan(
-			&c.ID, &c.UserID, &c.CredentialID, &c.PublicKey, &signCount,
-			&attest, &transports, &c.AAGUID, &createdAt, &lastUsed,
+			&c.ID, &c.UserID, &c.CredentialID, &c.Record, &createdAt, &lastUsed,
 		); scanErr != nil {
 			return nil, fmt.Errorf("scan webauthn credential: %w", scanErr)
 		}
-		// Bounds-check the on-disk sign count before narrowing to uint32.
-		// SQLite stores INTEGER as int64; a negative or oversized value
-		// would corrupt the WebAuthn replay-protection logic, so reject
-		// it as a malformed row rather than silently wrapping.
-		if signCount < 0 || signCount > 0xFFFFFFFF {
-			return nil, fmt.Errorf("scan webauthn credential: sign_count out of range: %d", signCount)
-		}
-		c.SignCount = uint32(signCount)
-		c.AttestationType = attest.String
-		c.Transports = transports.String
 		if t, parseErr := time.Parse(time.RFC3339, createdAt); parseErr == nil {
 			c.CreatedAt = t
 		}
@@ -208,11 +188,33 @@ func (db *DB) ListWebAuthnCredentials(
 	return out, nil
 }
 
-// UpdateWebAuthnSignCount persists the new authenticator sign count
-// (replay-protection counter) and bumps last_used_at to now.
-func (db *DB) UpdateWebAuthnSignCount(
-	ctx context.Context, credentialID []byte, signCount uint32,
-) error {
+// WebAuthnCredentialOwner returns the username a credential is registered
+// to, or mfa.ErrCredentialNotFound.
+func (db *DB) WebAuthnCredentialOwner(ctx context.Context, credentialID []byte) (string, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	if db.closed {
+		return "", errors.New("database is closed")
+	}
+
+	var username string
+	err := db.readConn.QueryRowContext(ctx, `
+		SELECT u.username
+		FROM webauthn_credentials c JOIN users u ON u.id = c.user_id
+		WHERE c.credential_id = ?
+	`, credentialID).Scan(&username)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", mfa.ErrCredentialNotFound
+	}
+	if err != nil {
+		return "", fmt.Errorf("webauthn credential owner: %w", err)
+	}
+	return username, nil
+}
+
+// UpdateWebAuthnCredential replaces the stored record after a sign-in (its
+// sign count and flags move with every assertion) and bumps last_used_at.
+func (db *DB) UpdateWebAuthnCredential(ctx context.Context, credentialID, record []byte) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	if db.closed {
@@ -222,11 +224,11 @@ func (db *DB) UpdateWebAuthnSignCount(
 	now := time.Now().UTC().Format(time.RFC3339)
 	res, err := db.writeConn.ExecContext(ctx, `
 		UPDATE webauthn_credentials
-		SET sign_count = ?, last_used_at = ?
+		SET record = ?, last_used_at = ?
 		WHERE credential_id = ?
-	`, int64(signCount), now, credentialID)
+	`, record, now, credentialID)
 	if err != nil {
-		return fmt.Errorf("update webauthn sign count: %w", err)
+		return fmt.Errorf("update webauthn credential: %w", err)
 	}
 	rows, _ := res.RowsAffected()
 	if rows == 0 {

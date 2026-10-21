@@ -22,7 +22,8 @@ type Store interface {
 	GetTOTP(ctx context.Context, username string) (secret string, enabled bool, err error)
 	AddWebAuthnCredential(ctx context.Context, userID int64, cred WebAuthnCredential) (int64, error)
 	ListWebAuthnCredentials(ctx context.Context, userID int64) ([]WebAuthnCredential, error)
-	UpdateWebAuthnSignCount(ctx context.Context, credentialID []byte, signCount uint32) error
+	WebAuthnCredentialOwner(ctx context.Context, credentialID []byte) (username string, err error)
+	UpdateWebAuthnCredential(ctx context.Context, credentialID, record []byte) error
 }
 
 // ErrCredentialNotFound is returned when a WebAuthn credential lookup
@@ -30,16 +31,13 @@ type Store interface {
 var ErrCredentialNotFound = errors.New("webauthn credential not found")
 
 // WebAuthnCredential is a single registered authenticator. A user may have
-// several.
+// several. Record is the complete credential as foundation/pkg/passkey
+// serializes it; the store keeps it opaque and indexes it by CredentialID.
 type WebAuthnCredential struct {
-	ID              int64
-	UserID          int64
-	CredentialID    []byte // raw credential ID bytes (NOT base64-encoded)
-	PublicKey       []byte // COSE-encoded public key from the authenticator
-	SignCount       uint32
-	AttestationType string
-	Transports      string // comma-joined transport hints ("usb,nfc",...)
-	AAGUID          []byte
-	CreatedAt       time.Time
-	LastUsedAt      *time.Time
+	ID           int64
+	UserID       int64
+	CredentialID []byte // raw credential ID bytes (NOT base64-encoded)
+	Record       []byte
+	CreatedAt    time.Time
+	LastUsedAt   *time.Time
 }

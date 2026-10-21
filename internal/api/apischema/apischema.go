@@ -97,7 +97,6 @@ func Targets() []Target {
 		{&api.MFAToggleResponse{}, "mfa-toggle-response.schema.json"},
 		{&api.MFAStatusResponse{}, "mfa-status-response.schema.json"},
 		{&api.WebAuthnCreationOptionsResponse{}, "webauthn-creation-options-response.schema.json"},
-		{&api.WebAuthnLoginBeginRequest{}, "webauthn-login-begin-request.schema.json"},
 		{&api.WebAuthnRequestOptionsResponse{}, "webauthn-request-options-response.schema.json"},
 		{&api.CSRFTokenResponse{}, "csrf-token-response.schema.json"},
 		{&api.SetupStatusResponse{}, "setup-status-response.schema.json"},

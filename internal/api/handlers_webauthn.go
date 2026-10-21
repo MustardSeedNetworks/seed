@@ -1,17 +1,24 @@
 package api
 
-// handlers_webauthn.go holds the WebAuthn passkey endpoints: registration
-// for an authenticated user and the login second factor. The TOTP
-// endpoints and the shared MFA helpers are in handlers_mfa.go.
+// handlers_webauthn.go holds the passkey endpoints: enrolment for a signed-in
+// user and passwordless sign-in. foundation/pkg/passkey owns the ceremonies and
+// the fleet's verification policy (discoverable credentials, user
+// verification, single-use browser-bound challenges); this file owns seed's
+// routes, the cookie that binds a ceremony to its browser, and storage. The
+// TOTP endpoints and the shared MFA helpers are in handlers_mfa.go.
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"net/http"
-	"sync"
+	"strings"
 	"time"
 
 	"github.com/go-webauthn/webauthn/webauthn"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/passkey"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
@@ -43,73 +50,89 @@ func userHandleFromID(rowID int64) []byte {
 	return id
 }
 
-// webAuthnSessionStore holds in-flight WebAuthn ceremony state keyed
-// by username. Sessions expire after webauthnSessionTTL.
-type webAuthnSessionStore struct {
-	mu       sync.Mutex
-	sessions map[string]webAuthnSessionEntry
-}
+// passkeyCeremonyTTL matches foundation's ceremony timeout: the cookie lives
+// no longer than the challenge it names.
+const passkeyCeremonyTTL = 5 * time.Minute
 
-type webAuthnSessionEntry struct {
-	data    webauthn.SessionData
-	purpose string // "register" or "login"
-	expires time.Time
-}
-
-const webauthnSessionTTL = 5 * time.Minute
-
-func newWebAuthnSessionStore() *webAuthnSessionStore {
-	return &webAuthnSessionStore{
-		sessions: make(map[string]webAuthnSessionEntry),
+// passkeyCookieScope returns a ceremony cookie's name and path. Each purpose
+// has its own cookie scoped to its own finish route, so it travels with no
+// other request.
+func passkeyCookieScope(purpose passkey.Purpose) (string, string) {
+	if purpose == passkey.Registration {
+		return "seed_passkey_register", APIVersionPrefix + "/auth/webauthn/register/finish"
 	}
+	return "seed_passkey_login", APIVersionPrefix + "/auth/webauthn/login/finish"
 }
 
-// Put stores a session, evicting expired entries opportunistically.
-func (s *webAuthnSessionStore) Put(
-	username, purpose string, data webauthn.SessionData,
-) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	now := time.Now()
-	for k, v := range s.sessions {
-		if v.expires.Before(now) {
-			delete(s.sessions, k)
-		}
-	}
-	s.sessions[username+"|"+purpose] = webAuthnSessionEntry{
-		data:    data,
-		purpose: purpose,
-		expires: now.Add(webauthnSessionTTL),
-	}
+func setPasskeyCookie(w http.ResponseWriter, purpose passkey.Purpose, value string, maxAge int) {
+	name, path := passkeyCookieScope(purpose)
+	http.SetCookie(w, &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Path:     path,
+		MaxAge:   maxAge,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	})
 }
 
-// Take returns and removes the session for the given user/purpose.
-// Returns (zero, false) when missing or expired.
-func (s *webAuthnSessionStore) Take(
-	username, purpose string,
-) (webauthn.SessionData, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	entry, ok := s.sessions[username+"|"+purpose]
+// startPasskeyCeremony keeps the session server-side under a random browser
+// secret and hands the browser only "<ceremony id>.<secret>" in an HttpOnly
+// cookie. account is the user handle for enrolment and empty for sign-in.
+func (s *Server) startPasskeyCeremony(
+	w http.ResponseWriter, purpose passkey.Purpose, session *passkey.Session, account string,
+) error {
+	const secretBytes = 32
+	secret := make([]byte, secretBytes)
+	_, _ = rand.Read(secret) // crypto/rand.Read never returns an error
+	browser := base64.RawURLEncoding.EncodeToString(secret)
+	id, err := s.passkeyCeremonies.Add(*session, passkey.Binding{
+		Browser: browser, AccountID: account, Purpose: purpose,
+	})
+	if err != nil {
+		return err
+	}
+	setPasskeyCookie(w, purpose, id+"."+browser, int(passkeyCeremonyTTL.Seconds()))
+	return nil
+}
+
+// takePasskeyCeremony consumes the ceremony the request's cookie names. The
+// cookie is spent either way: a failed finish needs a fresh challenge.
+func (s *Server) takePasskeyCeremony(
+	w http.ResponseWriter, r *http.Request, purpose passkey.Purpose, account string,
+) (passkey.Session, bool) {
+	setPasskeyCookie(w, purpose, "", -1)
+	name, _ := passkeyCookieScope(purpose)
+	cookie, err := r.Cookie(name)
+	if err != nil {
+		return passkey.Session{}, false
+	}
+	id, browser, ok := strings.Cut(cookie.Value, ".")
 	if !ok {
-		return webauthn.SessionData{}, false
+		return passkey.Session{}, false
 	}
-	delete(s.sessions, username+"|"+purpose)
-	if entry.expires.Before(time.Now()) {
-		return webauthn.SessionData{}, false
-	}
-	return entry.data, true
+	return s.passkeyCeremonies.Take(id, passkey.Binding{
+		Browser: browser, AccountID: account, Purpose: purpose,
+	})
 }
 
-// webAuthnSessions is the package-level singleton ceremony cache.
-var webAuthnSessions = newWebAuthnSessionStore() //nolint:gochecknoglobals // process-wide cache
+// passkeyUser is a seed account as go-webauthn sees it: the row-ID user
+// handle, the username, and the complete stored credentials.
+type passkeyUser struct {
+	handle      []byte
+	name        string
+	credentials []webauthn.Credential
+}
 
-// loadWebAuthnUser builds a *auth.WebAuthnUser for the given username
-// through the users use-case and the MFA store.
-func (s *Server) loadWebAuthnUser(
-	ctx context.Context, username string,
-) (*auth.WebAuthnUser, *users.User, error) {
+func (u *passkeyUser) WebAuthnID() []byte                         { return u.handle }
+func (u *passkeyUser) WebAuthnName() string                       { return u.name }
+func (u *passkeyUser) WebAuthnDisplayName() string                { return u.name }
+func (u *passkeyUser) WebAuthnCredentials() []webauthn.Credential { return u.credentials }
+
+// loadPasskeyUser builds the account's ceremony view through the users
+// use-case and the MFA store.
+func (s *Server) loadPasskeyUser(ctx context.Context, username string) (*passkeyUser, *users.User, error) {
 	if !s.identityMFA.Available() {
 		return nil, nil, errors.New("database not available")
 	}
@@ -117,31 +140,20 @@ func (s *Server) loadWebAuthnUser(
 	if err != nil {
 		return nil, nil, err
 	}
-	creds, err := s.identityMFA.ListWebAuthnCredentials(ctx, user.ID)
+	stored, err := s.identityMFA.ListWebAuthnCredentials(ctx, user.ID)
 	if err != nil {
 		return nil, nil, err
 	}
-	wanCreds := make([]webauthn.Credential, 0, len(creds))
-	for _, c := range creds {
-		wanCreds = append(wanCreds, webauthn.Credential{
-			ID:              c.CredentialID,
-			PublicKey:       c.PublicKey,
-			AttestationType: c.AttestationType,
-			Authenticator: webauthn.Authenticator{
-				AAGUID:    c.AAGUID,
-				SignCount: c.SignCount,
-			},
-		})
+	credentials := make([]webauthn.Credential, 0, len(stored))
+	for _, c := range stored {
+		credential, decodeErr := passkey.UnmarshalCredential(c.Record)
+		if decodeErr != nil {
+			return nil, nil, decodeErr
+		}
+		credentials = append(credentials, credential)
 	}
-	// Use the row ID as the user handle. WebAuthn requires it be 1-64
-	// bytes and stable across renames; binary.BigEndian gives us a
-	// canonical 8-byte encoding of the auto-increment int64 row ID.
-	id := userHandleFromID(user.ID)
-	return &auth.WebAuthnUser{
-		ID:          id,
-		Name:        user.Username,
-		DisplayName: user.Username,
-		Credentials: wanCreds,
+	return &passkeyUser{
+		handle: userHandleFromID(user.ID), name: user.Username, credentials: credentials,
 	}, user, nil
 }
 
@@ -155,29 +167,31 @@ func (s *Server) handleWebAuthnRegisterBegin(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	username := usernameFromContext(r)
-	if username == "" || s.webAuthnManager() == nil {
+	if username == "" || s.passkeys == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized,
 			ErrCodeUnauthorized, localizer.T("errors.auth.unauthorized"), "")
 		return
 	}
-	user, _, err := s.loadWebAuthnUser(r.Context(), username)
+	user, _, err := s.loadPasskeyUser(r.Context(), username)
 	if err != nil {
-		logger.ErrorContext(r.Context(), "Failed to load WebAuthn user", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to load passkey user", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.api.internalError"), "")
 		return
 	}
-	opts, sess, err := s.webAuthnManager().BeginRegistration(user)
+	opts, session, err := s.passkeys.BeginRegistration(user)
+	if err == nil {
+		err = s.startPasskeyCeremony(w, passkey.Registration, session, string(user.handle))
+	}
 	if err != nil {
 		logger.ErrorContext(r.Context(), "WebAuthn begin registration failed", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.api.internalError"), "")
 		return
 	}
-	webAuthnSessions.Put(username, "register", *sess)
 	logger.InfoContext(r.Context(), "WebAuthn registration started",
 		"event", "webauthn_register", "username", username, "result", "begin")
-	sendJSONResponse(w, logger, http.StatusOK, newWebAuthnCreationOptions(opts, user.ID))
+	sendJSONResponse(w, logger, http.StatusOK, newWebAuthnCreationOptions(opts, user.handle))
 }
 
 // handleWebAuthnRegisterFinish completes the registration ceremony and
@@ -189,25 +203,25 @@ func (s *Server) handleWebAuthnRegisterFinish(w http.ResponseWriter, r *http.Req
 		return
 	}
 	username := usernameFromContext(r)
-	if username == "" || s.webAuthnManager() == nil {
+	if username == "" || s.passkeys == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized,
 			ErrCodeUnauthorized, localizer.T("errors.auth.unauthorized"), "")
 		return
 	}
-	sess, ok := webAuthnSessions.Take(username, "register")
+	user, dbUser, err := s.loadPasskeyUser(r.Context(), username)
+	if err != nil {
+		logger.ErrorContext(r.Context(), "Failed to load passkey user", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, localizer.T("errors.api.internalError"), "")
+		return
+	}
+	session, ok := s.takePasskeyCeremony(w, r, passkey.Registration, string(user.handle))
 	if !ok {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeBadRequest, localizer.T("errors.mfa.sessionExpired"), "")
 		return
 	}
-	user, dbUser, err := s.loadWebAuthnUser(r.Context(), username)
-	if err != nil {
-		logger.ErrorContext(r.Context(), "Failed to load WebAuthn user", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.api.internalError"), "")
-		return
-	}
-	cred, err := s.webAuthnManager().FinishRegistration(user, sess, r)
+	credential, err := s.passkeys.FinishRegistration(user, session, r)
 	if err != nil {
 		logger.WarnContext(r.Context(), "WebAuthn finish registration failed", "error", err,
 			"event", "webauthn_register", "username", username, "result", "rejected")
@@ -215,16 +229,14 @@ func (s *Server) handleWebAuthnRegisterFinish(w http.ResponseWriter, r *http.Req
 			ErrCodeBadRequest, localizer.T("errors.mfa.registrationFailed"), "")
 		return
 	}
-	dbCred := mfa.WebAuthnCredential{
-		UserID:          dbUser.ID,
-		CredentialID:    cred.ID,
-		PublicKey:       cred.PublicKey,
-		SignCount:       cred.Authenticator.SignCount,
-		AttestationType: cred.AttestationType,
-		AAGUID:          cred.Authenticator.AAGUID,
+	record, err := passkey.MarshalCredential(*credential)
+	if err == nil {
+		_, err = s.identityMFA.AddWebAuthnCredential(r.Context(), dbUser.ID, mfa.WebAuthnCredential{
+			CredentialID: credential.ID, Record: record,
+		})
 	}
-	if _, addErr := s.identityMFA.AddWebAuthnCredential(r.Context(), dbUser.ID, dbCred); addErr != nil {
-		logger.ErrorContext(r.Context(), "Failed to persist WebAuthn credential", "error", addErr)
+	if err != nil {
+		logger.ErrorContext(r.Context(), "Failed to persist WebAuthn credential", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.api.internalError"), "")
 		return
@@ -241,107 +253,100 @@ func (s *Server) handleWebAuthnRegisterFinish(w http.ResponseWriter, r *http.Req
 // WebAuthn login
 // ----------------------------------------------------------------------
 
-// handleWebAuthnLoginBegin starts the assertion ceremony for the given
-// username and returns the credential assertion options.
+// handleWebAuthnLoginBegin starts a username-free sign-in: the browser offers
+// whichever discoverable passkey it holds for this relying party.
 func (s *Server) handleWebAuthnLoginBegin(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 	if !requirePost(w, r, logger, localizer) {
 		return
 	}
-	if s.webAuthnManager() == nil {
+	if s.handleLoginRateLimited(w, logger, localizer, s.getClientIP(r)) {
+		return
+	}
+	if s.passkeys == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.api.internalError"), "")
 		return
 	}
-
-	var req WebAuthnLoginBeginRequest
-	if !decodeJSONStrictLocalized(w, r, &req, mfaBodyLimit, logger, localizer) {
-		return
+	opts, session, err := s.passkeys.BeginLogin()
+	if err == nil {
+		err = s.startPasskeyCeremony(w, passkey.Login, session, "")
 	}
-	if req.Username == "" {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
-		return
-	}
-
-	user, _, err := s.loadWebAuthnUser(r.Context(), req.Username)
 	if err != nil {
-		// Don't disclose user existence — return a generic error.
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, localizer.T("errors.mfa.noCredentials"), "")
+		// The ceremony store is bounded; a full one is a transient refusal.
+		logger.WarnContext(r.Context(), "WebAuthn begin login failed", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail, localizer.T("errors.api.internalError"), "")
 		return
 	}
-	opts, sess, err := s.webAuthnManager().BeginLogin(user)
-	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, localizer.T("errors.mfa.noCredentials"), "")
-		return
-	}
-	webAuthnSessions.Put(req.Username, "login", *sess)
-	logger.InfoContext(r.Context(), "WebAuthn login started",
-		"event", "webauthn_login", "username", req.Username, "result", "begin")
 	sendJSONResponse(w, logger, http.StatusOK, newWebAuthnRequestOptions(opts))
 }
 
-// handleWebAuthnLoginFinish finishes the assertion ceremony, updates
-// the credential's sign-count, and issues a real access token.
+// handleWebAuthnLoginFinish verifies the assertion, persists the updated
+// credential record, and issues a session.
 func (s *Server) handleWebAuthnLoginFinish(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 	if !requirePost(w, r, logger, localizer) {
 		return
 	}
-	if s.webAuthnManager() == nil {
+	clientIP := s.getClientIP(r)
+	if s.handleLoginRateLimited(w, logger, localizer, clientIP) {
+		return
+	}
+	if s.passkeys == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.api.internalError"), "")
 		return
 	}
-
-	// go-webauthn expects to parse the response body itself, so we
-	// pull the username from a duplicated query param to avoid eating
-	// the body before the library sees it.
-	username := r.URL.Query().Get("username")
-	if username == "" {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
-		return
-	}
-
-	sess, ok := webAuthnSessions.Take(username, "login")
+	session, ok := s.takePasskeyCeremony(w, r, passkey.Login, "")
 	if !ok {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeBadRequest, localizer.T("errors.mfa.sessionExpired"), "")
 		return
 	}
-	user, _, err := s.loadWebAuthnUser(r.Context(), username)
-	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, localizer.T("errors.mfa.noCredentials"), "")
-		return
-	}
 
-	cred, err := s.webAuthnManager().FinishLogin(user, sess, r)
+	var username string
+	resolve := func(credentialID, userHandle []byte) (webauthn.User, error) {
+		owner, err := s.identityMFA.WebAuthnCredentialOwner(r.Context(), credentialID)
+		if err != nil {
+			return nil, err
+		}
+		user, _, err := s.loadPasskeyUser(r.Context(), owner)
+		if err != nil {
+			return nil, err
+		}
+		if string(user.handle) != string(userHandle) {
+			return nil, mfa.ErrCredentialNotFound
+		}
+		username = owner
+		return user, nil
+	}
+	_, credential, err := s.passkeys.FinishLogin(resolve, session, r)
 	if err != nil {
 		recordMFAAuditEvent(r, username, "webauthn", "rejected")
+		s.loginRateLimiter().RecordAttempt(clientIP, false)
 		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized,
 			ErrCodeUnauthorized, localizer.T("errors.mfa.assertionFailed"), "")
 		return
 	}
 
-	s.completeWebAuthnLogin(w, r, username, cred)
+	s.completeWebAuthnLogin(w, r, username, credential)
 }
 
 func (s *Server) completeWebAuthnLogin(
-	w http.ResponseWriter, r *http.Request, username string, cred *webauthn.Credential,
+	w http.ResponseWriter, r *http.Request, username string, credential *webauthn.Credential,
 ) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-	if updErr := s.identityMFA.UpdateWebAuthnSignCount(
-		r.Context(), cred.ID, cred.Authenticator.SignCount,
-	); updErr != nil {
-		logger.ErrorContext(r.Context(), "Failed to update WebAuthn sign count",
-			"error", updErr, "username", username)
+	record, err := passkey.MarshalCredential(*credential)
+	if err == nil {
+		err = s.identityMFA.UpdateWebAuthnCredential(r.Context(), credential.ID, record)
+	}
+	if err != nil {
+		logger.ErrorContext(r.Context(), "Failed to update WebAuthn credential",
+			"error", err, "username", username)
 		recordMFAAuditEvent(r, username, "webauthn", "rejected")
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.api.internalError"), "")
@@ -349,6 +354,7 @@ func (s *Server) completeWebAuthnLogin(
 	}
 
 	recordMFAAuditEvent(r, username, "webauthn", "success")
+	s.loginRateLimiter().RecordAttempt(s.getClientIP(r), true)
 	logger.InfoContext(r.Context(), "WebAuthn login successful",
 		"event", "webauthn_login", "username", username, "result", "success")
 
@@ -365,7 +371,3 @@ func (s *Server) completeWebAuthnLogin(
 		Expires: time.Now().Add(auth.AccessTokenDuration).Unix(),
 	})
 }
-
-// ----------------------------------------------------------------------
-// MFA status (UI helper)
-// ----------------------------------------------------------------------
