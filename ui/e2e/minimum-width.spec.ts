@@ -47,6 +47,7 @@ const PAGES = [
   { name: 'device-groups', path: '/device-groups' },
   { name: 'ipam', path: '/ipam' },
   { name: 'lifecycle', path: '/lifecycle' },
+  { name: 'ip-sla', path: '/ip-sla' },
   { name: 'topology', path: '/topology' },
   { name: 'interfaces', path: '/interfaces' },
   { name: 'device-configs', path: '/device-configs' },

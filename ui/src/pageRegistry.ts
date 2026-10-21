@@ -27,6 +27,7 @@ import {
   Server,
   ServerCog,
   Shield,
+  Timer,
   Wifi,
 } from 'lucide-react';
 import { type ComponentType, lazy } from 'react';
@@ -63,6 +64,7 @@ const IpamPage = lazy(() => import('./pages/IpamPage').then((m) => ({ default: m
 const LifecyclePage = lazy(() =>
   import('./pages/LifecyclePage').then((m) => ({ default: m.LifecyclePage })),
 );
+const IpSlaPage = lazy(() => import('./pages/IpSlaPage').then((m) => ({ default: m.IpSlaPage })));
 const TopologyPage = lazy(() =>
   import('./pages/TopologyPage').then((m) => ({ default: m.TopologyPage })),
 );
@@ -125,6 +127,7 @@ type PageI18nKey =
   | 'deviceGroups'
   | 'ipam'
   | 'lifecycle'
+  | 'ipSla'
   | 'topology'
   | 'interfaces'
   | 'deviceConfigs'
@@ -273,6 +276,15 @@ const staticPages: PageDef[] = [
     iconColorClass: 'text-module-security',
     component: LifecyclePage,
     help: 'lifecycle',
+  },
+  {
+    path: '/ip-sla',
+    group: 'monitoring',
+    i18nKey: 'ipSla',
+    icon: Timer,
+    iconColorClass: 'text-module-security',
+    component: IpSlaPage,
+    help: 'ipSla',
   },
   {
     path: '/topology',

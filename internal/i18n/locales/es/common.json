@@ -393,5 +393,14 @@
     "label": "Paleta de comandos",
     "placeholder": "Buscar páginas y acciones…",
     "actions": "Acciones"
+  },
+  "trend": {
+    "windowLabel": "Periodo",
+    "window": {
+      "1h": "Última hora",
+      "24h": "Últimas 24 horas",
+      "7d": "Últimos 7 días"
+    },
+    "peak": "Pico {{series}} {{value}}"
   }
 }

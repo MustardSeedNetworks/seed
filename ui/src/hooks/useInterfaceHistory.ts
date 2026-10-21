@@ -5,10 +5,8 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
+import type { HistoryRange } from '../components/ui/TrendChart';
 import type { InterfaceHistoryResponse } from '../types/generated/interface-history-response';
-
-export const HISTORY_RANGES = ['1h', '24h', '7d'] as const;
-export type HistoryRange = (typeof HISTORY_RANGES)[number];
 
 export interface UseInterfaceHistoryResult {
   history: InterfaceHistoryResponse | null;

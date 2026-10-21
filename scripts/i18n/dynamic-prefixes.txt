@@ -168,6 +168,7 @@ common:profile.
 common:discovery.
 common:device.
 common:health.
+common:trend.
 common:interface.
 common:recovery.
 common:tooltips.
@@ -205,7 +206,8 @@ validation:fields.
 # reads t(`deviceGroups.severity.${severity}`). DeviceConfigsPage reads
 # t(`deviceConfigs.platform.${platform}`) and .status.${status}. IpamPage
 # reads t(`ipam.source.${source}`) and t(`ipam.exhaustion.${exhaustion}`).
-# LifecyclePage reads t(`lifecycle.status.${status}`).
+# LifecyclePage reads t(`lifecycle.status.${status}`). IpSlaPage reads
+# t(`ipSla.type.t${rttType}`).
 pages:alerts.
 pages:dashboard.
 pages:deviceConfigs.
@@ -213,6 +215,7 @@ pages:deviceGroups.
 pages:flows.
 pages:groups.
 pages:interfaces.
+pages:ipSla.
 pages:ipam.
 pages:lifecycle.
 pages:link.
