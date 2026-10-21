@@ -1,12 +1,10 @@
 name: License Compliance
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
     # The scan reads only the module and ui/ manifests; a PR that changes
-    # neither cannot change its result, and main still scans every push.
+    # neither cannot change its result. Main is covered by the weekly run.
     paths:
       - go.mod
       - go.sum
