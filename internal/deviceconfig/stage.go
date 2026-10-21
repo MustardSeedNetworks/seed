@@ -3,8 +3,8 @@ package deviceconfig
 // Operating system image staging (P-D3, #3499, ADR-0035 §3). Staging checks
 // the device first, copies an uploaded image to it, has the device verify its
 // copy against the image's hash, and makes the copy the image the device
-// boots next, keeping the running image as the fallback. It never reloads the
-// device: reloading is its own confirmed action.
+// boots next, keeping the running software as the fallback. It never reloads
+// the device: reloading is its own confirmed action.
 
 import (
 	"context"
@@ -32,6 +32,9 @@ const (
 	// minHashRate is the slowest flash a device is given time to hash its
 	// copy at.
 	minHashRate = 2 << 20
+	// junosInstallTimeout is how long a Junos "request system software add"
+	// is given to validate and unpack a package, which takes minutes.
+	junosInstallTimeout = 30 * time.Minute
 )
 
 // ErrImageCorrupt is a copy whose hash on the device is not the image's.
@@ -41,10 +44,11 @@ var ErrImageCorrupt = errors.New("the device's hash of its copy does not match t
 type ImageFacts struct {
 	Version string
 	// RunningImage is the image the device runs, as the device names it
-	// ("flash:c2960x-universalk9-mz.152-7.E4.bin").
+	// ("flash:c2960x-universalk9-mz.152-7.E4.bin"). Junos runs installed
+	// packages rather than an image file, so it is empty there.
 	RunningImage string
 	// Dir is the file system the running image is on, where the new image is
-	// staged ("flash:"), and FreeBytes its free space.
+	// staged ("flash:"; "/var/tmp/" on Junos), and FreeBytes its free space.
 	Dir       string
 	FreeBytes int64
 	// InstallMode is an IOS-XE device booted from packages.conf, which takes
@@ -57,9 +61,11 @@ type DeviceImage struct {
 	Dir    string
 	Name   string
 	Size   int64
+	SHA256 string
 	SHA512 string
 	// Fallback is the image the device runs now, kept to boot from if the new
-	// one does not come up.
+	// one does not come up. Junos has none: the install keeps the running
+	// software for "request system software rollback".
 	Fallback string
 }
 
@@ -105,13 +111,10 @@ func (p *Pushes) checkStage(ctx context.Context, req StageRequest) (Image, Targe
 	if err != nil {
 		return Image{}, Target{}, err
 	}
-	switch {
-	case t.Platform != img.Platform:
+	if t.Platform != img.Platform {
 		return Image{}, Target{}, ValidationError{
 			Msg: fmt.Sprintf("the image is for %s and the target is %s", img.Platform, t.Platform),
 		}
-	case t.Platform == PlatformJuniperJunos:
-		return Image{}, Target{}, ValidationError{Msg: "staging on juniper-junos is not available yet"}
 	}
 	return img, t, nil
 }
@@ -180,7 +183,8 @@ func (p *Pushes) stage(
 	}
 
 	di := DeviceImage{
-		Dir: facts.Dir, Name: img.Name, Size: img.Size, SHA512: img.SHA512, Fallback: facts.RunningImage,
+		Dir: facts.Dir, Name: img.Name, Size: img.Size, SHA256: img.SHA256, SHA512: img.SHA512,
+		Fallback: facts.RunningImage,
 	}
 	_, f, err := p.images.open(ctx, img.ClientID, img.ID)
 	if err != nil {
@@ -200,16 +204,21 @@ func (p *Pushes) stage(
 	})
 	if errors.Is(err, ErrImageCorrupt) {
 		res.Outcome, res.Reason = StageFailed, fmt.Sprintf(
-			"the device's SHA-512 of %s does not match the image, so the copy was deleted; stage it again",
+			"the device's hash of %s does not match the image, so the copy was deleted; stage it again",
 			di.Path())
 		return res
 	}
 	if err != nil {
 		return failedStage(res, "verify the copy", err)
 	}
-	note(ctx, "verified", map[string]any{"path": di.Path(), "sha512": img.SHA512})
+	// The hash in the audit is the one the device computed.
+	verified, bootTimeout := map[string]any{"path": di.Path(), "sha512": img.SHA512}, deviceTimeout
+	if t.Platform == PlatformJuniperJunos {
+		verified, bootTimeout = map[string]any{"path": di.Path(), "sha256": img.SHA256}, junosInstallTimeout
+	}
+	note(ctx, "verified", verified)
 
-	err = onDeviceFor(ctx, deviceTimeout, func(ctx context.Context) error { return p.device.SetBoot(ctx, req, di) })
+	err = onDeviceFor(ctx, bootTimeout, func(ctx context.Context) error { return p.device.SetBoot(ctx, req, di) })
 	if err != nil {
 		return failedStage(res, "set the boot image", err)
 	}
@@ -227,6 +236,10 @@ func refuseStage(facts ImageFacts, img Image) string {
 			"stage it from the device's CLI"
 	case fileName(facts.RunningImage) == img.Name:
 		return "the device already runs " + img.Name
+	// A Junos package is named for the release it installs
+	// ("junos-install-ex-x86-64-21.4R3-S5.4.tgz").
+	case img.Platform == PlatformJuniperJunos && strings.Contains(img.Name, facts.Version):
+		return "the device already runs Junos " + facts.Version
 	case facts.FreeBytes < img.Size:
 		return fmt.Sprintf("%s has %d bytes free and the image needs %d; free space on the device first",
 			facts.Dir, facts.FreeBytes, img.Size)
