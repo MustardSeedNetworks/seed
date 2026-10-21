@@ -170,6 +170,10 @@ type PushDevice interface {
 	// SetBoot makes img the image the device boots next, keeping the image
 	// it runs as the fallback.
 	SetBoot(ctx context.Context, req DeviceRequest, img DeviceImage) error
+	// Reload restarts the device. It returns once the device has taken the
+	// reload, before it goes down. A device whose running configuration has
+	// unsaved changes is not reloaded and answers ErrUnsavedChanges.
+	Reload(ctx context.Context, req DeviceRequest) error
 }
 
 // PushAuditEvent is one push action for the audit log. Detail never carries
@@ -218,6 +222,8 @@ type Pushes struct {
 	images  *Images
 	device  PushDevice
 	audit   func(context.Context, PushAuditEvent) error
+	// reloadWindow and reloadPoll pace the wait for a reloaded device.
+	reloadWindow, reloadPoll time.Duration
 
 	mu   sync.Mutex
 	busy map[string]struct{}
@@ -232,7 +238,8 @@ func NewPushes(
 		return nil, ErrUnavailable
 	}
 	return &Pushes{
-		backups: backups, plans: plans, images: images, device: device, audit: audit, busy: map[string]struct{}{},
+		backups: backups, plans: plans, images: images, device: device, audit: audit,
+		reloadWindow: reloadWindow, reloadPoll: reloadPoll, busy: map[string]struct{}{},
 	}, nil
 }
 

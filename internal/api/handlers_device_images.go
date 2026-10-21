@@ -6,6 +6,7 @@ package api
 //   GET    /api/v1/device-images                        the client's images
 //   DELETE /api/v1/device-images/{imageId}              delete an image
 //   POST   /api/v1/device-images/{imageId}/stage        stage an image on a target (a job)
+//   POST   /api/v1/device-images/{imageId}/reload       reload a target onto a staged image (a job)
 //
 // Every route is Pro (config_push). Uploading, deleting and staging are admin
 // only; listing is operator+, like reading push plans. An upload is refused
@@ -13,7 +14,8 @@ package api
 // Staging copies the image to the target with its push login, has the device
 // verify the copy and sets it as the boot image; it never reloads the device.
 // Like a plan it may be started by a personal access token, since nothing
-// runs the image until a reload.
+// runs the image until a reload. A reload is its own admin action and, like
+// an apply, refuses a token: it takes the device down and boots the image.
 
 import (
 	"context"
@@ -25,6 +27,7 @@ import (
 
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
 
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/deviceconfig"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -34,7 +37,8 @@ import (
 const (
 	deviceImagesPath = APIVersionPrefix + "/device-images"
 
-	deviceImageStageJobKind = "device-image-stage"
+	deviceImageStageJobKind  = "device-image-stage"
+	deviceImageReloadJobKind = "device-image-reload"
 	// imageUploadWindow is how long an upload may take: the largest image
 	// over a 5 Mbit/s management link, where the server's usual 15 s read
 	// timeout would cut every image off.
@@ -76,17 +80,33 @@ func (s *Server) deviceImageRoutes() []route.Route {
 			Auth:    true,
 			CSRF:    true,
 		},
+		{
+			Path:    APIVersionPrefix + "/device-images/{imageId}/reload",
+			Handler: s.handleDeviceImageReload,
+			Methods: []string{http.MethodPost},
+			Scope:   admin,
+			Feature: configPushFeature,
+			Limiter: limitEndpoint,
+			Auth:    true,
+			CSRF:    true,
+		},
 	}
 }
 
-// imageStageInput is the stage POST body: the target to stage on.
-type imageStageInput struct {
+// imageTargetInput is the stage and reload POST body: the target to stage on
+// or reload.
+type imageTargetInput struct {
 	TargetID string `json:"targetId"`
 }
 
 // imageStageJob is the staging job's params, a Go value like pushPlanJob.
 type imageStageJob struct {
 	Request deviceconfig.StageRequest
+}
+
+// imageReloadJob is the reload job's params.
+type imageReloadJob struct {
+	Request deviceconfig.ReloadRequest
 }
 
 func (s *Server) handleDeviceImages(w http.ResponseWriter, r *http.Request) {
@@ -174,12 +194,8 @@ func (s *Server) handleDeviceImageStage(w http.ResponseWriter, r *http.Request) 
 	if !ok {
 		return
 	}
-	var in imageStageInput
-	if !decodeJSONStrict(w, r, &in, MaxBodySizeJSON) {
-		return
-	}
-	if !deviceConfigTargetIDPattern.MatchString(in.TargetID) {
-		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, "targetId is required")
+	in, ok := decodeImageTarget(w, r)
+	if !ok {
 		return
 	}
 	req := deviceconfig.StageRequest{
@@ -198,6 +214,63 @@ func (s *Server) handleDeviceImageStage(w http.ResponseWriter, r *http.Request) 
 		s.auditDeviceConfig(r, "device_config.image.stage", "Image staging started",
 			"job_id", jobID, "image_id", id, "target_id", in.TargetID)
 	})
+}
+
+func (s *Server) handleDeviceImageReload(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("imageId")
+	if !deviceImageIDPattern.MatchString(id) {
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Missing or invalid image id")
+		return
+	}
+	if auth.IsAPITokenAuth(r.Context()) {
+		logging.FromContext(r.Context()).WarnContext(r.Context(), "Forbidden: a token cannot reload a device",
+			"event", "auth.forbidden",
+			"reason", "scope",
+			"username", usernameFromContext(r),
+			"client_ip", GetClientIP(r),
+			"path", singleLogLine(r.URL.Path),
+			"method", r.Method,
+		)
+		writeError(w, r, http.StatusForbidden, ErrCodeForbidden,
+			"A personal access token cannot reload a device; sign in to reload")
+		return
+	}
+	clientID, ok := s.deviceConfigPushCaller(w, r)
+	if !ok {
+		return
+	}
+	in, ok := decodeImageTarget(w, r)
+	if !ok {
+		return
+	}
+	req := deviceconfig.ReloadRequest{
+		ClientID:  clientID,
+		ImageID:   id,
+		TargetID:  in.TargetID,
+		User:      usernameFromContext(r),
+		Remote:    s.getClientIP(r),
+		UserAgent: r.UserAgent(),
+	}
+	if err := s.deviceConfigPushes.CheckReload(r.Context(), req); err != nil {
+		writeDeviceConfigError(w, r, err)
+		return
+	}
+	s.submitClientJob(w, r, clientID, deviceImageReloadJobKind, imageReloadJob{Request: req}, func(jobID string) {
+		s.auditDeviceConfig(r, "device_config.image.reload", "Device reload started",
+			"job_id", jobID, "image_id", id, "target_id", in.TargetID)
+	})
+}
+
+func decodeImageTarget(w http.ResponseWriter, r *http.Request) (imageTargetInput, bool) {
+	var in imageTargetInput
+	if !decodeJSONStrict(w, r, &in, MaxBodySizeJSON) {
+		return in, false
+	}
+	if !deviceConfigTargetIDPattern.MatchString(in.TargetID) {
+		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, "targetId is required")
+		return in, false
+	}
+	return in, true
 }
 
 // deviceImageCaller resolves the caller's client and answers 503 when the
@@ -244,5 +317,20 @@ func newDeviceImageStageHandler(svc func() *deviceconfig.Pushes) jobs.Handler {
 			return nil, deviceconfig.ErrUnavailable
 		}
 		return pushes.Stage(ctx, p.Request)
+	}
+}
+
+// newDeviceImageReloadHandler returns the job handler for a reload.
+func newDeviceImageReloadHandler(svc func() *deviceconfig.Pushes) jobs.Handler {
+	return func(ctx context.Context, params any, _ func(float64)) (any, error) {
+		p, ok := params.(imageReloadJob)
+		if !ok {
+			return nil, fmt.Errorf("reload a device with POST %s/{imageId}/reload", deviceImagesPath)
+		}
+		pushes := svc()
+		if pushes == nil {
+			return nil, deviceconfig.ErrUnavailable
+		}
+		return pushes.Reload(ctx, p.Request)
 	}
 }

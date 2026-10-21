@@ -32,6 +32,8 @@ type recordingDevice struct {
 	mu       sync.Mutex
 	requests []deviceconfig.DeviceRequest
 	steps    []string
+	// boot is the image the device boots next and running the one it runs.
+	boot, running string
 }
 
 func (d *recordingDevice) record(step string, req deviceconfig.DeviceRequest) bool {
@@ -69,8 +71,13 @@ func (d *recordingDevice) ImageFacts(
 	_ context.Context, req deviceconfig.DeviceRequest,
 ) (deviceconfig.ImageFacts, error) {
 	d.record("facts", req)
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if d.running == "" {
+		d.running, d.boot = "flash:cat9k-17.09.04a.bin", "flash:cat9k-17.09.04a.bin"
+	}
 	return deviceconfig.ImageFacts{
-		Version: "17.09.04a", RunningImage: "flash:cat9k-17.09.04a.bin", Dir: "flash:", FreeBytes: 1 << 30,
+		Version: "17.09.04a", RunningImage: d.running, Dir: "flash:", FreeBytes: 1 << 30, BootImage: d.boot,
 	}, nil
 }
 
@@ -93,8 +100,18 @@ func (d *recordingDevice) VerifyImage(
 	return nil
 }
 
-func (d *recordingDevice) SetBoot(_ context.Context, req deviceconfig.DeviceRequest, _ deviceconfig.DeviceImage) error {
+func (d *recordingDevice) SetBoot(
+	_ context.Context, req deviceconfig.DeviceRequest, img deviceconfig.DeviceImage,
+) error {
 	d.record("boot", req)
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.boot = img.Path()
+	return nil
+}
+
+func (d *recordingDevice) Reload(_ context.Context, req deviceconfig.DeviceRequest) error {
+	d.record("reload", req)
 	return nil
 }
 

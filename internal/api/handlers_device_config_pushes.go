@@ -330,6 +330,7 @@ func (s *Server) registerDeviceConfigPushKind() {
 		deviceConfigPushPlanJobKind:  newDeviceConfigPushPlanHandler(pushes),
 		deviceConfigPushApplyJobKind: newDeviceConfigPushApplyHandler(pushes),
 		deviceImageStageJobKind:      newDeviceImageStageHandler(pushes),
+		deviceImageReloadJobKind:     newDeviceImageReloadHandler(pushes),
 	} {
 		if err := s.jobsRunner().Register(kind, handler); err != nil {
 			logging.GetLogger().Error("failed to register config-push job kind", "kind", kind, "error", err)

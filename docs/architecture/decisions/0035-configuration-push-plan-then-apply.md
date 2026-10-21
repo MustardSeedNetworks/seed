@@ -192,6 +192,26 @@ reload, Seed checks the device is back on the expected version. Seed cannot
 undo a bad image remotely: the fallback boot entry is the rollback, and the
 reload confirmation says so.
 
+The reload is a job (`POST /api/v1/device-images/{id}/reload` `{targetId}`),
+which takes the target like a push does, for the whole wait. The image names
+what the device should come back on. The job reads the device first and
+refuses a device that does not boot the image next (IOS's first boot
+statement, EOS's boot configuration) or already runs it. Junos names no
+pending software, so it is refused only when it already runs the package's
+release. IOS and EOS are reloaded with `reload` and Junos with
+`request system reboot`. A device that first asks to save a modified running
+configuration is left alone and the reload is refused: answering would
+either lose changes someone else made or save them. The job then tries the
+device every 15 seconds for 45 minutes, the time a Junos upgrade can take
+to boot. It ends `verified` when the device runs the image: IOS names its
+running image, EOS shows a new version on the image, and Junos shows a new
+release that the package is named for. It ends `wrong_image` when the
+device comes back on other software (its fallback, most likely),
+`unreachable` when the device went down and did not come back in time, and
+`failed` when the device took the reload but never went down. The audit log
+records `reload_requested` and `reload_sent`, then the outcome with the
+versions before and after.
+
 ### 4. Authorization
 
 - Plan, apply, image upload, staging and reload are `Scope: roles.Admin` with

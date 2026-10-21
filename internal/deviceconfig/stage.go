@@ -54,6 +54,9 @@ type ImageFacts struct {
 	// InstallMode is an IOS-XE device booted from packages.conf, which takes
 	// a new image with "install add" rather than a boot statement.
 	InstallMode bool
+	// BootImage is the image the device boots next: IOS's first boot
+	// statement, EOS's boot configuration. Junos names none.
+	BootImage string
 }
 
 // DeviceImage is an image as it is staged on one device.

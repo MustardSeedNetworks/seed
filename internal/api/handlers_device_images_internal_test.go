@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/deviceconfig"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
@@ -237,4 +238,75 @@ func TestDeviceImageStageRefusals(t *testing.T) {
 			}
 		})
 	}
+}
+
+func callReloadImage(t *testing.T, s *Server, req *http.Request, imageID string) *httptest.ResponseRecorder {
+	t.Helper()
+	req.SetPathValue("imageId", imageID)
+	rec := httptest.NewRecorder()
+	s.handleDeviceImageReload(rec, req)
+	return rec
+}
+
+// TestDeviceImageReloadThroughTheAPI: a token cannot reload; an admin's
+// reload of a target that boots the staged image next is a job that tells
+// the device to reload with the push login and is audited against the
+// image. The wait for the device to come back is the use-case's, tested
+// there; here the job is cancelled once the device took the reload.
+func TestDeviceImageReloadThroughTheAPI(t *testing.T) {
+	s, db, device := newDeviceConfigPushTestServer(t)
+	tgt, _ := pushReadyTargetOn(t, s, deviceconfig.PlatformCiscoIOS)
+	const name = "cat9k_iosxe.17.12.04.SPA.bin"
+	up := uploadImage(t, s, name, imageSHA512(testImage), testImage)
+	if up.Code != http.StatusCreated {
+		t.Fatalf("upload: %d %s", up.Code, up.Body.String())
+	}
+	img := decodeInto[deviceconfig.Image](t, up)
+	stageID := decodeJob(t, callStageImage(t, s, img.ID, `{"targetId":"`+tgt.ID+`"}`).Body).ID
+	waitFor(t, "staging finishes", func() bool {
+		job, _ := s.jobsRunner().Get(stageID)
+		return job.State.Terminal()
+	})
+
+	body := []byte(`{"targetId":"` + tgt.ID + `"}`)
+	path := deviceImagesPath + "/" + img.ID + "/reload"
+	pat := withClaim(newAuthedRequest(http.MethodPost, path, body, dcAdmin))
+	pat = pat.WithContext(auth.WithAPITokenAuth(pat.Context()))
+	if rec := callReloadImage(t, s, pat, img.ID); rec.Code != http.StatusForbidden ||
+		!strings.Contains(rec.Body.String(), "personal access token") {
+		t.Fatalf("reload by token: %d %s, want 403", rec.Code, rec.Body.String())
+	}
+	if rec := callReloadImage(t, s, withClaim(newAuthedRequest(http.MethodPost, path, []byte(`{}`), dcAdmin)),
+		img.ID); rec.Code != http.StatusBadRequest {
+		t.Errorf("reload without a target: %d %s, want 400", rec.Code, rec.Body.String())
+	}
+
+	rec := callReloadImage(t, s, withClaim(newAuthedRequest(http.MethodPost, path, body, dcAdmin)), img.ID)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("reload: %d %s", rec.Code, rec.Body.String())
+	}
+	jobID := decodeJob(t, rec.Body).ID
+	waitFor(t, "the device takes the reload", func() bool {
+		device.mu.Lock()
+		defer device.mu.Unlock()
+		return slices.Contains(device.steps, "reload")
+	})
+	if err := s.jobsRunner().Cancel(jobID); err != nil {
+		t.Fatalf("cancel the reload job: %v", err)
+	}
+	waitFor(t, "the reload job ends", func() bool {
+		job, _ := s.jobsRunner().Get(jobID)
+		return job.State.Terminal()
+	})
+
+	device.mu.Lock()
+	requests := slices.Clone(device.requests)
+	device.mu.Unlock()
+	if last := requests[len(requests)-1]; last.Password != "wr1te" {
+		t.Errorf("the reload logged in with %q, want the push credential", last.Password)
+	}
+	requireImageAudit(t, db, img.ID, "device_config.image.uploaded", "device_config.image.stage_started",
+		"device_config.image.staged", "device_config.image.verified", "device_config.image.boot_set",
+		"device_config.image.reload_requested", "device_config.image.reload_sent",
+		"device_config.image.reload_failed")
 }

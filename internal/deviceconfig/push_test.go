@@ -101,8 +101,12 @@ type memDevice struct {
 	facts                                 deviceconfig.ImageFacts
 	factsErr, copyErr, verifyErr, bootErr error
 	copied                                string
-	requests                              []deviceconfig.DeviceRequest
-	steps                                 []string
+	// reloadErr fails the reload; reloaded is what ImageFacts reads after
+	// it, one answer a call, the last repeated.
+	reloadErr error
+	reloaded  []factsAnswer
+	requests  []deviceconfig.DeviceRequest
+	steps     []string
 	// gate, when set, holds each dry run and image copy until it is closed.
 	gate chan struct{}
 }
@@ -143,8 +147,23 @@ func (m *memDevice) Rollback(_ context.Context, req deviceconfig.DeviceRequest) 
 	return m.step("rollback", req, m.rollbackErr)
 }
 
+// factsAnswer is one answer of ImageFacts.
+type factsAnswer struct {
+	facts deviceconfig.ImageFacts
+	err   error
+}
+
 func (m *memDevice) ImageFacts(_ context.Context, req deviceconfig.DeviceRequest) (deviceconfig.ImageFacts, error) {
-	return m.facts, m.step("facts", req, m.factsErr)
+	m.mu.Lock()
+	answer := factsAnswer{m.facts, m.factsErr}
+	if slices.Contains(m.steps, "reload") && len(m.reloaded) > 0 {
+		answer = m.reloaded[0]
+		if len(m.reloaded) > 1 {
+			m.reloaded = m.reloaded[1:]
+		}
+	}
+	m.mu.Unlock()
+	return answer.facts, m.step("facts", req, answer.err)
 }
 
 func (m *memDevice) CopyImage(
@@ -167,6 +186,10 @@ func (m *memDevice) VerifyImage(_ context.Context, req deviceconfig.DeviceReques
 
 func (m *memDevice) SetBoot(_ context.Context, req deviceconfig.DeviceRequest, img deviceconfig.DeviceImage) error {
 	return m.step("boot "+img.Path()+" then "+img.Fallback, req, m.bootErr)
+}
+
+func (m *memDevice) Reload(_ context.Context, req deviceconfig.DeviceRequest) error {
+	return m.step("reload", req, m.reloadErr)
 }
 
 type memAudit struct {

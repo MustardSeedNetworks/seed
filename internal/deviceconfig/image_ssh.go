@@ -35,12 +35,21 @@ var (
 	junosVersion = regexp.MustCompile(`(?m)^(?:Junos: (\S+)|JUNOS (?:Software Release|Base OS boot) \[([^\]]+)\])`)
 	// junosSHA256 is "file checksum sha-256": "SHA256 (/var/tmp/x) = 3c9e...".
 	junosSHA256 = regexp.MustCompile(`(?m)= *([0-9a-fA-F]{64})\s*$`)
+	// reloadQuestion is IOS and EOS asking whether to go on with a reload,
+	// or first whether to save a modified configuration ("Save? [yes/no]:",
+	// "[yes/no/cancel/diff]:" on EOS).
+	reloadQuestion = regexp.MustCompile(`(?:Proceed with reload\? \[confirm\]|Save\? \[yes/no[^\]\n]*\]:) ?\z`)
+	// junosRebootQuestion is Junos asking to confirm "request system reboot".
+	junosRebootQuestion = regexp.MustCompile(`Reboot the system \? \[yes,no\] \(no\) ?\z`)
 	// junosRebootRequired is how "request system software add" reports a
 	// package installed for the next boot ("WARNING: A REBOOT IS REQUIRED TO
 	// LOAD THIS SOFTWARE CORRECTLY", "A reboot is required to complete the
 	// install").
 	junosRebootRequired = regexp.MustCompile(`(?i)reboot is required`)
 )
+
+// iosShowBoot lists IOS's boot statements, in the order the device tries them.
+const iosShowBoot = "show running-config | include ^boot system"
 
 // junosStagingDir is where Junos takes a package to install: its SCP server
 // takes the path as it is, and /var/tmp is the file system meant for them.
@@ -72,6 +81,13 @@ func imageFacts(client *ssh.Client, platform Platform) (ImageFacts, error) {
 	case PlatformCiscoIOS:
 		facts.Version, facts.RunningImage = submatch(iosVersion, version), submatch(iosSystemImage, version)
 		facts.InstallMode = fileName(facts.RunningImage) == "packages.conf"
+		boot, bootErr := execCommand(client, iosShowBoot)
+		if bootErr != nil {
+			return ImageFacts{}, bootErr
+		}
+		if statements := bootStatements(boot); len(statements) > 0 {
+			facts.BootImage = strings.TrimPrefix(statements[0], "boot system ")
+		}
 	case PlatformAristaEOS:
 		// EOS names only the image it boots, which is the running image
 		// unless the boot image was changed since the last reload.
@@ -80,6 +96,7 @@ func imageFacts(client *ssh.Client, platform Platform) (ImageFacts, error) {
 			return ImageFacts{}, bootErr
 		}
 		facts.Version, facts.RunningImage = submatch(eosVersion, version), submatch(eosBootImage, boot)
+		facts.BootImage = facts.RunningImage
 	case PlatformCiscoNXOS, PlatformNETCONF, PlatformJuniperJunos:
 		return ImageFacts{}, fmt.Errorf("%w: cannot stage an image on %s", ErrCommand, platform)
 	}
@@ -261,8 +278,7 @@ func junosSoftwareAdd(client *ssh.Client, img DeviceImage) error {
 // as they were, so the device is never left with no boot statement Seed did
 // not mean.
 func iosSetBoot(client *ssh.Client, img DeviceImage) error {
-	const show = "show running-config | include ^boot system"
-	before, err := execCommand(client, show)
+	before, err := execCommand(client, iosShowBoot)
 	if err != nil {
 		return err
 	}
@@ -273,7 +289,7 @@ func iosSetBoot(client *ssh.Client, img DeviceImage) error {
 	if err != nil {
 		return err
 	}
-	after, err := execCommand(client, show)
+	after, err := execCommand(client, iosShowBoot)
 	if err != nil {
 		return err
 	}
@@ -353,6 +369,65 @@ func eosSetBoot(client *ssh.Client, img DeviceImage) error {
 		return fmt.Errorf("%w: the device's boot image is not the one set", ErrCommand)
 	}
 	return nil
+}
+
+// Reload restarts the device from its CLI and returns once the device has
+// been told to go on. IOS and EOS first ask to save a modified running
+// configuration: the reload is then abandoned rather than saving or losing
+// changes someone else made. Junos asks to confirm the reboot, which also
+// boots the software a staging installed.
+func (SSHFetcher) Reload(ctx context.Context, req DeviceRequest) error {
+	return withClient(ctx, req.Host, req.Port, req.User, req.Password, req.PinnedHostKey,
+		func(client *ssh.Client) error {
+			return onSession(client, func(session *ssh.Session) error {
+				if req.Platform == PlatformJuniperJunos {
+					return junosReboot(session)
+				}
+				return cliReload(session)
+			})
+		})
+}
+
+func cliReload(session *ssh.Session) error {
+	s, err := openPrivileged(session)
+	if err != nil {
+		return err
+	}
+	if err = s.send("reload\n"); err != nil {
+		return err
+	}
+	out, err := s.expect(regexp.MustCompile(reloadQuestion.String() + "|" + s.prompt.String()))
+	if err != nil {
+		return err
+	}
+	switch {
+	case strings.HasPrefix(s.last, "Save?"):
+		// ^C leaves the question without an answer, and so without a reload.
+		_ = s.send("\x03")
+		return ErrUnsavedChanges
+	case !strings.HasPrefix(s.last, "Proceed"):
+		return fmt.Errorf("%w: reload%s", ErrCommand, joinMessages(cliErrors(out)))
+	}
+	return s.send("\n")
+}
+
+func junosReboot(session *ssh.Session) error {
+	s, err := openCLIShell(session)
+	if err != nil {
+		return err
+	}
+	const command = "request system reboot"
+	if err = s.send(command + "\n"); err != nil {
+		return err
+	}
+	out, err := s.expect(regexp.MustCompile(junosRebootQuestion.String() + "|" + s.prompt.String()))
+	if err != nil {
+		return err
+	}
+	if !strings.HasPrefix(s.last, "Reboot") {
+		return fmt.Errorf("%w: %s%s", ErrCommand, command, joinMessages(junosErrors(out)))
+	}
+	return s.send("yes\n")
 }
 
 // deleteImageFile deletes a staged copy. It never names the running image:

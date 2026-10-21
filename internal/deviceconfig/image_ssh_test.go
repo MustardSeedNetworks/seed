@@ -42,6 +42,9 @@ type fakeStaging struct {
 	// junosVersion is what Junos's show version prints; added is the package
 	// "request system software add" installed, and addOut what it printed.
 	junosVersion, added, addOut string
+	// modified is a running configuration with unsaved changes, which the
+	// reload asks to save; reloaded is a reload the device went on with.
+	modified, reloaded bool
 }
 
 // newFakeJunos is an EX switch running 21.4R3-S5.4 whose /var has 1 GiB free.
@@ -239,6 +242,13 @@ func (d *fakeStaging) serve(channel ssh.Channel) {
 		}
 		cmd := strings.TrimSpace(line)
 		d.record(cmd)
+		if cmd == "reload" || cmd == "request system reboot" {
+			if d.reload(r, channel, cmd) {
+				return
+			}
+			_, _ = io.WriteString(channel, "\r\nsw1"+mode)
+			continue
+		}
 		var out string
 		out, mode = d.answer(cmd, mode)
 		if cmd == "exit" && mode == "#" {
@@ -246,6 +256,29 @@ func (d *fakeStaging) serve(channel ssh.Channel) {
 		}
 		_, _ = io.WriteString(channel, out+"sw1"+mode)
 	}
+}
+
+// reload asks what the device's CLI asks before it reloads and reports
+// whether the device went on with it.
+func (d *fakeStaging) reload(r *bufio.Reader, ch ssh.Channel, cmd string) bool {
+	question, yes := "Proceed with reload? [confirm]", ""
+	switch {
+	case cmd == "request system reboot":
+		question, yes = "Reboot the system ? [yes,no] (no) ", "yes"
+	case d.modified && d.eos:
+		question = "System configuration has been modified. Save? [yes/no/cancel/diff]:"
+	case d.modified:
+		question = "System configuration has been modified. Save? [yes/no]: "
+	}
+	_, _ = io.WriteString(ch, question)
+	answer, err := readLine(r, ch)
+	if err != nil || answer != yes {
+		return false
+	}
+	d.mu.Lock()
+	d.reloaded = true
+	d.mu.Unlock()
+	return true
 }
 
 func (d *fakeStaging) answer(cmd, mode string) (string, string) {
@@ -312,6 +345,7 @@ func TestStageAnImageOnTheDevice(t *testing.T) {
 			name: "ios",
 			facts: deviceconfig.ImageFacts{
 				Version: "17.09.04a", RunningImage: iosOldImage, Dir: "flash:", FreeBytes: 1 << 30,
+				BootImage: iosOldImage,
 			},
 			image: "cat9k_iosxe.17.12.04.SPA.bin",
 			boot:  []string{"boot system flash:cat9k_iosxe.17.12.04.SPA.bin", "boot system " + iosOldImage},
@@ -322,6 +356,7 @@ func TestStageAnImageOnTheDevice(t *testing.T) {
 			eos:  true,
 			facts: deviceconfig.ImageFacts{
 				Version: "4.31.2F", RunningImage: eosOldImage, Dir: "flash:", FreeBytes: 1 << 30,
+				BootImage: eosOldImage,
 			},
 			image: "EOS-4.32.1F.swi",
 			boot:  []string{"flash:EOS-4.32.1F.swi"},
@@ -503,4 +538,42 @@ func TestJunosStagingFailures(t *testing.T) {
 		require.ErrorIs(t, err, deviceconfig.ErrCommand)
 		require.ErrorContains(t, err, "did not report the package installed for the next boot")
 	})
+}
+
+// TestReloadTheDevice: IOS and EOS go on with a reload at their confirm,
+// Junos at its yes/no question, and a modified running configuration is left
+// as it is, unsaved, with no reload.
+func TestReloadTheDevice(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		device   func() *fakeStaging
+		modified bool
+		command  string
+	}{
+		{name: "ios", device: func() *fakeStaging { return newFakeStaging(false) }, command: "reload"},
+		{name: "eos", device: func() *fakeStaging { return newFakeStaging(true) }, command: "reload"},
+		{name: "junos", device: newFakeJunos, command: "request system reboot"},
+		{name: "ios modified", device: func() *fakeStaging { return newFakeStaging(false) }, modified: true},
+		{name: "eos modified", device: func() *fakeStaging { return newFakeStaging(true) }, modified: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			d := tt.device()
+			d.modified = tt.modified
+			err := deviceconfig.SSHFetcher{}.Reload(fetchCtx(t), d.start(t))
+			if tt.modified {
+				require.ErrorIs(t, err, deviceconfig.ErrUnsavedChanges)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.command, d.recorded()[0])
+			}
+			<-d.done
+			d.mu.Lock()
+			defer d.mu.Unlock()
+			require.Equal(t, !tt.modified, d.reloaded)
+			require.False(t, d.saved, "a reload never saves the configuration")
+		})
+	}
 }

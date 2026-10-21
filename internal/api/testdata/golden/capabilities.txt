@@ -2046,6 +2046,18 @@ body:
   {
     "auth": true,
     "csrf": true,
+    "feature": "config_push",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/device-images/{imageId}/reload",
+    "rateLimited": true,
+    "scope": "admin"
+  },
+  {
+    "auth": true,
+    "csrf": true,
     "feature": "server_monitoring",
     "maxBodyBytes": 262144,
     "methods": [

@@ -14469,6 +14469,57 @@ paths:
               required: true
               schema:
                 type: string
+    /api/v1/device-images/{imageId}/reload:
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: imageId
+              required: true
+              schema:
+                type: string
+        post:
+            description: Requires an admin-scoped token.
+            operationId: postApiV1DeviceImagesImageIdReload
+            responses:
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Admin scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "429":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Rate limit exceeded for this route class.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
     /api/v1/device-images/{imageId}/stage:
         parameters:
             - description: Path parameter.
