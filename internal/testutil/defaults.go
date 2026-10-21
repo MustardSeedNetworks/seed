@@ -20,7 +20,7 @@ type TestDefaults struct {
 type AuthDefaults struct {
 	Username     string        // Test username
 	Password     string        // Plaintext test password
-	PasswordHash string        // Pre-computed bcrypt hash
+	PasswordHash string        // Pre-computed hash of Password
 	JWTSecret    string        // Test JWT secret
 	Timeout      time.Duration // Auth timeout
 }
@@ -90,7 +90,7 @@ func GetTestDefaults() *TestDefaults {
 			Auth: AuthDefaults{
 				Username:     "admin",
 				Password:     "TestP@ssw0rd!Secure123",
-				PasswordHash: "$2a$10$bl5aXjxJJUKfo7K1x2MdFuBIU2peRMPiW8L0sPkccLl2JUKLs/xb.",
+				PasswordHash: "$argon2id$v=19$m=65536,t=3,p=4$+faK1MlvCovV6zqH8bCsQg$7AdjvM67ZhFMEsxgIeYvQ/JyXcWxw2vXakM5G4+AWDI",
 				JWTSecret:    "test-jwt-secret-for-testing-only-32b",
 				Timeout:      cfg.Auth.SessionTimeout,
 			},

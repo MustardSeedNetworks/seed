@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
@@ -233,20 +234,6 @@ func TestValidateExpiredToken(t *testing.T) {
 	}
 }
 
-func TestHashPassword(t *testing.T) {
-	hash, err := auth.HashPassword("testpassword")
-	if err != nil {
-		t.Fatalf("failed to hash password: %v", err)
-	}
-
-	if hash == "" {
-		t.Error("expected non-empty hash")
-	}
-	if hash == "testpassword" {
-		t.Error("hash should not equal plaintext password")
-	}
-}
-
 func TestMiddleware(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
@@ -455,7 +442,7 @@ func TestGenerateInitialCredentials(t *testing.T) {
 
 func TestIsDefaultPasswordHash(t *testing.T) {
 	// Generate a hash for "seed" - should be detected as default
-	seedHash, err := auth.HashPassword("seed")
+	seedHash, err := fndpw.Hash("seed")
 	if err != nil {
 		t.Fatalf("failed to hash password: %v", err)
 	}
@@ -465,7 +452,7 @@ func TestIsDefaultPasswordHash(t *testing.T) {
 	}
 
 	// Generate a hash for a different password - should NOT be detected
-	secureHash, err := auth.HashPassword("SecurePassword123")
+	secureHash, err := fndpw.Hash("SecurePassword123")
 	if err != nil {
 		t.Fatalf("failed to hash password: %v", err)
 	}
@@ -526,7 +513,7 @@ func TestUpdatePasswordHash(t *testing.T) {
 	}
 
 	// Update password hash
-	newHash, _ := auth.HashPassword("newpassword")
+	newHash, _ := fndpw.Hash("newpassword")
 	m.UpdatePasswordHash(ctx, newHash)
 
 	// Old token should now be invalid (token version incremented)
@@ -1206,7 +1193,7 @@ func TestAuthenticateWithUserStore(t *testing.T) {
 
 	store := newMockUserStore()
 	// Add a user to the store
-	hash, _ := auth.HashPassword("storepassword")
+	hash, _ := fndpw.Hash("storepassword")
 	store.passwords["storeuser"] = hash
 	store.tokenVersions["storeuser"] = 1
 
@@ -1233,7 +1220,7 @@ func TestAuthenticateWithLockedUser(t *testing.T) {
 	ctx := context.Background()
 
 	store := newMockUserStore()
-	hash, _ := auth.HashPassword("password")
+	hash, _ := fndpw.Hash("password")
 	store.passwords["lockeduser"] = hash
 	store.locked["lockeduser"] = true
 

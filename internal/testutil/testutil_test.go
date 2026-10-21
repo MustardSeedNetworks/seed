@@ -24,8 +24,8 @@ func TestGetTestDefaults(t *testing.T) {
 			t.Errorf("expected test password, got %q", defaults1.Auth.Password)
 		}
 
-		if defaults1.Auth.PasswordHash != "$2a$10$bl5aXjxJJUKfo7K1x2MdFuBIU2peRMPiW8L0sPkccLl2JUKLs/xb." {
-			t.Errorf("expected bcrypt hash, got %q", defaults1.Auth.PasswordHash)
+		if defaults1.Auth.PasswordHash != "$argon2id$v=19$m=65536,t=3,p=4$+faK1MlvCovV6zqH8bCsQg$7AdjvM67ZhFMEsxgIeYvQ/JyXcWxw2vXakM5G4+AWDI" {
+			t.Errorf("expected argon2id hash, got %q", defaults1.Auth.PasswordHash)
 		}
 
 		if defaults1.Auth.JWTSecret != "test-jwt-secret-for-testing-only-32b" {

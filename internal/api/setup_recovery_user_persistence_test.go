@@ -12,6 +12,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
+
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
@@ -109,7 +111,7 @@ func assertPersistedPassword(t *testing.T, db *database.DB, username, wantRole s
 	user, err := db.GetUser(t.Context(), username)
 	require.NoError(t, err)
 	require.Equal(t, wantRole, user.Role)
-	ok, _, err := auth.VerifyPassword(user.PasswordHash, persistedPassword)
+	ok, err := fndpw.Verify(user.PasswordHash, persistedPassword)
 	require.NoError(t, err)
 	require.True(t, ok)
 }

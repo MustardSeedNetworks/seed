@@ -15,6 +15,8 @@ import (
 	"errors"
 	"fmt"
 	"unicode"
+
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
 )
 
 // PasswordRejectReason classifies why a password was refused at
@@ -81,8 +83,8 @@ func EnforcePasswordPolicy(
 			Accepted: false,
 			Reason:   PasswordRejectClassRule,
 			Message: fmt.Sprintf(
-				"password must be at least %d characters and contain upper, lower, digit, and symbol",
-				MinPasswordLength,
+				"password must be %d to %d characters and contain upper, lower, digit, and symbol",
+				MinPasswordLength, fndpw.MaxBytes,
 			),
 			Strength: EvaluatePasswordStrength(password, userInputs),
 		}, fmt.Errorf("%w: class rule", ErrPasswordRejected)
@@ -138,9 +140,10 @@ const (
 )
 
 // ValidatePasswordStrength checks if a password meets minimum requirements (fixes #535).
-// Requirements: at least 12 characters, contains uppercase, lowercase, digit, and special character.
+// Requirements: 12 to fndpw.MaxBytes bytes (the most foundation will hash), with
+// uppercase, lowercase, digit, and special characters.
 func ValidatePasswordStrength(password string) error {
-	if len(password) < MinPasswordLength {
+	if len(password) < MinPasswordLength || len(password) > fndpw.MaxBytes {
 		return ErrWeakPassword
 	}
 

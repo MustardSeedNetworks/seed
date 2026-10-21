@@ -8,6 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
+
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/paths"
@@ -57,7 +59,7 @@ interactive setup.`,
 // The Password field is intentionally included in JSON output: this struct
 // is only used by `seed setup --json`, which is the bootstrap CLI invocation
 // that GENERATES the initial admin password and shows it to the operator
-// once. After setup runs, only the bcrypt hash is persisted; this struct
+// once. After setup runs, only the password hash is persisted; this struct
 // is never serialized to disk or transmitted over a network.
 type setupCredentials struct {
 	Username string `json:"username"`
@@ -71,7 +73,7 @@ func generatePasswordAndHash() (string, string, error) {
 	if err != nil {
 		return "", "", fmt.Errorf("generating password: %w", err)
 	}
-	hash, err := auth.HashPassword(password)
+	hash, err := fndpw.Hash(password)
 	if err != nil {
 		return "", "", fmt.Errorf("hashing password: %w", err)
 	}

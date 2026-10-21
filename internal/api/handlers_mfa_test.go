@@ -24,6 +24,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
+
 	api "github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
@@ -32,7 +34,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/identity/mfa"
 )
 
-// testUserPassword is the bcrypt/argon2 input used to seed the test
+// testUserPassword is the password used to seed the test
 // user. It satisfies the Wave 2 password policy (>12 chars, mixed
 // classes) so EnforcePasswordPolicy doesn't fire on disable tests.
 const testUserPassword = "MFA-Test-Pass-1234!"
@@ -58,7 +60,7 @@ func newMFAFixture(t *testing.T) *mfaTestFixture {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = db.Close() })
 
-	hash, err := auth.HashPassword(testUserPassword)
+	hash, err := fndpw.Hash(testUserPassword)
 	require.NoError(t, err)
 	_, err = db.CreateUser(context.Background(), "admin", hash, "admin")
 	require.NoError(t, err)

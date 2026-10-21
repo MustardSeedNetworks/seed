@@ -5,7 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/MustardSeedNetworks/seed/internal/auth"
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
+
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/paths"
 )
@@ -46,7 +47,7 @@ func TestGeneratePasswordAndHashVerifiable(t *testing.T) {
 	}
 
 	// Verify the password matches the hash (Argon2id post-Wave 2).
-	matched, _, verifyErr := auth.VerifyPassword(hash, password)
+	matched, verifyErr := fndpw.Verify(hash, password)
 	if verifyErr != nil {
 		t.Errorf("VerifyPassword returned error: %v", verifyErr)
 	}
@@ -55,7 +56,7 @@ func TestGeneratePasswordAndHashVerifiable(t *testing.T) {
 	}
 
 	// Wrong password should not match.
-	wrongMatched, _, wrongVerifyErr := auth.VerifyPassword(hash, "wrongpassword")
+	wrongMatched, wrongVerifyErr := fndpw.Verify(hash, "wrongpassword")
 	if wrongVerifyErr != nil {
 		t.Errorf("VerifyPassword on wrong password returned error: %v", wrongVerifyErr)
 	}

@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
+
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
@@ -198,12 +200,7 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Capture the algorithm of the OLD hash for the audit log before
-	// we overwrite it (Wave 2 / task #84).
-	previousAlg := string(auth.DetectHashAlgorithm(s.config.Auth.DefaultPasswordHash))
-
-	// Hash the new password (Argon2id).
-	hash, err := auth.HashPassword(req.Password)
+	hash, err := fndpw.Hash(req.Password)
 	if err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal,
 			localizer.T("errors.api.internalError"), "")
@@ -241,13 +238,10 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Security audit log: initial setup completed (fixes #697)
-	// Wave 2 / task #84: include previous_algorithm so password rotations
-	// are auditable across the bcrypt → argon2id migration.
 	logger.InfoContext(r.Context(), "Initial setup completed - admin password changed",
 		"client_ip", clientIP,
 		"event", "password_change",
 		"result", "accepted",
-		"previous_algorithm", previousAlg,
 		"setup", true)
 
 	sendJSONResponse(w, logger, http.StatusOK, SetupCompleteResponse{Status: statusSuccess})

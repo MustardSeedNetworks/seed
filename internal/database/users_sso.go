@@ -22,7 +22,7 @@ import (
 // and aren't guaranteed unique across providers (and the local-auth
 // users.username UNIQUE constraint applies to the entire users table).
 // SSO users never have a usable password_hash — we store a sentinel
-// value that bcrypt cannot match against any input.
+// value that is not a password record, so no input can match it.
 func (db *DB) UpsertSSOUser(ctx context.Context, in ssosync.Identity) (*users.User, error) {
 	if in.Provider == "" || in.ExternalID == "" {
 		return nil, errors.New("provider and external_id are required")
@@ -73,7 +73,7 @@ func (db *DB) UpsertSSOUser(ctx context.Context, in ssosync.Identity) (*users.Us
 	now := time.Now().UTC()
 	nowStr := now.Format(time.RFC3339)
 
-	// "!" prefix is not in bcrypt's alphabet so this value never matches.
+	// Not a PHC argon2id record, so password verification always rejects it.
 	const ssoSentinelHash = "!sso-no-password"
 
 	res, err := db.writeConn.ExecContext(ctx, `

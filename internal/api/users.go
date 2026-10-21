@@ -18,6 +18,8 @@ import (
 	"strings"
 	"time"
 
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
+
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
@@ -171,7 +173,7 @@ func (s *Server) handleUserCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hash, err := auth.HashPassword(req.Password)
+	hash, err := fndpw.Hash(req.Password)
 	if err != nil {
 		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to hash password")
 		return
@@ -296,7 +298,7 @@ func (s *Server) applyPasswordUpdate(
 		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
 		return false
 	}
-	hash, err := auth.HashPassword(password)
+	hash, err := fndpw.Hash(password)
 	if err != nil {
 		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to hash password")
 		return false
