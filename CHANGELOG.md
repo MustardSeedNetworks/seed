@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.281.8](https://github.com/MustardSeedNetworks/seed/compare/v0.281.7...v0.281.8) (2026-10-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-virtual to v3.14.19 ([#3631](https://github.com/MustardSeedNetworks/seed/issues/3631)) ([823c28b](https://github.com/MustardSeedNetworks/seed/commit/823c28b6b951193ab76aa3eea7e09c11635bf9ae))
+
+
+### Miscellaneous
+
+* **deps:** update module honnef.co/go/tools to v0.8.2 ([#3621](https://github.com/MustardSeedNetworks/seed/issues/3621)) ([d39b2a6](https://github.com/MustardSeedNetworks/seed/commit/d39b2a65788a62f59f34e4d67812999ad18a2a98))
+
 ## [0.281.7](https://github.com/MustardSeedNetworks/seed/compare/v0.281.6...v0.281.7) (2026-10-20)
 
 
