@@ -444,7 +444,9 @@ func (r *Runner) Recover(ctx context.Context) (int, error) {
 }
 
 // safeRun invokes a handler with panic recovery, converting a panic into a
-// failing error so one bad job never crashes the runner.
+// failing error so one bad job never crashes the runner. The recover stays
+// local rather than under supervise: a job is one-shot, and its panic must
+// become that job's failed state, not a restart of a worker.
 func safeRun(
 	ctx context.Context,
 	logger *slog.Logger,

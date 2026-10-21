@@ -1,6 +1,8 @@
 package discovery_test
 
 import (
+	"log/slog"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -331,4 +333,44 @@ func TestConvenienceEventFunctions(t *testing.T) {
 			t.Errorf("expected type %s, got %s", discovery.EventScanCompleted, event.Type)
 		}
 	})
+}
+
+// panicLog records the first log line written and signals it.
+type panicLog struct {
+	once sync.Once
+	line chan string
+}
+
+func (p *panicLog) Write(b []byte) (int, error) {
+	p.once.Do(func() { p.line <- string(b) })
+	return len(b), nil
+}
+
+func TestEventBusLogsSubscriberPanic(t *testing.T) {
+	logged := &panicLog{line: make(chan string, 1)}
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(logged, nil)))
+	t.Cleanup(func() { slog.SetDefault(prev) })
+
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
+	defer eb.Stop()
+
+	sub := eb.SubscribeAll(func(*discovery.Event) { panic("subscriber bug") })
+	eb.Publish(discovery.NewEvent(discovery.EvtDeviceDiscovered, discovery.SourceWired))
+
+	select {
+	case line := <-logged.line:
+		for _, want := range []string{
+			"discovery event subscriber panicked",
+			"subscription=" + sub.ID(),
+			"event_type=" + string(discovery.EvtDeviceDiscovered),
+			`panic="subscriber bug"`,
+		} {
+			if !strings.Contains(line, want) {
+				t.Errorf("log line %q missing %q", line, want)
+			}
+		}
+	case <-time.After(time.Second):
+		t.Fatal("subscriber panic was not logged")
+	}
 }

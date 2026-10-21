@@ -173,7 +173,9 @@ func (b *Bus) run(sub *subscription) {
 	}
 }
 
-// deliver invokes the handler with panic isolation.
+// deliver invokes the handler with panic isolation. The recover stays local
+// rather than under supervise: one bad event must not stop the subscription's
+// worker, and restarting that worker would drop its queued events.
 func (b *Bus) deliver(sub *subscription, ev Event) {
 	defer func() {
 		if r := recover(); r != nil {

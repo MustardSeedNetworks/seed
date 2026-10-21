@@ -265,6 +265,8 @@ func (m *LinkMonitor) notifyCallbacks(event LinkEvent, callbacks []LinkStateCall
 }
 
 // safeInvokeCallback invokes a callback with panic recovery (fixes #790).
+// The recover stays local rather than under supervise: each callback is a
+// one-shot goroutine with nothing to restart.
 func (m *LinkMonitor) safeInvokeCallback(callback LinkStateCallback, event LinkEvent) {
 	defer func() {
 		if r := recover(); r != nil {
