@@ -31,6 +31,7 @@ import {
   RecordRow,
   type RecordState,
 } from '../ui/ListDetail';
+import { MibBrowser } from './pollingTargets/MibBrowser';
 import { emptyInput, TargetForm, targetToInput } from './pollingTargets/TargetForm';
 
 type Facet = 'all' | 'failing' | 'paused';
@@ -71,7 +72,7 @@ function matchesFacet(target: PollingTargetResponse, facet: Facet): boolean {
 export function PollingTargetsPage(): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
   const { canWrite } = useRole();
-  const { targets, loading, error, create, update, remove, poll } = usePollingTargets();
+  const { targets, loading, error, create, update, remove, poll, walk } = usePollingTargets();
   const [editing, setEditing] = useState<PollingTargetResponse | null>(null);
   const [showCreate, setShowCreate] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -280,6 +281,11 @@ export function PollingTargetsPage(): JSX.Element {
               </p>
             ) : null}
             <CollectorChain chain={selected.collectorChain} />
+            <MibBrowser
+              key={selected.id}
+              walk={(oid): ReturnType<typeof walk> => walk(selected.id, oid)}
+              disabledReason={canWrite ? undefined : t('pollingTargets.mibReadOnly')}
+            />
           </DetailPane>
         ) : (
           <DetailEmpty>
