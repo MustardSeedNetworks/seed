@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -20,13 +21,14 @@ const (
 	flashTotal  = 1621966848
 )
 
-// fakeStaging is the part of an IOS or EOS device staging touches: its flash,
-// its boot statements, the read-only commands staging runs on an exec
+// fakeStaging is the part of an IOS, EOS or Junos device staging touches: its
+// flash, its boot statements, the read-only commands staging runs on an exec
 // channel, and the configuration commands that set the boot image in the CLI.
 type fakeStaging struct {
 	fakeCLI
 
 	eos   bool
+	junos bool
 	free  int64
 	flash map[string]string
 	boot  []string
@@ -37,6 +39,20 @@ type fakeStaging struct {
 	corrupt, refuseCopy, rejectBoot bool
 	// running is the image show version names (IOS).
 	running string
+	// junosVersion is what Junos's show version prints; added is the package
+	// "request system software add" installed, and addOut what it printed.
+	junosVersion, added, addOut string
+}
+
+// newFakeJunos is an EX switch running 21.4R3-S5.4 whose /var has 1 GiB free.
+func newFakeJunos() *fakeStaging {
+	return &fakeStaging{
+		done: make(chan struct{}), junos: true, free: 1 << 30, flash: map[string]string{},
+		junosVersion: "Hostname: ex1\r\nModel: ex2300-24t\r\nJunos: 21.4R3-S5.4\r\n",
+		addOut: "Verified junos-install-ex-x86-64-23.4R2.13.tgz signed by PackageProductionECP256_2024\r\n" +
+			"WARNING: A reboot is required to install the software\r\n" +
+			"WARNING:     Use the 'request system reboot' command immediately\r\n",
+	}
 }
 
 func newFakeStaging(eos bool) *fakeStaging {
@@ -57,8 +73,11 @@ func (d *fakeStaging) start(t *testing.T) deviceconfig.DeviceRequest {
 	dev := startSSHDevice(t, deviceOpts{password: "wr1te", shell: d.serve, scp: d.scp, exec: d.exec})
 	fr := dev.request(t, "wr1te", "", dev.fingerprint)
 	platform := deviceconfig.PlatformCiscoIOS
-	if d.eos {
+	switch {
+	case d.eos:
 		platform = deviceconfig.PlatformAristaEOS
+	case d.junos:
+		platform = deviceconfig.PlatformJuniperJunos
 	}
 	return deviceconfig.DeviceRequest{
 		Host: fr.Host, Port: fr.Port, User: "pusher", Password: "wr1te", PinnedHostKey: dev.fingerprint,
@@ -110,10 +129,21 @@ func (d *fakeStaging) scp(ch ssh.Channel, path string) {
 	_, _ = ch.Write([]byte{0})
 }
 
+func (d *fakeStaging) used() int64 {
+	used := int64(0)
+	for _, body := range d.flash {
+		used += int64(len(body))
+	}
+	return used
+}
+
 func (d *fakeStaging) exec(command string) (string, bool) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.commands = append(d.commands, command)
+	if d.junos {
+		return d.junosExec(command)
+	}
 	if file, ok := strings.CutPrefix(command, "verify /sha512 "); ok {
 		body, have := d.flash[file]
 		if !have {
@@ -141,17 +171,58 @@ func (d *fakeStaging) exec(command string) (string, bool) {
 	case "show boot-config":
 		return "Software image: " + d.boot[0] + "\r\nConsole speed: (not set)\r\n", true
 	case "dir flash:":
-		used := int64(0)
-		for _, body := range d.flash {
-			used += int64(len(body))
-		}
 		return fmt.Sprintf(
 			"Directory of flash:/\r\n\r\n%d bytes total (%d bytes free)\r\n",
 			flashTotal,
-			d.free-used,
+			d.free-d.used(),
 		), true
 	case "show running-config | include ^boot system":
 		return strings.Join(d.boot, "\r\n") + "\r\n", true
+	}
+	return "", false
+}
+
+// junosExec answers as Junos 21 does, where /var is mounted beneath /.mount
+// and a smaller root and /tmp are listed around it.
+func (d *fakeStaging) junosExec(command string) (string, bool) {
+	if file, ok := strings.CutPrefix(command, "file checksum sha-256 "); ok {
+		body, have := d.flash[file]
+		if !have {
+			return "error: could not resolve file: " + file + "\r\n", true
+		}
+		if d.corrupt {
+			body += "x"
+		}
+		return "SHA256 (" + file + ") = " + sha256Hex(body) + "\r\n", true
+	}
+	if file, ok := strings.CutPrefix(command, "file delete "); ok {
+		delete(d.flash, file)
+		return "", true
+	}
+	if file, ok := strings.CutPrefix(command, "request system software add "); ok {
+		if _, have := d.flash[file]; !have {
+			return "error: file does not exist: " + file + "\r\n", true
+		}
+		if !strings.Contains(d.addOut, "ERROR:") {
+			d.added = file
+		}
+		return d.addOut, true
+	}
+	switch command {
+	case "show version":
+		return d.junosVersion, true
+	case "show system storage | display xml":
+		fs := func(name, mount string, avail int64) string {
+			return "<filesystem><filesystem-name>" + name + "</filesystem-name>" +
+				`<available-blocks junos:format="x">` + strconv.FormatInt(avail/512, 10) + "</available-blocks>" +
+				"<mounted-on>" + mount + "</mounted-on></filesystem>"
+		}
+		return `<rpc-reply xmlns:junos="http://xml.juniper.net/junos/21.4R3/junos">` + "\r\n" +
+			"<system-storage-information>" +
+			fs("/dev/gpt/junos", "/.mount", 24<<20) +
+			fs("tmpfs", "/.mount/tmp", 512<<20) +
+			fs("/dev/gpt/var", "/.mount/var", d.free-d.used()) +
+			"</system-storage-information></rpc-reply>\r\n{master:0}\r\n", true
 	}
 	return "", false
 }
@@ -209,6 +280,12 @@ func (d *fakeStaging) answer(cmd, mode string) (string, string) {
 		return invalid, mode
 	}
 	return "", mode
+}
+
+func (d *fakeStaging) junosState() (map[string]string, string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return maps.Clone(d.flash), d.added
 }
 
 func (d *fakeStaging) state() (map[string]string, []string, bool) {
@@ -331,5 +408,99 @@ func TestStageImageFailures(t *testing.T) {
 		facts, err := deviceconfig.SSHFetcher{}.ImageFacts(fetchCtx(t), d.start(t))
 		require.NoError(t, err)
 		require.True(t, facts.InstallMode)
+	})
+}
+
+const junosPackage = "junos-install-ex-x86-64-23.4R2.13.tgz"
+
+// TestStageAJunosPackage is the device half of slice 5b-3: the release and
+// the free space of /var/tmp's file system are read, the package is copied
+// there as an SCP sink, the device's SHA-256 of its copy is checked, and the
+// package is installed for the next boot.
+func TestStageAJunosPackage(t *testing.T) {
+	t.Parallel()
+	d := newFakeJunos()
+	req := d.start(t)
+	ctx := fetchCtx(t)
+	var dev deviceconfig.SSHFetcher
+
+	facts, err := dev.ImageFacts(ctx, req)
+	require.NoError(t, err)
+	require.Equal(t, deviceconfig.ImageFacts{Version: "21.4R3-S5.4", Dir: "/var/tmp/", FreeBytes: 1 << 30}, facts)
+
+	img := deviceconfig.DeviceImage{
+		Dir: facts.Dir, Name: junosPackage, Size: int64(len(imageBytes)),
+		SHA256: sha256Hex(imageBytes), SHA512: sha512Hex(imageBytes),
+	}
+	require.NoError(t, dev.CopyImage(ctx, req, img, strings.NewReader(imageBytes)))
+	require.NoError(t, dev.VerifyImage(ctx, req, img))
+	require.NoError(t, dev.SetBoot(ctx, req, img))
+
+	flash, added := d.junosState()
+	require.Equal(t, map[string]string{"/var/tmp/" + junosPackage: imageBytes}, flash)
+	require.Equal(t, "/var/tmp/"+junosPackage, added)
+}
+
+// TestJunosStagingFailures: a release show version does not name, a copy
+// the device hashes differently, and an install the device refuses or does
+// not finish.
+func TestJunosStagingFailures(t *testing.T) {
+	t.Parallel()
+	img := deviceconfig.DeviceImage{
+		Dir: "/var/tmp/", Name: junosPackage, Size: int64(len(imageBytes)),
+		SHA256: sha256Hex(imageBytes), SHA512: sha512Hex(imageBytes),
+	}
+	staged := func(d *fakeStaging) { d.flash[img.Path()] = imageBytes }
+
+	t.Run("release before 15.1", func(t *testing.T) {
+		t.Parallel()
+		d := newFakeJunos()
+		d.junosVersion = "Hostname: ex2200\r\nModel: ex2200-24t-4g\r\nJUNOS Base OS boot [12.3R12.4]\r\n"
+		facts, err := deviceconfig.SSHFetcher{}.ImageFacts(fetchCtx(t), d.start(t))
+		require.NoError(t, err)
+		require.Equal(t, "12.3R12.4", facts.Version)
+	})
+
+	t.Run("no release", func(t *testing.T) {
+		t.Parallel()
+		d := newFakeJunos()
+		d.junosVersion = "Hostname: ex1\r\n"
+		_, err := deviceconfig.SSHFetcher{}.ImageFacts(fetchCtx(t), d.start(t))
+		require.ErrorIs(t, err, deviceconfig.ErrCommand)
+		require.ErrorContains(t, err, "did not name its running release")
+	})
+
+	t.Run("corrupt copy", func(t *testing.T) {
+		t.Parallel()
+		d := newFakeJunos()
+		d.corrupt = true
+		staged(d)
+		require.ErrorIs(t, deviceconfig.SSHFetcher{}.VerifyImage(fetchCtx(t), d.start(t), img),
+			deviceconfig.ErrImageCorrupt)
+		flash, _ := d.junosState()
+		require.Empty(t, flash, "the corrupt copy is deleted")
+	})
+
+	t.Run("install refused", func(t *testing.T) {
+		t.Parallel()
+		d := newFakeJunos()
+		d.addOut = "Checking compatibility with configuration\r\n" +
+			"ERROR: Validation failed for the configuration\r\n"
+		staged(d)
+		err := deviceconfig.SSHFetcher{}.SetBoot(fetchCtx(t), d.start(t), img)
+		require.ErrorIs(t, err, deviceconfig.ErrCommand)
+		require.ErrorContains(t, err, "ERROR: Validation failed")
+		_, added := d.junosState()
+		require.Empty(t, added)
+	})
+
+	t.Run("install not finished", func(t *testing.T) {
+		t.Parallel()
+		d := newFakeJunos()
+		d.addOut = "Installing package '/var/tmp/" + junosPackage + "' ...\r\n"
+		staged(d)
+		err := deviceconfig.SSHFetcher{}.SetBoot(fetchCtx(t), d.start(t), img)
+		require.ErrorIs(t, err, deviceconfig.ErrCommand)
+		require.ErrorContains(t, err, "did not report the package installed for the next boot")
 	})
 }

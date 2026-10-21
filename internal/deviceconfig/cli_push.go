@@ -397,12 +397,14 @@ func (s *cliShell) junosCommand(command string) error {
 	return nil
 }
 
-// junosErrors returns the "error:" lines of a command's output.
+// junosErrors returns the "error:" lines of a command's output, and the
+// "ERROR:" lines the package installer prints.
 func junosErrors(out string) []string {
 	var msgs []string
 	for line := range strings.SplitSeq(out, "\n") {
 		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "error:") || strings.HasPrefix(line, "syntax error") {
+		if strings.HasPrefix(line, "error:") || strings.HasPrefix(line, "ERROR:") ||
+			strings.HasPrefix(line, "syntax error") {
 			msgs = append(msgs, line)
 		}
 	}
