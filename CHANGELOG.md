@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.0](https://github.com/MustardSeedNetworks/seed/compare/v0.281.8...v0.282.0) (2026-10-22)
+
+
+### Features
+
+* **deviceconfig:** stage Junos packages with request system software add ([#3642](https://github.com/MustardSeedNetworks/seed/issues/3642)) ([daf6ecc](https://github.com/MustardSeedNetworks/seed/commit/daf6ecc3d01445e2ad36fcca53e85ad0e44ee2a6))
+* **ui:** ask the EoX feed question during first-run setup ([#3637](https://github.com/MustardSeedNetworks/seed/issues/3637)) ([e303d73](https://github.com/MustardSeedNetworks/seed/commit/e303d7375879da50b471e34bc18ab06e2f716747))
+* **ui:** show IP SLA operations and their trend on an IP SLA page ([#3643](https://github.com/MustardSeedNetworks/seed/issues/3643)) ([d10fcf1](https://github.com/MustardSeedNetworks/seed/commit/d10fcf1d1aabbda4cb9f34ae04d22ded705587e5)), closes [#3464](https://github.com/MustardSeedNetworks/seed/issues/3464)
+
+
+### Bug Fixes
+
+* **deps:** build with go1.27.3 for GO-2026-6809 ([#3641](https://github.com/MustardSeedNetworks/seed/issues/3641)) ([f1be71e](https://github.com/MustardSeedNetworks/seed/commit/f1be71eb489c824a329938024872b2337edf1116)), closes [#3640](https://github.com/MustardSeedNetworks/seed/issues/3640)
+* **deps:** update dependency i18next to v26.4.5 ([#3650](https://github.com/MustardSeedNetworks/seed/issues/3650)) ([03fab0b](https://github.com/MustardSeedNetworks/seed/commit/03fab0b3597e64503edf4db13bb1e2262a2a88a7))
+* **deps:** update dependency lucide-react to v1.56.0 ([#3632](https://github.com/MustardSeedNetworks/seed/issues/3632)) ([61d5b5c](https://github.com/MustardSeedNetworks/seed/commit/61d5b5cecc52210bdac1cfce435e4a43e48817be))
+* **discovery:** log a subscriber panic and record why each recover stays local ([#3648](https://github.com/MustardSeedNetworks/seed/issues/3648)) ([5062cf0](https://github.com/MustardSeedNetworks/seed/commit/5062cf0776837fbd593081aec00d717c07c84314)), closes [#3647](https://github.com/MustardSeedNetworks/seed/issues/3647)
+
+
+### Code Refactoring
+
+* **auth:** hash passwords through foundation pkg/password ([#3639](https://github.com/MustardSeedNetworks/seed/issues/3639)) ([926d023](https://github.com/MustardSeedNetworks/seed/commit/926d0238f13f59702dbff9fbbffccc3d901bd711)), closes [#3638](https://github.com/MustardSeedNetworks/seed/issues/3638)
+
+
+### Miscellaneous
+
+* **deps:** update node.js to v26.12.0 ([#3634](https://github.com/MustardSeedNetworks/seed/issues/3634)) ([c71a33b](https://github.com/MustardSeedNetworks/seed/commit/c71a33b4d9abafeff4eb098f959452adf0630add))
+
 ## [0.281.8](https://github.com/MustardSeedNetworks/seed/compare/v0.281.7...v0.281.8) (2026-10-21)
 
 
