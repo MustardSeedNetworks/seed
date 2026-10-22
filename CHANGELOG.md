@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.1](https://github.com/MustardSeedNetworks/seed/compare/v0.282.0...v0.282.1) (2026-10-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.57.0 ([#3636](https://github.com/MustardSeedNetworks/seed/issues/3636)) ([a7859ca](https://github.com/MustardSeedNetworks/seed/commit/a7859ca6a95bba138160b3f60ce9adca58a9b8c7))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3633](https://github.com/MustardSeedNetworks/seed/issues/3633)) ([c396e2d](https://github.com/MustardSeedNetworks/seed/commit/c396e2d402bb5784d26e2b58b3b72de801fb55cf))
+* **deps:** update dependency jsdom to v30.1.3 ([#3652](https://github.com/MustardSeedNetworks/seed/issues/3652)) ([7fac21a](https://github.com/MustardSeedNetworks/seed/commit/7fac21a7892a81fab7edeea3496bc7d173b6c8db))
+* **deps:** update github/codeql-action action to v4.39.0 ([#3654](https://github.com/MustardSeedNetworks/seed/issues/3654)) ([dd163b8](https://github.com/MustardSeedNetworks/seed/commit/dd163b8fd5672fce6b6624d397ee8dac8e694c52))
+
 ## [0.282.0](https://github.com/MustardSeedNetworks/seed/compare/v0.281.8...v0.282.0) (2026-10-22)
 
 
