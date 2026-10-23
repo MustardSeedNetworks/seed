@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.5](https://github.com/MustardSeedNetworks/seed/compare/v0.282.4...v0.282.5) (2026-10-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-virtual to v3.14.20 ([#3658](https://github.com/MustardSeedNetworks/seed/issues/3658)) ([3debf37](https://github.com/MustardSeedNetworks/seed/commit/3debf3735555572fb106c8a950dd952f8e26a21b))
+* **deps:** update dependency lucide-react to v1.58.0 ([#3667](https://github.com/MustardSeedNetworks/seed/issues/3667)) ([6924674](https://github.com/MustardSeedNetworks/seed/commit/6924674b3f0259054f225d912fc123a11c7ce813))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3663](https://github.com/MustardSeedNetworks/seed/issues/3663)) ([bef77c1](https://github.com/MustardSeedNetworks/seed/commit/bef77c1fd397b8f66a57c6ed7ba6553cc2970ab6))
+* **deps:** lock file maintenance ([#3668](https://github.com/MustardSeedNetworks/seed/issues/3668)) ([d8e4fe3](https://github.com/MustardSeedNetworks/seed/commit/d8e4fe36f2a17703b009498b1ea67fc4d703b09c))
+
 ## [0.282.4](https://github.com/MustardSeedNetworks/seed/compare/v0.282.3...v0.282.4) (2026-10-23)
 
 
