@@ -285,7 +285,7 @@ jobs:
         env:
           GOOS: windows
         with:
-          version: v2.14.0
+          version: v2.15.0
           # The action's cache key carries no GOOS, so this job and the Linux
           # lint inside ci-backend.yml would share one entry while analysing
           # two different trees. #2511.
