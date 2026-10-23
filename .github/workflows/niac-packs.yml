@@ -62,7 +62,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install libpcap-dev and PyYAML
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
         timeout-minutes: 10
         with:
           packages: libpcap-dev python3-yaml
@@ -110,7 +110,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install libpcap-dev and PyYAML
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
         timeout-minutes: 10
         with:
           packages: libpcap-dev python3-yaml
@@ -122,7 +122,7 @@ jobs:
       # Split from the browser download so apt runs under the fleet composite's
       # timeout and lock handling; see the Storybook job in ci.yml.
       - name: Install Chromium OS dependencies
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
         timeout-minutes: 10
         with:
           command: cd ui && node ./node_modules/playwright/cli.js install-deps chromium
