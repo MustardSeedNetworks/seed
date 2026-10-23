@@ -648,7 +648,7 @@ jobs:
   # ci-complete still needs: [dependency-review].
   dependency-review:
     if: github.event_name == 'pull_request'
-    uses: MustardSeedNetworks/.github/.github/workflows/dependency-review.yml@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+    uses: MustardSeedNetworks/.github/.github/workflows/dependency-review.yml@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
     permissions:
       contents: read
       # Only to post the findings comment when it fails.
@@ -837,7 +837,7 @@ jobs:
           persist-credentials: false
 
       - name: Install clang-format
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
         timeout-minutes: 5
         with:
           packages: clang-format-18
@@ -1065,7 +1065,7 @@ jobs:
 
       - name: Install libpcap build tools
         if: steps.libpcap-cache.outputs.cache-hit != 'true'
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
         timeout-minutes: 10
         with:
           packages: flex bison
@@ -1312,7 +1312,7 @@ jobs:
   # severity, several of which encode deliberate decisions.
   codeql-alert-gate:
     name: CodeQL Alert Gate
-    uses: MustardSeedNetworks/.github/.github/workflows/codeql-alert-gate.yml@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+    uses: MustardSeedNetworks/.github/.github/workflows/codeql-alert-gate.yml@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
     permissions:
       security-events: read
 
