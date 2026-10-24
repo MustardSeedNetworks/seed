@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.7](https://github.com/MustardSeedNetworks/seed/compare/v0.282.6...v0.282.7) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-virtual to v3.14.21 ([#3674](https://github.com/MustardSeedNetworks/seed/issues/3674)) ([b897946](https://github.com/MustardSeedNetworks/seed/commit/b8979467b4550be79fdc0a0ef6dd58729013b9c7))
+* **deps:** update dependency react-i18next to v17.0.20 ([#3675](https://github.com/MustardSeedNetworks/seed/issues/3675)) ([c7a659b](https://github.com/MustardSeedNetworks/seed/commit/c7a659bd54b18e94a9e466f3569fa6526e46761f))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3677](https://github.com/MustardSeedNetworks/seed/issues/3677)) ([2c1a8a8](https://github.com/MustardSeedNetworks/seed/commit/2c1a8a88ad31fa38c5afe2107f90616d40d3b2dc))
+* **deps:** lock file maintenance ([#3679](https://github.com/MustardSeedNetworks/seed/issues/3679)) ([7c2a875](https://github.com/MustardSeedNetworks/seed/commit/7c2a87547093ef99cbc140f7beacd58850790946))
+* **deps:** update dependency fast-uri to v4.2.3 [security] ([#3678](https://github.com/MustardSeedNetworks/seed/issues/3678)) ([afacaff](https://github.com/MustardSeedNetworks/seed/commit/afacaff442d9b7f4c2cac0c666626e832911300f))
+* **deps:** update module github.com/golangci/golangci-lint/v2/cmd/golangci-lint to v2.15.0 ([#3672](https://github.com/MustardSeedNetworks/seed/issues/3672)) ([8f3a413](https://github.com/MustardSeedNetworks/seed/commit/8f3a413b20e53fd0efd88d675ffc9f3f99bd0ab8))
+
 ## [0.282.6](https://github.com/MustardSeedNetworks/seed/compare/v0.282.5...v0.282.6) (2026-10-23)
 
 
