@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.9](https://github.com/MustardSeedNetworks/seed/compare/v0.282.8...v0.282.9) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-i18next to v17.0.21 ([#3685](https://github.com/MustardSeedNetworks/seed/issues/3685)) ([a5b5775](https://github.com/MustardSeedNetworks/seed/commit/a5b57753065474b87bb5f3016a1c8088e97425af))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.13.5 ([#3686](https://github.com/MustardSeedNetworks/seed/issues/3686)) ([a62eb5b](https://github.com/MustardSeedNetworks/seed/commit/a62eb5b77338f1178e7375bb4fe01f3ebfd78045))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3687](https://github.com/MustardSeedNetworks/seed/issues/3687)) ([576b361](https://github.com/MustardSeedNetworks/seed/commit/576b3617b934df3f7da5110026f7802b717feac7))
+
 ## [0.282.8](https://github.com/MustardSeedNetworks/seed/compare/v0.282.7...v0.282.8) (2026-10-24)
 
 
