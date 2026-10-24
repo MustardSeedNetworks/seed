@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.8](https://github.com/MustardSeedNetworks/seed/compare/v0.282.7...v0.282.8) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @hookform/resolvers to v5.9.2 ([#3680](https://github.com/MustardSeedNetworks/seed/issues/3680)) ([51a8a2c](https://github.com/MustardSeedNetworks/seed/commit/51a8a2c51d8fdb65e83adf01621973f7ed332e0b))
+* **deps:** update dependency lucide-react to v1.59.0 ([#3681](https://github.com/MustardSeedNetworks/seed/issues/3681)) ([febc983](https://github.com/MustardSeedNetworks/seed/commit/febc9835510d7859c7f1db29220e5d790771c084))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3682](https://github.com/MustardSeedNetworks/seed/issues/3682)) ([fa9a10a](https://github.com/MustardSeedNetworks/seed/commit/fa9a10af95048b9f70360d67d5631e0de8f170fb))
+* **deps:** lock file maintenance ([#3684](https://github.com/MustardSeedNetworks/seed/issues/3684)) ([b3755ce](https://github.com/MustardSeedNetworks/seed/commit/b3755ce678a3e59aedcbe14465b2b7bb4d799322))
+
 ## [0.282.7](https://github.com/MustardSeedNetworks/seed/compare/v0.282.6...v0.282.7) (2026-10-24)
 
 
