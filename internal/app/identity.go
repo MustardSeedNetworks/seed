@@ -223,6 +223,10 @@ func (a dbMFAAdapter) ListWebAuthnCredentials(ctx context.Context, userID int64)
 	return a.db().ListWebAuthnCredentials(ctx, userID)
 }
 
-func (a dbMFAAdapter) UpdateWebAuthnSignCount(ctx context.Context, credentialID []byte, signCount uint32) error {
-	return a.db().UpdateWebAuthnSignCount(ctx, credentialID, signCount)
+func (a dbMFAAdapter) WebAuthnCredentialOwner(ctx context.Context, credentialID []byte) (string, error) {
+	return a.db().WebAuthnCredentialOwner(ctx, credentialID)
+}
+
+func (a dbMFAAdapter) UpdateWebAuthnCredential(ctx context.Context, credentialID, record []byte) error {
+	return a.db().UpdateWebAuthnCredential(ctx, credentialID, record)
 }

@@ -179,6 +179,8 @@ func (s *Server) applyRecoveredPassword(
 	}
 
 	s.recoveryManager().Cleanup()
+	// A ceremony begun before the reset must not complete after it.
+	s.passkeyCeremonies.Clear()
 	s.loginRateLimiter().RecordAttempt(clientIP, true)
 
 	logger.InfoContext(r.Context(), "Password recovery completed successfully",

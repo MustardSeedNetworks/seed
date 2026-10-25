@@ -144,16 +144,9 @@ const PRE_SESSION_ENDPOINTS: ReadonlySet<string> = new Set([
   '/api/v1/auth/webauthn/login/finish',
 ]);
 
-/**
- * Whether an endpoint runs before the user holds a session.
- *
- * The query string is dropped before the lookup: passkey sign-in posts to
- * `webauthn/login/finish?username=…`, and matching the raw endpoint would treat
- * the one pre-session route that carries a query as authenticated.
- */
+/** Whether an endpoint runs before the user holds a session. */
 function isPreSessionEndpoint(endpoint: string): boolean {
-  const queryStart: number = endpoint.indexOf('?');
-  return PRE_SESSION_ENDPOINTS.has(queryStart === -1 ? endpoint : endpoint.slice(0, queryStart));
+  return PRE_SESSION_ENDPOINTS.has(endpoint);
 }
 
 /**

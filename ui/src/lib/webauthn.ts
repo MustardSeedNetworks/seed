@@ -18,11 +18,7 @@
 
 import { api } from '../api';
 import type { LoginResponse } from '../types/generated/login-response';
-import type {
-  WebAuthnCreationOptionsResponse,
-  WebAuthnCredentialDescriptor,
-} from '../types/generated/webauthn-creation-options-response';
-import type { WebAuthnLoginBeginRequest } from '../types/generated/webauthn-login-begin-request';
+import type { WebAuthnCreationOptionsResponse } from '../types/generated/webauthn-creation-options-response';
 import type { WebAuthnRequestOptionsResponse } from '../types/generated/webauthn-request-options-response';
 
 /** base64UrlToBuffer decodes the padless base64url the server sends. */
@@ -58,14 +54,6 @@ export function isPasskeySupported(): boolean {
   );
 }
 
-function decodeDescriptors(list: WebAuthnCredentialDescriptor[]): PublicKeyCredentialDescriptor[] {
-  return list.map((descriptor) => ({
-    id: base64UrlToBuffer(descriptor.id),
-    type: descriptor.type,
-    transports: descriptor.transports as AuthenticatorTransport[] | undefined,
-  }));
-}
-
 /**
  * registerPasskey runs the creation ceremony and enrols the result.
  *
@@ -89,7 +77,6 @@ export async function registerPasskey(): Promise<void> {
         ...options.publicKey.user,
         id: base64UrlToBuffer(options.publicKey.user.id),
       },
-      excludeCredentials: decodeDescriptors(options.publicKey.excludeCredentials),
     },
   })) as PublicKeyCredential | null;
 
@@ -112,24 +99,23 @@ export async function registerPasskey(): Promise<void> {
 /**
  * loginWithPasskey runs the assertion ceremony and returns the session it wins.
  *
- * finish takes the username as a query parameter, not in the body: go-webauthn
- * parses the body itself, so the handler cannot read it first.
+ * Sign-in is username-free: the browser offers whichever passkey it holds for
+ * this server, and the passkey names the account. The ceremony itself travels
+ * in an HttpOnly cookie that begin sets and finish consumes.
  */
-export async function loginWithPasskey(username: string): Promise<LoginResponse> {
+export async function loginWithPasskey(): Promise<LoginResponse> {
   if (!isPasskeySupported()) {
     throw new Error('This browser cannot use a passkey.');
   }
 
-  const request: WebAuthnLoginBeginRequest = { username };
   const options = await api.post<WebAuthnRequestOptionsResponse>(
     '/api/v1/auth/webauthn/login/begin',
-    request,
+    {},
   );
   const assertion = (await navigator.credentials.get({
     publicKey: {
       ...options.publicKey,
       challenge: base64UrlToBuffer(options.publicKey.challenge),
-      allowCredentials: decodeDescriptors(options.publicKey.allowCredentials),
     },
   })) as PublicKeyCredential | null;
 
@@ -139,18 +125,15 @@ export async function loginWithPasskey(username: string): Promise<LoginResponse>
 
   const response = assertion.response as AuthenticatorAssertionResponse;
 
-  return api.post<LoginResponse>(
-    `/api/v1/auth/webauthn/login/finish?username=${encodeURIComponent(username)}`,
-    {
-      id: assertion.id,
-      rawId: bufferToBase64Url(assertion.rawId),
-      type: assertion.type,
-      response: {
-        clientDataJSON: bufferToBase64Url(response.clientDataJSON),
-        authenticatorData: bufferToBase64Url(response.authenticatorData),
-        signature: bufferToBase64Url(response.signature),
-        userHandle: response.userHandle ? bufferToBase64Url(response.userHandle) : null,
-      },
+  return api.post<LoginResponse>('/api/v1/auth/webauthn/login/finish', {
+    id: assertion.id,
+    rawId: bufferToBase64Url(assertion.rawId),
+    type: assertion.type,
+    response: {
+      clientDataJSON: bufferToBase64Url(response.clientDataJSON),
+      authenticatorData: bufferToBase64Url(response.authenticatorData),
+      signature: bufferToBase64Url(response.signature),
+      userHandle: response.userHandle ? bufferToBase64Url(response.userHandle) : null,
     },
-  );
+  });
 }

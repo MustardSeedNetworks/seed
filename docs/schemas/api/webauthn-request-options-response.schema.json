@@ -3,39 +3,6 @@
   "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/webauthn-request-options-response.schema.json",
   "$ref": "#/$defs/WebAuthnRequestOptionsResponse",
   "$defs": {
-    "WebAuthnCredentialDescriptor": {
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "public-key"
-          ]
-        },
-        "id": {
-          "type": "string"
-        },
-        "transports": {
-          "items": {
-            "type": "string",
-            "enum": [
-              "usb",
-              "nfc",
-              "ble",
-              "smart-card",
-              "hybrid",
-              "internal"
-            ]
-          },
-          "type": "array"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "type",
-        "id"
-      ]
-    },
     "WebAuthnRequestOptions": {
       "properties": {
         "challenge": {
@@ -47,11 +14,11 @@
         "rpId": {
           "type": "string"
         },
-        "allowCredentials": {
-          "items": {
-            "$ref": "#/$defs/WebAuthnCredentialDescriptor"
-          },
-          "type": "array"
+        "userVerification": {
+          "type": "string",
+          "enum": [
+            "required"
+          ]
         }
       },
       "additionalProperties": false,
@@ -60,7 +27,7 @@
         "challenge",
         "timeout",
         "rpId",
-        "allowCredentials"
+        "userVerification"
       ]
     },
     "WebAuthnRequestOptionsResponse": {

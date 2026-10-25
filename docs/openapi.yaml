@@ -11499,15 +11499,35 @@ components:
                 - createdAt
                 - updatedAt
             type: object
+        WebAuthnAuthenticatorSelection:
+            additionalProperties: false
+            properties:
+                requireResidentKey:
+                    type: boolean
+                residentKey:
+                    enum:
+                        - required
+                    type: string
+                userVerification:
+                    enum:
+                        - required
+                    type: string
+            required:
+                - requireResidentKey
+                - residentKey
+                - userVerification
+            type: object
         WebAuthnCreationOptions:
             additionalProperties: false
             properties:
+                attestation:
+                    enum:
+                        - none
+                    type: string
+                authenticatorSelection:
+                    $ref: '#/components/schemas/WebAuthnAuthenticatorSelection'
                 challenge:
                     type: string
-                excludeCredentials:
-                    items:
-                        $ref: '#/components/schemas/WebAuthnCredentialDescriptor'
-                    type: array
                 pubKeyCredParams:
                     items:
                         $ref: '#/components/schemas/WebAuthnCredentialParameter'
@@ -11524,7 +11544,8 @@ components:
                 - challenge
                 - pubKeyCredParams
                 - timeout
-                - excludeCredentials
+                - authenticatorSelection
+                - attestation
             type: object
         WebAuthnCreationOptionsResponse:
             additionalProperties: false
@@ -11533,30 +11554,6 @@ components:
                     $ref: '#/components/schemas/WebAuthnCreationOptions'
             required:
                 - publicKey
-            type: object
-        WebAuthnCredentialDescriptor:
-            additionalProperties: false
-            properties:
-                id:
-                    type: string
-                transports:
-                    items:
-                        enum:
-                            - usb
-                            - nfc
-                            - ble
-                            - smart-card
-                            - hybrid
-                            - internal
-                        type: string
-                    type: array
-                type:
-                    enum:
-                        - public-key
-                    type: string
-            required:
-                - type
-                - id
             type: object
         WebAuthnCredentialParameter:
             additionalProperties: false
@@ -11570,14 +11567,6 @@ components:
             required:
                 - type
                 - alg
-            type: object
-        WebAuthnLoginBeginRequest:
-            additionalProperties: false
-            properties:
-                username:
-                    type: string
-            required:
-                - username
             type: object
         WebAuthnRelyingParty:
             additionalProperties: false
@@ -11593,21 +11582,21 @@ components:
         WebAuthnRequestOptions:
             additionalProperties: false
             properties:
-                allowCredentials:
-                    items:
-                        $ref: '#/components/schemas/WebAuthnCredentialDescriptor'
-                    type: array
                 challenge:
                     type: string
                 rpId:
                     type: string
                 timeout:
                     type: integer
+                userVerification:
+                    enum:
+                        - required
+                    type: string
             required:
                 - challenge
                 - timeout
                 - rpId
-                - allowCredentials
+                - userVerification
             type: object
         WebAuthnRequestOptionsResponse:
             additionalProperties: false
@@ -12884,19 +12873,13 @@ paths:
     /api/v1/auth/webauthn/login/begin:
         post:
             operationId: postApiV1AuthWebauthnLoginBegin
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/WebAuthnLoginBeginRequest'
-                required: true
             responses:
                 "200":
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/WebAuthnRequestOptionsResponse'
-                    description: Request options for navigator.credentials.get(), naming the account's passkeys.
+                    description: Request options for navigator.credentials.get(). Sign-in is username-free, so no credentials are named. Sets the HttpOnly seed_passkey_login cookie that binds the ceremony to this browser.
                 "405":
                     content:
                         application/json:
@@ -12925,7 +12908,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/LoginResponse'
-                    description: The assertion verified; the session token.
+                    description: The assertion verified against the ceremony the seed_passkey_login cookie names; the session token.
                 "405":
                     content:
                         application/json:
@@ -12954,7 +12937,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/WebAuthnCreationOptionsResponse'
-                    description: Creation options for navigator.credentials.create(); enrolled passkeys are excluded.
+                    description: Creation options for navigator.credentials.create(), asking for a discoverable, user-verifying passkey. Sets the HttpOnly seed_passkey_register cookie that binds the ceremony to this browser.
                 "401":
                     content:
                         application/json:

@@ -9,10 +9,10 @@ import (
 // The passkey ceremony options in the WebAuthn JSON serialization: every
 // binary field is base64url without padding, and the browser decodes them to
 // ArrayBuffers before calling navigator.credentials. go-webauthn builds the
-// options; these transport types publish exactly the members it fills under
-// Seed's relying-party configuration, so the schema carries no `any` user
-// handle or open extension map. TestWebAuthnOptionsMatchLibraryWire fails if
-// the library starts sending a member these types drop.
+// options under foundation/pkg/passkey's policy; these transport types publish
+// exactly the members it fills, so the schema carries no `any` user handle or
+// open extension map. TestWebAuthnOptionsMatchLibraryWire fails if the library
+// or the policy starts sending a member these types drop.
 
 // WebAuthnCreationOptionsResponse is the body of POST
 // /auth/webauthn/register/begin, passed to navigator.credentials.create().
@@ -22,12 +22,13 @@ type WebAuthnCreationOptionsResponse struct {
 
 // WebAuthnCreationOptions is PublicKeyCredentialCreationOptions.
 type WebAuthnCreationOptions struct {
-	RP                 WebAuthnRelyingParty           `json:"rp"`
-	User               WebAuthnUserEntity             `json:"user"`
-	Challenge          string                         `json:"challenge"`
-	PubKeyCredParams   []WebAuthnCredentialParameter  `json:"pubKeyCredParams"`
-	TimeoutMs          int                            `json:"timeout"`
-	ExcludeCredentials []WebAuthnCredentialDescriptor `json:"excludeCredentials"`
+	RP                     WebAuthnRelyingParty           `json:"rp"`
+	User                   WebAuthnUserEntity             `json:"user"`
+	Challenge              string                         `json:"challenge"`
+	PubKeyCredParams       []WebAuthnCredentialParameter  `json:"pubKeyCredParams"`
+	TimeoutMs              int                            `json:"timeout"`
+	AuthenticatorSelection WebAuthnAuthenticatorSelection `json:"authenticatorSelection"`
+	Attestation            string                         `json:"attestation"            jsonschema:"enum=none"`
 }
 
 // WebAuthnRelyingParty names the relying party; id is the RP ID (a hostname).
@@ -50,11 +51,12 @@ type WebAuthnCredentialParameter struct {
 	Alg  int    `json:"alg"`
 }
 
-// WebAuthnCredentialDescriptor names an enrolled credential.
-type WebAuthnCredentialDescriptor struct {
-	Type       string   `json:"type"                 jsonschema:"enum=public-key"`
-	ID         string   `json:"id"`
-	Transports []string `json:"transports,omitempty" jsonschema:"enum=usb,enum=nfc,enum=ble,enum=smart-card,enum=hybrid,enum=internal"`
+// WebAuthnAuthenticatorSelection asks for a discoverable credential that
+// verifies the user, so sign-in needs no username.
+type WebAuthnAuthenticatorSelection struct {
+	RequireResidentKey bool   `json:"requireResidentKey"`
+	ResidentKey        string `json:"residentKey"        jsonschema:"enum=required"`
+	UserVerification   string `json:"userVerification"   jsonschema:"enum=required"`
 }
 
 // WebAuthnRequestOptionsResponse is the body of POST
@@ -63,18 +65,13 @@ type WebAuthnRequestOptionsResponse struct {
 	PublicKey WebAuthnRequestOptions `json:"publicKey"`
 }
 
-// WebAuthnRequestOptions is PublicKeyCredentialRequestOptions.
+// WebAuthnRequestOptions is PublicKeyCredentialRequestOptions. It names no
+// credentials: the browser offers whichever passkey it holds for the RP.
 type WebAuthnRequestOptions struct {
-	Challenge        string                         `json:"challenge"`
-	TimeoutMs        int                            `json:"timeout"`
-	RPID             string                         `json:"rpId"`
-	AllowCredentials []WebAuthnCredentialDescriptor `json:"allowCredentials"`
-}
-
-// WebAuthnLoginBeginRequest is the body of POST /auth/webauthn/login/begin.
-// It names the account because, unlike registration, nobody is signed in yet.
-type WebAuthnLoginBeginRequest struct {
-	Username string `json:"username" validate:"required"`
+	Challenge        string `json:"challenge"`
+	TimeoutMs        int    `json:"timeout"`
+	RPID             string `json:"rpId"`
+	UserVerification string `json:"userVerification" jsonschema:"enum=required"`
 }
 
 // newWebAuthnCreationOptions publishes go-webauthn's creation options. The
@@ -86,6 +83,7 @@ func newWebAuthnCreationOptions(c *protocol.CredentialCreation, userHandle []byt
 	for _, p := range o.Parameters {
 		params = append(params, WebAuthnCredentialParameter{Type: string(p.Type), Alg: int(p.Algorithm)})
 	}
+	selection := o.AuthenticatorSelection
 	return WebAuthnCreationOptionsResponse{PublicKey: WebAuthnCreationOptions{
 		RP: WebAuthnRelyingParty{Name: o.RelyingParty.Name, ID: o.RelyingParty.ID},
 		User: WebAuthnUserEntity{
@@ -93,10 +91,15 @@ func newWebAuthnCreationOptions(c *protocol.CredentialCreation, userHandle []byt
 			DisplayName: o.User.DisplayName,
 			ID:          base64.RawURLEncoding.EncodeToString(userHandle),
 		},
-		Challenge:          o.Challenge.String(),
-		PubKeyCredParams:   params,
-		TimeoutMs:          o.Timeout,
-		ExcludeCredentials: newWebAuthnDescriptors(o.CredentialExcludeList),
+		Challenge:        o.Challenge.String(),
+		PubKeyCredParams: params,
+		TimeoutMs:        o.Timeout,
+		AuthenticatorSelection: WebAuthnAuthenticatorSelection{
+			RequireResidentKey: selection.RequireResidentKey != nil && *selection.RequireResidentKey,
+			ResidentKey:        string(selection.ResidentKey),
+			UserVerification:   string(selection.UserVerification),
+		},
+		Attestation: string(o.Attestation),
 	}}
 }
 
@@ -107,22 +110,6 @@ func newWebAuthnRequestOptions(a *protocol.CredentialAssertion) WebAuthnRequestO
 		Challenge:        o.Challenge.String(),
 		TimeoutMs:        o.Timeout,
 		RPID:             o.RelyingPartyID,
-		AllowCredentials: newWebAuthnDescriptors(o.AllowedCredentials),
+		UserVerification: string(o.UserVerification),
 	}}
-}
-
-func newWebAuthnDescriptors(list []protocol.CredentialDescriptor) []WebAuthnCredentialDescriptor {
-	out := make([]WebAuthnCredentialDescriptor, 0, len(list))
-	for _, d := range list {
-		var transports []string
-		for _, t := range d.Transport {
-			transports = append(transports, string(t))
-		}
-		out = append(out, WebAuthnCredentialDescriptor{
-			Type:       string(d.Type),
-			ID:         d.CredentialID.String(),
-			Transports: transports,
-		})
-	}
-	return out
 }

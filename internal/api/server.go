@@ -17,6 +17,7 @@ import (
 
 	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
+	"github.com/MustardSeedNetworks/foundation/pkg/passkey"
 
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
@@ -156,8 +157,11 @@ type Server struct {
 	recovery   *auth.RecoveryTokenManager
 	oauthMgr   *oauth.Manager
 	proxies    *TrustedProxies
-	webAuthn   *auth.WebAuthnManager // optional WebAuthn (passkeys), Wave 3 (#85)
-	licenseMgr *license.Manager      // offline license manager (Phase D-2); nil in tests
+	// passkeys is nil until the HTTPS listener binds, and stays nil when the
+	// origin is not a valid relying party (an IP address, say).
+	passkeys          *passkey.Service
+	passkeyCeremonies *passkey.Store
+	licenseMgr        *license.Manager // offline license manager (Phase D-2); nil in tests
 
 	// renewSupportedFn/renewLeaseFn are the DHCP-renewal seam; vlanSeam is the
 	// analogous VLAN seam (handlers_vlan.go). Nil/zero in production; a test
@@ -364,6 +368,8 @@ func NewServer(d Deps) (*Server, error) {
 		background:    d.Background,
 		health:        system.NewCollector(),
 		engines:       engine.NewRegistry(nil),
+
+		passkeyCeremonies: passkey.NewStore(),
 	}
 
 	// Initialize auth, WebAuthn, and rate-limiting services

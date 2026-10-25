@@ -12,7 +12,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base32"
-	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -28,10 +27,8 @@ import (
 
 	api "github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/app"
-	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
-	"github.com/MustardSeedNetworks/seed/internal/identity/mfa"
 )
 
 // testUserPassword is the password used to seed the test
@@ -358,41 +355,6 @@ func TestSecretIsBase32(t *testing.T) {
 	_, err := base32.StdEncoding.WithPadding(base32.NoPadding).
 		DecodeString(resp.Secret)
 	assert.NoError(t, err)
-}
-
-// TestWebAuthnBeginAnswersPublishedOptions drives both begin ceremonies through
-// the production handler with one passkey enrolled. The bodies strict-decode
-// into the published types, and register/begin excludes the enrolled passkey
-// so the browser refuses to enrol the same authenticator twice.
-func TestWebAuthnBeginAnswersPublishedOptions(t *testing.T) {
-	f := newMFAFixture(t)
-	manager, err := auth.NewWebAuthnManager(auth.WebAuthnConfig{})
-	require.NoError(t, err)
-	f.server.SetWebAuthnManagerForTest(manager)
-	user, err := f.db.GetUser(t.Context(), "admin")
-	require.NoError(t, err)
-	_, err = f.db.AddWebAuthnCredential(t.Context(), user.ID, mfa.WebAuthnCredential{
-		CredentialID: []byte("enrolled-passkey"), PublicKey: []byte("public-key"),
-	})
-	require.NoError(t, err)
-	enrolled := base64.RawURLEncoding.EncodeToString([]byte("enrolled-passkey"))
-
-	w := f.post(t, "/api/v1/auth/webauthn/register/begin", struct{}{}, f.token)
-	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
-	var creation api.WebAuthnCreationOptionsResponse
-	decodeStrict(t, w, &creation)
-	require.Len(t, creation.PublicKey.ExcludeCredentials, 1)
-	assert.Equal(t, enrolled, creation.PublicKey.ExcludeCredentials[0].ID)
-	assert.Equal(t, "admin", creation.PublicKey.User.Name)
-	assert.NotEmpty(t, creation.PublicKey.Challenge)
-
-	w = f.post(t, "/api/v1/auth/webauthn/login/begin", api.WebAuthnLoginBeginRequest{Username: "admin"}, "")
-	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
-	var request api.WebAuthnRequestOptionsResponse
-	decodeStrict(t, w, &request)
-	require.Len(t, request.PublicKey.AllowCredentials, 1)
-	assert.Equal(t, enrolled, request.PublicKey.AllowCredentials[0].ID)
-	assert.NotEmpty(t, request.PublicKey.Challenge)
 }
 
 func decodeStrict(t *testing.T, w *httptest.ResponseRecorder, v any) {

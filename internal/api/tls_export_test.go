@@ -8,8 +8,8 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver"
+	"github.com/MustardSeedNetworks/foundation/pkg/passkey"
 
-	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
@@ -44,15 +44,15 @@ func (s *Server) ShutdownHTTPSForTest(ctx context.Context) error {
 	return s.httpServer.Shutdown(ctx)
 }
 
-// WebAuthnEnabledForTest reports whether the bound listener initialized passkeys.
-func (s *Server) WebAuthnEnabledForTest() bool {
-	return s.webAuthn != nil
+// PasskeysEnabledForTest reports whether the bound listener initialized passkeys.
+func (s *Server) PasskeysEnabledForTest() bool {
+	return s.passkeys != nil
 }
 
-// SetWebAuthnManagerForTest installs the passkey manager the HTTPS listener
+// SetPasskeyServiceForTest installs the passkey service the HTTPS listener
 // would otherwise build at bind time.
-func (s *Server) SetWebAuthnManagerForTest(m *auth.WebAuthnManager) {
-	s.webAuthn = m
+func (s *Server) SetPasskeyServiceForTest(service *passkey.Service) {
+	s.passkeys = service
 }
 
 // ExportFingerprintFromPEM exposes fingerprintFromPEM for testing.
@@ -80,7 +80,7 @@ var ErrNoCertificateBlock = errNoCertificateBlock
 // used in tests that exercise the cache behaviour directly.
 type TLSFingerprintCache = tlsFingerprintCache
 
-// ExportWebAuthnConfigFromServer exposes WebAuthn origin derivation for testing.
-func ExportWebAuthnConfigFromServer(cfg *config.Config, listenerPort int) auth.WebAuthnConfig {
-	return webAuthnConfigFromServer(cfg, listenerPort)
+// ExportPasskeyConfigFromServer exposes relying-party derivation for testing.
+func ExportPasskeyConfigFromServer(cfg *config.Config, listenerPort int) passkey.Config {
+	return passkeyConfigFromServer(cfg, listenerPort)
 }

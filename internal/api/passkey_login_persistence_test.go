@@ -9,6 +9,8 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/stretchr/testify/require"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/passkey"
+
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/identity/mfa"
 )
@@ -43,7 +45,7 @@ func preparePasskeyPersistence(t *testing.T, fixture *mfaTestFixture, state stri
 	user, err := fixture.db.GetUser(t.Context(), "admin")
 	require.NoError(t, err)
 	_, err = fixture.db.AddWebAuthnCredential(t.Context(), user.ID, mfa.WebAuthnCredential{
-		CredentialID: id, PublicKey: []byte("public-key"),
+		CredentialID: id, Record: []byte("record"),
 	})
 	require.NoError(t, err)
 	if state == "closed database" {
@@ -75,6 +77,8 @@ func assertPersistedPasskeyLogin(t *testing.T, fixture *mfaTestFixture, response
 	credentials, err := fixture.db.ListWebAuthnCredentials(t.Context(), user.ID)
 	require.NoError(t, err)
 	require.Len(t, credentials, 1)
-	require.Equal(t, uint32(7), credentials[0].SignCount)
+	stored, err := passkey.UnmarshalCredential(credentials[0].Record)
+	require.NoError(t, err)
+	require.Equal(t, uint32(7), stored.Authenticator.SignCount)
 	require.NotNil(t, credentials[0].LastUsedAt)
 }

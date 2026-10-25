@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
+	"github.com/MustardSeedNetworks/foundation/pkg/passkey"
 
 	alertpipeline "github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
 	"github.com/MustardSeedNetworks/seed/internal/app"
@@ -304,9 +305,9 @@ func (s *Server) initUseCases() {
 	s.initTFTP()
 }
 
-// webAuthnConfigFromServer derives the relying-party config from the exact
+// passkeyConfigFromServer derives the relying-party config from the exact
 // public HTTPS origin, or from the port actually bound for a local deployment.
-func webAuthnConfigFromServer(cfg *config.Config, listenerPort int) auth.WebAuthnConfig {
+func passkeyConfigFromServer(cfg *config.Config, listenerPort int) passkey.Config {
 	const (
 		devHost           = "localhost"
 		defaultPort       = 8443
@@ -328,19 +329,13 @@ func webAuthnConfigFromServer(cfg *config.Config, listenerPort int) auth.WebAuth
 			origin = cfg.Server.PublicOrigin
 		}
 	}
-	return auth.WebAuthnConfig{
-		RPID:          rpid,
-		RPDisplayName: "Seed",
-		RPOrigins:     []string{origin},
-	}
+	return passkey.Config{RPID: rpid, Origin: origin, DisplayName: "Seed"}
 }
 
-func (s *Server) initWebAuthn(listenerPort int) {
-	wan, err := auth.NewWebAuthnManager(webAuthnConfigFromServer(s.config, listenerPort))
+func (s *Server) initPasskeys(listenerPort int) {
+	service, err := passkey.New(passkeyConfigFromServer(s.config, listenerPort))
 	if err != nil {
-		logging.GetLogger().Warn("WebAuthn manager init failed; passkeys disabled", "error", err)
-		s.webAuthn = nil
-		return
+		logging.GetLogger().Warn("Passkeys disabled: the public origin is not a valid relying party", "error", err)
 	}
-	s.webAuthn = wan
+	s.passkeys = service
 }

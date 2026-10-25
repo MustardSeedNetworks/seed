@@ -1,15 +1,15 @@
 package api_test
 
 import (
-	"slices"
 	"testing"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/passkey"
+
 	"github.com/MustardSeedNetworks/seed/internal/api"
-	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
-func TestWebAuthnConfigUsesTrustedHTTPSOrigin(t *testing.T) {
+func TestPasskeyConfigUsesTrustedHTTPSOrigin(t *testing.T) {
 	t.Parallel()
 
 	for _, tt := range []struct {
@@ -44,15 +44,15 @@ func TestWebAuthnConfigUsesTrustedHTTPSOrigin(t *testing.T) {
 			t.Parallel()
 			cfg := config.DefaultConfig()
 			cfg.Server.PublicOrigin = tt.origin
-			got := api.ExportWebAuthnConfigFromServer(cfg, tt.listenerPort)
+			got := api.ExportPasskeyConfigFromServer(cfg, tt.listenerPort)
 			if got.RPID != tt.wantRPID {
 				t.Fatalf("RPID = %q, want %q", got.RPID, tt.wantRPID)
 			}
-			if len(got.RPOrigins) != 1 || !slices.Contains(got.RPOrigins, tt.wantOrigin) {
-				t.Fatalf("RPOrigins = %v, want only %q", got.RPOrigins, tt.wantOrigin)
+			if got.Origin != tt.wantOrigin {
+				t.Fatalf("Origin = %q, want %q", got.Origin, tt.wantOrigin)
 			}
-			if _, err := auth.NewWebAuthnManager(got); err != nil {
-				t.Fatalf("NewWebAuthnManager() error = %v", err)
+			if _, err := passkey.New(got); err != nil {
+				t.Fatalf("passkey.New() error = %v", err)
 			}
 		})
 	}
