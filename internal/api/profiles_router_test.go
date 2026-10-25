@@ -29,9 +29,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
+
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/app"
-	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
@@ -63,7 +64,7 @@ func newProfileRouterFixture(t *testing.T) *profileRouterFixture {
 	}
 	t.Cleanup(func() { _ = db.Close() })
 
-	hash, err := auth.HashPassword("test-operator-password")
+	hash, err := fndpw.Hash("test-operator-password")
 	if err != nil {
 		t.Fatalf("hash password: %v", err)
 	}

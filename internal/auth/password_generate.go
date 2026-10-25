@@ -4,7 +4,11 @@
 
 package auth
 
-import "errors"
+import (
+	"errors"
+
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
+)
 
 // Constants for unbiased random selection in password generation.
 const (
@@ -169,7 +173,7 @@ func GenerateInitialCredentials(username string) (*InitialCredentials, error) {
 		return nil, err
 	}
 
-	hash, err := HashPassword(password)
+	hash, err := fndpw.Hash(password)
 	if err != nil {
 		return nil, err
 	}

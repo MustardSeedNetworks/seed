@@ -206,17 +206,53 @@ func TestStageRefusesBeforeTheDevice(t *testing.T) {
 	}
 }
 
-// TestStageRefusesJunosForNow: Junos images upload, but staging them is a
-// later slice.
-func TestStageRefusesJunosForNow(t *testing.T) {
-	t.Parallel()
+// junosStageFixture holds a Junos push target dct-1 running 21.4R3-S5.4 and
+// an uploaded Junos package of release name.
+func junosStageFixture(t *testing.T, name string) (pushFixture, deviceconfig.StageRequest) {
+	t.Helper()
 	f := newPushFixture(t, iosRunning, pushTarget("dct-1", "10.0.0.1", deviceconfig.PlatformJuniperJunos))
+	f.device.facts = deviceconfig.ImageFacts{Version: "21.4R3-S5.4", Dir: "/var/tmp/", FreeBytes: 1 << 30}
 	img, err := f.images.Upload(context.Background(),
-		upload("junos-install-24.2R1.tgz", "juniper-junos", sha256Hex("Junos image bytes"), "Junos image bytes"))
+		upload(name, "juniper-junos", sha256Hex(imageBytes), imageBytes))
 	require.NoError(t, err)
-	err = f.pushes.CheckStage(context.Background(),
-		deviceconfig.StageRequest{ClientID: client, ImageID: img.ID, TargetID: "dct-1"})
-	require.ErrorContains(t, err, "staging on juniper-junos is not available yet")
+	return f, deviceconfig.StageRequest{ClientID: client, ImageID: img.ID, TargetID: "dct-1", User: "admin"}
+}
+
+// TestStageInstallsTheJunosPackage is slice 5b-3 at the unit level: the
+// package goes to /var/tmp, the audit records the SHA-256 the device
+// checks, and the install is the boot step, with no fallback image to name.
+func TestStageInstallsTheJunosPackage(t *testing.T) {
+	t.Parallel()
+	f, req := junosStageFixture(t, junosPackage)
+
+	res, err := f.pushes.Stage(context.Background(), req)
+	require.NoError(t, err)
+	require.Equal(t, deviceconfig.StageResult{
+		Outcome: deviceconfig.StageBootSet, RunningVersion: "21.4R3-S5.4", BootImage: "/var/tmp/" + junosPackage,
+	}, res)
+	require.Equal(t, []string{
+		"facts",
+		"copy /var/tmp/" + junosPackage,
+		"verify " + sha512Hex(imageBytes)[:8],
+		"boot /var/tmp/" + junosPackage + " then ",
+	}, f.device.steps)
+	require.Equal(t, []string{"stage_started", "staged", "verified", "boot_set"}, f.stageEvents())
+	verified := f.audit.events[3]
+	require.Equal(t, sha256Hex(imageBytes), verified.Detail["sha256"])
+	require.NotContains(t, verified.Detail, "sha512")
+}
+
+// TestStageRefusesTheRunningJunosRelease: a package named for the release
+// the device runs is refused before anything is copied.
+func TestStageRefusesTheRunningJunosRelease(t *testing.T) {
+	t.Parallel()
+	f, req := junosStageFixture(t, "junos-install-ex-x86-64-21.4R3-S5.4.tgz")
+
+	res, err := f.pushes.Stage(context.Background(), req)
+	require.NoError(t, err)
+	require.Equal(t, deviceconfig.StageRefused, res.Outcome)
+	require.Equal(t, "the device already runs Junos 21.4R3-S5.4", res.Reason)
+	require.Equal(t, []string{"facts"}, f.device.steps)
 }
 
 // TestStageOneJobPerTarget: staging shares the push's one-job-per-target

@@ -22,6 +22,7 @@ import {
   Route,
   ScrollText,
   Server,
+  Timer,
 } from '../../ui/Icons';
 import type { HelpSection } from '../helpModel';
 
@@ -350,6 +351,32 @@ export const reportingSections: HelpSection[] = [
           {
             term: 'content.lifecycle.terms.notListed.term',
             description: 'content.lifecycle.terms.notListed.description',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'ipSla',
+    titleKey: 'sections.ipSla',
+    icon: <Timer className={ICON} />,
+    keywords: ['ip sla', 'sla', 'rtt', 'round trip', 'jitter', 'loss', 'mos', 'cisco', 'rttmon'],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'content.ipSla.description',
+      },
+      {
+        kind: 'terms',
+        heading: 'content.common.terms',
+        items: [
+          {
+            term: 'content.ipSla.terms.threshold.term',
+            description: 'content.ipSla.terms.threshold.description',
+          },
+          {
+            term: 'content.ipSla.terms.completed.term',
+            description: 'content.ipSla.terms.completed.description',
           },
         ],
       },

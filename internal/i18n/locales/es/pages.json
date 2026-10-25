@@ -138,19 +138,12 @@
     },
     "history": {
       "openHint": "Seleccione una interfaz para ver su historial.",
-      "windowLabel": "Periodo",
-      "window": {
-        "1h": "Última hora",
-        "24h": "Últimas 24 horas",
-        "7d": "Últimos 7 días"
-      },
       "close": "Cerrar historial",
       "empty": "No hay sondeos con tasa en este periodo. Un destino recién añadido, o que dejó de responder, aún no tiene ninguno.",
       "traffic": "Tráfico",
       "errors": "Errores y descartes",
       "in": "Entrada",
-      "out": "Salida",
-      "peak": "Pico {{series}} {{value}}"
+      "out": "Salida"
     }
   },
   "deviceConfigs": {
@@ -515,6 +508,63 @@
     "importFirst": "Aún no hay datos EoX. Importe una respuesta de la API EoX de Cisco, o pida a un administrador que active la fuente EoX en Configuración.",
     "bulletin": "Leer el boletín de fin de vida",
     "emptyPrompt": "Seleccione una pieza para ver sus fechas de fin de vida."
+  },
+  "ipSla": {
+    "label": "IP SLA",
+    "title": "IP SLA",
+    "description": "Las operaciones Cisco IP SLA que ejecutan sus destinos de sondeo, con el último resultado y la tendencia de cada una.",
+    "loadFailed": "No se pudieron cargar las operaciones IP SLA: {{reason}}",
+    "operationCount_one": "{{count}} operación",
+    "operationCount_other": "{{count}} operaciones",
+    "failingCount_one": "{{count}} con fallo",
+    "failingCount_other": "{{count}} con fallo",
+    "noOperations": "Aún no hay operaciones IP SLA. El sondeo lista las operaciones de un destino Cisco cuando responde por SNMP con CISCO-RTTMON-MIB.",
+    "emptyPrompt": "Seleccione una operación para ver su tendencia.",
+    "operation": "Operación {{index}}",
+    "type": {
+      "t1": "Eco ICMP",
+      "t2": "Eco de ruta",
+      "t5": "Eco UDP",
+      "t6": "Conexión TCP",
+      "t7": "HTTP",
+      "t8": "DNS",
+      "t9": "Jitter UDP",
+      "t11": "DHCP",
+      "t12": "FTP",
+      "t16": "Jitter ICMP",
+      "t19": "Ping Ethernet",
+      "t20": "Jitter Ethernet"
+    },
+    "typeOther": "Tipo {{type}}",
+    "result": {
+      "noRun": "Aún sin ejecución",
+      "overThreshold": "{{rtt}}, sobre el umbral",
+      "timeout": "Tiempo agotado",
+      "failed": "Fallo (código {{sense}})"
+    },
+    "labelType": "Tipo",
+    "labelDestination": "Destino",
+    "labelThreshold": "Umbral",
+    "labelFrequency": "Se ejecuta",
+    "labelStatus": "Programación",
+    "labelPolled": "Último sondeo",
+    "everySeconds_one": "Cada segundo",
+    "everySeconds_other": "Cada {{count}} s",
+    "statusActive": "Activa",
+    "statusInactive": "Detenida",
+    "labelJitter": "Jitter",
+    "labelLost": "Paquetes perdidos",
+    "lostOf": "{{lost}} de {{sent}}",
+    "labelMos": "MOS",
+    "trend": "Tendencia",
+    "historyFailed": "No se pudo cargar la tendencia: {{reason}}",
+    "historyEmpty": "No hay ejecuciones en este periodo. Una operación recién añadida, o cuyo destino dejó de responder, aún no tiene ninguna.",
+    "chartTiming": "Ida y vuelta",
+    "chartOutcome": "Completadas y pérdida",
+    "seriesRtt": "RTT",
+    "seriesJitter": "Jitter",
+    "seriesCompleted": "Completadas",
+    "seriesLoss": "Pérdida"
   },
   "reports": {
     "description": "Panel de SLA agregado, seguimiento de cumplimiento e informes históricos.",

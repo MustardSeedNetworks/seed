@@ -393,5 +393,14 @@
     "label": "Command palette",
     "placeholder": "Search pages and actions…",
     "actions": "Actions"
+  },
+  "trend": {
+    "windowLabel": "Window",
+    "window": {
+      "1h": "Last hour",
+      "24h": "Last 24 hours",
+      "7d": "Last 7 days"
+    },
+    "peak": "Peak {{series}} {{value}}"
   }
 }

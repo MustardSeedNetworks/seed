@@ -5,6 +5,8 @@ package auth_test
 import (
 	"testing"
 
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
+
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 )
 
@@ -27,9 +29,9 @@ func TestFirstRun_NoUsableDefaultPassword(t *testing.T) {
 
 	// The legacy "seed" default must be detected too, so an old install that
 	// still carries it is caught and rotated rather than silently accepted.
-	seedHash, err := auth.HashPassword("seed")
+	seedHash, err := fndpw.Hash("seed")
 	if err != nil {
-		t.Fatalf("HashPassword(seed): %v", err)
+		t.Fatalf("fndpw.Hash(seed): %v", err)
 	}
 	if !auth.IsDefaultPasswordHash(seedHash) {
 		t.Error("IsDefaultPasswordHash(hash of \"seed\") = false, want true — legacy default not detected")
@@ -41,18 +43,18 @@ func TestFirstRun_NoUsableDefaultPassword(t *testing.T) {
 	guesses := []string{"", "admin", "password", "changeme", "seed", "default", auth.SetupModePlaceholder}
 	for _, freshHash := range []string{"", auth.SetupModePlaceholder} {
 		for _, guess := range guesses {
-			matched, _, _ := auth.VerifyPassword(freshHash, guess)
+			matched, _ := fndpw.Verify(freshHash, guess)
 			if matched {
-				t.Errorf("VerifyPassword(%q, %q) matched — a usable default password leaked", freshHash, guess)
+				t.Errorf("Verify(%q, %q) matched — a usable default password leaked", freshHash, guess)
 			}
 		}
 	}
 
 	// 3. A securely-set password is NOT flagged as default (the inverse — so the
 	// gate doesn't false-positive after the operator completes setup).
-	realHash, err := auth.HashPassword("a-strong-unique-operator-password-2026")
+	realHash, err := fndpw.Hash("a-strong-unique-operator-password-2026")
 	if err != nil {
-		t.Fatalf("HashPassword(real): %v", err)
+		t.Fatalf("fndpw.Hash(real): %v", err)
 	}
 	if auth.IsDefaultPasswordHash(realHash) {
 		t.Error("IsDefaultPasswordHash(real password) = true, want false")

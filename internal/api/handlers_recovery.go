@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
+
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
@@ -150,8 +152,6 @@ func (s *Server) applyRecoveredPassword(
 	localizer *i18n.Localizer,
 	clientIP, password string,
 ) {
-	previousAlg := string(auth.DetectHashAlgorithm(s.config.Auth.DefaultPasswordHash))
-
 	policyResult, policyErr := auth.EnforcePasswordPolicy(
 		r.Context(),
 		password,
@@ -162,7 +162,7 @@ func (s *Server) applyRecoveredPassword(
 		return
 	}
 
-	hash, err := auth.HashPassword(password)
+	hash, err := fndpw.Hash(password)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to hash password during recovery", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal,
@@ -188,7 +188,6 @@ func (s *Server) applyRecoveredPassword(
 		"username", username,
 		"event", "password_change",
 		"result", "accepted",
-		"previous_algorithm", previousAlg,
 		"source", "recovery")
 
 	sendJSONResponse(w, logger, http.StatusOK, RecoveryCompleteResponse{

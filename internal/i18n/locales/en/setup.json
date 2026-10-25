@@ -66,5 +66,18 @@
     "errors": {
       "saveFailed": "The credential could not be saved. Try again, or skip and add it in Settings."
     }
+  },
+  "eox": {
+    "title": "Hardware end-of-life dates",
+    "subtitle": "Optional: fetch them from Cisco for the hardware Seed finds",
+    "later": "You can change this later in Settings.",
+    "buttons": {
+      "save": "Save and continue",
+      "saving": "Saving...",
+      "skip": "Skip for now"
+    },
+    "errors": {
+      "saveFailed": "The answer could not be saved: {{reason}}"
+    }
   }
 }

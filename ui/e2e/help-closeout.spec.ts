@@ -198,6 +198,7 @@ for (const route of [
   '/device-groups',
   '/ipam',
   '/lifecycle',
+  '/ip-sla',
   '/topology',
   '/interfaces',
   '/device-configs',

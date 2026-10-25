@@ -5,6 +5,172 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.12](https://github.com/MustardSeedNetworks/seed/compare/v0.282.11...v0.282.12) (2026-10-25)
+
+
+### Miscellaneous
+
+* **deps:** update commitlint monorepo to v21.2.4 ([#3697](https://github.com/MustardSeedNetworks/seed/issues/3697)) ([2a4f27a](https://github.com/MustardSeedNetworks/seed/commit/2a4f27a91742b7669952a3bcb1d0ff01764753a9))
+* **deps:** update dependency postcss to v8.5.31 ([#3699](https://github.com/MustardSeedNetworks/seed/issues/3699)) ([3bd8a36](https://github.com/MustardSeedNetworks/seed/commit/3bd8a36616585b70c3e219049de709a5d8f76718))
+
+## [0.282.11](https://github.com/MustardSeedNetworks/seed/compare/v0.282.10...v0.282.11) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.5.0 ([#3691](https://github.com/MustardSeedNetworks/seed/issues/3691)) ([d65c0f5](https://github.com/MustardSeedNetworks/seed/commit/d65c0f5970fd805017cb785d1abbcc31090abbbf))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3693](https://github.com/MustardSeedNetworks/seed/issues/3693)) ([886220b](https://github.com/MustardSeedNetworks/seed/commit/886220b410a6fde94b64ba073c7e851e46a4abbf))
+
+## [0.282.10](https://github.com/MustardSeedNetworks/seed/compare/v0.282.9...v0.282.10) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.104.4 ([#3690](https://github.com/MustardSeedNetworks/seed/issues/3690)) ([000b224](https://github.com/MustardSeedNetworks/seed/commit/000b224cb376f3815f14788b7adc5d651809b39a))
+* **deps:** update dependency react-i18next to v17.1.0 ([#3692](https://github.com/MustardSeedNetworks/seed/issues/3692)) ([7a1c555](https://github.com/MustardSeedNetworks/seed/commit/7a1c5559ffe67c721b1f0ba82ff3fe6763989439))
+
+## [0.282.9](https://github.com/MustardSeedNetworks/seed/compare/v0.282.8...v0.282.9) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-i18next to v17.0.21 ([#3685](https://github.com/MustardSeedNetworks/seed/issues/3685)) ([a5b5775](https://github.com/MustardSeedNetworks/seed/commit/a5b57753065474b87bb5f3016a1c8088e97425af))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.13.5 ([#3686](https://github.com/MustardSeedNetworks/seed/issues/3686)) ([a62eb5b](https://github.com/MustardSeedNetworks/seed/commit/a62eb5b77338f1178e7375bb4fe01f3ebfd78045))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3687](https://github.com/MustardSeedNetworks/seed/issues/3687)) ([576b361](https://github.com/MustardSeedNetworks/seed/commit/576b3617b934df3f7da5110026f7802b717feac7))
+
+## [0.282.8](https://github.com/MustardSeedNetworks/seed/compare/v0.282.7...v0.282.8) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @hookform/resolvers to v5.9.2 ([#3680](https://github.com/MustardSeedNetworks/seed/issues/3680)) ([51a8a2c](https://github.com/MustardSeedNetworks/seed/commit/51a8a2c51d8fdb65e83adf01621973f7ed332e0b))
+* **deps:** update dependency lucide-react to v1.59.0 ([#3681](https://github.com/MustardSeedNetworks/seed/issues/3681)) ([febc983](https://github.com/MustardSeedNetworks/seed/commit/febc9835510d7859c7f1db29220e5d790771c084))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3682](https://github.com/MustardSeedNetworks/seed/issues/3682)) ([fa9a10a](https://github.com/MustardSeedNetworks/seed/commit/fa9a10af95048b9f70360d67d5631e0de8f170fb))
+* **deps:** lock file maintenance ([#3684](https://github.com/MustardSeedNetworks/seed/issues/3684)) ([b3755ce](https://github.com/MustardSeedNetworks/seed/commit/b3755ce678a3e59aedcbe14465b2b7bb4d799322))
+
+## [0.282.7](https://github.com/MustardSeedNetworks/seed/compare/v0.282.6...v0.282.7) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-virtual to v3.14.21 ([#3674](https://github.com/MustardSeedNetworks/seed/issues/3674)) ([b897946](https://github.com/MustardSeedNetworks/seed/commit/b8979467b4550be79fdc0a0ef6dd58729013b9c7))
+* **deps:** update dependency react-i18next to v17.0.20 ([#3675](https://github.com/MustardSeedNetworks/seed/issues/3675)) ([c7a659b](https://github.com/MustardSeedNetworks/seed/commit/c7a659bd54b18e94a9e466f3569fa6526e46761f))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3677](https://github.com/MustardSeedNetworks/seed/issues/3677)) ([2c1a8a8](https://github.com/MustardSeedNetworks/seed/commit/2c1a8a88ad31fa38c5afe2107f90616d40d3b2dc))
+* **deps:** lock file maintenance ([#3679](https://github.com/MustardSeedNetworks/seed/issues/3679)) ([7c2a875](https://github.com/MustardSeedNetworks/seed/commit/7c2a87547093ef99cbc140f7beacd58850790946))
+* **deps:** update dependency fast-uri to v4.2.3 [security] ([#3678](https://github.com/MustardSeedNetworks/seed/issues/3678)) ([afacaff](https://github.com/MustardSeedNetworks/seed/commit/afacaff442d9b7f4c2cac0c666626e832911300f))
+* **deps:** update module github.com/golangci/golangci-lint/v2/cmd/golangci-lint to v2.15.0 ([#3672](https://github.com/MustardSeedNetworks/seed/issues/3672)) ([8f3a413](https://github.com/MustardSeedNetworks/seed/commit/8f3a413b20e53fd0efd88d675ffc9f3f99bd0ab8))
+
+## [0.282.6](https://github.com/MustardSeedNetworks/seed/compare/v0.282.5...v0.282.6) (2026-10-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.4.7 ([#3669](https://github.com/MustardSeedNetworks/seed/issues/3669)) ([56dcafd](https://github.com/MustardSeedNetworks/seed/commit/56dcafd1b891fbc4074521a5e156a784b52e20ba))
+* **deps:** update dependency react-i18next to v17.0.19 ([#3670](https://github.com/MustardSeedNetworks/seed/issues/3670)) ([b792cfc](https://github.com/MustardSeedNetworks/seed/commit/b792cfcacf72fd2a5282cd5f1a031eaf89bbdb27))
+
+## [0.282.5](https://github.com/MustardSeedNetworks/seed/compare/v0.282.4...v0.282.5) (2026-10-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-virtual to v3.14.20 ([#3658](https://github.com/MustardSeedNetworks/seed/issues/3658)) ([3debf37](https://github.com/MustardSeedNetworks/seed/commit/3debf3735555572fb106c8a950dd952f8e26a21b))
+* **deps:** update dependency lucide-react to v1.58.0 ([#3667](https://github.com/MustardSeedNetworks/seed/issues/3667)) ([6924674](https://github.com/MustardSeedNetworks/seed/commit/6924674b3f0259054f225d912fc123a11c7ce813))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3663](https://github.com/MustardSeedNetworks/seed/issues/3663)) ([bef77c1](https://github.com/MustardSeedNetworks/seed/commit/bef77c1fd397b8f66a57c6ed7ba6553cc2970ab6))
+* **deps:** lock file maintenance ([#3668](https://github.com/MustardSeedNetworks/seed/issues/3668)) ([d8e4fe3](https://github.com/MustardSeedNetworks/seed/commit/d8e4fe36f2a17703b009498b1ea67fc4d703b09c))
+
+## [0.282.4](https://github.com/MustardSeedNetworks/seed/compare/v0.282.3...v0.282.4) (2026-10-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-i18next to v17.0.18 ([#3660](https://github.com/MustardSeedNetworks/seed/issues/3660)) ([9fe04f4](https://github.com/MustardSeedNetworks/seed/commit/9fe04f437457019f6aae5f996400c0632274345b))
+
+
+### Miscellaneous
+
+* **deps:** update dependency js-yaml to v5.5.0 ([#3661](https://github.com/MustardSeedNetworks/seed/issues/3661)) ([dd07da3](https://github.com/MustardSeedNetworks/seed/commit/dd07da3374f0cd07df43f491ee212d7905860a84))
+
+## [0.282.3](https://github.com/MustardSeedNetworks/seed/compare/v0.282.2...v0.282.3) (2026-10-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.4.6 ([#3659](https://github.com/MustardSeedNetworks/seed/issues/3659)) ([467f0bd](https://github.com/MustardSeedNetworks/seed/commit/467f0bdfbd9d92c243b5445bebe20e1b7f585ea2))
+
+
+### Miscellaneous
+
+* **deps:** update mustardseednetworks/.github action to v1.14.0 ([#3662](https://github.com/MustardSeedNetworks/seed/issues/3662)) ([9418565](https://github.com/MustardSeedNetworks/seed/commit/9418565c385babbb2742b69ac5cbe3598b75ba99))
+* **deps:** update npm to v12.2.1 ([#3657](https://github.com/MustardSeedNetworks/seed/issues/3657)) ([7eab975](https://github.com/MustardSeedNetworks/seed/commit/7eab9752d4dcd30c773582f2f48025c44ec636f7))
+
+## [0.282.2](https://github.com/MustardSeedNetworks/seed/compare/v0.282.1...v0.282.2) (2026-10-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.104.3 ([#3653](https://github.com/MustardSeedNetworks/seed/issues/3653)) ([09b0c31](https://github.com/MustardSeedNetworks/seed/commit/09b0c31096f6056bb95703a5ca265d063c1b1db3))
+
+## [0.282.1](https://github.com/MustardSeedNetworks/seed/compare/v0.282.0...v0.282.1) (2026-10-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.57.0 ([#3636](https://github.com/MustardSeedNetworks/seed/issues/3636)) ([a7859ca](https://github.com/MustardSeedNetworks/seed/commit/a7859ca6a95bba138160b3f60ce9adca58a9b8c7))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3633](https://github.com/MustardSeedNetworks/seed/issues/3633)) ([c396e2d](https://github.com/MustardSeedNetworks/seed/commit/c396e2d402bb5784d26e2b58b3b72de801fb55cf))
+* **deps:** update dependency jsdom to v30.1.3 ([#3652](https://github.com/MustardSeedNetworks/seed/issues/3652)) ([7fac21a](https://github.com/MustardSeedNetworks/seed/commit/7fac21a7892a81fab7edeea3496bc7d173b6c8db))
+* **deps:** update github/codeql-action action to v4.39.0 ([#3654](https://github.com/MustardSeedNetworks/seed/issues/3654)) ([dd163b8](https://github.com/MustardSeedNetworks/seed/commit/dd163b8fd5672fce6b6624d397ee8dac8e694c52))
+
+## [0.282.0](https://github.com/MustardSeedNetworks/seed/compare/v0.281.8...v0.282.0) (2026-10-22)
+
+
+### Features
+
+* **deviceconfig:** stage Junos packages with request system software add ([#3642](https://github.com/MustardSeedNetworks/seed/issues/3642)) ([daf6ecc](https://github.com/MustardSeedNetworks/seed/commit/daf6ecc3d01445e2ad36fcca53e85ad0e44ee2a6))
+* **ui:** ask the EoX feed question during first-run setup ([#3637](https://github.com/MustardSeedNetworks/seed/issues/3637)) ([e303d73](https://github.com/MustardSeedNetworks/seed/commit/e303d7375879da50b471e34bc18ab06e2f716747))
+* **ui:** show IP SLA operations and their trend on an IP SLA page ([#3643](https://github.com/MustardSeedNetworks/seed/issues/3643)) ([d10fcf1](https://github.com/MustardSeedNetworks/seed/commit/d10fcf1d1aabbda4cb9f34ae04d22ded705587e5)), closes [#3464](https://github.com/MustardSeedNetworks/seed/issues/3464)
+
+
+### Bug Fixes
+
+* **deps:** build with go1.27.3 for GO-2026-6809 ([#3641](https://github.com/MustardSeedNetworks/seed/issues/3641)) ([f1be71e](https://github.com/MustardSeedNetworks/seed/commit/f1be71eb489c824a329938024872b2337edf1116)), closes [#3640](https://github.com/MustardSeedNetworks/seed/issues/3640)
+* **deps:** update dependency i18next to v26.4.5 ([#3650](https://github.com/MustardSeedNetworks/seed/issues/3650)) ([03fab0b](https://github.com/MustardSeedNetworks/seed/commit/03fab0b3597e64503edf4db13bb1e2262a2a88a7))
+* **deps:** update dependency lucide-react to v1.56.0 ([#3632](https://github.com/MustardSeedNetworks/seed/issues/3632)) ([61d5b5c](https://github.com/MustardSeedNetworks/seed/commit/61d5b5cecc52210bdac1cfce435e4a43e48817be))
+* **discovery:** log a subscriber panic and record why each recover stays local ([#3648](https://github.com/MustardSeedNetworks/seed/issues/3648)) ([5062cf0](https://github.com/MustardSeedNetworks/seed/commit/5062cf0776837fbd593081aec00d717c07c84314)), closes [#3647](https://github.com/MustardSeedNetworks/seed/issues/3647)
+
+
+### Code Refactoring
+
+* **auth:** hash passwords through foundation pkg/password ([#3639](https://github.com/MustardSeedNetworks/seed/issues/3639)) ([926d023](https://github.com/MustardSeedNetworks/seed/commit/926d0238f13f59702dbff9fbbffccc3d901bd711)), closes [#3638](https://github.com/MustardSeedNetworks/seed/issues/3638)
+
+
+### Miscellaneous
+
+* **deps:** update node.js to v26.12.0 ([#3634](https://github.com/MustardSeedNetworks/seed/issues/3634)) ([c71a33b](https://github.com/MustardSeedNetworks/seed/commit/c71a33b4d9abafeff4eb098f959452adf0630add))
+
 ## [0.281.8](https://github.com/MustardSeedNetworks/seed/compare/v0.281.7...v0.281.8) (2026-10-21)
 
 

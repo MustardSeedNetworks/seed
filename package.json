@@ -6,7 +6,7 @@
   "type": "module",
   "engines": {
     "node": "26.12.0",
-    "npm": "12.2.0"
+    "npm": "12.2.1"
   },
   "scripts": {
     "prepare": "husky",
@@ -24,8 +24,8 @@
     "build-storybook": "cd ui && npm run build-storybook"
   },
   "devDependencies": {
-    "@commitlint/cli": "21.2.3",
-    "@commitlint/config-conventional": "21.2.3",
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
     "husky": "9.1.7",
     "lint-staged": "17.6.0",
     "typescript": "7.0.2"
@@ -40,8 +40,8 @@
     ]
   },
   "overrides": {
-    "fast-uri": "4.2.2",
-    "js-yaml": "5.4.3"
+    "fast-uri": "4.2.3",
+    "js-yaml": "5.5.0"
   },
-  "packageManager": "npm@12.2.0"
+  "packageManager": "npm@12.2.1"
 }

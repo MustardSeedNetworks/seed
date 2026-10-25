@@ -19,6 +19,7 @@ import { HttpResponse, http } from 'msw';
 import { SETTINGS_RESPONSE } from '../../src/test/settingsResponse';
 import type { DeviceCredentialListResponse } from '../../src/types/generated/device-credential-list-response';
 import type { DiscoveryOptionsResponse } from '../../src/types/generated/discovery-options-response';
+import type { LifecycleFeedResponse } from '../../src/types/generated/lifecycle-feed-response';
 import type { VulnerabilitySettings } from '../../src/types/generated/vulnerability-settings';
 import settingsDefaults from './settings-defaults.json';
 
@@ -58,6 +59,19 @@ export const handlers = [
   // SSOProvidersResponse: { providers } — internal/api/oauth.go. Empty is the
   // real default: providers only appear once one is configured and enabled.
   http.get('*/api/v1/sso/providers', () => HttpResponse.json({ providers: [] })),
+
+  // LifecycleFeedResponse — internal/api/handlers_lifecycle.go. A fresh install
+  // has not answered, which is what the first-run question asks.
+  http.get('*/api/v1/lifecycle/feed', () =>
+    HttpResponse.json<LifecycleFeedResponse>({
+      choice: 'unanswered',
+      endpoint: '',
+      tokenUrl: '',
+      clientId: '',
+      hasClientSecret: false,
+      fetched: 0,
+    }),
+  ),
 
   // The discovery/vulnerability pair useNetworkDiscoveryAutoScan reads, both
   // with every scan off.

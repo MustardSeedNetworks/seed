@@ -1,12 +1,12 @@
 /**
  * InterfaceHistory (UI-SEED-21): loading, error and an empty window are
- * distinct from a drawn history; the window control re-reads; a stretch with
- * no poll breaks the line.
+ * distinct from a drawn history; the window control re-reads.
  */
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { HistoryRange, UseInterfaceHistoryResult } from '../../hooks/useInterfaceHistory';
+import type { HistoryRange } from '../../components/ui/TrendChart';
+import type { UseInterfaceHistoryResult } from '../../hooks/useInterfaceHistory';
 import i18n from '../../i18n';
 import type {
   InterfaceHistoryResponse,
@@ -66,7 +66,7 @@ vi.mock('../../hooks/useInterfaceHistory', async (importOriginal) => ({
   },
 }));
 
-const { InterfaceHistory, seriesPath } = await import('./InterfaceHistory');
+const { InterfaceHistory } = await import('./InterfaceHistory');
 
 beforeEach(async () => {
   await i18n.changeLanguage('en');
@@ -131,41 +131,5 @@ describe('InterfaceHistory states', () => {
     expect(state.calls.at(-1)).toEqual(['t1', 3, '7d']);
     await user.click(screen.getByTestId('interface-history-close'));
     expect(onClose).toHaveBeenCalledOnce();
-  });
-});
-
-describe('seriesPath', () => {
-  const from = Date.parse('2026-10-08T00:00:00Z');
-  const to = from + 600_000;
-  const at = (s: number): string => new Date(from + s * 1000).toISOString();
-  const value = (p: InterfaceRatesResponse): number | undefined => p.inOctetsPerSec;
-
-  it('joins polls within the gap and scales to the peak', () => {
-    const d = seriesPath(
-      [point(at(0), { inOctetsPerSec: 0 }), point(at(60), { inOctetsPerSec: 10 })],
-      value,
-      from,
-      to,
-      10,
-      180_000,
-    );
-    expect(d).toBe('M0.0 120.0 L60.0 0.0');
-  });
-
-  it('breaks the line across a gap and a missing value', () => {
-    const d = seriesPath(
-      [
-        point(at(0), { inOctetsPerSec: 5 }),
-        point(at(300), { inOctetsPerSec: 5 }),
-        point(at(360)),
-        point(at(420), { inOctetsPerSec: 5 }),
-      ],
-      value,
-      from,
-      to,
-      10,
-      180_000,
-    );
-    expect(d).toBe('M0.0 60.0 M300.0 60.0 M420.0 60.0');
   });
 });

@@ -10,7 +10,8 @@ import { Tooltip } from '../ui/Tooltip';
  * 3. SetupWizard sends POST /api/v1/setup/complete with the token and password
  * 4. Server hashes and stores password
  * 5. Component automatically logs in user
- * 6. Calls onComplete callback to exit setup flow
+ * 6. The optional SNMP community, then the EoX feed question
+ * 7. Calls onComplete callback to exit setup flow
  *
  * The wizard is shown when the system detects initial setup is needed
  * (no admin password configured). It's displayed before the main application.
@@ -37,7 +38,9 @@ import {
   spacing,
   status as statusColor,
 } from '../../styles/theme';
+import { FirstRunEoxStep } from './FirstRunEoxStep';
 import { FirstRunSnmpStep } from './FirstRunSnmpStep';
+import { SetupSsoOptions } from './SetupSsoOptions';
 import { SetupTokenField } from './SetupTokenField';
 
 // API base URL for setup endpoints
@@ -65,10 +68,6 @@ interface SetupWizardProps {
  * Modal-like component that requires user to set admin password before
  * accessing the main application.
  */
-// SSO providers from backend (/api/v1/sso/providers returns the names of
-// only the providers that are enabled AND have a ClientID configured -
-// see internal/api/v1/handlers_oauth.go::initOAuthManager). Fixes #720.
-
 /**
  * First-run setup flow that forces the user to create credentials before using the app.
  */
@@ -86,12 +85,11 @@ export function SetupWizard({
   const [showPassword, setShowPassword] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [ssoProviders, setSsoProviders] = useState<string[]>([]);
-  // The wizard is two steps: credentials, then the optional SNMP community
-  // discovery needs to identify what it finds (#2722). `needsSetup` in
-  // useSetupState is a local flag flipped only by onComplete, so holding the
-  // call here is what keeps the second step mounted.
-  const [step, setStep] = useState<'password' | 'snmp'>('password');
+  // Credentials, then the optional SNMP community discovery needs to
+  // identify what it finds (#2722), then the admin's EoX feed answer
+  // (#3460). `needsSetup` in useSetupState is a local flag flipped only by
+  // onComplete, so holding the call here is what keeps the later steps mounted.
+  const [step, setStep] = useState<'password' | 'snmp' | 'eox'>('password');
 
   const {
     register,
@@ -107,25 +105,6 @@ export function SetupWizard({
 
   const password = watch('password');
 
-  // Fetch enabled SSO providers (fixes #769, #720)
-  useEffect(() => {
-    fetch(`${API_BASE}/api/v1/sso/providers`)
-      .then((res) => (res.ok ? res.json() : { providers: [] }))
-      .then((data: { providers?: string[] }) => {
-        const providers = data.providers ?? [];
-        setSsoProviders(providers);
-        logger.info(LogComponents.SETUP, 'SSO provider list loaded', {
-          count: providers.length,
-        });
-      })
-      .catch((err: unknown) => {
-        setSsoProviders([]);
-        logger.warn(LogComponents.SETUP, 'Failed to load SSO providers', {
-          error: err instanceof Error ? err.message : String(err),
-        });
-      });
-  }, []);
-
   // Update password fields when switching to generated mode
   useEffect(() => {
     if (passwordMode === 'generated' && suggestedPassword) {
@@ -133,15 +112,6 @@ export function SetupWizard({
       setValue('confirmPassword', suggestedPassword, { shouldValidate: true, shouldDirty: true });
     }
   }, [passwordMode, suggestedPassword, setValue]);
-
-  // Helper to check if a provider is enabled. The backend only lists
-  // providers that have Enabled=true AND a non-empty ClientID, so
-  // presence in the list is sufficient (#720).
-  const isProviderEnabled = (name: string): boolean =>
-    ssoProviders.some((p) => p.toLowerCase() === name.toLowerCase());
-
-  // Check if any SSO provider is enabled
-  const hasEnabledSso = ssoProviders.length > 0;
 
   const handleCopyPassword = async (): Promise<void> => {
     if (suggestedPassword) {
@@ -239,7 +209,10 @@ export function SetupWizard({
     : undefined;
 
   if (step === 'snmp') {
-    return <FirstRunSnmpStep onDone={onComplete} />;
+    return <FirstRunSnmpStep onDone={(): void => setStep('eox')} />;
+  }
+  if (step === 'eox') {
+    return <FirstRunEoxStep onDone={onComplete} />;
   }
 
   return (
@@ -521,76 +494,7 @@ export function SetupWizard({
             {isSubmitting ? t('buttons.settingUp') : t('buttons.completeSetup')}
           </button>
 
-          {/* SSO Options - only show if any provider is enabled (fixes #769) */}
-          {hasEnabledSso && (
-            <>
-              {/* Separator */}
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                  <div className="w-full border-t border-surface-border" />
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="px-cell bg-surface-raised text-sm text-text-muted">
-                    {tCommon('or')}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-col stack-sm">
-                {isProviderEnabled('google') && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      window.location.href = `${API_BASE}/api/v1/sso/login?provider=google`;
-                    }}
-                    className={cn(
-                      'w-full',
-                      button.size.md,
-                      'bg-status-info text-text-inverse',
-                      radius.md,
-                      'font-medium hover:bg-status-info/85 focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:control-disabled',
-                    )}
-                  >
-                    {tCommon('buttons.signInWithGoogle')}
-                  </button>
-                )}
-                {isProviderEnabled('microsoft') && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      window.location.href = `${API_BASE}/api/v1/sso/login?provider=microsoft`;
-                    }}
-                    className={cn(
-                      'w-full',
-                      button.size.md,
-                      'bg-surface-sunken text-text-primary',
-                      radius.md,
-                      'font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:control-disabled',
-                    )}
-                  >
-                    {tCommon('buttons.signInWithMicrosoft')}
-                  </button>
-                )}
-                {isProviderEnabled('github') && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      window.location.href = `${API_BASE}/api/v1/sso/login?provider=github`;
-                    }}
-                    className={cn(
-                      'w-full',
-                      button.size.md,
-                      'bg-surface-sunken text-text-primary',
-                      radius.md,
-                      'font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:control-disabled',
-                    )}
-                  >
-                    {tCommon('buttons.signInWithGitHub')}
-                  </button>
-                )}
-              </div>
-            </>
-          )}
+          <SetupSsoOptions />
         </form>
       </div>
     </div>

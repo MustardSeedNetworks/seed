@@ -517,7 +517,7 @@ jobs:
       # The scan above still ran; skipping the upload does not weaken the
       # gate. Same condition as the shared Semgrep upload (.github#174).
       - name: Upload gosec results
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         if: always() && github.event_name != 'merge_group' && !startsWith(github.ref, 'refs/heads/gh-readonly-queue/') && hashFiles('gosec-results.sarif') != ''
         with:
           sarif_file: gosec-results.sarif
@@ -572,7 +572,7 @@ jobs:
       # and CI Complete. The CRITICAL/HIGH gate below still reads the local
       # SARIF and still fails the job.
       - name: Upload Trivy results
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         if: always() && github.event_name != 'merge_group' && !startsWith(github.ref, 'refs/heads/gh-readonly-queue/') && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: trivy-results.sarif
@@ -648,7 +648,7 @@ jobs:
   # ci-complete still needs: [dependency-review].
   dependency-review:
     if: github.event_name == 'pull_request'
-    uses: MustardSeedNetworks/.github/.github/workflows/dependency-review.yml@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+    uses: MustardSeedNetworks/.github/.github/workflows/dependency-review.yml@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
     permissions:
       contents: read
       # Only to post the findings comment when it fails.
@@ -837,7 +837,7 @@ jobs:
           persist-credentials: false
 
       - name: Install clang-format
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
         timeout-minutes: 5
         with:
           packages: clang-format-18
@@ -1065,7 +1065,7 @@ jobs:
 
       - name: Install libpcap build tools
         if: steps.libpcap-cache.outputs.cache-hit != 'true'
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
         timeout-minutes: 10
         with:
           packages: flex bison
@@ -1300,7 +1300,7 @@ jobs:
       start-command: ./scripts/e2e-daemon.sh "$RUNNER_TEMP/seed-phone-width" 8443
       setup-command: node ui/e2e/phone-width-sign-in.ts
       storage-state: phone-width-state.json
-      routes: '["/dashboard", "/link", "/network", "/path", "/wifi", "/security", "/performance", "/reports", "/logs", "/polling-targets", "/device-groups", "/ipam", "/lifecycle", "/topology", "/interfaces", "/device-configs", "/flows", "/alerts"]'
+      routes: '["/dashboard", "/link", "/network", "/path", "/wifi", "/security", "/performance", "/reports", "/logs", "/polling-targets", "/device-groups", "/ipam", "/lifecycle", "/ip-sla", "/topology", "/interfaces", "/device-configs", "/flows", "/alerts"]'
       rail-testid: sidebar-desktop
       primary-action-testid: fab-run-all-tests
 
@@ -1312,7 +1312,7 @@ jobs:
   # severity, several of which encode deliberate decisions.
   codeql-alert-gate:
     name: CodeQL Alert Gate
-    uses: MustardSeedNetworks/.github/.github/workflows/codeql-alert-gate.yml@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+    uses: MustardSeedNetworks/.github/.github/workflows/codeql-alert-gate.yml@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
     permissions:
       security-events: read
 

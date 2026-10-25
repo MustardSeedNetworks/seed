@@ -22,9 +22,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
+
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/app"
-	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
@@ -61,7 +62,7 @@ func TestSecondFactorLoginSurvivesTheMiddlewareChain(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = db.Close() })
 
-	hash, hashErr := auth.HashPassword(mfaChainPassword)
+	hash, hashErr := fndpw.Hash(mfaChainPassword)
 	if hashErr != nil {
 		t.Fatalf("hash password: %v", hashErr)
 	}

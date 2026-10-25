@@ -189,7 +189,7 @@ func TestOldWay(t *testing.T) {
         },
         Auth: config.AuthConfig{
             DefaultUsername: "admin",
-            DefaultPasswordHash: "$2a$10$...",
+            DefaultPasswordHash: "$argon2id$v=19$...",
             JWTSecret: "test-secret",
         },
         // ... dozens more lines

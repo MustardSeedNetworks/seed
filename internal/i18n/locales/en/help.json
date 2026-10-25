@@ -35,6 +35,7 @@
     "deviceGroups": "Device Groups",
     "ipam": "IP Addresses",
     "lifecycle": "Hardware Lifecycle",
+    "ipSla": "IP SLA",
     "topology": "Topology",
     "interfaces": "Interfaces",
     "deviceConfigs": "Device Configs",
@@ -693,6 +694,19 @@
         "notListed": {
           "term": "Not listed",
           "description": "The EoX data has no record for the product: it has no announced end of life, or the data does not cover it."
+        }
+      }
+    },
+    "ipSla": {
+      "description": "See the Cisco IP SLA operations your routers and switches run: each one's latest result, and how its round trip, jitter, loss and completed runs moved over the last hour, day or week. Polling reads the operations over SNMP from CISCO-RTTMON-MIB; Seed does not configure them. A failed run or a round trip over the operation's threshold also raises an alert.",
+      "terms": {
+        "threshold": {
+          "term": "Threshold",
+          "description": "The round trip the operation is configured to treat as too slow. A completed run above it is marked over threshold."
+        },
+        "completed": {
+          "term": "Completed",
+          "description": "The share of runs in each part of the window that got a reply. A run that timed out or failed counts against it."
         }
       }
     },

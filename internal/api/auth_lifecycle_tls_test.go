@@ -31,9 +31,10 @@ import (
 	"testing"
 	"time"
 
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
+
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/app"
-	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
@@ -228,7 +229,7 @@ func newTLSSession(t *testing.T) *tlsSession {
 	}
 	t.Cleanup(func() { _ = db.Close() })
 
-	hash, hashErr := auth.HashPassword(lifecyclePassword)
+	hash, hashErr := fndpw.Hash(lifecyclePassword)
 	if hashErr != nil {
 		t.Fatalf("hash the test password: %v", hashErr)
 	}

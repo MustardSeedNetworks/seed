@@ -166,6 +166,20 @@ time.
    written to its boot configuration at once): the running image stays on
    flash, and falling back means booting it from Aboot. Seed never deletes the
    running image.
+6. Junos runs installed packages, not an image file, so its staging differs
+   in three places. The pre-check reads the release from `show version`
+   (`Junos: 21.4R3-S5.4`, or the bracketed form before 15.1) and refuses a
+   package whose name carries it, since Juniper names a package for its
+   release. The package goes to `/var/tmp/`, the file system meant for it,
+   and the free space is the `available-blocks` (512-byte blocks) of the
+   file system `show system storage | display xml` lists on the longest
+   prefix of that path, `/.mount/var` on Junos 21 and later. The boot step is
+   `request system software add /var/tmp/<name>` without `reboot`: the device
+   validates the running configuration against the new release and unpacks
+   it for the next boot, and the step succeeds only when the device reports a
+   reboot is required and printed no `error:` or `ERROR:` line. It is given
+   30 minutes. The fallback is the software the install keeps for
+   `request system software rollback`; the copy stays in `/var/tmp`.
 
 Staging is a job (`POST /api/v1/device-images/{id}/stage` `{targetId}`) that
 logs in with the target's push credential and shares the push's one job per
@@ -220,9 +234,8 @@ alert fires on the new configuration.
 4. EOS apply, and IOS/IOS-XE merge apply.
 5. IOS/IOS-XE replace over the SCP sink (5a); then image upload with the
    vendor hash (5b-1); pre-checks, SCP staging, verification and boot set on
-   IOS/IOS-XE and EOS (5b-2) and on Junos (5b-3), where setting the boot image
-   is a `request system software add` of the copy and needs its own design;
-   reload as its own action (5c).
+   IOS/IOS-XE and EOS (5b-2) and on Junos (5b-3, §3 step 6); reload as its
+   own action (5c).
 
 Tests drive an in-process `x/crypto/ssh` server that scripts each platform's
 dialogue, and the apply use-case is driven over a stand-in device through

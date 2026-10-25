@@ -47,6 +47,7 @@ import {
   Share2,
   Shield,
   Target,
+  Timer,
   Wifi,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -105,6 +106,7 @@ export function useNavGroups(): SidebarNavGroup[] {
         { path: '/device-groups', label: t('deviceGroups.label'), icon: Boxes },
         { path: '/ipam', label: t('ipam.label'), icon: Grid3X3 },
         { path: '/lifecycle', label: t('lifecycle.label'), icon: CalendarClock },
+        { path: '/ip-sla', label: t('ipSla.label'), icon: Timer },
       ],
     },
     {

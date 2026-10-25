@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
+
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -31,7 +33,7 @@ var (
 
 // SetupModePlaceholder is a placeholder hash used during initial setup.
 // This allows the server to start and show the wizard before a real password is set.
-// It is not a valid bcrypt hash and will fail any authentication attempt.
+// It is not a valid password record and will fail any authentication attempt.
 const SetupModePlaceholder = "$setup$pending$"
 
 // jwtSecretBytes is the number of random bytes for JWT signing secrets (256-bit key).
@@ -188,19 +190,9 @@ func (m *Manager) VerifyPasswordOnly(ctx context.Context, username, password str
 	usernameMatch := subtle.ConstantTimeCompare(
 		[]byte(username), []byte(storedUsername),
 	) == 1
-	passwordMatch, needsRehash, verifyErr := VerifyPassword(storedPasswordHash, password)
-	if verifyErr != nil {
+	passwordMatch, verifyErr := fndpw.Verify(storedPasswordHash, password)
+	if verifyErr != nil || !usernameMatch || !passwordMatch {
 		return ErrInvalidCredentials
-	}
-	if !usernameMatch || !passwordMatch {
-		return ErrInvalidCredentials
-	}
-	if needsRehash {
-		if newHash, hashErr := HashPassword(password); hashErr == nil {
-			m.mu.Lock()
-			m.passwordHash = newHash
-			m.mu.Unlock()
-		}
 	}
 	return nil
 }
@@ -221,17 +213,10 @@ func (m *Manager) verifyPasswordOnlyWithStore(
 		_ = userStore.RecordLoginFailure(ctx, username)
 		return ErrInvalidCredentials
 	}
-	matched, needsRehash, verifyErr := VerifyPassword(dbHash, password)
-	if verifyErr != nil {
+	matched, verifyErr := fndpw.Verify(dbHash, password)
+	if verifyErr != nil || !matched {
 		_ = userStore.RecordLoginFailure(ctx, username)
 		return ErrInvalidCredentials
-	}
-	if !matched {
-		_ = userStore.RecordLoginFailure(ctx, username)
-		return ErrInvalidCredentials
-	}
-	if needsRehash {
-		_ = m.rehashAndPersist(ctx, userStore, username, password)
 	}
 	if successErr := userStore.RecordLoginSuccess(ctx, username); successErr != nil {
 		logging.GetLogger().WarnContext(ctx,
@@ -284,39 +269,16 @@ func (m *Manager) authenticateWithUserStore(
 		return "", ErrInvalidCredentials
 	}
 
-	// Password comparison handles both Argon2id and legacy bcrypt; bcrypt
-	// matches trigger transparent rehash + persist (Wave 2 / task #84).
-	matched, needsRehash, verifyErr := VerifyPassword(dbHash, password)
-	if verifyErr != nil {
+	matched, verifyErr := fndpw.Verify(dbHash, password)
+	if errors.Is(verifyErr, fndpw.ErrRecord) {
 		logging.GetLogger().
 			ErrorContext(ctx, "Stored password hash has unsupported format",
 				"username", username, "error", verifyErr,
 				"event", "auth.password.unsupported_hash")
+	}
+	if verifyErr != nil || !matched {
 		_ = userStore.RecordLoginFailure(ctx, username)
 		return "", ErrInvalidCredentials
-	}
-	if !matched {
-		_ = userStore.RecordLoginFailure(ctx, username)
-		return "", ErrInvalidCredentials
-	}
-
-	// Transparent migration: re-hash legacy bcrypt credentials with
-	// Argon2id and persist before issuing the token. Failure here is
-	// logged but does not block the login (the user has already
-	// successfully authenticated).
-	if needsRehash {
-		if rehashErr := m.rehashAndPersist(ctx, userStore, username, password); rehashErr != nil {
-			logging.GetLogger().
-				WarnContext(ctx, "Password rehash failed; login still permitted",
-					"username", username, "error", rehashErr,
-					"event", "auth.password.rehash_failed")
-		} else {
-			logging.GetLogger().
-				InfoContext(ctx, "Password migrated to argon2id",
-					"username", username,
-					"previous_algorithm", string(HashAlgorithmBcrypt),
-					"event", "auth.password.rehashed")
-		}
 	}
 
 	// Record successful login
@@ -326,30 +288,6 @@ func (m *Manager) authenticateWithUserStore(
 	}
 
 	return m.GenerateToken(ctx, username)
-}
-
-// rehashAndPersist generates a new Argon2id hash for the given password
-// and writes it via the UserStore. It is invoked transparently when a
-// legacy bcrypt hash matches at login time.
-func (m *Manager) rehashAndPersist(
-	ctx context.Context,
-	userStore UserStore,
-	username, password string,
-) error {
-	newHash, hashErr := HashPassword(password)
-	if hashErr != nil {
-		return fmt.Errorf("hash password: %w", hashErr)
-	}
-	if updateErr := userStore.UpdatePassword(ctx, username, newHash); updateErr != nil {
-		return fmt.Errorf("persist new hash: %w", updateErr)
-	}
-	// Keep the in-memory mirror in sync if this is the default user.
-	m.mu.Lock()
-	if m.username == username {
-		m.passwordHash = newHash
-	}
-	m.mu.Unlock()
-	return nil
 }
 
 // authenticateInMemory handles authentication via in-memory credentials (legacy/config-based).
@@ -363,38 +301,17 @@ func (m *Manager) authenticateInMemory(
 		[]byte(storedUsername),
 	) == 1
 
-	// Password comparison handles both Argon2id and legacy bcrypt; bcrypt
-	// matches trigger transparent rehash of the in-memory hash.
-	passwordMatch, needsRehash, verifyErr := VerifyPassword(storedPasswordHash, password)
-	if verifyErr != nil {
+	passwordMatch, verifyErr := fndpw.Verify(storedPasswordHash, password)
+	if errors.Is(verifyErr, fndpw.ErrRecord) {
 		logging.GetLogger().
 			ErrorContext(ctx, "In-memory password hash has unsupported format",
 				"error", verifyErr,
 				"event", "auth.password.unsupported_hash")
-		return "", ErrInvalidCredentials
 	}
 
 	// Both checks must succeed - evaluated in constant time
-	if !usernameMatch || !passwordMatch {
+	if verifyErr != nil || !usernameMatch || !passwordMatch {
 		return "", ErrInvalidCredentials
-	}
-
-	if needsRehash {
-		if newHash, hashErr := HashPassword(password); hashErr == nil {
-			m.mu.Lock()
-			m.passwordHash = newHash
-			m.mu.Unlock()
-			logging.GetLogger().
-				InfoContext(ctx, "In-memory password migrated to argon2id",
-					"username", username,
-					"previous_algorithm", string(HashAlgorithmBcrypt),
-					"event", "auth.password.rehashed")
-		} else {
-			logging.GetLogger().
-				WarnContext(ctx, "In-memory password rehash failed; login still permitted",
-					"error", hashErr,
-					"event", "auth.password.rehash_failed")
-		}
 	}
 
 	return m.GenerateToken(ctx, username)
@@ -458,9 +375,7 @@ func IsDefaultPasswordHash(hash string) bool {
 		return true
 	}
 
-	// Check default "seed" password against both Argon2id and bcrypt
-	// formats (legacy installs still carry bcrypt hashes until migrated).
-	if matched, _, err := VerifyPassword(hash, "seed"); err == nil && matched {
+	if matched, err := fndpw.Verify(hash, "seed"); err == nil && matched {
 		return true
 	}
 
