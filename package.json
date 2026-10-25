@@ -24,8 +24,8 @@
     "build-storybook": "cd ui && npm run build-storybook"
   },
   "devDependencies": {
-    "@commitlint/cli": "21.2.3",
-    "@commitlint/config-conventional": "21.2.3",
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
     "husky": "9.1.7",
     "lint-staged": "17.6.0",
     "typescript": "7.0.2"
