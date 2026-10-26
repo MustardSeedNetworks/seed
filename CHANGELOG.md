@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.13](https://github.com/MustardSeedNetworks/seed/compare/v0.282.12...v0.282.13) (2026-10-26)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.13.6 ([#3689](https://github.com/MustardSeedNetworks/seed/issues/3689)) ([6d0a362](https://github.com/MustardSeedNetworks/seed/commit/6d0a362471863f82ecae52807a5f4cb93fcc0e6d))
+
+
+### Code Refactoring
+
+* **auth:** run passkeys through foundation pkg/passkey (D-SEED-114) ([#3645](https://github.com/MustardSeedNetworks/seed/issues/3645)) ([1cb963d](https://github.com/MustardSeedNetworks/seed/commit/1cb963dd9087ec8f6226c65a9a4a815bcd8aaef3))
+
 ## [0.282.12](https://github.com/MustardSeedNetworks/seed/compare/v0.282.11...v0.282.12) (2026-10-25)
 
 
