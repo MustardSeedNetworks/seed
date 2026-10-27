@@ -655,6 +655,10 @@
         "snmp": {
           "term": "SNMP",
           "description": "El Protocolo Simple de Administración de Red lee el estado y las tablas del dispositivo con las credenciales configuradas."
+        },
+        "walk": {
+          "term": "Explorar MIB",
+          "description": "Recorra un subárbol del destino seleccionado, por OID numérico o nombre de objeto MIB, para leer cada objeto que contiene. Un recorrido devuelve como máximo 500 objetos e indica cuándo se detuvo ahí."
         }
       }
     },

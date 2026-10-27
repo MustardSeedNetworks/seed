@@ -655,6 +655,10 @@
         "snmp": {
           "term": "SNMP",
           "description": "Simple Network Management Protocol reads device state and tables using the configured credentials."
+        },
+        "walk": {
+          "term": "Browse MIB",
+          "description": "Walk one subtree of the selected target, by numeric OID or MIB object name, to read every object under it. A walk returns at most 500 objects and says when it stopped there."
         }
       }
     },

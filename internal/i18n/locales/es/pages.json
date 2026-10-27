@@ -371,7 +371,19 @@
     "fieldPollInterval": "Intervalo de sondeo (segundos)",
     "nameAndIpRequired": "El nombre y la dirección IP son obligatorios.",
     "saveFailed": "No se pudo guardar",
-    "saveChanges": "Guardar cambios"
+    "saveChanges": "Guardar cambios",
+    "mibBrowser": "Explorar MIB",
+    "mibBrowserHint": "Recorra un subárbol de este dispositivo con su credencial de sondeo.",
+    "mibOidLabel": "OID o nombre de objeto",
+    "mibOidPlaceholder": "ifTable, sysDescr.0 o 1.3.6.1.2.1.2",
+    "mibWalk": "Recorrer",
+    "mibWalking": "Recorriendo…",
+    "mibReadOnly": "Solo lectura: se requiere el rol de operador para recorrer un dispositivo",
+    "mibWalkFailed": "El recorrido falló: {{reason}}",
+    "mibRowCount_one": "{{count}} objeto bajo {{oid}}",
+    "mibRowCount_other": "{{count}} objetos bajo {{oid}}",
+    "mibTruncated": "Se detuvo en {{count}} objetos. Recorra un subárbol más estrecho para ver el resto.",
+    "mibNoRows": "El dispositivo no devolvió nada bajo {{oid}}."
   },
   "deviceGroups": {
     "description": "Conjuntos de destinos de sondeo para limitar alertas e informes.",
