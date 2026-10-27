@@ -5,9 +5,10 @@
 # branch protection, code review, dependency update tools, signed releases,
 # pinned dependencies, SAST, vulnerabilities, etc.
 #
-# Runs weekly + on push to main. Results upload to GitHub's code-scanning
-# Security tab and (when publish_results=true) to the public OpenSSF
-# Scorecard API so projects can be compared.
+# Runs weekly, and when branch protection changes. A push to main does not
+# scan again; that run used to take a slot on the org's 20-job cap.
+# Results still upload to the Security tab and, when publish_results is
+# true, to the public OpenSSF Scorecard API.
 # =============================================================================
 
 name: OpenSSF Scorecard
@@ -16,8 +17,6 @@ on:
   branch_protection_rule:
   schedule:
     - cron: "37 9 * * 1"
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions: read-all

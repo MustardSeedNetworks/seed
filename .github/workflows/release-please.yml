@@ -58,9 +58,10 @@ on:
     workflows: ["CI", "CI Main Smoke"]
     branches: [main, release-please--branches--main]
     types: [completed]
-  # Offset from the hour so the fleet's four repos do not all fire at :00.
+  # Once a day, staggered across the fleet. workflow_run is the real
+  # trigger; this only reconciles a release a failed main signal skipped.
   schedule:
-    - cron: '07 */3 * * *'
+    - cron: '07 7 * * *'
   workflow_dispatch:
 
 # Serialise the runs. All three triggers can fire close together — a burst of
