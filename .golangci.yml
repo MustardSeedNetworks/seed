@@ -637,7 +637,6 @@ linters:
       # Default: [ switch ]
       check:
         - switch
-        - map
 
     exhaustruct:
       # List of regular expressions to match type names that should be excluded from processing.

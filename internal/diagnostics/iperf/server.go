@@ -67,9 +67,12 @@ func (m *Manager) StartServer(port int) error {
 		return fmt.Errorf("iperf3 server exited before listening: %w", waitErr)
 	case <-time.After(serverListenTimeout):
 		_ = cmd.Process.Kill()
-		<-exited
+		waitErr := <-exited
 		cancel()
-		return fmt.Errorf("iperf3 server failed to start listening on port %d within %v", port, serverListenTimeout)
+		return errors.Join(
+			fmt.Errorf("iperf3 server failed to start listening on port %d within %v", port, serverListenTimeout),
+			waitErr,
+		)
 	}
 
 	m.serverCmd = cmd
