@@ -2,7 +2,7 @@
 #
 # Build the seed binary the E2E jobs run.
 #
-# CI runs the daemon inside mcr.microsoft.com/playwright:v1.64.0-noble, which
+# CI runs the daemon inside mcr.microsoft.com/playwright:v1.64.1-noble, which
 # ships no libpcap and cannot apt-install one (its sources point at
 # azure.archive.ubuntu.com, which the container network cannot reach). So the
 # e2e caller's daemon job builds it on a host runner, with cgo against the static
