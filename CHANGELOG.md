@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.15](https://github.com/MustardSeedNetworks/seed/compare/v0.282.14...v0.282.15) (2026-10-27)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.104.5 ([#3705](https://github.com/MustardSeedNetworks/seed/issues/3705)) ([7ee3d47](https://github.com/MustardSeedNetworks/seed/commit/7ee3d47fee40f2c75e633f275e791535d9713dd3))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3706](https://github.com/MustardSeedNetworks/seed/issues/3706)) ([aceb206](https://github.com/MustardSeedNetworks/seed/commit/aceb2064a1be64daae846880ce16b277ba352054))
+* **deps:** lock file maintenance ([#3708](https://github.com/MustardSeedNetworks/seed/issues/3708)) ([9c8f097](https://github.com/MustardSeedNetworks/seed/commit/9c8f097c86bc6be6ea38f88350db71dabe7a0b26))
+
 ## [0.282.14](https://github.com/MustardSeedNetworks/seed/compare/v0.282.13...v0.282.14) (2026-10-26)
 
 
