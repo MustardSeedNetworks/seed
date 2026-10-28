@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.18](https://github.com/MustardSeedNetworks/seed/compare/v0.282.17...v0.282.18) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency immer to v11.2.3 ([#3719](https://github.com/MustardSeedNetworks/seed/issues/3719)) ([937c47d](https://github.com/MustardSeedNetworks/seed/commit/937c47dfa5e5c07b72a0f56aa6fe244fe72bd213))
+
+
+### Miscellaneous
+
+* **deps:** bump golangci-lint to v2.15.0 ([#3715](https://github.com/MustardSeedNetworks/seed/issues/3715)) ([18c2763](https://github.com/MustardSeedNetworks/seed/commit/18c2763344fb9a46324b080237d542f9e9644dca)), closes [#3714](https://github.com/MustardSeedNetworks/seed/issues/3714)
+* **deps:** update node.js to v26.12.1 ([#3720](https://github.com/MustardSeedNetworks/seed/issues/3720)) ([a3f9bbc](https://github.com/MustardSeedNetworks/seed/commit/a3f9bbc22adcc11660a0f42ea1e27ddc83da38a6))
+* **deps:** update storybook monorepo to v10.6.3 ([#3717](https://github.com/MustardSeedNetworks/seed/issues/3717)) ([2fc851e](https://github.com/MustardSeedNetworks/seed/commit/2fc851e5c4bc6ac72b5f8f30fab1dc2e23787ad0))
+
 ## [0.282.17](https://github.com/MustardSeedNetworks/seed/compare/v0.282.16...v0.282.17) (2026-10-27)
 
 
