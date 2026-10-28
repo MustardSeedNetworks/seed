@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.21](https://github.com/MustardSeedNetworks/seed/compare/v0.282.20...v0.282.21) (2026-10-28)
+
+
+### Bug Fixes
+
+* **tftp:** close the session socket on stop so Serve cannot hang ([#3729](https://github.com/MustardSeedNetworks/seed/issues/3729)) ([46b3daa](https://github.com/MustardSeedNetworks/seed/commit/46b3daa5185999e1dc4f5af8795589210d8beaa4)), closes [#3456](https://github.com/MustardSeedNetworks/seed/issues/3456)
+
+
+### Miscellaneous
+
+* **deps:** update dependency @chromatic-com/storybook to v5.6.0 ([#3718](https://github.com/MustardSeedNetworks/seed/issues/3718)) ([6405e98](https://github.com/MustardSeedNetworks/seed/commit/6405e983a2fa068f8b8f82a9ee5f68bc66c4745e))
+
 ## [0.282.20](https://github.com/MustardSeedNetworks/seed/compare/v0.282.19...v0.282.20) (2026-10-28)
 
 

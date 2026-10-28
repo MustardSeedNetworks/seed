@@ -1,6 +1,6 @@
 {
   "name": "seed-ui",
-  "version": "0.282.20",
+  "version": "0.282.21",
   "private": true,
   "type": "module",
   "description": "The Seed WebUI - Network Diagnostics - Mustard Seed Networks",
