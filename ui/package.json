@@ -41,7 +41,7 @@
     "i18next": "26.5.4",
     "i18next-browser-languagedetector": "8.2.1",
     "immer": "11.2.6",
-    "lucide-react": "1.60.0",
+    "lucide-react": "1.61.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-hook-form": "7.90.0",
