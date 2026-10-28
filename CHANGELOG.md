@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.20](https://github.com/MustardSeedNetworks/seed/compare/v0.282.19...v0.282.20) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @hookform/resolvers to v6 ([#3701](https://github.com/MustardSeedNetworks/seed/issues/3701)) ([54fd7e9](https://github.com/MustardSeedNetworks/seed/commit/54fd7e98a99487746c93fa5be508ea9d0a35c9c2))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3710](https://github.com/MustardSeedNetworks/seed/issues/3710)) ([2853e2a](https://github.com/MustardSeedNetworks/seed/commit/2853e2aa88d6bf0186da4c705c02abdadbf4235a))
+
+## [0.282.19](https://github.com/MustardSeedNetworks/seed/compare/v0.282.18...v0.282.19) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.5.4 ([#3727](https://github.com/MustardSeedNetworks/seed/issues/3727)) ([039bf24](https://github.com/MustardSeedNetworks/seed/commit/039bf245a6fb42972a80a074908e71917ee8e65d))
+* **deps:** update dependency immer to v11.2.6 ([#3722](https://github.com/MustardSeedNetworks/seed/issues/3722)) ([87dd11f](https://github.com/MustardSeedNetworks/seed/commit/87dd11f7ddce088c5b1a3dcf22725715757f9f69))
+* **deps:** update dependency lucide-react to v1.61.0 ([#3724](https://github.com/MustardSeedNetworks/seed/issues/3724)) ([2ecc65b](https://github.com/MustardSeedNetworks/seed/commit/2ecc65b21010d33cce86b32a43d87cec3ca62100))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.13.9 ([#3702](https://github.com/MustardSeedNetworks/seed/issues/3702)) ([74ac9cb](https://github.com/MustardSeedNetworks/seed/commit/74ac9cb6f6d29a3c4c6d20852a138149a60cfb80))
+
+
+### Miscellaneous
+
+* **deps:** update dependency markdownlint-cli2 to v0.24.0 ([#3726](https://github.com/MustardSeedNetworks/seed/issues/3726)) ([42aab08](https://github.com/MustardSeedNetworks/seed/commit/42aab081fff1ab848885aa9bbb9fa56239375c32))
+* **deps:** update dependency vite to v8.3.5 ([#3721](https://github.com/MustardSeedNetworks/seed/issues/3721)) ([b0c336a](https://github.com/MustardSeedNetworks/seed/commit/b0c336ad628bd162b205c07f1630195d6b38447c))
+* **deps:** update pre-commit hook davidanson/markdownlint-cli2 to v0.24.0 ([#3723](https://github.com/MustardSeedNetworks/seed/issues/3723)) ([a891cf6](https://github.com/MustardSeedNetworks/seed/commit/a891cf6835086669f321e7988632f4e5b0be0e25))
+
+## [0.282.18](https://github.com/MustardSeedNetworks/seed/compare/v0.282.17...v0.282.18) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency immer to v11.2.3 ([#3719](https://github.com/MustardSeedNetworks/seed/issues/3719)) ([937c47d](https://github.com/MustardSeedNetworks/seed/commit/937c47dfa5e5c07b72a0f56aa6fe244fe72bd213))
+
+
+### Miscellaneous
+
+* **deps:** bump golangci-lint to v2.15.0 ([#3715](https://github.com/MustardSeedNetworks/seed/issues/3715)) ([18c2763](https://github.com/MustardSeedNetworks/seed/commit/18c2763344fb9a46324b080237d542f9e9644dca)), closes [#3714](https://github.com/MustardSeedNetworks/seed/issues/3714)
+* **deps:** update node.js to v26.12.1 ([#3720](https://github.com/MustardSeedNetworks/seed/issues/3720)) ([a3f9bbc](https://github.com/MustardSeedNetworks/seed/commit/a3f9bbc22adcc11660a0f42ea1e27ddc83da38a6))
+* **deps:** update storybook monorepo to v10.6.3 ([#3717](https://github.com/MustardSeedNetworks/seed/issues/3717)) ([2fc851e](https://github.com/MustardSeedNetworks/seed/commit/2fc851e5c4bc6ac72b5f8f30fab1dc2e23787ad0))
+
 ## [0.282.17](https://github.com/MustardSeedNetworks/seed/compare/v0.282.16...v0.282.17) (2026-10-27)
 
 

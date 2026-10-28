@@ -61,7 +61,7 @@ require (
 
 require (
 	github.com/Azure/go-ntlmssp v0.1.1
-	github.com/MustardSeedNetworks/foundation v0.13.5
+	github.com/MustardSeedNetworks/foundation v0.13.9
 	github.com/go-pdf/fpdf v0.9.0
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/go-webauthn/webauthn v0.18.2

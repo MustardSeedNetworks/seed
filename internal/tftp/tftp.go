@@ -229,6 +229,7 @@ type session struct {
 	root      *os.Root
 	inbox     *os.Root
 	srv       *pintftp.Server
+	conn      *net.UDPConn
 	served    chan struct{}
 	stopped   chan struct{}
 	stopping  bool
@@ -280,6 +281,7 @@ func (m *Manager) Start(opts Options) (Status, error) {
 		startedAt: time.Now().UTC(),
 		root:      root,
 		inbox:     inbox,
+		conn:      conn,
 		served:    make(chan struct{}),
 		stopped:   make(chan struct{}),
 		onXfer:    m.cfg.OnTransfer,
@@ -371,6 +373,13 @@ func (m *Manager) stop(s *session, reason StopReason) {
 	// Shutdown waits for transfers; closing stopped makes each one fail its
 	// next block, so the wait is bounded by one block's retries, not a file.
 	s.srv.Shutdown()
+	// pin/tftp's Shutdown closes the socket only if Serve has already
+	// registered it, and cancels after releasing its lock. A Stop that lands
+	// in that window (TestSessionLifecycle stops right after Start) leaves
+	// Serve blocked in a read nothing will ever wake, and <-s.served hangs
+	// forever (#3456). Closing the socket we own wakes that read either way;
+	// a second close after Shutdown's own is a harmless error.
+	_ = s.conn.Close()
 	<-s.served
 	_ = s.root.Close()
 	_ = s.inbox.Close()
