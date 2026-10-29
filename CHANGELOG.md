@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.22](https://github.com/MustardSeedNetworks/seed/compare/v0.282.21...v0.282.22) (2026-10-29)
+
+
+### Bug Fixes
+
+* **deps:** update dependency immer to v11.2.7 ([#3732](https://github.com/MustardSeedNetworks/seed/issues/3732)) ([93e2bf3](https://github.com/MustardSeedNetworks/seed/commit/93e2bf3906d9ca6414c2ebb6a270c0e4e0d6bf3d))
+* **deps:** update go dependencies ([#3733](https://github.com/MustardSeedNetworks/seed/issues/3733)) ([ceae164](https://github.com/MustardSeedNetworks/seed/commit/ceae164c495439ab9984c98d3bd06cd2084b6609))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3735](https://github.com/MustardSeedNetworks/seed/issues/3735)) ([1117a0e](https://github.com/MustardSeedNetworks/seed/commit/1117a0ef5372b827346fb4209d308cddea68d547))
+* **deps:** update github/codeql-action action to v4.39.1 ([#3731](https://github.com/MustardSeedNetworks/seed/issues/3731)) ([1ecaa9d](https://github.com/MustardSeedNetworks/seed/commit/1ecaa9d9193880526aac1576aeb3132beb272c03))
+
 ## [0.282.21](https://github.com/MustardSeedNetworks/seed/compare/v0.282.20...v0.282.21) (2026-10-28)
 
 
