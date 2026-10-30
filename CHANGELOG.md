@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.25](https://github.com/MustardSeedNetworks/seed/compare/v0.282.24...v0.282.25) (2026-10-30)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-virtual to v3.14.22 ([#3739](https://github.com/MustardSeedNetworks/seed/issues/3739)) ([a7e0c47](https://github.com/MustardSeedNetworks/seed/commit/a7e0c4720933e7cd5f4594fbb7f8ae6dc4869e87))
+* **deps:** update dependency i18next to v26.5.6 ([#3740](https://github.com/MustardSeedNetworks/seed/issues/3740)) ([cb20fc8](https://github.com/MustardSeedNetworks/seed/commit/cb20fc809d6a46061a9374e9952a28407a302d3f))
+* **deps:** update dependency immer to v11.2.9 ([#3741](https://github.com/MustardSeedNetworks/seed/issues/3741)) ([27ad9e8](https://github.com/MustardSeedNetworks/seed/commit/27ad9e802984e7f2e1b285938dbb06ba6339be46))
+
+
+### Miscellaneous
+
+* **deps:** update securego/gosec action to v2.30.0 ([#3747](https://github.com/MustardSeedNetworks/seed/issues/3747)) ([10bdbb6](https://github.com/MustardSeedNetworks/seed/commit/10bdbb60ee545b00b618be37950e057e277ae7b5))
+
 ## [0.282.24](https://github.com/MustardSeedNetworks/seed/compare/v0.282.23...v0.282.24) (2026-10-29)
 
 
