@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.26](https://github.com/MustardSeedNetworks/seed/compare/v0.282.25...v0.282.26) (2026-10-31)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.5.7 ([#3748](https://github.com/MustardSeedNetworks/seed/issues/3748)) ([aa35fd3](https://github.com/MustardSeedNetworks/seed/commit/aa35fd3251e4e990e312c5bb89825a1bbbfeed57))
+* **deps:** update dependency i18next to v26.5.8 ([#3754](https://github.com/MustardSeedNetworks/seed/issues/3754)) ([1a5d2f8](https://github.com/MustardSeedNetworks/seed/commit/1a5d2f89e8bd6570aab09a970b24729c8612b2d7))
+* **deps:** update dependency i18next-browser-languagedetector to v8.2.2 ([#3749](https://github.com/MustardSeedNetworks/seed/issues/3749)) ([70b1ac5](https://github.com/MustardSeedNetworks/seed/commit/70b1ac510af28b0a65afa30e31696f214cf0f845))
+* **deps:** update dependency react-hook-form to v7.91.0 ([#3751](https://github.com/MustardSeedNetworks/seed/issues/3751)) ([f2cf236](https://github.com/MustardSeedNetworks/seed/commit/f2cf23621f916650279ef7d4a447e65977ee4660))
+* **deps:** update dependency react-i18next to v17.1.5 ([#3750](https://github.com/MustardSeedNetworks/seed/issues/3750)) ([1870094](https://github.com/MustardSeedNetworks/seed/commit/1870094c6f3643e554aa42d06b95ce4da99ad410))
+* **deps:** update dependency react-i18next to v17.1.6 ([#3755](https://github.com/MustardSeedNetworks/seed/issues/3755)) ([b876b84](https://github.com/MustardSeedNetworks/seed/commit/b876b841d6ee62a756fc8e944a4690b47892a63e))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3752](https://github.com/MustardSeedNetworks/seed/issues/3752)) ([9dfb62f](https://github.com/MustardSeedNetworks/seed/commit/9dfb62f8bee1a11130ad3d678bdf28687d5cf6ae))
+* **deps:** lock file maintenance ([#3756](https://github.com/MustardSeedNetworks/seed/issues/3756)) ([7e0cb63](https://github.com/MustardSeedNetworks/seed/commit/7e0cb63a364e65ecd174b1dcf06329451c0270c0))
+
 ## [0.282.25](https://github.com/MustardSeedNetworks/seed/compare/v0.282.24...v0.282.25) (2026-10-30)
 
 
