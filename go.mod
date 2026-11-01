@@ -61,14 +61,14 @@ require (
 
 require (
 	github.com/Azure/go-ntlmssp v0.1.1
-	github.com/MustardSeedNetworks/foundation v0.13.11
+	github.com/MustardSeedNetworks/foundation v0.13.16
 	github.com/go-pdf/fpdf v0.9.0
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/go-webauthn/webauthn v0.18.2
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/gopacket/gopacket v1.7.4
-	github.com/gosnmp/gosnmp v1.45.0
+	github.com/gosnmp/gosnmp v1.47.0
 	github.com/invopop/jsonschema v0.14.0
 	github.com/kardianos/service v1.3.0
 	github.com/mdlayher/genetlink v1.4.0
