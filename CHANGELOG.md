@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.30](https://github.com/MustardSeedNetworks/seed/compare/v0.282.29...v0.282.30) (2026-11-01)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next-browser-languagedetector to v8.2.3 ([#3772](https://github.com/MustardSeedNetworks/seed/issues/3772)) ([fcc123f](https://github.com/MustardSeedNetworks/seed/commit/fcc123f0f5ad9321ab268d794f6ae1077601afe7))
+* **deps:** update dependency react-i18next to v17.1.9 ([#3769](https://github.com/MustardSeedNetworks/seed/issues/3769)) ([9b89a52](https://github.com/MustardSeedNetworks/seed/commit/9b89a5257ba38cbbee127f98429d92b9be8b52c3))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3767](https://github.com/MustardSeedNetworks/seed/issues/3767)) ([40bcf76](https://github.com/MustardSeedNetworks/seed/commit/40bcf76c48ee28e033da442008a4109c3e64ca23))
+* **deps:** lock file maintenance ([#3770](https://github.com/MustardSeedNetworks/seed/issues/3770)) ([d9223bc](https://github.com/MustardSeedNetworks/seed/commit/d9223bce9f06403a9189ce217b9c53f9b449097b))
+
 ## [0.282.29](https://github.com/MustardSeedNetworks/seed/compare/v0.282.28...v0.282.29) (2026-11-01)
 
 
