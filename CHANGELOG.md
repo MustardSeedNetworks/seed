@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.31](https://github.com/MustardSeedNetworks/seed/compare/v0.282.30...v0.282.31) (2026-11-02)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.5.11 ([#3771](https://github.com/MustardSeedNetworks/seed/issues/3771)) ([ab63ea7](https://github.com/MustardSeedNetworks/seed/commit/ab63ea711444d238c1e9fcb6adcbff6aaa9ea2ab))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3775](https://github.com/MustardSeedNetworks/seed/issues/3775)) ([fe4b126](https://github.com/MustardSeedNetworks/seed/commit/fe4b1264f0b2303db56bfa9c45ff68a1c4cd2387))
+
 ## [0.282.30](https://github.com/MustardSeedNetworks/seed/compare/v0.282.29...v0.282.30) (2026-11-01)
 
 
