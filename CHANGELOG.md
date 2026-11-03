@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.35](https://github.com/MustardSeedNetworks/seed/compare/v0.282.34...v0.282.35) (2026-11-03)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @hookform/resolvers to v6.0.1 ([#3785](https://github.com/MustardSeedNetworks/seed/issues/3785)) ([742cc53](https://github.com/MustardSeedNetworks/seed/commit/742cc535a3b3119648e48e79ffe2ae0fdacd8b3f))
+* **deps:** update dependency lucide-react to v1.62.0 ([#3786](https://github.com/MustardSeedNetworks/seed/issues/3786)) ([4240ed0](https://github.com/MustardSeedNetworks/seed/commit/4240ed0b8c5bf0d5f462d85dffbdd8cff247099c))
+
 ## [0.282.34](https://github.com/MustardSeedNetworks/seed/compare/v0.282.33...v0.282.34) (2026-11-03)
 
 
