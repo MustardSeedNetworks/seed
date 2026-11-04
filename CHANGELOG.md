@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.38](https://github.com/MustardSeedNetworks/seed/compare/v0.282.37...v0.282.38) (2026-11-04)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @hookform/resolvers to v6.0.2 ([#3795](https://github.com/MustardSeedNetworks/seed/issues/3795)) ([6de62d0](https://github.com/MustardSeedNetworks/seed/commit/6de62d0db06edc8eb60bce2777eee9ef5696dae2))
+
 ## [0.282.37](https://github.com/MustardSeedNetworks/seed/compare/v0.282.36...v0.282.37) (2026-11-04)
 
 
