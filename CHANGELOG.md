@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.42](https://github.com/MustardSeedNetworks/seed/compare/v0.282.41...v0.282.42) (2026-11-05)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-virtual to v3.14.24 ([#3804](https://github.com/MustardSeedNetworks/seed/issues/3804)) ([832d7b6](https://github.com/MustardSeedNetworks/seed/commit/832d7b61439e97dc720019cfe8d610f2122798c3))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3806](https://github.com/MustardSeedNetworks/seed/issues/3806)) ([1203aac](https://github.com/MustardSeedNetworks/seed/commit/1203aacb88b3fe42c5bf0e15fa0e710dc5dce24e))
+
 ## [0.282.41](https://github.com/MustardSeedNetworks/seed/compare/v0.282.40...v0.282.41) (2026-11-05)
 
 
