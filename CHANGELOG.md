@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.41](https://github.com/MustardSeedNetworks/seed/compare/v0.282.40...v0.282.41) (2026-11-05)
+
+
+### Miscellaneous
+
+* **deps:** update node.js to v26.13.0 ([#3792](https://github.com/MustardSeedNetworks/seed/issues/3792)) ([593bb1b](https://github.com/MustardSeedNetworks/seed/commit/593bb1b10d27e7ad948e231fa469cfbdf93cb151))
+
 ## [0.282.40](https://github.com/MustardSeedNetworks/seed/compare/v0.282.39...v0.282.40) (2026-11-05)
 
 
