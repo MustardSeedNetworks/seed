@@ -41,7 +41,6 @@
 /api/v1/integrations/paloalto             # scheduled: UI #3519, see /integrations/meraki
 /api/v1/integrations/paloalto/devices     # scheduled: UI #3519, see /integrations/meraki
 /api/v1/path/traceroute                   # scheduled: Wave 4 path cluster (#165 #395 #435), one traceroute engine
-/api/v1/polling-targets/{targetId}/walk    # scheduled: UI #3546 (MIB browser); P-E5 backend (#3545) landed first, API-driven until then
 /api/v1/reporting/logs/query              # PAT-only allow-list (owner 2026-09-04)
 /api/v1/security/discovery/fingerprint    # scheduled: S4-5 #2456 reuses it (owner 2026-09-24, keep and reuse); operator+ and rate limited (#2635)
 /api/v1/security/discovery/probe          # scheduled: S4-5 #2456, see /security/discovery/fingerprint
