@@ -11,11 +11,11 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.12.0 // indirect
 	github.com/dustin/go-humanize v1.1.0 // indirect
-	github.com/ebitengine/purego v0.11.1 // indirect
+	github.com/ebitengine/purego v0.11.2 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.4 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.15 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.16 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/locales v0.14.2 // indirect
 	github.com/go-playground/universal-translator v0.18.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/go-webauthn/x v0.3.1 // indirect
@@ -54,48 +54,48 @@ require (
 	golang.org/x/vuln v1.9.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	honnef.co/go/tools v0.8.2 // indirect
-	modernc.org/libc v1.79.0 // indirect
+	modernc.org/libc v1.80.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
 )
 
 require (
 	github.com/Azure/go-ntlmssp v0.1.1
-	github.com/MustardSeedNetworks/foundation v0.13.11
+	github.com/MustardSeedNetworks/foundation v0.14.6
 	github.com/go-pdf/fpdf v0.9.0
-	github.com/go-playground/validator/v10 v10.30.5
+	github.com/go-playground/validator/v10 v10.30.6
 	github.com/go-webauthn/webauthn v0.18.2
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
-	github.com/gopacket/gopacket v1.7.4
-	github.com/gosnmp/gosnmp v1.45.0
+	github.com/gopacket/gopacket v1.7.7
+	github.com/gosnmp/gosnmp v1.47.0
 	github.com/invopop/jsonschema v0.14.0
 	github.com/kardianos/service v1.3.0
 	github.com/mdlayher/genetlink v1.4.0
 	github.com/mdlayher/netlink v1.11.2
-	github.com/mdlayher/wifi v0.9.0
-	github.com/nicksnyder/go-i18n/v2 v2.6.1
+	github.com/mdlayher/wifi v0.10.0
+	github.com/nicksnyder/go-i18n/v2 v2.7.0
 	github.com/pin/tftp/v3 v3.2.0
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 	github.com/pquerna/otp v1.5.0
 	github.com/pressly/goose/v3 v3.29.0
 	github.com/safchain/ethtool v0.7.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
-	github.com/shirou/gopsutil/v4 v4.26.9
+	github.com/shirou/gopsutil/v4 v4.26.10
 	github.com/showwin/speedtest-go v1.8.3
 	github.com/spf13/cobra v1.10.2
-	github.com/spf13/pflag v1.0.10
+	github.com/spf13/pflag v1.1.0
 	github.com/stretchr/testify v1.12.1
 	github.com/trustelem/zxcvbn v1.0.1
 	github.com/vishvananda/netlink v1.3.1
 	golang.org/x/crypto v0.58.0
-	golang.org/x/net v0.61.0
-	golang.org/x/oauth2 v0.37.0
-	golang.org/x/sys v0.49.0
+	golang.org/x/net v0.62.0
+	golang.org/x/oauth2 v0.38.0
+	golang.org/x/sys v0.50.0
 	golang.org/x/text v0.43.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.61.0
+	modernc.org/sqlite v1.62.0
 )
 
 tool (
