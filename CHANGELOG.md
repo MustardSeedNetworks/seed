@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.45](https://github.com/MustardSeedNetworks/seed/compare/v0.282.44...v0.282.45) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.73.0 ([#3812](https://github.com/MustardSeedNetworks/seed/issues/3812)) ([96fdfc2](https://github.com/MustardSeedNetworks/seed/commit/96fdfc2cba6f01fd2467d9ed4dd2554d94396868))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @babel/core to v7.29.13 ([#3826](https://github.com/MustardSeedNetworks/seed/issues/3826)) ([bd9dde9](https://github.com/MustardSeedNetworks/seed/commit/bd9dde924c4b53e6873ca4704afeaa6d3d12b144))
+
 ## [0.282.44](https://github.com/MustardSeedNetworks/seed/compare/v0.282.43...v0.282.44) (2026-11-20)
 
 
