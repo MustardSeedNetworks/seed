@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.46](https://github.com/MustardSeedNetworks/seed/compare/v0.282.45...v0.282.46) (2026-11-21)
+
+
+### Miscellaneous
+
+* **deps:** update dependency brace-expansion to v5.0.13 ([#3827](https://github.com/MustardSeedNetworks/seed/issues/3827)) ([dd37401](https://github.com/MustardSeedNetworks/seed/commit/dd37401e918c0cc15a86fe31f1c544486b054363))
+* **deps:** update dependency msw to v3.0.5 ([#3829](https://github.com/MustardSeedNetworks/seed/issues/3829)) ([5b94b14](https://github.com/MustardSeedNetworks/seed/commit/5b94b14a7b7f4c393bc8e8220182bd4c800a7b6a))
+
 ## [0.282.45](https://github.com/MustardSeedNetworks/seed/compare/v0.282.44...v0.282.45) (2026-11-21)
 
 
