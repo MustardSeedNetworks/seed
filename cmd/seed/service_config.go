@@ -21,14 +21,8 @@ func anchorServicePaths(cfg *config.Config, sp *paths.Paths) {
 		}
 		return filepath.Join(sp.Root, p)
 	}
-	cfg.Database.Path = anchor(cfg.Database.Path)
-	if cfg.Database.Path == "" {
-		cfg.Database.Path = filepath.Join(sp.DataDir, "seed.db")
-	}
-	cfg.Logging.File = anchor(cfg.Logging.File)
-	if cfg.Logging.File == "" {
-		cfg.Logging.File = filepath.Join(sp.LogDir, "seed.log")
-	}
+	cfg.Database.Path = anchor(firstSet(cfg.Database.Path, filepath.FromSlash(paths.DefaultDatabaseFile)))
+	cfg.Logging.File = anchor(firstSet(cfg.Logging.File, filepath.FromSlash(paths.DefaultLogFile)))
 	cfg.NetworkDiscovery.OUIFilePath = anchor(cfg.NetworkDiscovery.OUIFilePath)
 	cfg.Server.CertFile = anchor(cfg.Server.CertFile)
 	cfg.Server.KeyFile = anchor(cfg.Server.KeyFile)
