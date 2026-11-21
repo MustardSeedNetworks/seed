@@ -15,10 +15,13 @@ import { Redirect, Route, Switch, useLocation } from 'wouter';
 import { AppFooter } from '../components/app/AppFooter';
 import { CapabilityWarnings } from '../components/app/CapabilityWarnings';
 import { ConnectionNotice } from '../components/app/ConnectionNotice';
+import { DaemonBanner } from '../components/app/DaemonBanner';
 import { RailControls } from '../components/app/RailControls';
 import { CommandPalette } from '../components/ui/CommandPalette';
 import { Fab } from '../components/ui/Fab';
 import { AppContext, type AppContextValue } from '../contexts/AppContext';
+import { useBuildVersion } from '../hooks/useBuildVersion';
+import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useDeviceIdentity } from '../hooks/useDeviceIdentity';
 import { useIsPhone } from '../hooks/useIsPhone';
 import { useNavGroups } from '../navGroups';
@@ -54,6 +57,8 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
   const pages = usePages();
   const isPhone = useIsPhone();
   const { name: deviceName } = useDeviceIdentity();
+  const { version: appVersion } = useBuildVersion();
+  const daemonStatus = useConnectionStatus();
   const [location] = useLocation();
   const {
     cards,
@@ -69,7 +74,6 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
     registerPathMonitorHandler,
     channelGraphData,
     channelGraphLoading,
-    appVersion,
     capabilities,
     sseStatus,
     reconnect,
@@ -135,7 +139,6 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
     registerPathMonitorHandler,
     channelGraphData,
     channelGraphLoading,
-    appVersion,
     openSettings,
   };
 
@@ -189,7 +192,11 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
         )}
       >
         <div className={cn(section.width.xl, 'mx-auto')}>
-          <ConnectionNotice status={sseStatus} onReconnect={reconnect} />
+          {daemonStatus === 'disconnected' ? (
+            <DaemonBanner />
+          ) : (
+            <ConnectionNotice status={sseStatus} onReconnect={reconnect} />
+          )}
           <CapabilityWarnings capabilities={capabilities} />
 
           <Suspense fallback={<PageLoader />}>

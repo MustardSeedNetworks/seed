@@ -10,7 +10,6 @@
  * - fetchLinkData: Layer 2 link status
  * - fetchIpConfig: DHCP/IP configuration
  * - fetchInterfaces: Available network interfaces
- * - fetchVersion: Application version
  * - fetchDiscoveryData: LLDP/CDP/EDP neighbors
  * - fetchDnsData: DNS test results
  * - fetchVlanData: VLAN configuration
@@ -64,7 +63,6 @@ interface UseNetworkFetchersProps {
   setCards: React.Dispatch<React.SetStateAction<CardState>>;
   setCurrentInterface: (name: string) => void;
   setInterfaces: React.Dispatch<React.SetStateAction<InterfaceInfo[]>>;
-  setAppVersion: React.Dispatch<React.SetStateAction<string>>;
   setNetworkDiscovery: React.Dispatch<React.SetStateAction<NetworkDiscoveryData | null>>;
   setIsWifi: (wifi: boolean) => void;
   userSetWifiModeRef: React.MutableRefObject<boolean>;
@@ -82,7 +80,6 @@ export function useNetworkFetchers({
   setCards,
   setCurrentInterface,
   setInterfaces,
-  setAppVersion,
   setNetworkDiscovery,
   setIsWifi,
   userSetWifiModeRef,
@@ -94,7 +91,6 @@ export function useNetworkFetchers({
   fetchLinkData: () => Promise<void>;
   fetchIpConfig: () => Promise<void>;
   fetchInterfaces: () => Promise<void>;
-  fetchVersion: () => Promise<void>;
   fetchDiscoveryData: () => Promise<void>;
   fetchDnsData: () => Promise<void>;
   fetchVlanData: () => Promise<void>;
@@ -211,23 +207,6 @@ export function useNetworkFetchers({
       logger.error(LogComponents.NETWORK, 'Failed to fetch interfaces', err);
     }
   }, [setInterfaces, setRecommendedEthernet]);
-
-  // Fetch app version from status endpoint
-  const fetchVersion = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/status`, {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.version) {
-          setAppVersion(data.version);
-        }
-      }
-    } catch (err) {
-      logger.error(LogComponents.SYSTEM, 'Failed to fetch version', err);
-    }
-  }, [setAppVersion]);
 
   // Fetch discovery data (LLDP/CDP/EDP neighbors)
   const fetchDiscoveryData = useCallback(async () => {
@@ -587,7 +566,6 @@ export function useNetworkFetchers({
     fetchLinkData,
     fetchIpConfig,
     fetchInterfaces,
-    fetchVersion,
     fetchDiscoveryData,
     fetchDnsData,
     fetchVlanData,

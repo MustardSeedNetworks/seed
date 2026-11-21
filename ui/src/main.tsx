@@ -21,9 +21,14 @@ import { createRoot } from 'react-dom/client';
 import App from './app';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProfileProvider } from './contexts/profileContext';
+import { initThemeFromStorage } from './hooks/useTheme';
 import { i18nReady } from './i18n';
 import { getQueryClient } from './lib/queryClient';
 import './index.css';
+
+// Before the first paint and before the awaited i18n load below, which would
+// otherwise leave the page unthemed while locale files arrive.
+initThemeFromStorage();
 
 // Mount the React application to the root DOM element
 // QueryClientProvider enables React Query for API caching and deduplication
