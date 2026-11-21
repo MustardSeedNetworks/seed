@@ -171,7 +171,7 @@ func runRestore(cmd *cobra.Command, state *cliState, archive string) error {
 	}
 	restored, err := support.Restore(file, l.restoreTargets(), keepCopy)
 	if err != nil {
-		if errors.Is(err, support.ErrArchive) {
+		if errors.Is(err, support.ErrArchive) || errors.Is(err, support.ErrUnsafeTarget) {
 			return fmt.Errorf("%w; nothing was changed", err)
 		}
 		return err

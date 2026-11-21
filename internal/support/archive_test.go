@@ -400,3 +400,126 @@ func TestWriteBundleRefusesEscapingNames(t *testing.T) {
 		})
 	}
 }
+
+func symlinkOrSkip(t *testing.T, target, link string) {
+	t.Helper()
+	if err := os.Symlink(target, link); err != nil {
+		t.Skipf("cannot create symlinks here: %v", err)
+	}
+}
+
+func goodArchive(t *testing.T) []byte {
+	t.Helper()
+	src := newInstall(t)
+	src.write(t, support.EntryConfig, "from-archive")
+	src.write(t, support.EntryDatabase, "db-from-archive")
+	return backupBytes(t, src.members(t))
+}
+
+func readFile(t *testing.T, path string) string {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
+}
+
+// TestRestoreNeverFollowsLinks plants a link where restore would write, remove
+// or create, and proves the link's target is untouched and the restore is
+// refused as a whole.
+func TestRestoreNeverFollowsLinks(t *testing.T) {
+	tests := []struct {
+		name  string
+		plant func(t *testing.T, dst install, outside string, hook *func() error)
+	}{
+		{"target file is a link", func(t *testing.T, dst install, outside string, _ *func() error) {
+			dst.write(t, support.EntryDatabase, "real")
+			if err := os.Remove(dst.path(support.EntryDatabase)); err != nil {
+				t.Fatal(err)
+			}
+			symlinkOrSkip(t, filepath.Join(outside, "victim"), dst.path(support.EntryDatabase))
+		}},
+		{"target file is a dangling link", func(t *testing.T, dst install, outside string, _ *func() error) {
+			if err := os.MkdirAll(filepath.Dir(dst.path(support.EntryConfig)), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			symlinkOrSkip(t, filepath.Join(outside, "not-yet"), dst.path(support.EntryConfig))
+		}},
+		{"parent directory is a link", func(t *testing.T, dst install, outside string, _ *func() error) {
+			if err := os.MkdirAll(filepath.Dir(filepath.Dir(dst.path(support.EntryDatabase))), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			symlinkOrSkip(t, outside, filepath.Dir(dst.path(support.EntryDatabase)))
+		}},
+		{"stale sidecar is a link", func(t *testing.T, dst install, outside string, _ *func() error) {
+			dst.write(t, support.EntryDatabase, "real")
+			symlinkOrSkip(t, filepath.Join(outside, "victim"), dst.path(support.EntryDatabaseWAL))
+		}},
+		{"target is a directory", func(t *testing.T, dst install, _ string, _ *func() error) {
+			if err := os.MkdirAll(dst.path(support.EntryConfig), 0o700); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{"link planted after validation", func(t *testing.T, dst install, outside string, hook *func() error) {
+			dst.write(t, support.EntryDatabase, "real")
+			*hook = func() error {
+				if err := os.Remove(dst.path(support.EntryDatabase)); err != nil {
+					return err
+				}
+				return os.Symlink(filepath.Join(outside, "victim"), dst.path(support.EntryDatabase))
+			}
+		}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) { runLinkCase(t, tc.plant) })
+	}
+}
+
+func runLinkCase(t *testing.T, plant func(t *testing.T, dst install, outside string, hook *func() error)) {
+	t.Helper()
+	dst := newInstall(t)
+	outside := t.TempDir()
+	victim := filepath.Join(outside, "victim")
+	if err := os.WriteFile(victim, []byte("victim-content"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var hook func() error
+	plant(t, dst, outside, &hook)
+
+	_, err := support.Restore(bytes.NewReader(goodArchive(t)), dst.targets, hook)
+	if !errors.Is(err, support.ErrUnsafeTarget) {
+		t.Fatalf("Restore error = %v, want ErrUnsafeTarget", err)
+	}
+	if got := readFile(t, victim); got != "victim-content" {
+		t.Errorf("the link target was written through: %q", got)
+	}
+	entries, readErr := os.ReadDir(outside)
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if len(entries) != 1 {
+		t.Errorf("restore created files through a link: %v", entries)
+	}
+	if left := dst.leftovers(t); len(left) != 0 {
+		t.Errorf("a refused restore left temporary files: %v", left)
+	}
+}
+
+func TestRestoreRefusesFilesOwnedByAnotherUser(t *testing.T) {
+	if os.Geteuid() != 0 || runtimeIsWindows() {
+		t.Skip("changing a file's owner needs root")
+	}
+	dst := newInstall(t)
+	dst.write(t, support.EntryConfig, "owned-by-someone-else")
+	if err := os.Chown(dst.path(support.EntryConfig), 12345, 12345); err != nil {
+		t.Fatal(err)
+	}
+	_, err := support.Restore(bytes.NewReader(goodArchive(t)), dst.targets, nil)
+	if !errors.Is(err, support.ErrUnsafeTarget) || !strings.Contains(err.Error(), "uid 12345") {
+		t.Fatalf("Restore error = %v, want an ownership refusal naming uid 12345", err)
+	}
+	if got, _ := dst.read(t, support.EntryConfig); got != "owned-by-someone-else" {
+		t.Errorf("config changed to %q", got)
+	}
+}

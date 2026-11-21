@@ -161,7 +161,7 @@ directory, the data directory under the installed service; pass `--workdir`
 if the daemon runs somewhere else.
 
 ```bash
-seed status [--json]            # exit 0 running, 1 error, 2 not running
+seed status [--json]            # exit 0 running, 1 not running, 2 error
 seed logs [-f] [--lines N]      # end of the daemon log, or follow it
 seed support-bundle [-o FILE]   # redacted diagnostics to send to support
 seed backup [-o FILE]           # config, keyring, database, certificate

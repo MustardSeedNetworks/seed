@@ -14,7 +14,7 @@ func TestExitCodeFor(t *testing.T) {
 	}{
 		{"plain error", plain, 1},
 		{"daemon running", &daemonRunningError{dir: "/etc/seed", instead: "stop it"}, exitDaemonRunning},
-		{"tagged 2", withExitCode(exitNotRunning, plain), 2},
+		{"tagged 2", withExitCode(exitStatusUnknown, plain), 2},
 		{"tagged 1", withExitCode(exitFailure, plain), 1},
 		{"tagged and wrapped", errors.Join(errors.New("ctx"), withExitCode(2, plain)), 2},
 		{"reported without a message", reportedExit(2), 2},

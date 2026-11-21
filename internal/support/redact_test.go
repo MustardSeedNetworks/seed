@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -38,6 +39,49 @@ func TestRedactJSON(t *testing.T) {
 			in:          `{"api_tokens":["token-aaaa","token-bbbb"]}`,
 			wantGone:    []string{"token-aaaa", "token-bbbb"},
 			wantSecrets: []string{"token-aaaa", "token-bbbb"},
+		},
+		{
+			name:        "webhook url is sensitive entirely",
+			in:          `{"alerts":{"webhook_url":"https://hooks.example.com/services/T000/B000/XXXXSECRETXXXX"}}`,
+			wantGone:    []string{"hooks.example.com", "XXXXSECRETXXXX"},
+			wantSecrets: []string{"https://hooks.example.com/services/T000/B000/XXXXSECRETXXXX", "XXXXSECRETXXXX"},
+		},
+		{
+			name:     "receiver and notification urls too",
+			in:       `{"a":{"receiver":"https://r.example/in/tok-aaaa1111"},"b":{"notification_endpoint":"https://n.example/x?y=tok-bbbb2222"}}`,
+			wantGone: []string{"tok-aaaa1111", "tok-bbbb2222"},
+			wantSecrets: []string{
+				"https://r.example/in/tok-aaaa1111",
+				"tok-aaaa1111",
+				"https://n.example/x?y=tok-bbbb2222",
+				"tok-bbbb2222",
+			},
+		},
+		{
+			name:        "userinfo password in an ordinary url",
+			in:          `{"integrations":{"base":"https://admin:hunter2000@meraki.example.com/api/v1"}}`,
+			wantKept:    []string{"admin", "meraki.example.com/api/v1"},
+			wantGone:    []string{"hunter2000"},
+			wantSecrets: []string{"hunter2000"},
+		},
+		{
+			name:        "userinfo token with no password",
+			in:          `{"feed":"https://tok-cccc3333@feed.example.com/x"}`,
+			wantKept:    []string{"feed.example.com/x"},
+			wantGone:    []string{"tok-cccc3333"},
+			wantSecrets: []string{"tok-cccc3333"},
+		},
+		{
+			name:        "credential query parameters",
+			in:          `{"feed":"https://feed.example.com/x?format=json&api_key=key-dddd4444&sig=sig-eeee5555"}`,
+			wantKept:    []string{"feed.example.com/x", "format=json"},
+			wantGone:    []string{"key-dddd4444", "sig-eeee5555"},
+			wantSecrets: []string{"key-dddd4444", "sig-eeee5555"},
+		},
+		{
+			name:     "plain urls and non-urls are untouched",
+			in:       `{"a":"https://example.com/docs?page=2","b":"not://","c":"host:8443"}`,
+			wantKept: []string{"https://example.com/docs?page=2", "not://", "host:8443"},
 		},
 		{
 			name:     "unset credential stays unset",
@@ -160,7 +204,12 @@ func TestRedactJSONCoversEveryConfigField(t *testing.T) {
 
 // looksLikeCredential is deliberately broader than the redactor's own pattern:
 // it is the independent check that the redactor's pattern is wide enough.
+var opaqueURLName = regexp.MustCompile(`(?i)(webhook|receiver|notification)`)
+
 func looksLikeCredential(key string) bool {
+	if opaqueURLName.MatchString(key) {
+		return true
+	}
 	if support.IsSensitiveKey(key) {
 		return true
 	}
@@ -188,6 +237,9 @@ func shape(t reflect.Type, key string, leaves *[]leaf) any {
 	}
 	if t.Kind() == reflect.String {
 		sentinel := fmt.Sprintf("SENTINEL_%s_%d", key, len(*leaves))
+		if opaqueURLName.MatchString(key) {
+			sentinel = "https://SENTINEL-" + strings.ReplaceAll(sentinel, "_", "-") + ".example/hook/abc"
+		}
 		*leaves = append(*leaves, leaf{key: key, sentinel: sentinel})
 		return sentinel
 	}
@@ -257,6 +309,37 @@ func TestScrubText(t *testing.T) {
 			in:   `login password=s3cretvalue ok; {"api_key": "k-12345-abc", "level": "info"}`,
 			gone: []string{"s3cretvalue", "k-12345-abc"},
 			kept: []string{`"level": "info"`},
+		},
+		{
+			name: "snake_case, kebab-case and camelCase key prefixes",
+			in: "smtp_password=pw-aaaa1111 snmp-community: com-bbbb2222 apiToken=tok-cccc3333 " +
+				`{"db_secret":"sec-dddd4444"} x-api-key=key-eeee5555 SMTP_PASSWORD=pw-ffff6666`,
+			gone: []string{
+				"pw-aaaa1111",
+				"com-bbbb2222",
+				"tok-cccc3333",
+				"sec-dddd4444",
+				"key-eeee5555",
+				"pw-ffff6666",
+			},
+			kept: []string{"smtp_password", "snmp-community", "apiToken", "db_secret"},
+		},
+		{
+			name: "keywords that do not end the key are not credentials",
+			in:   "max_tokens=100 tokenizer=fast password_policy=strict secretary=jo communityname=lab",
+			kept: []string{
+				"max_tokens=100",
+				"tokenizer=fast",
+				"password_policy=strict",
+				"secretary=jo",
+				"communityname=lab",
+			},
+		},
+		{
+			name: "url userinfo password in a log line",
+			in:   "fetch https://admin:hunter2000@meraki.example.com/api failed",
+			gone: []string{"hunter2000"},
+			kept: []string{"admin", "meraki.example.com/api"},
 		},
 		{
 			name:    "short known values are left to the patterns",

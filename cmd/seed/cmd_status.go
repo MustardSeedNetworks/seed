@@ -22,10 +22,10 @@ The daemon holds a single-instance lock on the config directory; status reads
 that lock for the process and port, then asks the daemon's unauthenticated
 /__version for its build, so a hung daemon is told apart from a stopped one.
 
-Exit status:
+Exit status (the same as niac status):
   0  running and answering
-  1  could not tell, or running but not answering
-  2  not running`,
+  1  not running
+  2  could not tell: an error, or running but not answering`,
 		Example: `  # Is it up?
   seed status
 
@@ -37,7 +37,13 @@ Exit status:
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SilenceUsage = true
-			return runStatus(cmd, state)
+			if err := runStatus(cmd, state); err != nil {
+				if _, coded := codeOf(err); !coded {
+					return withExitCode(exitStatusUnknown, err)
+				}
+				return err
+			}
+			return nil
 		},
 	}
 	statusCmd.Flags().Bool("json", false, "print the status as JSON")
@@ -71,9 +77,9 @@ func runStatus(cmd *cobra.Command, state *cliState) error {
 	}
 	switch {
 	case !status.Running:
-		return reportedExit(exitNotRunning)
+		return reportedExit(exitStatusDown)
 	case status.Error != "":
-		return withExitCode(exitFailure, errors.New(status.Error))
+		return withExitCode(exitStatusUnknown, errors.New(status.Error))
 	default:
 		return nil
 	}

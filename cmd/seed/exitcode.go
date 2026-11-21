@@ -4,15 +4,15 @@ package main
 
 import "errors"
 
-// Process exit statuses shared by the operations commands (status, logs,
-// support-bundle, backup, restore). Scripts branch on them, so they are a
-// contract: 0 it worked, 1 it failed, 2 the daemon's state decided the answer
-// ("not running" for status, "running" for a command that refuses to touch a
-// live install). exitDaemonRunning, the status the write-refusing commands
-// already used, is the same 2.
+// Process exit statuses. `status` matches niac's so scripts behave the same
+// across products: 0 running, 1 not running, 2 could not tell (an error, or a
+// daemon that holds the lock but does not answer). The other operations
+// commands (logs, support-bundle, backup, restore) exit 1 on failure, as niac's
+// do, and 2 when they refuse to touch a running install (exitDaemonRunning).
 const (
-	exitFailure    = 1
-	exitNotRunning = 2
+	exitFailure       = 1
+	exitStatusDown    = 1
+	exitStatusUnknown = 2
 )
 
 // exitError carries a specific process exit status out to the single exit

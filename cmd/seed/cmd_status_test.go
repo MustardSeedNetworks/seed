@@ -20,8 +20,8 @@ func TestStatusExitCodes(t *testing.T) {
 		wantStderr []string
 	}{
 		{
-			name:       "not running is 2",
-			wantCode:   2,
+			name:       "not running is 1",
+			wantCode:   1,
 			wantStdout: []string{"Status: NOT RUNNING"},
 		},
 		{
@@ -33,33 +33,33 @@ func TestStatusExitCodes(t *testing.T) {
 			wantStdout: []string{"Status: RUNNING", "Version: 9.9.9-test", "Commit: abc1234", "TLS fingerprint: AA:BB"},
 		},
 		{
-			name: "running but not answering is 1",
+			name: "running but not answering is 2",
 			setup: func(t *testing.T, in *opsInstall) {
 				in.serveVersion()
 				in.holdLock(freePort(t))
 			},
-			wantCode:   1,
+			wantCode:   2,
 			wantStdout: []string{"Status: NOT ANSWERING"},
 			wantStderr: []string{"did not answer"},
 		},
 		{
-			name: "running with no readable certificate is 1",
+			name: "running with no readable certificate is 2",
 			setup: func(t *testing.T, in *opsInstall) {
 				in.holdLock(freePort(t))
 			},
-			wantCode:   1,
+			wantCode:   2,
 			wantStderr: []string{"read the daemon certificate"},
 		},
 		{
-			name: "unreadable config is 1",
+			name: "unreadable config is 2",
 			setup: func(_ *testing.T, in *opsInstall) {
 				in.writeFile(in.configPath, "{not json")
 			},
-			wantCode:   1,
+			wantCode:   2,
 			wantStderr: []string{"load config"},
 		},
 		{
-			name: "an unreadable lock is an error, not not-running",
+			name: "an unreadable lock is 2, not not-running",
 			setup: func(t *testing.T, in *opsInstall) {
 				if !canBreakLock() {
 					t.Skip("cannot make the lock file unreadable here")
@@ -71,7 +71,7 @@ func TestStatusExitCodes(t *testing.T) {
 				}
 				t.Cleanup(func() { _ = os.Chmod(lockPath, 0o600) })
 			},
-			wantCode:   1,
+			wantCode:   2,
 			wantStderr: []string{"check whether seed serve is running"},
 		},
 	}
@@ -112,7 +112,7 @@ func TestStatusJSON(t *testing.T) {
 	}{
 		{
 			name:     "not running",
-			wantCode: 2,
+			wantCode: 1,
 			check: func(t *testing.T, got map[string]any) {
 				if got["running"] != false {
 					t.Errorf("running = %v, want false", got["running"])

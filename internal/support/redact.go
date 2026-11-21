@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 )
@@ -30,14 +31,24 @@ const (
 var (
 	sensitiveKey = regexp.MustCompile(sensitiveKeyPattern)
 	pathLikeKey  = regexp.MustCompile(pathLikeKeyPattern)
+	// opaqueURLKey names settings whose URL is itself the credential: a
+	// webhook or receiver endpoint carries its token in the path or query.
+	opaqueURLKey = regexp.MustCompile(`(?i)(webhook|receiver|notification)`)
+	// secretQueryParam names the query parameters that carry a credential.
+	secretQueryParam = regexp.MustCompile(`(?i)(token|secret|password|passwd|api[_-]?key|key|sig|signature|auth|code)`)
+	urlUserinfo      = regexp.MustCompile(`([A-Za-z][A-Za-z0-9+.-]*://[^/\s:@]*:)[^@\s/]+@`)
 
 	privateKeyBlock = regexp.MustCompile(`-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----`)
 	bearerPattern   = regexp.MustCompile(`(?i)bearer\s+[A-Za-z0-9._~+/=-]+`)
 	jwtPattern      = regexp.MustCompile(`eyJ[A-Za-z0-9_-]*\.eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*`)
 	// credentialAssignment catches a key=value or "key": "value" pair whose key
-	// names a credential, for secrets this package was never told about.
+	// names a credential, for secrets this package was never told about. The
+	// key may carry a snake_case, kebab-case or camelCase prefix
+	// (smtp_password, snmp-community, apiToken); the keyword must end the key,
+	// so max_tokens and tokenizer are left alone.
 	credentialAssignment = regexp.MustCompile(
-		`(?i)\b(token|community|password|passphrase|secret|api[_-]?key|license[_-]?key)\b` +
+		`(?i)((?:^|[^A-Za-z0-9])[A-Za-z0-9_-]*` +
+			`(?:token|secret|password|passphrase|community|api[_-]?key|license[_-]?key))` +
 			`(["']?\s*[:=]\s*)"?[^"\s,}]+"?`)
 )
 
@@ -65,7 +76,7 @@ func RedactJSON(data []byte) ([]byte, []string, error) {
 		return nil, nil, fmt.Errorf("parse config: %w", err)
 	}
 	var secrets []string
-	doc = redactValue(doc, false, &secrets)
+	doc = redactValue(doc, "", &secrets)
 	var out bytes.Buffer
 	encoder := json.NewEncoder(&out)
 	encoder.SetIndent("", "  ")
@@ -76,29 +87,102 @@ func RedactJSON(data []byte) ([]byte, []string, error) {
 	return out.Bytes(), secrets, nil
 }
 
-func redactValue(value any, sensitive bool, secrets *[]string) any {
+func redactValue(value any, key string, secrets *[]string) any {
 	switch typed := value.(type) {
 	case map[string]any:
-		for key, child := range typed {
-			typed[key] = redactValue(child, IsSensitiveKey(key), secrets)
+		for childKey, child := range typed {
+			typed[childKey] = redactValue(child, childKey, secrets)
 		}
 		return typed
 	case []any:
 		for i, child := range typed {
-			typed[i] = redactValue(child, sensitive, secrets)
+			typed[i] = redactValue(child, key, secrets)
 		}
 		return typed
 	case string:
-		if !sensitive || typed == "" {
-			return typed
-		}
-		if len(typed) >= minScrubLen {
-			*secrets = append(*secrets, typed)
-		}
-		return Placeholder
+		return redactString(typed, key, secrets)
 	default:
 		return value
 	}
+}
+
+func redactString(value, key string, secrets *[]string) string {
+	if value == "" {
+		return value
+	}
+	if IsSensitiveKey(key) {
+		remember(secrets, value)
+		return Placeholder
+	}
+	parsed, ok := parseURL(value)
+	if !ok {
+		return value
+	}
+	if opaqueURLKey.MatchString(key) {
+		remember(secrets, value)
+		remember(secrets, lastSegment(parsed.Path))
+		for _, values := range parsed.Query() {
+			for _, v := range values {
+				remember(secrets, v)
+			}
+		}
+		return Placeholder
+	}
+	return redactURL(value, parsed, secrets)
+}
+
+func remember(secrets *[]string, value string) {
+	if len(value) >= minScrubLen {
+		*secrets = append(*secrets, value)
+	}
+}
+
+func parseURL(value string) (*url.URL, bool) {
+	if !strings.Contains(value, "://") {
+		return nil, false
+	}
+	parsed, err := url.Parse(value)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return nil, false
+	}
+	return parsed, true
+}
+
+func lastSegment(p string) string {
+	return p[strings.LastIndex(p, "/")+1:]
+}
+
+// redactURL removes the credential parts of a URL that is not credential-named
+// as a whole: a userinfo password (or a bare userinfo token) and the values of
+// credential-named query parameters. The rest of the URL stays readable.
+func redactURL(raw string, parsed *url.URL, secrets *[]string) string {
+	changed := false
+	if parsed.User != nil {
+		if password, has := parsed.User.Password(); has {
+			remember(secrets, password)
+			parsed.User = url.UserPassword(parsed.User.Username(), Placeholder)
+		} else {
+			remember(secrets, parsed.User.Username())
+			parsed.User = url.User(Placeholder)
+		}
+		changed = true
+	}
+	query := parsed.Query()
+	for name, values := range query {
+		if !secretQueryParam.MatchString(name) {
+			continue
+		}
+		for i, v := range values {
+			remember(secrets, v)
+			values[i] = Placeholder
+			changed = true
+		}
+	}
+	if !changed {
+		return raw
+	}
+	parsed.RawQuery = query.Encode()
+	return strings.ReplaceAll(parsed.String(), url.QueryEscape(Placeholder), Placeholder)
 }
 
 // ScrubText removes known secret values from free text, then masks anything
@@ -114,6 +198,7 @@ func ScrubText(text string, secrets []string) string {
 		}
 	}
 	text = privateKeyBlock.ReplaceAllString(text, Placeholder)
+	text = urlUserinfo.ReplaceAllString(text, "${1}"+Placeholder+"@")
 	text = bearerPattern.ReplaceAllString(text, "Bearer "+Placeholder)
 	text = jwtPattern.ReplaceAllString(text, Placeholder)
 	return credentialAssignment.ReplaceAllString(text, "$1$2"+Placeholder)

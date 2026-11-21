@@ -54,6 +54,11 @@ const (
 // has been written when it is returned.
 var ErrArchive = errors.New("refusing archive")
 
+// ErrUnsafeTarget marks a restore refused because a file it would replace is a
+// link, is not a regular file, or belongs to another user. Nothing has been
+// written when it is returned.
+var ErrUnsafeTarget = errors.New("refusing to restore over")
+
 // Member is one file to carry in a backup.
 type Member struct {
 	Entry string
@@ -190,6 +195,9 @@ func Restore(src io.ReadSeeker, targets []Target, beforeInstall func() error) ([
 	present, err := validate(src, byEntry)
 	if err != nil {
 		return nil, err
+	}
+	if checkErr := checkTargets(byEntry, present); checkErr != nil {
+		return nil, checkErr
 	}
 	if beforeInstall != nil {
 		if hookErr := beforeInstall(); hookErr != nil {
@@ -336,6 +344,13 @@ func install(src io.Reader, targets map[string]Target, present map[string]bool) 
 		}
 		pending = append(pending, item)
 	}
+	// A link planted while the files were being staged is caught here, before
+	// the first rename, so a refusal still means nothing was changed.
+	for _, item := range pending {
+		if checkErr := checkTarget(item.dir, item.base, item.target.Path); checkErr != nil {
+			return nil, checkErr
+		}
+	}
 	restored := make([]string, 0, len(pending))
 	for _, item := range pending {
 		if renameErr := item.dir.Rename(item.tmp, item.base); renameErr != nil {
@@ -348,16 +363,24 @@ func install(src io.Reader, targets map[string]Target, present map[string]bool) 
 }
 
 func stage(tr io.Reader, header *tar.Header, target Target) (staged, error) {
-	root, base, err := openParent(target.Path)
+	root, base, err := openTarget(target.Path)
 	if err != nil {
-		return staged{}, fmt.Errorf("prepare %s: %w", target.Path, err)
+		return staged{}, err
 	}
 	tmp := base + tmpSuffix
+	if _, statErr := root.Lstat(tmp); statErr == nil {
+		// A leftover from an interrupted restore, or something planted: either
+		// way it is removed by name, never followed.
+		if removeErr := root.Remove(tmp); removeErr != nil {
+			_ = root.Close()
+			return staged{}, fmt.Errorf("clear %s: %w", target.Path, removeErr)
+		}
+	}
 	mode := fs.FileMode(privateMode)
 	if target.Entry == EntryCertificate {
 		mode = publicCertMode
 	}
-	file, openErr := root.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
+	file, openErr := root.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
 	if openErr != nil {
 		_ = root.Close()
 		return staged{}, fmt.Errorf("create %s: %w", target.Path, openErr)
@@ -377,12 +400,9 @@ func removeAbsent(targets map[string]Target, present map[string]bool) error {
 		if present[entry] || !target.RemoveIfAbsent {
 			continue
 		}
-		root, base, err := fsutil.RootAt(target.Path)
-		if errors.Is(err, fs.ErrNotExist) {
-			continue
-		}
+		root, base, err := openTarget(target.Path)
 		if err != nil {
-			return fmt.Errorf("prepare %s: %w", target.Path, err)
+			return err
 		}
 		removeErr := root.Remove(base)
 		_ = root.Close()
@@ -393,14 +413,92 @@ func removeAbsent(targets map[string]Target, present map[string]bool) error {
 	return nil
 }
 
-// openParent opens an [os.Root] on the directory that will hold p, creating
-// the directory when it does not exist yet (a fresh host has no certs/).
-func openParent(p string) (*os.Root, string, error) {
+// checkTargets refuses the restore when any file it would replace or remove is
+// unsafe to touch.
+func checkTargets(targets map[string]Target, present map[string]bool) error {
+	for entry, target := range targets {
+		if !present[entry] && !target.RemoveIfAbsent {
+			continue
+		}
+		root, _, err := openTarget(target.Path)
+		if err != nil {
+			return err
+		}
+		_ = root.Close()
+	}
+	return nil
+}
+
+// openTarget opens an [os.Root] on the directory that will hold p, creating
+// the directory when it does not exist yet (a fresh host has no certs/), and
+// returns it with p's base name. It never resolves symlinks: the directory
+// itself and the file are refused if they are links, and every later create,
+// rename and remove goes through the root by base name, so the final component
+// is never followed.
+func openTarget(p string) (*os.Root, string, error) {
 	dir := filepath.Dir(p)
 	if err := ensureDir(dir); err != nil {
+		return nil, "", fmt.Errorf("prepare %s: %w", p, err)
+	}
+	if err := refuseLinkedDir(dir); err != nil {
 		return nil, "", err
 	}
-	return fsutil.RootAt(p)
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return nil, "", fmt.Errorf("prepare %s: %w", p, err)
+	}
+	base := filepath.Base(p)
+	if checkErr := checkTarget(root, base, p); checkErr != nil {
+		_ = root.Close()
+		return nil, "", checkErr
+	}
+	return root, base, nil
+}
+
+// refuseLinkedDir refuses a target directory that is itself a link, which is
+// how a planted certs/ or data/ would redirect a restore. It looks the
+// directory up through its own parent so the lookup cannot follow it.
+func refuseLinkedDir(dir string) error {
+	parent := filepath.Dir(dir)
+	if parent == dir {
+		return nil
+	}
+	root, err := os.OpenRoot(parent)
+	if err != nil {
+		return fmt.Errorf("open %s: %w", parent, err)
+	}
+	defer func() { _ = root.Close() }()
+	info, err := root.Lstat(filepath.Base(dir))
+	if err != nil {
+		return fmt.Errorf("inspect %s: %w", dir, err)
+	}
+	if info.Mode()&(fs.ModeSymlink|fs.ModeIrregular) != 0 {
+		return fmt.Errorf("%w %s: the directory is a link", ErrUnsafeTarget, dir)
+	}
+	return nil
+}
+
+// checkTarget refuses a destination that exists and is a link, is not a
+// regular file, or is owned by a user other than the one running restore.
+func checkTarget(root *os.Root, base, display string) error {
+	info, err := root.Lstat(base)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("inspect %s: %w", display, err)
+	}
+	if info.Mode()&(fs.ModeSymlink|fs.ModeIrregular) != 0 {
+		return fmt.Errorf("%w %s: it is a link", ErrUnsafeTarget, display)
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("%w %s: it is not a regular file", ErrUnsafeTarget, display)
+	}
+	if owner, known := fileOwner(info); known && owner != invokerUID() {
+		return fmt.Errorf("%w %s: it belongs to uid %d, not to you (uid %d); run restore as the user that owns it",
+			ErrUnsafeTarget, display, owner, invokerUID())
+	}
+	return nil
 }
 
 // ensureDir creates dir through an [os.Root] on its nearest existing ancestor,
