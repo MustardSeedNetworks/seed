@@ -136,7 +136,7 @@ func (s *Server) activeCertPath() string {
 	if s.config.Server.CertFile != "" {
 		return s.config.Server.CertFile
 	}
-	return filepath.Join(selfSignedCertDir, httpserver.DefaultCertFileName)
+	return filepath.Join(s.certDir, httpserver.DefaultCertFileName)
 }
 
 // tlsFingerprintForResponse returns the cached fingerprint (computing it

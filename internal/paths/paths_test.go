@@ -10,6 +10,9 @@ import (
 )
 
 func TestResolve_SystemMode(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the Windows system layout is covered by TestResolve_SystemMode_Windows")
+	}
 	p := paths.Resolve(paths.ModeSystem)
 
 	if p.Mode != paths.ModeSystem {

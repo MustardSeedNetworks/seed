@@ -127,6 +127,14 @@ sudo installer -pkg seed-<version>-darwin-arm64.pkg -target /
 The `.pkg` does not include the Wi-Fi helper, so Wi-Fi scans on macOS report no
 networks.
 
+On Windows, extract the `.zip` and run `install.ps1` from an elevated
+PowerShell. It installs `seed.exe` to `C:\Program Files\Seed` and registers
+the service, and the service keeps its config, database, logs, certificates
+and setup token under `C:\ProgramData\Seed`, readable only by SYSTEM and
+Administrators. `install.ps1` stops without changing anything if that
+directory already exists and is owned by someone else or contains a link. The
+firewall rule for port 8443 covers the Domain and Private profiles only.
+
 ### First run
 
 1. Open `https://<device-ip>:8443` (accept the self-signed cert).

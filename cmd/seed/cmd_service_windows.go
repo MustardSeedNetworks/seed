@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/kardianos/service"
@@ -40,6 +41,7 @@ const (
 type seedProgram struct {
 	state      *cliState
 	configPath string
+	certDir    string
 	config     *config.Config
 	server     *api.Server
 	components *api.BackgroundComponents
@@ -49,11 +51,26 @@ type seedProgram struct {
 
 // Start is called when the Windows Service Manager starts the service.
 func (p *seedProgram) Start(_ service.Service) error {
-	p.configPath = paths.ResolveConfigPath(p.state.cfgFile, paths.ModeAuto)
+	// ModeSystem, not ModeAuto: os.Getuid is -1 on Windows, so auto-detection
+	// said "user" and put the config and JWT secret under the profile of the
+	// account the service runs as.
+	sp := paths.Resolve(paths.ModeSystem)
+	if err := prepareServiceDirs(sp); err != nil {
+		return err
+	}
+	// The SCM starts the service in C:\Windows\System32. Every storage path in
+	// the config is made absolute below; this catches the ones that are code
+	// constants, such as the report directory, so none can fall back there.
+	if err := os.Chdir(sp.Root); err != nil {
+		return fmt.Errorf("enter service directory: %w", err)
+	}
+	p.certDir = sp.CertDir
+	p.configPath = paths.ResolveConfigPath(p.state.cfgFile, paths.ModeSystem)
 	cfg, err := loadAndConfigureConfigForService(p.configPath)
 	if err != nil {
 		return err
 	}
+	anchorServicePaths(cfg, sp)
 	p.config = cfg
 	p.stopChan = make(chan struct{})
 	p.stoppedCh = make(chan struct{})
@@ -99,6 +116,7 @@ func (p *seedProgram) run() {
 		Config:         cfg,
 		ConfigPath:     configPath,
 		LogPath:        logPath,
+		CertDir:        p.certDir,
 		NetManager:     netMgr,
 		ICMPAvailable:  true,
 		TrustedProxies: proxies,
@@ -155,11 +173,8 @@ func (p *seedProgram) run() {
 // setupLoggingForService configures logging for Windows service mode.
 func setupLoggingForService(cfg *config.Config) string {
 	logPath := cfg.Logging.File
-	if logPath == "" {
-		logPath = filepath.FromSlash(paths.DefaultLogFile)
-	}
 
-	_ = os.MkdirAll(filepath.Dir(logPath), 0o750)
+	_ = ensureDataDir(filepath.Dir(logPath))
 
 	logCfg := &logging.LoggingConfig{
 		Level:      cfg.Logging.Level,
@@ -204,7 +219,7 @@ func setupNetworkInterfaceForService(cfg *config.Config, configPath string) *net
 
 	if activeInterface != "" && activeInterface != cfg.Interface.Default {
 		cfg.Interface.Default = activeInterface
-		_ = cfg.Save(configPath)
+		_ = savePrivateConfig(cfg, configPath)
 		_ = netMgr.SetCurrentInterface(activeInterface)
 	}
 
@@ -214,10 +229,6 @@ func setupNetworkInterfaceForService(cfg *config.Config, configPath string) *net
 // initializeDatabaseForService initializes database for service mode.
 func initializeDatabaseForService(cfg *config.Config) *app.Persistence {
 	dbPath := cfg.Database.Path
-	if dbPath == "" {
-		dbPath = "data/seed.db"
-	}
-
 	db, err := database.OpenWithAutoRebuild(dbPath)
 	if err != nil {
 		logging.GetLogger().Error("Failed to open database", "path", dbPath, "error", err)
@@ -308,6 +319,39 @@ func initServiceCmd(state *cliState) {
 	state.rootCmd.AddCommand(serviceCmd)
 }
 
+// checkServiceExecutable refuses an executable that is not inside installDir.
+// The service runs as LocalSystem from whatever path it is registered with, so
+// registering a binary an unprivileged user can replace is a local privilege
+// escalation. exe must already have its symlinks resolved.
+func checkServiceExecutable(exe, installDir string) error {
+	if !filepath.IsAbs(exe) || !filepath.IsAbs(installDir) {
+		return fmt.Errorf("service executable %q and install directory %q must be absolute paths", exe, installDir)
+	}
+	rel, err := filepath.Rel(installDir, exe)
+	if err != nil || rel == "." || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return fmt.Errorf("refusing to register %s as a service: it is not under %s; "+
+			"run install.ps1 from the release archive, which copies seed.exe there", exe, installDir)
+	}
+	return nil
+}
+
+// installableExecutable returns the running binary with symlinks resolved, or
+// an error if it is not where the service may be registered from.
+func installableExecutable() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("locate seed.exe: %w", err)
+	}
+	resolved, err := filepath.EvalSymlinks(exe)
+	if err != nil {
+		return "", fmt.Errorf("resolve %s: %w", exe, err)
+	}
+	if checkErr := checkServiceExecutable(resolved, paths.Resolve(paths.ModeSystem).BinaryDir); checkErr != nil {
+		return "", checkErr
+	}
+	return resolved, nil
+}
+
 func getServiceConfig() *service.Config {
 	execPath, _ := os.Executable()
 	return &service.Config{
@@ -334,8 +378,14 @@ func runWindowsService(state *cliState) {
 }
 
 func installWindowsService() {
-	prg := &seedProgram{}
-	svc, err := service.New(prg, getServiceConfig())
+	execPath, err := installableExecutable()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+	svcCfg := getServiceConfig()
+	svcCfg.Executable = execPath
+	svc, err := service.New(&seedProgram{}, svcCfg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create service: %v\n", err)
 		os.Exit(1)

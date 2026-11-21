@@ -47,6 +47,12 @@ type Paths struct {
 	LogDir     string
 	CacheDir   string
 	BinaryDir  string
+
+	// Root and CertDir are set only by the Windows system layout, where every
+	// directory hangs off one tree under %ProgramData%. Root is also what the
+	// service resolves relative config paths against.
+	Root    string
+	CertDir string
 }
 
 // Resolve determines paths based on mode and environment.
@@ -54,6 +60,8 @@ type Paths struct {
 // For ModeAuto, it detects whether to use system or user paths by checking:
 //   - If running as root (UID 0)
 //   - If running under systemd (NOTIFY_SOCKET or INVOCATION_ID env vars)
+//   - If running as a Windows service (os.Getuid is -1 on Windows, so the UID
+//     test alone would put a service in user mode)
 //
 // Returns a Paths structure with all resolved directory and file paths.
 func Resolve(mode Mode) *Paths {
@@ -76,19 +84,10 @@ func detectActualMode(mode Mode) Mode {
 	if mode != ModeAuto {
 		return mode
 	}
-	if isSystemdService() || os.Getuid() == 0 {
+	if isSystemdService() || isWindowsService() || os.Getuid() == 0 {
 		return ModeSystem
 	}
 	return ModeUser
-}
-
-// resolveSystemPaths sets system-level paths (FHS compliant).
-func resolveSystemPaths(p *Paths) {
-	p.ConfigDir = filepath.Join("/etc", appName)
-	p.DataDir = filepath.Join("/var/lib", appName)
-	p.LogDir = filepath.Join("/var/log", appName)
-	p.CacheDir = filepath.Join("/var/cache", appName)
-	p.BinaryDir = "/usr/local/bin"
 }
 
 // resolveUserPaths sets user-level paths (XDG Base Directory compliant).

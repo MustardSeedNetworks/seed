@@ -9,8 +9,8 @@
 //
 // The package supports three installation modes:
 //
-//   - ModeAuto: Automatically detects whether running as root/systemd (system mode)
-//     or regular user (user mode)
+//   - ModeAuto: Automatically detects whether running as root, systemd or a
+//     Windows service (system mode) or regular user (user mode)
 //   - ModeUser: Forces user-level paths (~/.config, ~/.local/share, etc.)
 //   - ModeSystem: Forces system-level paths (/etc, /var/lib, /var/log, etc.)
 //
@@ -28,6 +28,11 @@
 //   - Logs: /var/log/seed/
 //   - Cache: /var/cache/seed/
 //   - Binary: /usr/local/bin/
+//
+// Windows system mode (a service started by the Service Control Manager, or
+// ModeSystem) keeps everything under %ProgramData%\Seed (config, data, logs,
+// certs, cache) and the binary under %ProgramFiles%\Seed. The folders come
+// from the Known Folder API, not the environment.
 //
 // # Config File Priority
 //
