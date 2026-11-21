@@ -18,6 +18,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/paths"
 )
 
 // Start starts the HTTPS server.
@@ -186,7 +187,7 @@ func (s *Server) SetBoundPortObserver(observe func(int)) {
 
 // selfSignedCertDir is where foundation's httpserver writes the generated pair
 // (server.crt / server.key) when the operator configured no certificate.
-const selfSignedCertDir = "certs"
+const selfSignedCertDir = paths.DefaultCertDir
 
 // selfSignedCertOptions describes the generated certificate. It is its own CA,
 // so `seed install-ca` can put the same file in the OS trust store.

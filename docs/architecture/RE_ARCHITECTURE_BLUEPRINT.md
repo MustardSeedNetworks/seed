@@ -670,6 +670,9 @@ be worse versions of the UI). But the CLI is not deletable — part of it is the
 | `seed setup` / `reset` | first-run admin bootstrap / factory reset |
 | `seed license activate` / `trial` | air-gapped boxes activate offline at the terminal |
 | `seed validate` | config check without booting |
+| `seed status` / `logs` | ask a running daemon, or read its log, from the host shell |
+| `seed support-bundle` | redacted diagnostics for support, collectable when the UI is down |
+| `seed backup` / `restore` | rebuild an install: config, keyring, database, certificate |
 
 Rule: **the CLI stays thin and operational, not a domain mirror.** Where an ops
 command touches domain logic (`license`, `export`, `setup`), it goes through core via

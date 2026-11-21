@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -25,12 +26,25 @@ type cliState struct {
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 // All CLI state is created here to satisfy gochecknoglobals - no package-level vars.
 func Execute() {
+	os.Exit(runCLI(os.Args[1:], os.Stdout, os.Stderr))
+}
+
+// runCLI runs the command tree against args and returns the process exit
+// status. It is Execute without the [os.Exit], so the exit codes the operations
+// commands promise can be tested.
+func runCLI(args []string, stdout, stderr io.Writer) int {
 	state := newCLIState()
 	initCommands(state)
+	state.rootCmd.SetArgs(args)
+	state.rootCmd.SetOut(stdout)
+	state.rootCmd.SetErr(stderr)
 	if err := state.rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(exitCodeFor(err))
+		if msg := err.Error(); msg != "" {
+			fmt.Fprintln(stderr, msg)
+		}
+		return exitCodeFor(err)
 	}
+	return 0
 }
 
 // newCLIState creates a new CLI state with all commands configured.
@@ -39,8 +53,11 @@ func newCLIState() *cliState {
 
 	// Note: Run function is set in initCommands() to avoid initialization cycle
 	state.rootCmd = &cobra.Command{
-		Use:   binaryName,
-		Short: "Seed - Network Diagnostics by Mustard Seed Networks",
+		Use: binaryName,
+		// runCLI prints the error once, and the operations commands report
+		// their own failures with an exit status rather than a usage dump.
+		SilenceErrors: true,
+		Short:         "Seed - Network Diagnostics by Mustard Seed Networks",
 		Long: fmt.Sprintf(`Seed %s - Network Diagnostics by Mustard Seed Networks
 
 A comprehensive network diagnostic tool that provides:`, version.GetVersion()) + `
@@ -154,10 +171,15 @@ func initCommands(state *cliState) {
 	initInstallCACmd(state)
 	initLicenseCmd(state)
 	initPlatformCmd(state)
+	initBackupCmd(state)
+	initLogsCmd(state)
 	initResetCmd(state)
+	initRestoreCmd(state)
 	initServeCmd(state)
 	initServiceCmd(state)
 	initSetupCmd(state)
+	initStatusCmd(state)
+	initSupportBundleCmd(state)
 	initUninstallCmd(state)
 	initValidateCmd(state)
 	initVersionCmd(state)

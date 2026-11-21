@@ -166,6 +166,28 @@ To remove the certificate from the trust store:
 sudo seed install-ca --uninstall
 ```
 
+### Operating a running install
+
+These commands read the same config and instance lock as `seed serve`, so
+they work from a shell on the host without a login. Relative paths in the
+config (`logs/`, `data/`, `certs/`) resolve against the daemon's working
+directory, the data directory under the installed service; pass `--workdir`
+if the daemon runs somewhere else.
+
+```bash
+seed status [--json]            # exit 0 running, 1 not running, 2 error
+seed logs [-f] [--lines N]      # end of the daemon log, or follow it
+seed support-bundle [-o FILE]   # redacted diagnostics to send to support
+seed backup [-o FILE]           # config, keyring, database, certificate
+seed restore FILE               # put a backup back, keeping a pre-restore copy
+seed version --json             # build metadata, same keys as /__version
+```
+
+`backup` and `restore` refuse while the daemon is running (exit 2): a database
+copied under a writing daemon is not a valid backup. A backup holds the
+install's secrets, so it is created readable by you alone and should be kept
+that way. The license activation is device-bound and is not part of it.
+
 ## Editions
 
 Seed ships as one binary on three tiers — **Free**, **Starter** and **Pro**.
