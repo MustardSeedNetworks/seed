@@ -133,7 +133,7 @@ func mustNewServer(deps api.Deps) *api.Server {
 func initializeDatabase(cfg *config.Config) *app.Persistence {
 	dbPath := cfg.Database.Path
 	if dbPath == "" {
-		dbPath = "data/seed.db"
+		dbPath = filepath.FromSlash(paths.DefaultDatabaseFile)
 	}
 
 	db, err := database.OpenWithAutoRebuild(dbPath)
@@ -219,7 +219,7 @@ func setupLogging(cfg *config.Config) string {
 	// Use configured log path, or default to logs/seed.log
 	logPath := cfg.Logging.File
 	if logPath == "" {
-		logPath = filepath.Join("logs", "seed.log")
+		logPath = filepath.FromSlash(paths.DefaultLogFile)
 	}
 
 	if err := os.MkdirAll(filepath.Dir(logPath), 0o750); err != nil {

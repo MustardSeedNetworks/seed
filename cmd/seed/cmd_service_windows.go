@@ -156,7 +156,7 @@ func (p *seedProgram) run() {
 func setupLoggingForService(cfg *config.Config) string {
 	logPath := cfg.Logging.File
 	if logPath == "" {
-		logPath = filepath.Join("logs", "seed.log")
+		logPath = filepath.FromSlash(paths.DefaultLogFile)
 	}
 
 	_ = os.MkdirAll(filepath.Dir(logPath), 0o750)

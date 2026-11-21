@@ -11,6 +11,21 @@ const (
 	defaultConfig = "seed.json"
 )
 
+// Daemon-relative defaults. The daemon opens these relative to its working
+// directory (the data directory under the installed service), so anything that
+// has to find them from outside the daemon resolves them against that same
+// directory rather than guessing.
+const (
+	// DefaultLogFile is the log the daemon writes when logging.file is unset.
+	DefaultLogFile = "logs/seed.log"
+	// DefaultDatabaseFile is the SQLite file the daemon opens when
+	// database.path is unset.
+	DefaultDatabaseFile = "data/seed.db"
+	// DefaultCertDir is where the daemon keeps its generated certificate pair
+	// when server.cert_file is unset.
+	DefaultCertDir = "certs"
+)
+
 // Mode indicates the installation mode.
 type Mode int
 

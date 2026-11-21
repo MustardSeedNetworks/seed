@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -64,7 +66,7 @@ func TestVersionCmdExecution(t *testing.T) {
 	}
 }
 
-func TestVersionCmdHasRunFunction(t *testing.T) {
+func TestVersionCmdHasRunEFunction(t *testing.T) {
 	state := newCLIState()
 	initVersionCmd(state)
 
@@ -81,7 +83,31 @@ func TestVersionCmdHasRunFunction(t *testing.T) {
 		t.Fatal("version command not found")
 	}
 
-	if versionCmd.Run == nil {
-		t.Error("version command should have a Run function")
+	if versionCmd.RunE == nil {
+		t.Error("version command should have a RunE function")
+	}
+}
+
+func TestVersionJSON(t *testing.T) {
+	var out, errOut bytes.Buffer
+	if code := runCLI([]string{"version", "--json"}, &out, &errOut); code != 0 {
+		t.Fatalf("exit = %d, stderr %q", code, errOut.String())
+	}
+	var got map[string]string
+	if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+		t.Fatalf("version --json is not JSON: %v\n%s", err, out.String())
+	}
+	for _, key := range []string{"version", "commit", "buildTime", "releaseTrain", "uiBuildHash"} {
+		if _, ok := got[key]; !ok {
+			t.Errorf("version --json lacks %q: %v", key, got)
+		}
+	}
+	if got["version"] != version.GetVersion() {
+		t.Errorf("version = %q, want %q", got["version"], version.GetVersion())
+	}
+
+	out.Reset()
+	if code := runCLI([]string{"version"}, &out, &errOut); code != 0 || !strings.HasPrefix(out.String(), "Seed ") {
+		t.Errorf("plain version: exit %d, output %q", code, out.String())
 	}
 }
