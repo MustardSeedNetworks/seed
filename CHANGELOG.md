@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.47](https://github.com/MustardSeedNetworks/seed/compare/v0.282.46...v0.282.47) (2026-11-21)
+
+
+### Miscellaneous
+
+* **deps:** update dependency postcss to v8.5.33 ([#3830](https://github.com/MustardSeedNetworks/seed/issues/3830)) ([3713ef5](https://github.com/MustardSeedNetworks/seed/commit/3713ef52138ddf9c756955f846b0e7f77acc6cfa))
+* **deps:** update dependency rollup-plugin-visualizer to v7.1.3 ([#3832](https://github.com/MustardSeedNetworks/seed/issues/3832)) ([dd3713d](https://github.com/MustardSeedNetworks/seed/commit/dd3713d9ca07022e010c732d2b38e1ddd571cebb))
+
 ## [0.282.46](https://github.com/MustardSeedNetworks/seed/compare/v0.282.45...v0.282.46) (2026-11-21)
 
 
