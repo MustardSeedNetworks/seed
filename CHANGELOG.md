@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.284.0](https://github.com/MustardSeedNetworks/seed/compare/v0.283.0...v0.284.0) (2026-11-21)
+
+
+### Features
+
+* **cli:** add status, logs, support-bundle, backup and restore ([#3846](https://github.com/MustardSeedNetworks/seed/issues/3846)) ([0c060fe](https://github.com/MustardSeedNetworks/seed/commit/0c060fec2fb850dc3874af0d6c25aa813d05cfbc)), closes [#3845](https://github.com/MustardSeedNetworks/seed/issues/3845)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.7.2 ([#3810](https://github.com/MustardSeedNetworks/seed/issues/3810)) ([457adda](https://github.com/MustardSeedNetworks/seed/commit/457adda507c7580326b779d7e18c6818fdaa808e))
+* **deps:** update dependency i18next-browser-languagedetector to v8.3.0 ([#3811](https://github.com/MustardSeedNetworks/seed/issues/3811)) ([d48f946](https://github.com/MustardSeedNetworks/seed/commit/d48f946e87f1738352a8e0ac59eeab422cfa596b))
+* **deps:** update dependency react-hook-form to v7.92.0 ([#3856](https://github.com/MustardSeedNetworks/seed/issues/3856)) ([5ecf048](https://github.com/MustardSeedNetworks/seed/commit/5ecf0487630eb0bfab0eebb45b9f0d82fb234fa3))
+* **deps:** update dependency react-i18next to v17.1.13 ([#3851](https://github.com/MustardSeedNetworks/seed/issues/3851)) ([3b89f6b](https://github.com/MustardSeedNetworks/seed/commit/3b89f6b237a8b17623242a380451e6be6408174f))
+* **deps:** update dependency zustand to v5.1.0 ([#3858](https://github.com/MustardSeedNetworks/seed/issues/3858)) ([eecdf4d](https://github.com/MustardSeedNetworks/seed/commit/eecdf4d84291fe7a75af85bf5582fa8ec2baca93))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @vitejs/plugin-react to v6.3.0 ([#3854](https://github.com/MustardSeedNetworks/seed/issues/3854)) ([420e5c9](https://github.com/MustardSeedNetworks/seed/commit/420e5c9bc0eb2e27c7644d2f3ee0a9e76dcb2f30))
+
 ## [0.283.0](https://github.com/MustardSeedNetworks/seed/compare/v0.282.51...v0.283.0) (2026-11-21)
 
 
