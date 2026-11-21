@@ -177,6 +177,13 @@ func TestResolve_ModeAuto_WithSystemd(t *testing.T) {
 }
 
 func TestResolveConfigPath_Priority(t *testing.T) {
+	// The Windows system layout has its own test; here only the priority of
+	// the fallback matters, so the expectation follows the resolved layout.
+	systemConfig := "/etc/seed/seed.json"
+	if runtime.GOOS == "windows" {
+		systemConfig = paths.Resolve(paths.ModeSystem).ConfigFile
+	}
+
 	tests := []struct {
 		name        string
 		explicit    string
@@ -222,7 +229,7 @@ func TestResolveConfigPath_Priority(t *testing.T) {
 			explicit:    "",
 			envValue:    "",
 			mode:        paths.ModeSystem,
-			expected:    "/etc/seed/seed.json",
+			expected:    systemConfig,
 			description: "should fall back to system path",
 		},
 	}
