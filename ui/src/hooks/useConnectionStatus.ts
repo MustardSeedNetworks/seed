@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
+import { pingDaemon } from '../api/buildVersion';
 
 export type ConnectionState = 'connected' | 'disconnected' | 'checking';
 
-const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 const CHECK_INTERVAL_MS = 15_000;
 const TIMEOUT_MS = 5_000;
 
@@ -20,10 +20,7 @@ export function useConnectionStatus(): ConnectionState {
       controller = new AbortController();
       timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
       try {
-        const response = await fetch(`${API_BASE}/__version`, { signal: controller.signal });
-        if (!response.ok) {
-          throw new Error(`status ${response.status}`);
-        }
+        await pingDaemon(controller.signal);
         if (!disposed) setStatus('connected');
       } catch {
         if (!disposed) setStatus('disconnected');

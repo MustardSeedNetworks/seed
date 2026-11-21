@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { fetchBuildVersionBody } from '../api/buildVersion';
 
 /**
  * Build metadata served by the daemon's unauthenticated /__version endpoint.
@@ -11,8 +12,6 @@ export interface BuildVersion {
   buildTime: string;
   uiBuildHash: string;
 }
-
-const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 const FALLBACK: BuildVersion = {
   version: 'dev',
@@ -43,16 +42,7 @@ export function useBuildVersion(): BuildVersion {
   const [data, setData] = useState<BuildVersion>(FALLBACK);
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`${API_BASE}/__version`, {
-      headers: { Accept: 'application/json' },
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`status ${response.status}`);
-        }
-        return response.json();
-      })
+    fetchBuildVersionBody(controller.signal)
       .then((body: unknown) => {
         if (isBuildVersion(body)) {
           setData(body);

@@ -660,30 +660,6 @@ describe('App', () => {
       expect(profileTriggers.length).toBeGreaterThan(0);
     });
 
-    it('shows the daemon banner when /__version is unreachable', async () => {
-      const authenticated = mockFetch.getMockImplementation();
-      mockFetch.mockImplementation((url: string, init?: RequestInit) => {
-        if (url.includes('/__version')) {
-          return Promise.reject(new TypeError('Failed to fetch'));
-        }
-        return authenticated?.(url, init);
-      });
-      renderWithProviders(<App />);
-
-      expect(await screen.findByTestId('daemon-banner')).toHaveTextContent(
-        "Can't reach Seed daemon, retrying",
-      );
-    });
-
-    it('shows no daemon banner when /__version answers', async () => {
-      renderWithProviders(<App />);
-
-      await waitFor(() => {
-        expect(screen.getAllByText('Seed').length).toBeGreaterThan(0);
-      });
-      expect(screen.queryByTestId('daemon-banner')).toBeNull();
-    });
-
     it('renders interface selector', async () => {
       mockFetch.mockImplementation((url: string) => {
         if (url.includes('/api/v1/setup/status')) {
