@@ -62,6 +62,7 @@
     "unknown": "Unknown",
     "unavailable": "Unavailable",
     "clickToReconnect": "Click to reconnect",
+    "daemonUnreachable": "Can't reach Seed daemon, retrying",
     "tapToReconnect": "Tap to reconnect",
     "notApplicable": "n/a",
     "yes": "yes",

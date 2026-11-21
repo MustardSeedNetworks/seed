@@ -49,7 +49,6 @@ async function switchCardFor(body: unknown): Promise<SwitchData | null> {
       },
       setCurrentInterface: vi.fn(),
       setInterfaces: vi.fn(),
-      setAppVersion: vi.fn(),
       setNetworkDiscovery: vi.fn(),
       setIsWifi: vi.fn(),
       userSetWifiModeRef: ref(false),

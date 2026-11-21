@@ -31,7 +31,6 @@ describe.each([
         setCards: vi.fn(),
         setCurrentInterface: vi.fn(),
         setInterfaces: vi.fn(),
-        setAppVersion: vi.fn(),
         setNetworkDiscovery: vi.fn(),
         setIsWifi: vi.fn(),
         userSetWifiModeRef: { current: false },

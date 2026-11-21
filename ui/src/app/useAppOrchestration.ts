@@ -85,7 +85,6 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
   // Network state
   const [interfaces, setInterfaces] = useState<InterfaceInfo[]>([]);
   const [networkDiscovery, setNetworkDiscovery] = useState<NetworkDiscoveryData | null>(null);
-  const [appVersion, setAppVersion] = useState('dev');
   // #756: Auto-detected recommended interfaces (most capable)
   const [recommendedEthernet, setRecommendedEthernet] = useState<string | undefined>();
 
@@ -154,7 +153,6 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     fetchLinkData,
     fetchIpConfig,
     fetchInterfaces,
-    fetchVersion,
     fetchDiscoveryData,
     fetchDnsData,
     fetchVlanData,
@@ -168,7 +166,6 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     setCards,
     setCurrentInterface,
     setInterfaces,
-    setAppVersion,
     setNetworkDiscovery,
     setIsWifi,
     userSetWifiModeRef,
@@ -460,9 +457,6 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
       fetchInterfaces().catch((): void => {
         /* handled */
       });
-      fetchVersion().catch((): void => {
-        /* handled */
-      });
       fetchDiscoveryData().catch((): void => {
         /* handled */
       });
@@ -494,7 +488,6 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     fetchLinkData,
     fetchIpConfig,
     fetchInterfaces,
-    fetchVersion,
     fetchDiscoveryData,
     fetchDnsData,
     fetchGatewayData,
@@ -566,7 +559,6 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     interfaces,
     networkDiscovery,
     scanError,
-    appVersion,
     recommendedEthernet,
     // interface selection
     currentInterface,

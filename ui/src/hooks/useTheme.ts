@@ -72,6 +72,29 @@ function applyTheme(theme: Theme): void {
 }
 
 /**
+ * Reads the persisted theme. Anything unreadable (storage blocked, or a value
+ * this build never wrote) falls back to dark, the default for a first visit.
+ */
+function readStoredTheme(): Theme {
+  try {
+    const stored: string | null = localStorage.getItem(STORAGE_KEY);
+    return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'dark';
+  } catch {
+    return 'dark';
+  }
+}
+
+/**
+ * Applies the persisted theme to <html>. Called from main.tsx before anything
+ * else loads, so the first paint already has the right palette. index.html
+ * cannot do it: the CSP is `script-src 'self'`, which forbids an inline
+ * script, and the markup carries no theme class of its own.
+ */
+export function initThemeFromStorage(): void {
+  applyTheme(readStoredTheme());
+}
+
+/**
  * Custom hook for managing application theme.
  *
  * Handles theme persistence, system theme detection, and automatic updates
@@ -86,13 +109,7 @@ export function useTheme(): {
   toggleTheme: () => void;
   isDark: boolean;
 } {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-      return stored || 'dark';
-    }
-    return 'dark';
-  });
+  const [theme, setThemeState] = useState<Theme>(readStoredTheme);
 
   const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(() =>
     theme === 'system' ? getSystemTheme() : theme,
