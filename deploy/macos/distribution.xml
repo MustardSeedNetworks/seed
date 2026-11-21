@@ -3,7 +3,7 @@
     <title>Seed - Network Diagnostic Tool</title>
     <organization>com.mustardseednetworks</organization>
     <domains enable_localSystem="true"/>
-    <options customize="never" require-scripts="true" rootVolumeOnly="true"/>
+    <options customize="never" require-scripts="true" rootVolumeOnly="true" hostArchitectures="arm64"/>
 
     <!-- Minimum macOS version (Monterey 12.0 or later) -->
     <os-version min="12.0"/>

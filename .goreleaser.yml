@@ -24,8 +24,9 @@
 #     seed-slsa-provenance.intoto.jsonl
 #
 # Not produced from this config:
-#   - macOS .pkg installer (no native pkgbuild from Linux). macOS users get
-#     the .tar.gz; deploy/macos/build-pkg.sh stays in-tree for local builds.
+#   - macOS .pkg installer (no native pkgbuild from Linux). release.yml's
+#     macos-pkg job builds it from this config's darwin archive on a macOS
+#     runner and attaches it to the release.
 #
 # Tested against goreleaser v2.x.
 # =============================================================================
@@ -293,7 +294,7 @@ signs:
 # job (needs: [goreleaser]).
 #
 # There is no tap and there will not be one — owner decision, 2026-09-07. Do not
-# re-add a brews: block. macOS ships as the .tar.gz above (see the header).
+# re-add a brews: block. macOS ships as the .tar.gz above and a .pkg (see the header).
 
 release:
   github:

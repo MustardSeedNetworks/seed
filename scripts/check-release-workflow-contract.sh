@@ -10,6 +10,7 @@ workflow="${RELEASE_WORKFLOW_PATH:-.github/workflows/release.yml}"
 repo_root="${RELEASE_REPO_ROOT:-.}"
 goreleaser_config="${GORELEASER_CONFIG_PATH:-$repo_root/.goreleaser.yml}"
 release_please_config="${RELEASE_PLEASE_CONFIG_PATH:-$repo_root/.github/release-please-config.json}"
+release_artifacts="${RELEASE_ARTIFACTS_PATH:-$repo_root/.github/release-artifacts.txt}"
 
 require() {
   local pattern="$1"
@@ -101,7 +102,7 @@ validate_action_pins() {
   done < <(grep -E '^[[:space:]]*(-[[:space:]]+)?uses:' "$file")
 }
 
-require "if: \${{ !cancelled() && github.event_name == 'push' && !inputs.dry_run && needs.goreleaser.result == 'success' }}"
+require "if: \${{ !cancelled() && github.event_name == 'push' && !inputs.dry_run && needs.goreleaser.result == 'success' && needs.macos-pkg.result == 'success' }}"
 # Publishing is reserved for pushed tags: only a push can satisfy the
 # verify-tag assertion that the commit passed CI Complete, and a v* tag can be
 # created on any commit. Both halves are pinned -- the publish predicate and the
@@ -119,6 +120,26 @@ require_step_condition "Refuse a manual dispatch that asks to publish" \
   "if: \${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run }}"
 require_job_condition "publish-release" \
   "if: \${{ github.event_name == 'push' && !inputs.dry_run }}"
+
+# The macOS .pkg is a required release artifact. It is built outside goreleaser,
+# so three things keep it from being dropped: the job must exist and feed the
+# provenance job (which publish-release waits for), its publishing steps carry
+# the same push predicate as goreleaser's, and the artifact list names it.
+require_job_condition "macos-pkg" "needs: [goreleaser]"
+require_job_condition "macos-pkg" "runs-on: macos-latest"
+require_job_condition "provenance" "needs: [goreleaser, macos-pkg]"
+require "deploy/macos/build-pkg.sh"
+require "PKG=seed-\${version}-darwin-arm64.pkg"
+for step in "Install Syft and Cosign" "SBOM, sign, and publish the .pkg" "Add the .pkg to the provenance subjects"; do
+  require_step_condition "$step" \
+    "if: \${{ github.event_name == 'push' && !inputs.dry_run }}"
+done
+require_step_condition "Upload dry-run .pkg for inspection" \
+  "if: \${{ github.event_name != 'push' || inputs.dry_run }}"
+if ! grep -Fxq 'seed-{version}-darwin-arm64.pkg' "$release_artifacts"; then
+  echo "release workflow contract: $release_artifacts must list seed-{version}-darwin-arm64.pkg" >&2
+  exit 1
+fi
 # Renovate owns these four values; the gate owns their shape. See require_pin.
 require_pin 'IPERF3_VERSION' '^ +IPERF3_VERSION: "[0-9]+\.[0-9]+(\.[0-9]+)?"$'
 require_pin 'IPERF3_SHA256' '^ +IPERF3_SHA256: "[0-9a-f]{64}"$'
@@ -128,6 +149,22 @@ require_pin 'SYFT_VERSION' '^ +SYFT_VERSION: "[0-9]+\.[0-9]+\.[0-9]+"$'
 require_pin 'SYFT_SHA256' '^ +SYFT_SHA256: "[0-9a-f]{64}"$'
 require_pin 'COSIGN_VERSION' '^ +COSIGN_VERSION: "v[0-9]+\.[0-9]+\.[0-9]+"$'
 require_pin 'COSIGN_SHA256' '^ +COSIGN_SHA256: "[0-9a-f]{64}"$'
+# The macOS job carries its own copy of the tool pins, with darwin checksums.
+# Renovate does not manage them, so the contract keeps them in step with the
+# linux pins above rather than letting one set drift.
+require_pin 'SYFT_DARWIN_VERSION' '^ +SYFT_DARWIN_VERSION: "[0-9]+\.[0-9]+\.[0-9]+"$'
+require_pin 'SYFT_DARWIN_SHA256' '^ +SYFT_DARWIN_SHA256: "[0-9a-f]{64}"$'
+require_pin 'COSIGN_DARWIN_VERSION' '^ +COSIGN_DARWIN_VERSION: "v[0-9]+\.[0-9]+\.[0-9]+"$'
+require_pin 'COSIGN_DARWIN_SHA256' '^ +COSIGN_DARWIN_SHA256: "[0-9a-f]{64}"$'
+pin_value() {
+  grep -oE "^ +$1: \"[^\"]+\"" "$workflow" | head -1 | cut -d'"' -f2
+}
+for tool in SYFT COSIGN; do
+  if [[ "$(pin_value "${tool}_VERSION")" != "$(pin_value "${tool}_DARWIN_VERSION")" ]]; then
+    echo "release workflow contract: ${tool}_DARWIN_VERSION must equal ${tool}_VERSION (rotate the darwin checksum with it)" >&2
+    exit 1
+  fi
+done
 require "syft_dir=\$(mktemp -d)"
 require "trap 'rm -rf \"\$syft_dir\"' EXIT"
 require "cosign_dir=\$(mktemp -d)"
@@ -194,6 +231,20 @@ if ! awk '
 fi
 
 if ! awk '
+  /- name: Install Syft and Cosign$/ { in_step = 1; next }
+  in_step && /^        shell: bash$/ { bash = 1 }
+  in_step && /releases\/download\/v\$\{SYFT_DARWIN_VERSION\}\// { syft_download = 1 }
+  in_step && /releases\/download\/\$\{COSIGN_DARWIN_VERSION\}\// { cosign_download = 1 }
+  in_step && /echo "\$\{SYFT_DARWIN_SHA256\}  .*shasum -a 256 -c -$/ { syft_checksum = 1 }
+  in_step && /echo "\$\{COSIGN_DARWIN_SHA256\}  .*shasum -a 256 -c -$/ { cosign_checksum = 1 }
+  in_step && /^      - name:/ { exit }
+  END { exit !(bash && syft_download && cosign_download && syft_checksum && cosign_checksum) }
+' "$workflow"; then
+  echo "release workflow contract missing checksum-bound Syft and Cosign installation in the macos-pkg job" >&2
+  exit 1
+fi
+
+if ! awk '
   /- name: Install Cosign inside container/ { in_step = 1; next }
   in_step && /^        shell: bash$/ { bash = 1 }
   in_step && /releases\/download\/\$\{COSIGN_VERSION\}\/cosign-linux-amd64/ { download = 1 }
@@ -228,14 +279,15 @@ refuses() {
 }
 
 # attests mirrors the provenance job. Only a pushed, non-dry-run tag whose
-# goreleaser job succeeded produces an attestation -- a snapshot has nothing
+# goreleaser and macos-pkg jobs succeeded produces an attestation -- a snapshot has nothing
 # published to attest against.
 attests() {
   local event="$1"
   local dry_run="$2"
   local goreleaser="$3"
+  local macos_pkg="$4"
 
-  [[ "$event" == push && "$dry_run" != true && "$goreleaser" == success ]]
+  [[ "$event" == push && "$dry_run" != true && "$goreleaser" == success && "$macos_pkg" == success ]]
 }
 
 assert_mode() {
@@ -266,9 +318,10 @@ assert_mode refuses "dispatch asking to publish" true workflow_dispatch false
 assert_mode refuses "dispatch dry-run" false workflow_dispatch true
 assert_mode refuses "pushed tag" false push false
 
-assert_mode attests "normal release" true push false success
-assert_mode attests "dispatch dry-run" false workflow_dispatch true success
-assert_mode attests "dispatch asking to publish" false workflow_dispatch false success
-assert_mode attests "pushed tag whose goreleaser failed" false push false failure
+assert_mode attests "normal release" true push false success success
+assert_mode attests "dispatch dry-run" false workflow_dispatch true success success
+assert_mode attests "dispatch asking to publish" false workflow_dispatch false success success
+assert_mode attests "pushed tag whose goreleaser failed" false push false failure success
+assert_mode attests "pushed tag whose macos-pkg failed" false push false success failure
 
 echo "release workflow contract: modes, checksums, pins, and permissions verified."

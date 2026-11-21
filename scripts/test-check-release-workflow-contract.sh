@@ -156,8 +156,53 @@ assert_rejected \
   $'  publish-release:\n    name: Publish verified release\n    if: ${{ !inputs.dry_run }}'
 assert_rejected \
   "provenance-without-push-event" \
-  "if: \${{ !cancelled() && github.event_name == 'push' && !inputs.dry_run && needs.goreleaser.result == 'success' }}" \
-  "if: \${{ !cancelled() && !inputs.dry_run && needs.goreleaser.result == 'success' }}"
+  "if: \${{ !cancelled() && github.event_name == 'push' && !inputs.dry_run && needs.goreleaser.result == 'success' && needs.macos-pkg.result == 'success' }}" \
+  "if: \${{ !cancelled() && !inputs.dry_run && needs.goreleaser.result == 'success' && needs.macos-pkg.result == 'success' }}"
+assert_rejected \
+  "provenance-ignores-macos-pkg-result" \
+  " && needs.macos-pkg.result == 'success' }}" \
+  " }}"
+assert_rejected \
+  "provenance-does-not-wait-for-macos-pkg" \
+  "needs: [goreleaser, macos-pkg]" \
+  "needs: [goreleaser]"
+assert_rejected \
+  "pkg-publishes-on-dispatch" \
+  $'      - name: SBOM, sign, and publish the .pkg\n        if: ${{ github.event_name == \'push\' && !inputs.dry_run }}' \
+  $'      - name: SBOM, sign, and publish the .pkg\n        if: ${{ !inputs.dry_run }}'
+assert_rejected \
+  "pkg-subjects-without-push-event" \
+  $'      - name: Add the .pkg to the provenance subjects\n        if: ${{ github.event_name == \'push\' && !inputs.dry_run }}' \
+  $'      - name: Add the .pkg to the provenance subjects\n        if: ${{ !inputs.dry_run }}'
+assert_rejected \
+  "pkg-job-removed-from-build" \
+  "deploy/macos/build-pkg.sh" \
+  "deploy/macos/build-pkg-removed.sh"
+assert_rejected \
+  "darwin-syft-checksum-skipped" \
+  "echo \"\${SYFT_DARWIN_SHA256}  \${RUNNER_TEMP}/syft.tar.gz\" | shasum -a 256 -c -" \
+  "echo \"\${SYFT_DARWIN_SHA256}  \${RUNNER_TEMP}/syft.tar.gz\""
+assert_rejected \
+  "darwin-cosign-checksum-skipped" \
+  "echo \"\${COSIGN_DARWIN_SHA256}  \${bin}/cosign\" | shasum -a 256 -c -" \
+  "echo \"\${COSIGN_DARWIN_SHA256}  \${bin}/cosign\""
+assert_rejected \
+  "darwin-cosign-sha-truncated" \
+  "$(grep -oE 'COSIGN_DARWIN_SHA256: "[0-9a-f]{64}"' "$source_workflow" | head -1)" \
+  'COSIGN_DARWIN_SHA256: "5cf948c2"'
+assert_rejected \
+  "darwin-syft-version-drifts-from-linux" \
+  "$(grep -oE 'SYFT_DARWIN_VERSION: "[^"]+"' "$source_workflow" | head -1)" \
+  'SYFT_DARWIN_VERSION: "0.0.1"'
+assert_rejected \
+  "darwin-cosign-version-drifts-from-linux" \
+  "$(grep -oE 'COSIGN_DARWIN_VERSION: "[^"]+"' "$source_workflow" | head -1)" \
+  'COSIGN_DARWIN_VERSION: "v0.0.1"'
+assert_config_rejected \
+  "release-artifacts-drops-pkg" RELEASE_ARTIFACTS_PATH \
+  .github/release-artifacts.txt \
+  $'seed-{version}-darwin-arm64.pkg\n' \
+  ''
 assert_rejected \
   "snapshot-no-longer-complements-publish" \
   $'      - name: Run goreleaser (snapshot/dry-run)\n        if: ${{ github.event_name != \'push\' || inputs.dry_run }}' \
