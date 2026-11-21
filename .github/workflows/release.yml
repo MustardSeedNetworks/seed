@@ -250,7 +250,7 @@ jobs:
       # Pin both tag and OCI index digest so the release toolchain is immutable.
       # Keep the image current so its Multi-Arch:same libraries stay aligned
       # with ubuntu-ports; stale images break the arm64 libpcap installation.
-      image: goreleaser/goreleaser-cross:v1.27.1-2-v2.18.2@sha256:8def7638d4f31ce8b22034694875c41c0cccb8392c9d06258c7dca9383bf1948
+      image: goreleaser/goreleaser-cross:v1.27.3-3-v2.20.2@sha256:74447bcb1afe2472293568c1226ba3460f0e2db9f023d288d60cc72ffa92ee1b
     outputs:
       # base64-encoded SHA-256 hashes of all release artifacts, formatted
       # for slsa-github-generator's base64-subjects input. Set only on a
