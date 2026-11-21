@@ -32,7 +32,6 @@ export interface AppContextValue {
   registerPathMonitorHandler: (handler: (update: PathMonitorUpdate) => void) => () => void;
   channelGraphData: WiFiChannelGraphResponse | null;
   channelGraphLoading: boolean;
-  appVersion: string;
   /**
    * Opens the settings drawer. Settings is a drawer rather than a route, so a
    * page that wants to send the operator to an option has nothing to link to;

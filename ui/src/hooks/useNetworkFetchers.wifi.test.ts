@@ -74,7 +74,6 @@ it.each<{ response: WiFiResponse; expected: WiFiData }>([
         },
         setCurrentInterface: vi.fn(),
         setInterfaces: vi.fn(),
-        setAppVersion: vi.fn(),
         setNetworkDiscovery: vi.fn(),
         setIsWifi,
         userSetWifiModeRef: { current: false },
