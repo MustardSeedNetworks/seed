@@ -57,59 +57,7 @@ Copy-Item $SourceBinary (Join-Path $BuildDir $BinaryName)
 
 # Create install script
 Write-Host "[3/4] Creating install script..." -ForegroundColor Cyan
-$InstallScript = @'
-# Seed - Windows Installation Script
-# Run as Administrator
-
-$ErrorActionPreference = "Stop"
-
-$InstallDir = "$env:ProgramFiles\Seed"
-$BinaryName = "seed.exe"
-$ServiceName = "SeedNetworkDiagnostics"
-
-Write-Host "Installing Seed..." -ForegroundColor Green
-
-# Create installation directory
-New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-New-Item -ItemType Directory -Force -Path "$InstallDir\configs" | Out-Null
-New-Item -ItemType Directory -Force -Path "$InstallDir\logs" | Out-Null
-New-Item -ItemType Directory -Force -Path "$InstallDir\data" | Out-Null
-
-# Copy binary
-Copy-Item $BinaryName "$InstallDir\$BinaryName" -Force
-
-# Add to PATH
-$MachinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
-if ($MachinePath -notlike "*$InstallDir*") {
-    [Environment]::SetEnvironmentVariable("Path", "$MachinePath;$InstallDir", "Machine")
-    Write-Host "  Added $InstallDir to system PATH"
-}
-
-# Install as Windows service
-Write-Host "  Installing Windows service..."
-& "$InstallDir\$BinaryName" service install
-
-# Add firewall rule
-Write-Host "  Adding firewall rule for port 8443..."
-New-NetFirewallRule -DisplayName "Seed" `
-    -Direction Inbound -Protocol TCP -LocalPort 8443 `
-    -Action Allow -ErrorAction SilentlyContinue | Out-Null
-
-# Start service
-Write-Host "  Starting service..."
-& "$InstallDir\$BinaryName" service start
-
-Write-Host ""
-Write-Host "Installation complete!" -ForegroundColor Green
-Write-Host "  Web UI: https://localhost:8443"
-Write-Host "  Service: $ServiceName"
-Write-Host ""
-Write-Host "Commands:"
-Write-Host "  seed service status   - Check service status"
-Write-Host "  seed service stop     - Stop service"
-Write-Host "  seed service start    - Start service"
-'@
-Set-Content -Path (Join-Path $BuildDir "install.ps1") -Value $InstallScript
+Copy-Item (Join-Path $ScriptDir "install.ps1") (Join-Path $BuildDir "install.ps1")
 
 # Create zip
 Write-Host "[4/4] Creating zip archive..." -ForegroundColor Cyan

@@ -150,6 +150,15 @@ for setting in 'draft: true' 'use_existing_draft: true'; do
   fi
 done
 require "run: gh release edit \"\$TARGET_TAG\" --draft=false"
+
+# The Windows zip must ship the real installer as install.ps1. build.ps1 is the
+# packaging script that builds the zip; shipping it under that name left
+# Windows users with no installer.
+if ! grep -A1 -F -- 'src: deploy/windows/install.ps1' "$goreleaser_config" | grep -Fq 'dst: install.ps1' ||
+  grep -Fq 'deploy/windows/build.ps1' "$goreleaser_config"; then
+  echo "release workflow contract: windows archive must ship deploy/windows/install.ps1 as install.ps1 ($goreleaser_config)" >&2
+  exit 1
+fi
 require_job_condition "publish-release" "needs: [goreleaser, provenance]"
 
 validate_action_pins "$workflow"

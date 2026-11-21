@@ -194,6 +194,11 @@ assert_config_rejected \
   '  use_existing_draft: true' \
   '  use_existing_draft: false'
 assert_config_rejected \
+  "windows-zip-ships-build-script" GORELEASER_CONFIG_PATH \
+  .goreleaser.yml \
+  'src: deploy/windows/install.ps1' \
+  'src: deploy/windows/build.ps1'
+assert_config_rejected \
   "goreleaser-publishes" GORELEASER_CONFIG_PATH \
   .goreleaser.yml \
   $'\n  draft: true\n' \

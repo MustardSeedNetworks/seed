@@ -169,7 +169,7 @@ archives:
         dst: configs
       - src: internal/api/ui
         dst: ui
-      - src: deploy/windows/build.ps1
+      - src: deploy/windows/install.ps1
         dst: install.ps1
 
 # Linux .deb + .rpm via nfpm (built into goreleaser).
