@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.49](https://github.com/MustardSeedNetworks/seed/compare/v0.282.48...v0.282.49) (2026-11-21)
+
+
+### Miscellaneous
+
+* **deps:** update node toolchain ([#3836](https://github.com/MustardSeedNetworks/seed/issues/3836)) ([7141a3f](https://github.com/MustardSeedNetworks/seed/commit/7141a3f55c3c719f67fa46bc52493e60c451f082))
+* **deps:** update storybook monorepo to v10.6.7 ([#3838](https://github.com/MustardSeedNetworks/seed/issues/3838)) ([4b1e4d4](https://github.com/MustardSeedNetworks/seed/commit/4b1e4d4782b00053837a127bf943652fea776756))
+
 ## [0.282.48](https://github.com/MustardSeedNetworks/seed/compare/v0.282.47...v0.282.48) (2026-11-21)
 
 
