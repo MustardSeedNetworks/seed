@@ -98,16 +98,27 @@ func applyConfigServerEnv(cfg *Config) error {
 // Save writes the configuration to a JSON file at the specified path.
 // This method acquires a read lock to prevent data races during marshaling.
 func (c *Config) Save(path string) error {
-	c.mu.RLock()
-	data, err := json.MarshalIndent(c, "", "  ")
-	c.mu.RUnlock()
+	data, err := c.Marshal()
 	if err != nil {
-		return fmt.Errorf("marshal config JSON: %w", err)
+		return err
 	}
-	return writeFileAtomically(path, data, configFileMode)
+	return WriteFileAtomically(path, data, configFileMode)
 }
 
-// writeFileAtomically replaces path with data through a scratch file in the
+// Marshal returns the JSON document Save writes. A caller that must route the
+// write through its own file-permission policy (the Windows service) writes
+// these bytes itself, with [WriteFileAtomically].
+func (c *Config) Marshal() ([]byte, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	data, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("marshal config JSON: %w", err)
+	}
+	return data, nil
+}
+
+// WriteFileAtomically replaces path with data through a scratch file in the
 // same directory, so a crash or a full disk mid-save leaves the previous
 // config exactly as it was (seed#2747). [os.WriteFile] truncates first, which
 // both loses the old document before the new one is complete and lets a
@@ -117,7 +128,7 @@ func (c *Config) Save(path string) error {
 // writable file. Every path Seed writes is one the writer owns: the packaged
 // daemon owns /etc/seed (0750 seed:seed, listed in the unit's ReadWritePaths)
 // and the CLI writes under the user's own XDG directory.
-func writeFileAtomically(path string, data []byte, mode os.FileMode) error {
+func WriteFileAtomically(path string, data []byte, mode os.FileMode) error {
 	// A symlinked config is replaced through its target, so the scratch file
 	// lands on the same filesystem as the file rename will replace and the
 	// operator's link survives — behaviour [os.WriteFile] had for free.

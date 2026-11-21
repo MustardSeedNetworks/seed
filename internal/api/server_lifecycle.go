@@ -186,7 +186,8 @@ func (s *Server) SetBoundPortObserver(observe func(int)) {
 }
 
 // selfSignedCertDir is where foundation's httpserver writes the generated pair
-// (server.crt / server.key) when the operator configured no certificate.
+// (server.crt / server.key) when the operator configured no certificate and
+// [Deps.CertDir] is unset.
 const selfSignedCertDir = paths.DefaultCertDir
 
 // selfSignedCertOptions describes the generated certificate. It is its own CA,
@@ -213,7 +214,7 @@ func (s *Server) startHTTPS() error {
 		Addr:     net.JoinHostPort("", strconv.Itoa(s.config.Server.Port)),
 		CertFile: certFile,
 		KeyFile:  keyFile,
-		CertDir:  selfSignedCertDir,
+		CertDir:  s.certDir,
 		Cert:     selfSignedCertOptions(),
 		Logger:   logging.GetLogger(),
 	})

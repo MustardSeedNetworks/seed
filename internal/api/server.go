@@ -8,6 +8,7 @@ package api
 // retention each live in sibling server_*.go files.
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -140,6 +141,7 @@ type Server struct {
 	config     *config.Config
 	configPath string
 	logPath    string
+	certDir    string
 
 	// HTTP server components
 	httpServer *http.Server
@@ -329,9 +331,14 @@ type Server struct {
 // a nil NetManager, Persistence or Background, or a nil TrustedProxies, is a
 // server without that collaborator (the api tests run that way).
 type Deps struct {
-	Config         *config.Config
-	ConfigPath     string
-	LogPath        string
+	Config     *config.Config
+	ConfigPath string
+	LogPath    string
+	// CertDir is where the generated self-signed pair is written when no
+	// certificate is configured. Zero means "certs" relative to the working
+	// directory, which is what the foreground daemon has always used; the
+	// Windows service sets it because its working directory is System32.
+	CertDir        string
 	NetManager     *netif.Manager
 	ICMPAvailable  bool
 	TrustedProxies *TrustedProxies
@@ -363,6 +370,7 @@ func NewServer(d Deps) (*Server, error) {
 		config:        cfg,
 		configPath:    d.ConfigPath,
 		logPath:       d.LogPath,
+		certDir:       cmp.Or(d.CertDir, selfSignedCertDir),
 		icmpAvailable: d.ICMPAvailable,
 		startTime:     time.Now(),
 		background:    d.Background,
