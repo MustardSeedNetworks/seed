@@ -3,9 +3,11 @@
 # scripts/check-release-artifacts.py). {version} is the tag without its "v".
 # Each line's .sbom.json and .cosign.bundle files, checksums.txt and the
 # provenance are required without being listed. Change this file in the same
-# PR that changes what .goreleaser.yml publishes.
+# PR that changes what .goreleaser.yml publishes. The .pkg is not a goreleaser
+# artifact: release.yml's macos-pkg job builds and attaches it.
 
 seed-{version}-darwin-arm64.tar.gz
+seed-{version}-darwin-arm64.pkg
 seed-{version}-linux-amd64.tar.gz
 seed-{version}-linux-arm64.tar.gz
 seed-{version}-windows-amd64.zip

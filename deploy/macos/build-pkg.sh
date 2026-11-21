@@ -11,11 +11,19 @@
 #   ./build-pkg.sh ./seed-darwin-arm64 0.165.34       # Use specified binary and version
 #
 # Requirements:
-#   - Xcode command line tools (pkgbuild, productbuild)
+#   - Xcode command line tools (pkgbuild, productbuild, lipo)
 #   - Seed binary built for macOS
+#
+# The release workflow (macos-pkg job) runs this with SEED_SKIP_WIFI_HELPER=1
+# and no signing identity, so the installer it publishes is neither Developer ID
+# signed nor notarized and carries no Wi-Fi helper.
 #
 
 set -e
+
+# cp and pkgbuild otherwise carry extended attributes into the payload as
+# AppleDouble ._ files, which the install then drops into /usr/local/seed.
+export COPYFILE_DISABLE=1
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -58,8 +66,9 @@ if [[ -z "$VERSION" ]]; then
     VERSION="${VERSION#v}"
 fi
 
-# Architecture
-ARCH=$(uname -m)
+# Architecture of the binary, not of the build host: the release builds the
+# arm64 package from the darwin archive on whatever runner it gets.
+ARCH=$(lipo -archs "$BINARY_PATH")
 [[ "$ARCH" == "x86_64" ]] && ARCH="amd64"
 
 log_info "Building macOS .pkg installer"
@@ -98,7 +107,7 @@ if security find-identity -v -p codesigning | grep -q "$SIGN_IDENTITY"; then
     codesign --verify --strict "$BUILD_DIR/payload$INSTALL_LOCATION/$PKG_NAME"
 else
     log_warn "No '$SIGN_IDENTITY' identity — shipping an unsigned daemon."
-    log_warn "This package cannot be notarized and macOS will refuse to install it."
+    log_warn "This package cannot be notarized; Gatekeeper will not open it by double-click."
 fi
 
 # Copy launchd plists (daemon + Wi-Fi helper agent)
@@ -155,7 +164,7 @@ sed "s/__VERSION__/$VERSION/g" "$SCRIPT_DIR/distribution.xml" > "$BUILD_DIR/dist
 
 # Build final product package
 log_step "6/6 Building final package..."
-PKG_OUTPUT="$REPO_ROOT/dist/seed-${VERSION}-${ARCH}.pkg"
+PKG_OUTPUT="$REPO_ROOT/dist/seed-${VERSION}-darwin-${ARCH}.pkg"
 mkdir -p "$(dirname "$PKG_OUTPUT")"
 
 productbuild \
@@ -166,6 +175,11 @@ productbuild \
 
 # Clean up intermediate files
 rm -rf "$BUILD_DIR"
+
+if pkgutil --payload-files "$PKG_OUTPUT" | grep '/\._'; then
+    log_error "Payload contains AppleDouble ._ files (listed above)"
+    exit 1
+fi
 
 echo
 log_info "Package built successfully!"

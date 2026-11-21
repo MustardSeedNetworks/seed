@@ -13,7 +13,7 @@
 The Seed is a network diagnostic appliance from **Mustard Seed Networks**.
 Plug it into any network jack and the web UI shows link status, switch
 information, DHCP/DNS health, gateway reachability, Wi-Fi radio conditions,
-and security posture in real time. It runs on Linux, macOS and Windows.
+and security posture in real time. It runs on Linux, macOS (Apple silicon only) and Windows.
 
 ## What it does
 
@@ -49,7 +49,7 @@ and security posture in real time. It runs on Linux, macOS and Windows.
 
 ### Prerequisites
 
-- Linux, macOS or Windows on x86-64 or arm64
+- Linux or Windows on x86-64 or arm64, or macOS on Apple silicon (arm64 only)
 - Go 1.27+
 - Node.js 26+
 - libpcap-dev
@@ -109,9 +109,23 @@ sudo ./seed           # listens on https://localhost:8443
 ```
 
 Or grab an artifact from the [releases page](https://github.com/MustardSeedNetworks/seed/releases):
-`.deb`/`.rpm`/`.tar.gz` for Linux (amd64 and arm64), an Apple Silicon
-`.tar.gz` for macOS, or `.zip` for Windows. Packages are built only by
-`release.yml` on a tag — there is no local packaging target.
+`.deb`/`.rpm`/`.tar.gz` for Linux (amd64 and arm64), `.zip` for Windows, or on
+macOS the `.pkg`. Packages are built only by `release.yml` on a tag — there is
+no local packaging target.
+
+On macOS, Seed supports **Apple silicon (arm64) only**; there is no Intel build.
+Install the `.pkg`, which puts Seed in `/usr/local/seed` and starts it as a
+launchd daemon. Upgrading keeps your config (`/etc/seed`), data and certificates
+(`/usr/local/seed/data` and `certs`). The `.pkg`
+is not Developer ID signed or notarized, so install it from Terminal and check
+its cosign bundle first (see [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md)):
+
+```bash
+sudo installer -pkg seed-<version>-darwin-arm64.pkg -target /
+```
+
+The `.pkg` does not include the Wi-Fi helper, so Wi-Fi scans on macOS report no
+networks.
 
 ### First run
 
@@ -260,11 +274,10 @@ The UI uses a Tailwind v4 CSS-first theme with semantic tokens:
 Conventional commits drive [release-please](https://github.com/googleapis/release-please).
 Tags trigger `release.yml`, which builds binaries and packages
 (`.deb`/`.rpm`/`.zip`/`.tar.gz`) for Linux and Windows on amd64 and arm64 and
-for macOS on arm64, and attaches an SBOM, a cosign bundle and SLSA provenance
-to each. Seed is not distributed through Homebrew and will not be (owner
-decision, 2026-09-07). The release publishes macOS as a `.tar.gz` only; the
-`.pkg` installer is built locally by `deploy/macos/build-pkg.sh` and is not on
-the Releases page. See [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md).
+for macOS on arm64 (a `.tar.gz` and a `.pkg`), and attaches an SBOM, a cosign
+bundle and SLSA provenance to each. Seed is not distributed through Homebrew
+and will not be (owner decision, 2026-09-07). See
+[`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md).
 
 ## License
 

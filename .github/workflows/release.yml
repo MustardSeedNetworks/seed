@@ -31,10 +31,13 @@
 #   then link a static libpcap built from source here, so one artifact serves
 #   both the Debian and the Red Hat family (#2978).
 #
-# Known limitation:
-#   macOS .pkg installer is not produced (no native pkgbuild from Linux).
-#   macOS users get the .tar.gz; deploy/macos/build-pkg.sh stays in-tree
-#   for anyone who wants to assemble one locally.
+# macOS .pkg:
+#   pkgbuild exists only on macOS, so the macos-pkg job builds the installer on
+#   a macOS runner from the darwin archive goreleaser produced. It is Apple
+#   silicon only, carries no Wi-Fi helper (that needs a Developer ID identity
+#   the release does not hold) and is not Developer ID signed or notarized: its
+#   integrity comes from the cosign bundle, the SBOM and the SLSA provenance.
+#   The release stays a draft until provenance, which needs macos-pkg, finishes.
 # =============================================================================
 
 name: Release
@@ -393,6 +396,16 @@ jobs:
           hashes=$(base64 -w0 < dist/provenance-subjects.txt)
           echo "hashes=${hashes}" >> "$GITHUB_OUTPUT"
 
+      - name: Hand the darwin archive and checksums to macos-pkg
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: macos-pkg-inputs
+          path: |
+            dist/seed-*-darwin-arm64.tar.gz
+            dist/checksums.txt
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Upload dry-run artifact bundle for inspection
         if: ${{ github.event_name != 'push' || inputs.dry_run }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -400,6 +413,126 @@ jobs:
           name: goreleaser-dryrun-${{ github.run_id }}
           path: dist/
           retention-days: 14
+
+  # =========================================================================
+  # macOS .pkg — built from goreleaser's darwin archive, so the installer
+  # carries the same binary the archive does. On a real release it is SBOM'd
+  # and cosign-signed like every other artifact, appended to checksums.txt
+  # (which is re-signed), and added to the provenance subjects. The release is
+  # still a draft here; publish-release flips it after provenance.
+  # =========================================================================
+  macos-pkg:
+    name: macOS .pkg
+    needs: [goreleaser]
+    runs-on: macos-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      id-token: write # cosign keyless OIDC
+    outputs:
+      # base64 of goreleaser's provenance subjects plus the .pkg, the
+      # subject-checksums input of the provenance job. Set only on a release.
+      hashes: ${{ steps.hashes.outputs.hashes }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download the darwin archive and checksums
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: macos-pkg-inputs
+          path: ${{ runner.temp }}/macos-pkg-inputs/
+
+      - name: Build the .pkg
+        shell: bash
+        env:
+          # The Wi-Fi helper must be signed with a Developer ID identity this
+          # release does not hold, so the installer ships without it.
+          SEED_SKIP_WIFI_HELPER: "1"
+        run: |
+          set -euo pipefail
+          archives=("${RUNNER_TEMP}"/macos-pkg-inputs/seed-*-darwin-arm64.tar.gz)
+          if [ "${#archives[@]}" -ne 1 ]; then
+            echo "::error::expected one darwin archive, found ${#archives[@]}"
+            exit 1
+          fi
+          name="$(basename "${archives[0]}" .tar.gz)"
+          version="${name#seed-}"
+          version="${version%-darwin-arm64}"
+          mkdir "${RUNNER_TEMP}/darwin"
+          tar -xzf "${archives[0]}" -C "${RUNNER_TEMP}/darwin" seed
+          deploy/macos/build-pkg.sh "${RUNNER_TEMP}/darwin/seed" "${version}"
+          echo "PKG=seed-${version}-darwin-arm64.pkg" >> "$GITHUB_ENV"
+
+      - name: Upload dry-run .pkg for inspection
+        if: ${{ github.event_name != 'push' || inputs.dry_run }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: macos-pkg-dryrun-${{ github.run_id }}
+          path: dist/${{ env.PKG }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Install Syft and Cosign
+        if: ${{ github.event_name == 'push' && !inputs.dry_run }}
+        # The linux copies of these pins are in the goreleaser job; the release
+        # workflow contract fails when the two sets of versions differ. Each
+        # darwin arm64 build is checked against the upstream checksums file.
+        # Rotate with the linux pins.
+        env:
+          SYFT_DARWIN_VERSION: "1.51.0"
+          SYFT_DARWIN_SHA256: "4f37f4c7fefce0a68e4cf71ba3f5f9829a99e65d89b29f7ee41b8c2c10ea8c59"
+          COSIGN_DARWIN_VERSION: "v3.1.3"
+          COSIGN_DARWIN_SHA256: "5cf948c2f4dfe59687bdd0b8523709067383e03982cc543475c8a7dc70e92a76"
+        shell: bash
+        run: |
+          set -euo pipefail
+          bin="${RUNNER_TEMP}/bin"
+          mkdir -p "${bin}"
+          curl -sSfL -o "${RUNNER_TEMP}/syft.tar.gz" \
+            "https://github.com/anchore/syft/releases/download/v${SYFT_DARWIN_VERSION}/syft_${SYFT_DARWIN_VERSION}_darwin_arm64.tar.gz"
+          echo "${SYFT_DARWIN_SHA256}  ${RUNNER_TEMP}/syft.tar.gz" | shasum -a 256 -c -
+          tar -xzf "${RUNNER_TEMP}/syft.tar.gz" -C "${bin}" syft
+          curl -sSfL -o "${bin}/cosign" \
+            "https://github.com/sigstore/cosign/releases/download/${COSIGN_DARWIN_VERSION}/cosign-darwin-arm64"
+          echo "${COSIGN_DARWIN_SHA256}  ${bin}/cosign" | shasum -a 256 -c -
+          chmod 0755 "${bin}/syft" "${bin}/cosign"
+          echo "${bin}" >> "$GITHUB_PATH"
+
+      - name: SBOM, sign, and publish the .pkg
+        if: ${{ github.event_name == 'push' && !inputs.dry_run }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          cd dist
+          cp "${RUNNER_TEMP}/macos-pkg-inputs/checksums.txt" checksums.txt
+          SYFT_FILE_METADATA_CATALOGER_ENABLED=true \
+            syft "${PKG}" --output "spdx-json=${PKG}.sbom.json"
+          cosign sign-blob --yes --bundle "${PKG}.cosign.bundle" "${PKG}"
+          cosign sign-blob --yes --bundle "${PKG}.sbom.json.cosign.bundle" "${PKG}.sbom.json"
+          shasum -a 256 "${PKG}" "${PKG}.sbom.json" >> checksums.txt
+          cosign sign-blob --yes --bundle checksums.txt.cosign.bundle checksums.txt
+          gh release upload "${REF_NAME}" --clobber --repo "${GITHUB_REPOSITORY}" \
+            checksums.txt checksums.txt.cosign.bundle \
+            "${PKG}" "${PKG}.sbom.json" "${PKG}.cosign.bundle" "${PKG}.sbom.json.cosign.bundle"
+
+      - name: Add the .pkg to the provenance subjects
+        if: ${{ github.event_name == 'push' && !inputs.dry_run }}
+        id: hashes
+        shell: bash
+        env:
+          GORELEASER_HASHES: ${{ needs.goreleaser.outputs.hashes }}
+        run: |
+          # "<sha256>  <filename>" lines, the subject-checksums format:
+          # goreleaser's validated primary assets, then the .pkg.
+          set -euo pipefail
+          printf '%s' "${GORELEASER_HASHES}" | base64 --decode > subjects.txt
+          (cd dist && shasum -a 256 "${PKG}") >> subjects.txt
+          echo "hashes=$(base64 < subjects.txt | tr -d '\n')" >> "$GITHUB_OUTPUT"
 
   # =========================================================================
   # SLSA L3 provenance — runs on real releases (not dry-run).
@@ -419,8 +552,8 @@ jobs:
     # Only a real release attests: a snapshot has nothing published to attest
     # against. `!cancelled()` is kept so a cancelled upstream is distinguishable
     # from a failed one.
-    if: ${{ !cancelled() && github.event_name == 'push' && !inputs.dry_run && needs.goreleaser.result == 'success' }}
-    needs: [goreleaser]
+    if: ${{ !cancelled() && github.event_name == 'push' && !inputs.dry_run && needs.goreleaser.result == 'success' && needs.macos-pkg.result == 'success' }}
+    needs: [goreleaser, macos-pkg]
     runs-on: ubuntu-latest
     permissions:
       id-token: write       # Sigstore OIDC signing
@@ -430,11 +563,12 @@ jobs:
       - name: Decode artifact subjects
         id: subjects
         shell: bash
+        env:
+          HASHES: ${{ needs.macos-pkg.outputs.hashes }}
         run: |
           set -euo pipefail
-          # Pick whichever upstream ran. The unused one is empty.
-          echo "${{ needs.goreleaser.outputs.hashes }}" \
-            | base64 -d > subjects.txt
+          # goreleaser's primary assets plus the macOS .pkg.
+          printf '%s' "${HASHES}" | base64 -d > subjects.txt
           echo "Subjects:"
           cat subjects.txt
 
