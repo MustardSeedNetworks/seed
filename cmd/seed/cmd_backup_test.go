@@ -133,8 +133,8 @@ func TestBackupAndRestoreRefuseWhileTheDaemonRuns(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			code, _, stderr := in.run(tc.args...)
-			if code != exitDaemonRunning {
-				t.Fatalf("exit = %d, want %d (stderr %q)", code, exitDaemonRunning, stderr)
+			if code != exitRefused {
+				t.Fatalf("exit = %d, want %d (stderr %q)", code, exitRefused, stderr)
 			}
 			if !strings.Contains(stderr, "seed serve is running") || !strings.Contains(stderr, "Stop seed serve") {
 				t.Errorf("refusal does not say what is running or what to do:\n%s", stderr)

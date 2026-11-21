@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/instance"
 	"github.com/kardianos/service"
 	"github.com/spf13/cobra"
 
@@ -43,6 +44,7 @@ type seedProgram struct {
 	state      *cliState
 	configPath string
 	certDir    string
+	lock       *instance.Lock
 	config     *config.Config
 	server     *api.Server
 	components *api.BackgroundComponents
@@ -67,8 +69,16 @@ func (p *seedProgram) Start(_ service.Service) error {
 	}
 	p.certDir = sp.CertDir
 	p.configPath = paths.ResolveConfigPath(p.state.cfgFile, paths.ModeSystem)
+	// The single-instance lock is what `seed status` and the write guards read.
+	// Without it a console could not tell the service from nothing running.
+	lock, err := instance.Acquire(lockDir(p.configPath))
+	if err != nil {
+		return fmt.Errorf("take the single-instance lock: %w", err)
+	}
+	p.lock = lock
 	cfg, err := loadAndConfigureConfigForService(p.configPath)
 	if err != nil {
+		_ = lock.Release()
 		return err
 	}
 	anchorServicePaths(cfg, sp)
@@ -94,6 +104,7 @@ func (p *seedProgram) Stop(_ service.Service) error {
 // run executes the main service logic.
 func (p *seedProgram) run() {
 	defer close(p.stoppedCh)
+	defer func() { _ = p.lock.Release() }()
 
 	configPath := p.configPath
 	cfg := p.config
@@ -129,6 +140,11 @@ func (p *seedProgram) run() {
 		return
 	}
 	p.server = server
+	server.SetBoundPortObserver(func(port int) {
+		if setErr := p.lock.SetPort(port); setErr != nil {
+			logging.GetLogger().Warn("Could not publish the bound port", "error", setErr)
+		}
+	})
 
 	// Start components
 	ctx := context.Background()

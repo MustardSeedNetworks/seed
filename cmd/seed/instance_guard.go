@@ -28,11 +28,11 @@ const (
 		"holds its activation state in memory and would not see the change."
 )
 
-// exitWriteRefused is the exit status of a command that refused to touch state
+// exitRefused is the exit status of a command that refused to touch state
 // it must not: a running seed serve owns it, or the Windows system layout needs
 // an elevated shell. It is distinct from the generic 1 so a script can tell
 // "refused" from "the command failed".
-const exitWriteRefused = 2
+const exitRefused = 2
 
 // daemonRunningError reports that seed serve holds the instance lock on the
 // directory this command would have written to.
@@ -128,13 +128,13 @@ func exitCodeFor(err error) int {
 		return code
 	}
 	if _, ok := errors.AsType[*daemonRunningError](err); ok {
-		return exitWriteRefused
+		return exitRefused
 	}
 	if _, ok := errors.AsType[*elevationRequiredError](err); ok {
-		return exitWriteRefused
+		return exitRefused
 	}
 	if _, ok := errors.AsType[*untrustedDataDirError](err); ok {
-		return exitWriteRefused
+		return exitRefused
 	}
 	return 1
 }

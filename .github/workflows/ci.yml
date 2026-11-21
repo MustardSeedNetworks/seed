@@ -497,6 +497,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "export-config exited $LASTEXITCODE" }
           if ($exported.server.port -ne 8443) { throw "export-config sees port $($exported.server.port), not the service's 8443" }
 
+          # status reads the single-instance lock the service holds and asks it
+          # for /__version, so this fails if the service took no lock or the
+          # console looked in the wrong tree.
+          $status = & $seed status --json | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw "status exited $LASTEXITCODE" }
+          if (-not $status.running) { throw "status reports the service not running" }
+          if ($status.port -ne 8443) { throw "status sees port $($status.port), not 8443" }
+          if ($status.version -ne $env:EXPECTED_VERSION) { throw "status sees version $($status.version), expected $env:EXPECTED_VERSION" }
+
       - name: Stop and uninstall
         shell: pwsh
         run: |

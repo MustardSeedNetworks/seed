@@ -69,10 +69,16 @@ func resolveLayout(state *cliState, cmd *cobra.Command) (layout, error) {
 	if err != nil {
 		return layout{}, err
 	}
+	system := paths.Resolve(paths.ModeAuto)
 	if workDir == "" {
-		workDir = paths.Resolve(paths.ModeAuto).DataDir
+		// The Windows service works in the root of its tree, so a relative
+		// "data/seed.db" in its config is Root\data\seed.db, not under DataDir.
+		workDir = firstSet(system.Root, system.DataDir)
 	}
 	configPath := paths.ResolveConfigPath(state.cfgFile, paths.ModeAuto)
+	if err = requireElevation(configPath); err != nil {
+		return layout{}, err
+	}
 	cfg, err := config.Load(configPath)
 	if err != nil {
 		return layout{}, fmt.Errorf("load config %s: %w", configPath, err)

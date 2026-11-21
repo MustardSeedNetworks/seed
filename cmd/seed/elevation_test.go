@@ -25,8 +25,8 @@ func TestCheckElevation(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("checkElevation error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if err != nil && exitCodeFor(err) != exitWriteRefused {
-				t.Errorf("exit code = %d, want %d", exitCodeFor(err), exitWriteRefused)
+			if err != nil && exitCodeFor(err) != exitRefused {
+				t.Errorf("exit code = %d, want %d", exitCodeFor(err), exitRefused)
 			}
 		})
 	}
