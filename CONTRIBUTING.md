@@ -11,8 +11,8 @@ Be respectful, inclusive, and professional in all interactions.
 
 ### Prerequisites
 
-- Go 1.22+
-- Node.js 24+
+- Go 1.27.4 (see `go.mod`)
+- Node.js 26.13.0 (see `.nvmrc`)
 - libpcap-dev (Linux) or libpcap (macOS)
 - Git
 
