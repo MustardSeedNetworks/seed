@@ -110,7 +110,7 @@ func TestE2ERunnerRequiresPlaintextRedirect(t *testing.T) {
 }
 
 // TestProductionEntrypointTreeHasOneListener walks cmd/seed and internal/api:
-// httpserver.Listen is called once, http.Server.Serve only on its listener,
+// httpserver.Listen is called once, [http.Server.Serve] only on its listener,
 // and no other primitive opens or wraps a TCP listener for HTTP.
 func TestProductionEntrypointTreeHasOneListener(t *testing.T) {
 	lifecycle := filepath.Join("..", "..", "internal", "api", "server_lifecycle.go")

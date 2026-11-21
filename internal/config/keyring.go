@@ -26,12 +26,17 @@ import (
 	"strings"
 )
 
+// KeyringFileName is the credential keyring's file name in the config
+// directory. Backup and restore name it to carry the keyring with the config
+// it decrypts.
+const KeyringFileName = "credential.key"
+
 const (
 	// dekEnvVar supplies a base64-encoded 32-byte DEK master, taking
 	// precedence over the on-disk key file. It is never written to disk.
 	dekEnvVar = "SEED_CREDENTIAL_KEY"
 	// dekFileName is the dedicated key-file name under the data dir.
-	dekFileName = "credential.key"
+	dekFileName = KeyringFileName
 	// dekInfoFmt is the HKDF domain-separation label per version.
 	dekInfoFmt = "seed:snmp-credential-encryption:v%d"
 	// dekKDFName records the KDF used for a keyring version.
