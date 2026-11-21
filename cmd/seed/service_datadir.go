@@ -29,8 +29,11 @@ func ensureDataDir(path string) error {
 	return os.MkdirAll(path, privateDirMode)
 }
 
-// verifyDataDir fails unless path is a real directory (not a link) and every
-// file in files that exists is a regular file.
+// verifyDataDir fails unless path is a real directory (not a link), on Windows
+// owned by SYSTEM or Administrators and closed to everyone else, and every file
+// in files that exists is a regular file. Run it before an elevated process
+// reads or writes the tree: anything less trusts a directory a user may have
+// made.
 //
 // TODO(#3848): use securedir.Verify.
 func verifyDataDir(path string, files ...string) error {
@@ -40,6 +43,9 @@ func verifyDataDir(path string, files ...string) error {
 	}
 	if !info.IsDir() {
 		return fmt.Errorf("data directory %s is not a directory (mode %s)", path, info.Mode().Type())
+	}
+	if err = verifyDirSecurity(path); err != nil {
+		return err
 	}
 	for _, file := range files {
 		fileInfo, statErr := os.Lstat(file)

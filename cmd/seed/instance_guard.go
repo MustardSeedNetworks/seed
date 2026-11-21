@@ -77,6 +77,19 @@ func checkElevation(configPath, systemConfig string, elevated bool) error {
 	return &elevationRequiredError{configPath: configPath}
 }
 
+// untrustedDataDirError reports that the Windows system tree failed
+// verification, so an elevated command must not read or write it.
+type untrustedDataDirError struct {
+	err error
+}
+
+func (e *untrustedDataDirError) Error() string {
+	return fmt.Sprintf("refusing to use the Seed service data: %v. "+
+		"Reinstall with install.ps1, which creates it with the right permissions", e.err)
+}
+
+func (e *untrustedDataDirError) Unwrap() error { return e.err }
+
 func sameConfigPath(a, b string) bool {
 	a, b = filepath.Clean(a), filepath.Clean(b)
 	if runtime.GOOS == "windows" {
@@ -85,9 +98,26 @@ func sameConfigPath(a, b string) bool {
 	return a == b
 }
 
-// requireElevation is checkElevation against this machine.
+// checkSystemTree runs [verifyDataDir] over the system tree when configPath is
+// its config, so an elevated command never works inside a directory someone
+// else could have prepared. Any other config path is the caller's own.
+func checkSystemTree(configPath string, system *paths.Paths) error {
+	if !sameConfigPath(configPath, system.ConfigFile) {
+		return nil
+	}
+	if err := verifyDataDir(system.Root, system.ConfigFile); err != nil {
+		return &untrustedDataDirError{err: err}
+	}
+	return nil
+}
+
+// requireElevation is checkElevation, then checkSystemTree, against this machine.
 func requireElevation(configPath string) error {
-	return checkElevation(configPath, paths.Resolve(paths.ModeSystem).ConfigFile, processElevated())
+	system := paths.Resolve(paths.ModeSystem)
+	if err := checkElevation(configPath, system.ConfigFile, processElevated()); err != nil {
+		return err
+	}
+	return checkSystemTree(configPath, system)
 }
 
 // exitCodeFor maps an error returned by the root command to a process exit
@@ -101,6 +131,9 @@ func exitCodeFor(err error) int {
 		return exitWriteRefused
 	}
 	if _, ok := errors.AsType[*elevationRequiredError](err); ok {
+		return exitWriteRefused
+	}
+	if _, ok := errors.AsType[*untrustedDataDirError](err); ok {
 		return exitWriteRefused
 	}
 	return 1

@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/MustardSeedNetworks/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/paths"
 )
 
 func initLicenseCmd(state *cliState) {
@@ -49,6 +50,9 @@ device hash, and unlocked feature count. With no license active, prints the
 Free-tier banner.`,
 		Example: `  # Show the active license / trial status
   seed license status`,
+		PreRunE: func(_ *cobra.Command, _ []string) error {
+			return requireElevation(paths.ResolveConfigPath("", paths.ModeAuto))
+		},
 		Run: func(_ *cobra.Command, _ []string) { runLicenseStatus(state) },
 	})
 

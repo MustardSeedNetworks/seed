@@ -161,6 +161,12 @@ func TestAnchorServicePaths(t *testing.T) {
 
 func TestPrepareServiceDirsCreatesTheTree(t *testing.T) {
 	sp := servicePathsUnder(filepath.Join(t.TempDir(), "Seed"))
+	// Created and protected first: on Windows verifyDataDir refuses a root that
+	// inherits its parent's permissions, which is what MkdirAll would leave.
+	if err := os.Mkdir(sp.Root, privateDirMode); err != nil {
+		t.Fatal(err)
+	}
+	protectDirForTest(t, sp.Root)
 
 	if err := prepareServiceDirs(sp); err != nil {
 		t.Fatalf("prepareServiceDirs: %v", err)
@@ -174,6 +180,7 @@ func TestPrepareServiceDirsCreatesTheTree(t *testing.T) {
 
 func TestVerifyDataDir(t *testing.T) {
 	dir := t.TempDir()
+	protectDirForTest(t, dir)
 	regular := filepath.Join(dir, "seed.json")
 	if err := os.WriteFile(regular, []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
@@ -222,5 +229,40 @@ func TestSavePrivateConfigRoundTrips(t *testing.T) {
 	}
 	if loaded.Auth.JWTSecret != "persisted-secret" {
 		t.Errorf("JWT secret = %q, want the saved one", loaded.Auth.JWTSecret)
+	}
+}
+
+func TestCheckSystemTree(t *testing.T) {
+	root := t.TempDir()
+	protectDirForTest(t, root)
+	system := servicePathsUnder(root)
+	file := filepath.Join(root, "afile")
+	if err := os.WriteFile(file, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	missing := servicePathsUnder(filepath.Join(root, "absent"))
+
+	tests := []struct {
+		name       string
+		configPath string
+		system     *paths.Paths
+		wantErr    bool
+	}{
+		{"system config in a verified tree", system.ConfigFile, system, false},
+		{"another config is not checked", filepath.Join(t.TempDir(), "seed.json"), system, false},
+		{"system tree missing", missing.ConfigFile, missing, true},
+		{"system root is a file", servicePathsUnder(file).ConfigFile, servicePathsUnder(file), true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := checkSystemTree(tt.configPath, tt.system)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("checkSystemTree error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err != nil && exitCodeFor(err) != exitWriteRefused {
+				t.Errorf("exit code = %d, want %d", exitCodeFor(err), exitWriteRefused)
+			}
+		})
 	}
 }

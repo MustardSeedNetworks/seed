@@ -4,7 +4,6 @@ package paths
 
 import (
 	"errors"
-	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -54,11 +53,14 @@ func knownFolder(id *windows.KNOWNFOLDERID, envVar, stock string) string {
 }
 
 // windowsSystemLayout reports whether ModeAuto should resolve to the system
-// layout: the SCM started this process, or a service install exists, so the
-// config an administrator's console edits is the one the service reads. A
-// console on a machine with no install keeps the user layout.
+// layout: the SCM started this process, or the SCM has the Seed service
+// registered, so the config an administrator's console edits is the one the
+// service reads. Only the SCM decides. A directory under %ProgramData% proves
+// nothing, since any user can create one and steer an elevated console into a
+// tree they control. A console on a machine with no install keeps the user
+// layout.
 func windowsSystemLayout() bool {
-	return isWindowsService() || serviceRegistered() || systemConfigDirExists()
+	return isWindowsService() || serviceRegistered()
 }
 
 // isWindowsService reports whether the Service Control Manager started this
@@ -68,8 +70,9 @@ func isWindowsService() bool {
 	return err == nil && isService
 }
 
-// serviceRegistered reports whether the SCM knows the Seed service. A denied
-// query still means the service exists.
+// serviceRegistered reports whether the SCM knows the Seed service. A query
+// refused for lack of rights still means the service exists, and the caller
+// then needs elevation; any other failure is "not installed".
 func serviceRegistered() bool {
 	manager, err := windows.OpenSCManager(nil, nil, windows.SC_MANAGER_CONNECT)
 	if err != nil {
@@ -83,18 +86,8 @@ func serviceRegistered() bool {
 	}
 	service, err := windows.OpenService(manager, name, windows.SERVICE_QUERY_STATUS)
 	if err != nil {
-		return !errors.Is(err, windows.ERROR_SERVICE_DOES_NOT_EXIST)
+		return errors.Is(err, windows.ERROR_ACCESS_DENIED)
 	}
 	_ = windows.CloseServiceHandle(service)
 	return true
-}
-
-// systemConfigDirExists reports whether %ProgramData%\Seed\config exists. The
-// root is closed to ordinary users, so an access-denied stat from a
-// non-elevated console is a yes, not a no.
-func systemConfigDirExists() bool {
-	var system Paths
-	resolveSystemPaths(&system)
-	_, err := os.Stat(system.ConfigDir)
-	return err == nil || !errors.Is(err, fs.ErrNotExist)
 }
