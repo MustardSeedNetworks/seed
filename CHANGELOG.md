@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.50](https://github.com/MustardSeedNetworks/seed/compare/v0.282.49...v0.282.50) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tailwindcss/postcss to v4.3.5 ([#3839](https://github.com/MustardSeedNetworks/seed/issues/3839)) ([9f2f08f](https://github.com/MustardSeedNetworks/seed/commit/9f2f08fa0a8d6be80f5be70ee82d4a52db2bb296))
+* **release:** ship the real windows installer and correct docs versions ([#3823](https://github.com/MustardSeedNetworks/seed/issues/3823)) ([4bec614](https://github.com/MustardSeedNetworks/seed/commit/4bec614cb6e309b4b37bc81c797efd6527504259))
+
 ## [0.282.49](https://github.com/MustardSeedNetworks/seed/compare/v0.282.48...v0.282.49) (2026-11-21)
 
 
