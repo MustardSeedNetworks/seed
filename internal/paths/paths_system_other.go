@@ -13,5 +13,5 @@ func resolveSystemPaths(p *Paths) {
 	p.BinaryDir = "/usr/local/bin"
 }
 
-// isWindowsService is always false off Windows.
-func isWindowsService() bool { return false }
+// windowsSystemLayout is always false off Windows.
+func windowsSystemLayout() bool { return false }

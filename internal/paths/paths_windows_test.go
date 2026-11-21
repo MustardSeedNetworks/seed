@@ -3,6 +3,9 @@
 package paths_test
 
 import (
+	"errors"
+	"io/fs"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -47,10 +50,25 @@ func TestResolve_SystemMode_Windows(t *testing.T) {
 	}
 }
 
-// A console process is not a service, so ModeAuto keeps resolving user paths
-// for it; only the SCM-started service flips to the system layout.
-func TestResolve_AutoMode_ConsoleIsUser_Windows(t *testing.T) {
-	if p := paths.Resolve(paths.ModeAuto); p.Mode != paths.ModeUser {
-		t.Errorf("console process resolved mode %v, want ModeUser", p.Mode)
+// A console resolves the system layout exactly when a service install is
+// visible to it, so an administrator's commands and the service read one
+// config; with no install it keeps the user layout.
+func TestResolve_AutoMode_FollowsServiceInstall_Windows(t *testing.T) {
+	// The config directory is the install signal a test can read without the
+	// SCM; the job that runs this has no service registered before it installs.
+	want := paths.ModeUser
+	if _, err := os.Stat(paths.Resolve(paths.ModeSystem).ConfigDir); err == nil || !errors.Is(err, fs.ErrNotExist) {
+		want = paths.ModeSystem
+	}
+	p := paths.Resolve(paths.ModeAuto)
+	if p.Mode != want {
+		t.Errorf("ModeAuto resolved %v, want %v", p.Mode, want)
+	}
+	dir, ok := paths.WindowsSystemConfigDir()
+	if ok != (want == paths.ModeSystem) {
+		t.Errorf("WindowsSystemConfigDir ok = %v, want %v", ok, want == paths.ModeSystem)
+	}
+	if ok && dir != paths.Resolve(paths.ModeSystem).ConfigDir {
+		t.Errorf("WindowsSystemConfigDir = %q, want the system ConfigDir", dir)
 	}
 }

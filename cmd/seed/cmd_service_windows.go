@@ -26,7 +26,7 @@ import (
 
 const (
 	// windowsServiceName is the internal service name used by Windows SCM.
-	windowsServiceName = "SeedNetworkDiagnostics"
+	windowsServiceName = paths.WindowsServiceName
 
 	// windowsDisplayName is the human-readable service name shown in services.msc.
 	windowsDisplayName = "Seed Network Diagnostic Service"
