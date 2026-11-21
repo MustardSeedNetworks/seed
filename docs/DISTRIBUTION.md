@@ -21,7 +21,7 @@ Releases are public on GitHub. Every tag produces, for each target:
 | Target | Artifact |
 | --- | --- |
 | Linux amd64 / arm64 | `.deb`, `.rpm`, `.tar.gz` |
-| macOS arm64 | `.tar.gz` |
+| macOS arm64 (Apple silicon only) | `.pkg`, `.tar.gz` |
 | Windows amd64 / arm64 | `.zip` |
 
 Alongside each artifact:
@@ -34,10 +34,12 @@ Alongside each artifact:
 There is **no macOS x86-64 build** and **no container image**. There is also
 **no Homebrew tap, and there will not be one** — the `brews:` block was removed
 on 2026-05-18 when the tap token proved never to have been provisioned, and the
-owner closed the question on 2026-09-07. Do not re-add it. Nor is there a
-published macOS `.pkg`: the release workflow cannot run `pkgbuild` on Linux, so
-the installer is built only locally by `deploy/macos/build-pkg.sh`, and the
-`.tar.gz` above is what an operator downloads.
+owner closed the question on 2026-09-07. Do not re-add it.
+
+The macOS `.pkg` is built by the `macos-pkg` job of `release.yml` on a macOS
+runner, from the darwin `.tar.gz` goreleaser produced. It is not Developer ID
+signed or notarized and carries no Wi-Fi helper, which needs a Developer ID
+identity the release does not hold; verify it with its cosign bundle instead.
 
 ## 2. How it is built
 
@@ -71,9 +73,19 @@ no plaintext listener. A plaintext request to that port, such as a browser
 given `<host>:8443` without a scheme, gets a `308` redirect to the same URL
 over `https://` and nothing else.
 
-On macOS, unpack the archive and run its installer, which registers a launchd
-daemon running as root. The daemon keeps its config in `/etc/seed` and its data
-in `/var/lib/seed`; `uninstall.sh --purge` removes both.
+On macOS (Apple silicon only), install the `.pkg`. It puts the daemon in
+`/usr/local/seed`, installs `/Library/LaunchDaemons/com.seed.plist` and
+bootstraps it. The daemon keeps its config in `/etc/seed`, and its database
+(`data/`) and generated certificates (`certs/`) under `/usr/local/seed`, its
+working directory. None of those are in the package payload, so an upgrade
+leaves them untouched; `uninstall.sh --purge` removes them.
+
+```bash
+sudo installer -pkg seed-<version>-darwin-arm64.pkg -target /
+```
+
+The `.tar.gz` carries the same binary with `install.sh`, `upgrade.sh` and
+`uninstall.sh` for installing without the package:
 
 ```bash
 mkdir seed && tar -xzf seed-<version>-darwin-arm64.tar.gz -C seed
