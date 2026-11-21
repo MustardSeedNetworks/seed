@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.282.48](https://github.com/MustardSeedNetworks/seed/compare/v0.282.47...v0.282.48) (2026-11-21)
+
+
+### Miscellaneous
+
+* **deps:** update github actions ([#3833](https://github.com/MustardSeedNetworks/seed/issues/3833)) ([60562e0](https://github.com/MustardSeedNetworks/seed/commit/60562e0e22f54cb8c3f82a9687866e9362cb8b3f))
+* **deps:** update markdownlint to v0.24.1 ([#3835](https://github.com/MustardSeedNetworks/seed/issues/3835)) ([bd8e886](https://github.com/MustardSeedNetworks/seed/commit/bd8e8868876c129ba713344fc7b53e66590d97c0))
+
 ## [0.282.47](https://github.com/MustardSeedNetworks/seed/compare/v0.282.46...v0.282.47) (2026-11-21)
 
 
