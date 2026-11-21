@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -176,11 +177,16 @@ func setupLoggingForService(cfg *config.Config) string {
 
 	_ = ensureDataDir(filepath.Dir(logPath))
 
+	// A service has no console: os.Stdout is an invalid handle, and InitLogger
+	// writes to stdout ahead of the file through an io.MultiWriter, which stops
+	// at the first error. Without the discard writer the log file was never
+	// written.
 	logCfg := &logging.LoggingConfig{
 		Level:      cfg.Logging.Level,
 		Format:     cfg.Logging.Format,
 		AddSource:  cfg.Logging.AddSource,
 		File:       logPath,
+		Writer:     io.Discard,
 		MaxSize:    cfg.Logging.MaxSize,
 		MaxBackups: cfg.Logging.MaxBackups,
 		MaxAge:     cfg.Logging.MaxAge,
