@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.283.0](https://github.com/MustardSeedNetworks/seed/compare/v0.282.51...v0.283.0) (2026-11-21)
+
+
+### Features
+
+* **release:** ship a macos pkg from ci ([#3844](https://github.com/MustardSeedNetworks/seed/issues/3844)) ([5992060](https://github.com/MustardSeedNetworks/seed/commit/59920606889ff0af7e87521a14f242b4e5340371)), closes [#3842](https://github.com/MustardSeedNetworks/seed/issues/3842)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.107.1 ([#3815](https://github.com/MustardSeedNetworks/seed/issues/3815)) ([8346aa7](https://github.com/MustardSeedNetworks/seed/commit/8346aa7c151681322393709ea97b061dbc8e2b1c))
+* **deps:** update dependency immer to v11.2.10 ([#3850](https://github.com/MustardSeedNetworks/seed/issues/3850)) ([e3670a6](https://github.com/MustardSeedNetworks/seed/commit/e3670a6185c53c69607bdf293b518aca43f1c177))
+* **ui:** bring seed web UI to fleet parity ([#3824](https://github.com/MustardSeedNetworks/seed/issues/3824)) ([f3e2d11](https://github.com/MustardSeedNetworks/seed/commit/f3e2d110e1059fa755fa5edeca307b068e863fa3)), closes [#3821](https://github.com/MustardSeedNetworks/seed/issues/3821)
+
 ## [0.282.51](https://github.com/MustardSeedNetworks/seed/compare/v0.282.50...v0.282.51) (2026-11-21)
 
 
