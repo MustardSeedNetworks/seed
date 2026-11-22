@@ -538,6 +538,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          set -x
           expanded="${RUNNER_TEMP}/pkg-expanded"
           pkgutil --check-signature "dist/${PKG}" | grep -F "Developer ID Installer"
           pkgutil --expand-full "dist/${PKG}" "${expanded}"
