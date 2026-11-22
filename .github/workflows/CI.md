@@ -17,6 +17,22 @@ docs-only PR does not pay for a Go build. `ci-complete` is the single required
 status check — it depends on every other job, so adding a job to `ci.yml`
 without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 
+## Light PR runs, full suite in the queue
+
+A pull request runs lint, typecheck, unit tests, the required security scans,
+build verification and the PR title/body lint. `race` (the race detector) and `e2e`
+(browser tests and smoke) run only in the merge queue, so a PR gets feedback
+sooner and the full suite still runs once, on the exact commit that lands.
+
+- On a PR those jobs show as skipped, and `CI Complete` treats a skip as success.
+- In the merge queue `CI Complete` requires them to have succeeded. A skip there
+  fails it, so a broken `if:` cannot let code land untested.
+- To run the full suite on a PR, add the `full-ci` label before pushing (the
+  label is read from the event, so an already-running workflow does not pick it
+  up), or dispatch the workflow on the branch:
+  `gh workflow run ci.yml --ref <branch>`. A dispatch checks the parent commit,
+  so it is the thing to use for a change that touches CI itself.
+
 ## GitHub Actions Workflows
 
 ### ci.yml - Main CI Pipeline

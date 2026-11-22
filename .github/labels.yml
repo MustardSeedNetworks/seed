@@ -115,6 +115,9 @@
 - name: "dependencies"
   color: 0366D6
   description: "Dependency update."
+- name: "full-ci"
+  color: 0E8A16
+  description: "Run the race detector and browser E2E on this PR, not only in the merge queue."
 - name: "stop-updating"
   color: B60205
   description: "Renovate does not rebase or re-arm this PR"
