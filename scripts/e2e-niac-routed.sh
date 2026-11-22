@@ -43,6 +43,10 @@ python3 -c 'import yaml' 2>/dev/null || {
 }
 
 run_dir=$(mktemp -d "${TMPDIR:-/tmp}/seed-niac-routed.XXXXXX")
+# The daemons run as root, and securedir (foundation) refuses a certificate
+# directory with an ancestor another account owns, so their working and
+# certificate directories live in a root-owned tree, not under run_dir.
+root_dir=$(sudo mktemp -d "${TMPDIR:-/tmp}/seed-niac-routed-root.XXXXXX")
 netns=seed-e2r-$$
 seed_link=sdr$$
 niac_link=nir$$
@@ -87,7 +91,7 @@ cleanup() {
     sudo chown -R "$(id -u):$(id -g)" "$kept" 2>/dev/null || true
     printf '\nfull logs kept in %s\n' "$kept" >&2
   fi
-  sudo rm -rf "$run_dir"
+  sudo rm -rf "$run_dir" "$root_dir"
   trap - EXIT HUP INT TERM
   exit "$exit_status"
 }
@@ -272,7 +276,7 @@ sudo ip route add "$route" via "$gateway" dev "$seed_link"
 setsid sudo ip netns exec "$netns" "$niac_bin" daemon --once "$niac_link" "$run_dir/scenario.yaml" \
   --attachment "$attachment" --attachment-mode access --access-vlan "$vlan" \
   --attachment-policy "$niac_link=access:$vlan" \
-  --storage disabled --cert-dir "$run_dir/niac-certs" >"$run_dir/niac.log" 2>&1 &
+  --storage disabled --cert-dir "$root_dir/niac-certs" >"$run_dir/niac.log" 2>&1 &
 niac_pid=$!
 
 attempt=0
@@ -292,16 +296,16 @@ printf '%s\n' \
 
 # Root for the raw sockets the sweep uses; HOME repointed so the host's own
 # licence file cannot change the tier under test (seed#2688). Started from
-# the run directory because seed writes its certs/ and data/ relative to the
-# working directory, and as root they would land in the checkout.
+# the root-owned directory because seed writes its certs/ and data/ relative
+# to the working directory, and as root they would land in the checkout.
 #
 # The tier under test is a Pro trial started in that HOME: the spec ends by
 # tracing a path into the site, and path analysis is Pro. The discovery and
 # learning routes the spec drives are ungated.
 (cd "$run_dir" && sudo env HOME="$run_dir" "$repo_dir/seed" license trial >/dev/null)
 (
-  cd "$run_dir"
   exec setsid sudo env HOME="$run_dir" SEED_LOGIN_MAX_ATTEMPTS=200 \
+    sh -c 'cd "$1" && shift && exec "$@"' sh "$root_dir" \
     "$repo_dir/seed" --config "$run_dir/config.json" >"$run_dir/seed.out" 2>&1
 ) &
 seed_pid=$!

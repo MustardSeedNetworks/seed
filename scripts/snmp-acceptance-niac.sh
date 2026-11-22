@@ -52,6 +52,10 @@ python3 -c 'import yaml' 2>/dev/null || {
 }
 
 run_dir=$(mktemp -d "${TMPDIR:-/tmp}/seed-snmp-acceptance.XXXXXX")
+# The simulator runs as root, and securedir (foundation) refuses a certificate
+# directory with an ancestor another account owns, so its certificates live in
+# a root-owned directory, not under run_dir.
+root_dir=$(sudo mktemp -d "${TMPDIR:-/tmp}/seed-snmp-acceptance-root.XXXXXX")
 niac_ns=seed-sa-niac-$$
 poll_ns=seed-sa-poll-$$
 poll_link=sap$$
@@ -97,7 +101,7 @@ cleanup() {
     sudo chown -R "$(id -u):$(id -g)" "$kept" 2>/dev/null || true
     printf '\nlogs kept in %s\n' "$kept" >&2
   fi
-  sudo rm -rf "$run_dir"
+  sudo rm -rf "$run_dir" "$root_dir"
   trap - EXIT HUP INT TERM
   exit "$exit_status"
 }
@@ -313,7 +317,7 @@ EOF
   setsid sudo ip netns exec "$niac_ns" "$niac_bin" daemon --once "$niac_link" "$run_dir/$pack.yaml" \
     --attachment "$attachment" --attachment-mode access --access-vlan "$vlan" \
     --attachment-policy "$niac_link=access:$vlan" \
-    --storage disabled --cert-dir "$run_dir/niac-certs" >"$run_dir/$pack.niac.log" 2>&1 &
+    --storage disabled --cert-dir "$root_dir/niac-certs" >"$run_dir/$pack.niac.log" 2>&1 &
   niac_pid=$!
   attempt=0
   until grep -q 'Simulation started' "$run_dir/$pack.niac.log" 2>/dev/null; do

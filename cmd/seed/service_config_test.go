@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/securedir"
+
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/paths"
@@ -20,11 +22,11 @@ import (
 // v0.200.0 config carries, and treating it as fatal crash-loops the upgrade
 // (#2377). That one is migrated away with a warning instead.
 func TestLoadAndConfigureConfigForServiceReportsRemovedSetting(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "seed.json")
+	path := filepath.Join(privateTempDir(t), "seed.json")
 	if err := os.WriteFile(path, []byte(`{"server":{"https":false}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	_, err := loadAndConfigureConfigForService(path)
+	_, err := loadAndConfigureConfigForService(path, testDirOptions(t))
 	if err == nil || !strings.Contains(err.Error(), `unknown field "https"`) {
 		t.Fatalf("expected removed-setting error, got %v", err)
 	}
@@ -33,24 +35,24 @@ func TestLoadAndConfigureConfigForServiceReportsRemovedSetting(t *testing.T) {
 // TestLoadAndConfigureConfigForServiceMigratesSatisfiedHTTPSToggle is the other
 // half: the service loader must start on a config that only asks for HTTPS.
 func TestLoadAndConfigureConfigForServiceMigratesSatisfiedHTTPSToggle(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "seed.json")
+	path := filepath.Join(privateTempDir(t), "seed.json")
 	if err := os.WriteFile(path, []byte(`{"server":{"https":true}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := loadAndConfigureConfigForService(path); err != nil {
+	if _, err := loadAndConfigureConfigForService(path, testDirOptions(t)); err != nil {
 		t.Fatalf("a config asking only for HTTPS must load: %v", err)
 	}
 }
 
 func TestLoadAndConfigureConfigForServiceReturnsValidatedConfig(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "seed.json")
+	path := filepath.Join(privateTempDir(t), "seed.json")
 	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = auth.SetupModePlaceholder
 	if err := cfg.Save(path); err != nil {
 		t.Fatal(err)
 	}
 
-	loaded, err := loadAndConfigureConfigForService(path)
+	loaded, err := loadAndConfigureConfigForService(path, testDirOptions(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,17 +62,28 @@ func TestLoadAndConfigureConfigForServiceReturnsValidatedConfig(t *testing.T) {
 }
 
 func TestLoadAndConfigureConfigForServiceReportsPartialCertificatePair(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "seed.json")
+	path := filepath.Join(privateTempDir(t), "seed.json")
 	cfg := config.DefaultConfig()
 	cfg.Auth.DefaultPasswordHash = auth.SetupModePlaceholder
 	cfg.Server.CertFile = "server.crt"
 	if err := cfg.Save(path); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := loadAndConfigureConfigForService(path); err == nil ||
+	if _, err := loadAndConfigureConfigForService(path, testDirOptions(t)); err == nil ||
 		!strings.Contains(err.Error(), "server.cert_file and server.key_file") {
 		t.Fatalf("expected certificate-pair validation error, got %v", err)
 	}
+}
+
+// privateTempDir is a temporary directory in the form securedir accepts: its
+// links resolved, since macOS keeps its temp tree behind /var.
+func privateTempDir(t *testing.T) string {
+	t.Helper()
+	dir, err := securedir.Canonical(t.TempDir(), testDirOptions(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return dir
 }
 
 func servicePathsUnder(root string) *paths.Paths {
@@ -160,55 +173,90 @@ func TestAnchorServicePaths(t *testing.T) {
 }
 
 func TestPrepareServiceDirsCreatesTheTree(t *testing.T) {
-	sp := servicePathsUnder(filepath.Join(t.TempDir(), "Seed"))
-	// Created and protected first: on Windows verifyDataDir refuses a root that
-	// inherits its parent's permissions, which is what MkdirAll would leave.
-	if err := os.Mkdir(sp.Root, privateDirMode); err != nil {
-		t.Fatal(err)
-	}
-	protectDirForTest(t, sp.Root)
+	opts := testDirOptions(t)
+	sp := servicePathsUnder(filepath.Join(privateTempDir(t), "Seed"))
 
-	if err := prepareServiceDirs(sp); err != nil {
+	got, err := prepareServiceDirs(sp, opts)
+	if err != nil {
 		t.Fatalf("prepareServiceDirs: %v", err)
 	}
-	for _, dir := range []string{sp.Root, sp.ConfigDir, sp.DataDir, sp.LogDir, sp.CertDir} {
-		if info, err := os.Stat(dir); err != nil || !info.IsDir() {
-			t.Errorf("%s was not created as a directory (err %v)", dir, err)
+	for _, dir := range []string{got.Root, got.ConfigDir, got.DataDir, got.LogDir, got.CertDir} {
+		if info, statErr := os.Stat(dir); statErr != nil || !info.IsDir() {
+			t.Errorf("%s was not created as a directory (err %v)", dir, statErr)
 		}
+	}
+	if got.ConfigFile != filepath.Join(got.ConfigDir, "seed.json") {
+		t.Errorf("ConfigFile = %s, want it inside %s", got.ConfigFile, got.ConfigDir)
+	}
+}
+
+// install.ps1 creates the root before the service ever starts; the service
+// takes it over rather than refusing it.
+func TestPrepareServiceDirsTakesOverTheInstallersRoot(t *testing.T) {
+	opts := testDirOptions(t)
+	sp := servicePathsUnder(filepath.Join(privateTempDir(t), "Seed"))
+	if err := securedir.Ensure(sp.Root, opts); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := prepareServiceDirs(sp, opts); err != nil {
+		t.Fatalf("prepareServiceDirs over an existing root: %v", err)
+	}
+	if info, err := os.Stat(sp.CertDir); err != nil || !info.IsDir() {
+		t.Errorf("certificate directory missing under the existing root (err %v)", err)
+	}
+}
+
+func TestPrepareServiceDirsReturnsCanonicalPaths(t *testing.T) {
+	opts := testDirOptions(t)
+	sp := servicePathsUnder(filepath.Join(t.TempDir(), "Seed"))
+	want, err := securedir.Canonical(sp.Root, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := prepareServiceDirs(sp, opts)
+	if err != nil {
+		t.Fatalf("prepareServiceDirs: %v", err)
+	}
+	if got.Root != want || got.CertDir != filepath.Join(want, "certs") {
+		t.Errorf("Root = %s, CertDir = %s; want %s and its certs", got.Root, got.CertDir, want)
+	}
+}
+
+func TestPrepareServiceDirsRefusesAFileAsTheRoot(t *testing.T) {
+	file := filepath.Join(privateTempDir(t), "Seed")
+	if err := os.WriteFile(file, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := prepareServiceDirs(servicePathsUnder(file), testDirOptions(t)); err == nil {
+		t.Fatal("a file where the service directory belongs was accepted")
 	}
 }
 
 func TestVerifyDataDir(t *testing.T) {
-	dir := t.TempDir()
-	protectDirForTest(t, dir)
-	regular := filepath.Join(dir, "seed.json")
-	if err := os.WriteFile(regular, []byte("{}"), 0o600); err != nil {
+	opts := testDirOptions(t)
+	dir := privateTempDir(t)
+	if err := os.WriteFile(filepath.Join(dir, "seed.json"), []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	notDir := filepath.Join(dir, "file")
 	if err := os.WriteFile(notDir, nil, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	subdir := filepath.Join(dir, "sub")
-	if err := os.Mkdir(subdir, 0o750); err != nil {
-		t.Fatal(err)
-	}
 
 	tests := []struct {
 		name    string
 		path    string
-		files   []string
 		wantErr bool
 	}{
-		{"directory with an existing regular file", dir, []string{regular}, false},
-		{"missing files are fine", dir, []string{filepath.Join(dir, "absent.db")}, false},
-		{"missing directory", filepath.Join(dir, "absent"), nil, true},
-		{"a file where the directory should be", notDir, nil, true},
-		{"a directory where a file should be", dir, []string{subdir}, true},
+		{"private directory with a regular file in it", dir, false},
+		{"missing directory", filepath.Join(dir, "absent"), true},
+		{"a file where the directory should be", notDir, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := verifyDataDir(tt.path, tt.files...); (err != nil) != tt.wantErr {
+			if err := verifyDataDir(tt.path, opts); (err != nil) != tt.wantErr {
 				t.Errorf("verifyDataDir error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -216,11 +264,11 @@ func TestVerifyDataDir(t *testing.T) {
 }
 
 func TestSavePrivateConfigRoundTrips(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "seed.json")
+	path := filepath.Join(privateTempDir(t), "seed.json")
 	cfg := config.DefaultConfig()
 	cfg.Auth.JWTSecret = "persisted-secret"
 
-	if err := savePrivateConfig(cfg, path); err != nil {
+	if err := savePrivateConfig(cfg, path, testDirOptions(t)); err != nil {
 		t.Fatalf("savePrivateConfig: %v", err)
 	}
 	loaded, err := config.Load(path)
@@ -233,15 +281,21 @@ func TestSavePrivateConfigRoundTrips(t *testing.T) {
 }
 
 func TestCheckSystemTree(t *testing.T) {
-	root := t.TempDir()
-	protectDirForTest(t, root)
+	opts := testDirOptions(t)
+	root := privateTempDir(t)
 	system := servicePathsUnder(root)
+	for _, dir := range []string{system.ConfigDir, system.DataDir, system.LogDir} {
+		if err := os.Mkdir(dir, 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
 	file := filepath.Join(root, "afile")
 	if err := os.WriteFile(file, nil, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	missing := servicePathsUnder(filepath.Join(root, "absent"))
+	noRoot := &paths.Paths{ConfigFile: system.ConfigFile}
 
 	tests := []struct {
 		name       string
@@ -251,12 +305,13 @@ func TestCheckSystemTree(t *testing.T) {
 	}{
 		{"system config in a verified tree", system.ConfigFile, system, false},
 		{"another config is not checked", filepath.Join(t.TempDir(), "seed.json"), system, false},
+		{"a layout with no root has no tree to check", system.ConfigFile, noRoot, false},
 		{"system tree missing", missing.ConfigFile, missing, true},
 		{"system root is a file", servicePathsUnder(file).ConfigFile, servicePathsUnder(file), true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := checkSystemTree(tt.configPath, tt.system)
+			err := checkSystemTree(tt.configPath, tt.system, opts)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("checkSystemTree error = %v, wantErr %v", err, tt.wantErr)
 			}

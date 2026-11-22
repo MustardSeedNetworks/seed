@@ -115,6 +115,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 		config:        cfg,
 		configPath:    "/tmp/test-config.yaml",
 		logPath:       "/tmp/test.log",
+		certDir:       selfSignedCertDir,
 		icmpAvailable: true,
 		engines:       engine.NewRegistry(nil),
 

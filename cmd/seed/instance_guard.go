@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/instance"
+	"github.com/MustardSeedNetworks/foundation/pkg/securedir"
 
 	"github.com/MustardSeedNetworks/seed/internal/paths"
 )
@@ -98,15 +99,22 @@ func sameConfigPath(a, b string) bool {
 	return a == b
 }
 
-// checkSystemTree runs [verifyDataDir] over the system tree when configPath is
-// its config, so an elevated command never works inside a directory someone
-// else could have prepared. Any other config path is the caller's own.
-func checkSystemTree(configPath string, system *paths.Paths) error {
-	if !sameConfigPath(configPath, system.ConfigFile) {
+// checkSystemTree runs [verifyDataDir] over the system tree's config, data and
+// log directories when configPath is its config, so an elevated command never
+// works inside a directory someone else could have prepared. Verifying each
+// checks the ancestor chain through Root too. The certificate directory is left
+// out: foundation writes the private key readable by SYSTEM alone, so an
+// Administrators console cannot open it to judge it, and the service itself
+// verifies the whole tree at start. Any other config path is the caller's own,
+// and a layout with no Root (everywhere but Windows) has no such tree.
+func checkSystemTree(configPath string, system *paths.Paths, opts securedir.Options) error {
+	if system.Root == "" || !sameConfigPath(configPath, system.ConfigFile) {
 		return nil
 	}
-	if err := verifyDataDir(system.Root, system.ConfigFile); err != nil {
-		return &untrustedDataDirError{err: err}
+	for _, dir := range []string{system.ConfigDir, system.DataDir, system.LogDir} {
+		if err := verifyDataDir(dir, opts); err != nil {
+			return &untrustedDataDirError{err: err}
+		}
 	}
 	return nil
 }
@@ -117,7 +125,7 @@ func requireElevation(configPath string) error {
 	if err := checkElevation(configPath, system.ConfigFile, processElevated()); err != nil {
 		return err
 	}
-	return checkSystemTree(configPath, system)
+	return checkSystemTree(configPath, system, securedir.Options{})
 }
 
 // exitCodeFor maps an error returned by the root command to a process exit

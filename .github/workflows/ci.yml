@@ -111,9 +111,11 @@ jobs:
           - 'cmd/seed/service_*'
           - 'cmd/seed/elevation_*'
           - 'cmd/seed/instance_guard*'
-          - 'cmd/seed/datadir_*'
+          - 'cmd/seed/dir_options_*'
           - 'internal/license/**'
           - 'internal/paths/**'
+          - 'go.mod'
+          - 'go.sum'
           - '.github/workflows/ci.yml'
         docs:
           - '**/*.md'
@@ -361,7 +363,7 @@ jobs:
           CGO_ENABLED: "0"
         run: |
           go test -count=1 ./internal/paths ./internal/license
-          go test -count=1 -run 'TestCheckServiceExecutable|TestAnchorServicePaths|TestPrepareServiceDirs|TestVerifyDataDir|TestSavePrivateConfig|TestCheckElevation|TestCheckProtectedDACL|TestVerifyDirSecurity|TestCheckSystemTree' ./cmd/seed
+          go test -count=1 -run 'TestCheckServiceExecutable|TestAnchorServicePaths|TestPrepareServiceDirs|TestVerifyDataDir|TestSavePrivateConfig|TestCheckElevation|TestCheckSystemTree' ./cmd/seed
 
       # The Makefile's GO_LDFLAGS, with a version that names this run so the
       # assertion below cannot be satisfied by a stale binary.
