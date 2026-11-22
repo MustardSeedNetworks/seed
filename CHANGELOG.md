@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.284.3](https://github.com/MustardSeedNetworks/seed/compare/v0.284.2...v0.284.3) (2026-11-22)
+
+
+### Bug Fixes
+
+* **windows:** adopt foundation securedir for the service data dir ([#3869](https://github.com/MustardSeedNetworks/seed/issues/3869)) ([e7ce398](https://github.com/MustardSeedNetworks/seed/commit/e7ce3982f99479f4ce629554dd2a4ffde7ba6cff))
+
+
+### Miscellaneous
+
+* **deps:** update dependency msw to v3.0.6 ([#3867](https://github.com/MustardSeedNetworks/seed/issues/3867)) ([688df33](https://github.com/MustardSeedNetworks/seed/commit/688df33a3a7095ebbc98071541a26abea843df20))
+
 ## [0.284.2](https://github.com/MustardSeedNetworks/seed/compare/v0.284.1...v0.284.2) (2026-11-22)
 
 
