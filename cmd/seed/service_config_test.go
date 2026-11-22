@@ -284,6 +284,11 @@ func TestCheckSystemTree(t *testing.T) {
 	opts := testDirOptions(t)
 	root := privateTempDir(t)
 	system := servicePathsUnder(root)
+	for _, dir := range []string{system.ConfigDir, system.DataDir, system.LogDir} {
+		if err := os.Mkdir(dir, 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
 	file := filepath.Join(root, "afile")
 	if err := os.WriteFile(file, nil, 0o600); err != nil {
 		t.Fatal(err)
