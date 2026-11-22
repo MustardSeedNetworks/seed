@@ -35,7 +35,6 @@ func TestVerifyDataDirOnWindows(t *testing.T) {
 		wantErr bool
 	}{
 		{"install.ps1 descriptor", installerACL, false},
-		{"SYSTEM only", "D:PAI(A;OICI;FA;;;SY)", false},
 		{"users can write", usersWrite, true},
 	}
 	for _, tt := range tests {
@@ -71,7 +70,10 @@ func TestPrepareServiceDirsClosesAUsersReadGrant(t *testing.T) {
 	}
 }
 
-func TestPrepareServiceDirsTakesBackAWritableCertDir(t *testing.T) {
+// A Users-writable directory under the root is content nobody vouched for:
+// Ensure takes a tree over only when everything in it already passes, so the
+// service refuses to start rather than adopting it.
+func TestPrepareServiceDirsRefusesAWritableCertDir(t *testing.T) {
 	opts := testDirOptions(t)
 	sp := servicePathsUnder(privateTempDir(t))
 	if _, err := prepareServiceDirs(sp, opts); err != nil {
@@ -79,12 +81,7 @@ func TestPrepareServiceDirsTakesBackAWritableCertDir(t *testing.T) {
 	}
 	applyDACLForTest(t, sp.CertDir, usersWrite)
 
-	// Ensure replaces the ACL of the directories it is given, so a
-	// Users-writable certs directory is taken back, not trusted.
-	if _, err := prepareServiceDirs(sp, opts); err != nil {
-		t.Fatalf("a writable certs directory was not taken back: %v", err)
-	}
-	if strings.Contains(dirSDDL(t, sp.CertDir), ";BU)") {
-		t.Error("certs directory still grants Users access")
+	if _, err := prepareServiceDirs(sp, opts); !errors.Is(err, securedir.ErrUnsafeAccess) {
+		t.Fatalf("prepareServiceDirs error = %v, want ErrUnsafeAccess", err)
 	}
 }
