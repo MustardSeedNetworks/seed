@@ -508,6 +508,21 @@ jobs:
           if ($status.port -ne 8443) { throw "status sees port $($status.port), not 8443" }
           if ($status.version -ne $env:EXPECTED_VERSION) { throw "status sees version $($status.version), expected $env:EXPECTED_VERSION" }
 
+      # backup refuses while the service runs, so stop it first. The key is
+      # readable by SYSTEM alone, so this shows what an elevated console gets.
+      - name: Backup from an elevated console
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $seed = "$env:ProgramFiles\Seed\seed.exe"
+          & $seed service stop
+          if ($LASTEXITCODE -ne 0) { throw "service stop failed" }
+          $archive = Join-Path $env:RUNNER_TEMP "seed-backup.tar.gz"
+          & $seed backup -o $archive 2>&1 | Write-Host
+          Write-Host "backup exit code: $LASTEXITCODE"
+          if (Test-Path $archive) { tar -tzf $archive | Write-Host }
+          if ($LASTEXITCODE -ne 0) { throw "backup or archive listing failed" }
+
       - name: Stop and uninstall
         shell: pwsh
         run: |
