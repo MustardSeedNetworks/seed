@@ -34,9 +34,18 @@
 # macOS .pkg:
 #   pkgbuild exists only on macOS, so the macos-pkg job builds the installer on
 #   a macOS runner from the darwin archive goreleaser produced. It is Apple
-#   silicon only, carries no Wi-Fi helper (that needs a Developer ID identity
-#   the release does not hold) and is not Developer ID signed or notarized: its
-#   integrity comes from the cosign bundle, the SBOM and the SLSA provenance.
+#   silicon only. The daemon and the Wi-Fi helper are signed with the Developer
+#   ID Application identity, the package with the Developer ID Installer
+#   identity, and the package is notarized and stapled, so it installs by
+#   double-click and Wi-Fi scanning works. The Wi-Fi helper is notarized and
+#   stapled before it is packaged, so air-gapped installs validate offline. A
+#   pushed tag, or a dispatch with sign_macos, without the signing secrets
+#   fails there rather than ship an installer Gatekeeper refuses; any other
+#   dispatch builds unsigned and says so. Secrets:
+#   MACOS_SIGNING_P12_BASE64, MACOS_SIGNING_P12_PASSWORD (one .p12 holding both
+#   identities), APPLE_NOTARY_KEY_P8_BASE64, APPLE_NOTARY_KEY_ID,
+#   APPLE_NOTARY_ISSUER_ID. A dispatch with sign_macos signs and
+#   notarizes too, which is how the whole chain is proven without cutting a tag.
 #   The release stays a draft until provenance, which needs macos-pkg, finishes.
 # =============================================================================
 
@@ -52,6 +61,10 @@ on:
         description: "Must stay true: a manual run is always snapshot-only. Publishing requires pushing a v* tag."
         type: boolean
         default: true
+      sign_macos:
+        description: "With dry_run: sign and notarize the macOS .pkg for real (needs the signing secrets) instead of building it unsigned. Still publishes nothing."
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -416,10 +429,12 @@ jobs:
 
   # =========================================================================
   # macOS .pkg — built from goreleaser's darwin archive, so the installer
-  # carries the same binary the archive does. On a real release it is SBOM'd
-  # and cosign-signed like every other artifact, appended to checksums.txt
-  # (which is re-signed), and added to the provenance subjects. The release is
-  # still a draft here; publish-release flips it after provenance.
+  # carries the same binary the archive does. It is Developer ID signed,
+  # notarized and stapled first; on a real release it is then SBOM'd and
+  # cosign-signed like every other artifact (after stapling, which changes the
+  # bytes), appended to checksums.txt (which is re-signed), and added to the
+  # provenance subjects. The release is still a draft here; publish-release
+  # flips it after provenance.
   # =========================================================================
   macos-pkg:
     name: macOS .pkg
@@ -444,12 +459,68 @@ jobs:
           name: macos-pkg-inputs
           path: ${{ runner.temp }}/macos-pkg-inputs/
 
+      - name: Resolve the signing mode
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          SIGN_MACOS: ${{ inputs.sign_macos }}
+          P12_BASE64: ${{ secrets.MACOS_SIGNING_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.MACOS_SIGNING_P12_PASSWORD }}
+          NOTARY_KEY_BASE64: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}
+          NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          if [ "${EVENT}" = "push" ] || [ "${SIGN_MACOS}" = "true" ]; then
+            if [ -z "${P12_BASE64}" ] || [ -z "${P12_PASSWORD}" ] || [ -z "${NOTARY_KEY_BASE64}" ] || [ -z "${NOTARY_KEY_ID}" ] || [ -z "${NOTARY_ISSUER_ID}" ]; then
+              echo "::error::The macOS signing secrets (MACOS_SIGNING_P12_BASE64, MACOS_SIGNING_P12_PASSWORD, APPLE_NOTARY_KEY_P8_BASE64, APPLE_NOTARY_KEY_ID, APPLE_NOTARY_ISSUER_ID) are not all set. Without them the .pkg would be refused by Gatekeeper and carry no Wi-Fi helper, so this run is refused."
+              exit 1
+            fi
+            echo "SIGN=true" >> "$GITHUB_ENV"
+          else
+            echo "::warning::sign_macos is off, so the .pkg is built UNSIGNED, UN-NOTARIZED and WITHOUT the Wi-Fi helper. It proves nothing about signing and must not be distributed."
+            echo "SIGN=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Set up Go for the Wi-Fi helper
+        if: ${{ env.SIGN == 'true' }}
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Import signing identities
+        if: ${{ env.SIGN == 'true' }}
+        shell: bash
+        env:
+          P12_BASE64: ${{ secrets.MACOS_SIGNING_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.MACOS_SIGNING_P12_PASSWORD }}
+        run: |
+          set -euo pipefail
+          keychain="${RUNNER_TEMP}/signing.keychain-db"
+          keychain_password="$(uuidgen)"
+          echo "::add-mask::${keychain_password}"
+          # Registered before the key material exists, so the keychain is
+          # removed even when the import below fails half way.
+          echo "KEYCHAIN=${keychain}" >> "$GITHUB_ENV"
+          echo "${P12_BASE64}" | base64 --decode > "${RUNNER_TEMP}/signing.p12"
+          security create-keychain -p "${keychain_password}" "${keychain}"
+          security set-keychain-settings -lut 3600 "${keychain}"
+          security unlock-keychain -p "${keychain_password}" "${keychain}"
+          security import "${RUNNER_TEMP}/signing.p12" -k "${keychain}" -P "${P12_PASSWORD}" \
+            -T /usr/bin/codesign -T /usr/bin/productsign -T /usr/bin/productbuild -T /usr/bin/pkgbuild
+          rm -f "${RUNNER_TEMP}/signing.p12"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "${keychain_password}" "${keychain}" > /dev/null
+          security list-keychains -d user -s "${keychain}" login.keychain-db
+          security find-identity -v "${keychain}" | grep -F "Developer ID Application"
+          security find-identity -v "${keychain}" | grep -F "Developer ID Installer"
+
       - name: Build the .pkg
         shell: bash
         env:
-          # The Wi-Fi helper must be signed with a Developer ID identity this
-          # release does not hold, so the installer ships without it.
-          SEED_SKIP_WIFI_HELPER: "1"
+          NOTARY_KEY_BASE64: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}
+          NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
         run: |
           set -euo pipefail
           archives=("${RUNNER_TEMP}"/macos-pkg-inputs/seed-*-darwin-arm64.tar.gz)
@@ -462,8 +533,76 @@ jobs:
           version="${version%-darwin-arm64}"
           mkdir "${RUNNER_TEMP}/darwin"
           tar -xzf "${archives[0]}" -C "${RUNNER_TEMP}/darwin" seed
+          if [ "${SIGN}" = "true" ]; then
+            # build-pkg.sh signs the daemon (hardened runtime, secure
+            # timestamp), build-helper.sh signs the entitled Wi-Fi helper and
+            # build-pkg.sh notarizes and staples it, and productbuild signs
+            # the package with the Installer identity.
+            export SEED_SIGN_IDENTITY="Developer ID Application"
+            export SEED_INSTALLER_IDENTITY="Developer ID Installer"
+          else
+            export SEED_SKIP_WIFI_HELPER=1
+            unset NOTARY_KEY_BASE64 NOTARY_KEY_ID NOTARY_ISSUER_ID
+          fi
           deploy/macos/build-pkg.sh "${RUNNER_TEMP}/darwin/seed" "${version}"
           echo "PKG=seed-${version}-darwin-arm64.pkg" >> "$GITHUB_ENV"
+
+      - name: Check the signed package contract
+        if: ${{ env.SIGN == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          expanded="${RUNNER_TEMP}/pkg-expanded"
+          pkgutil --check-signature "dist/${PKG}" | grep -F "Developer ID Installer"
+          pkgutil --expand-full "dist/${PKG}" "${expanded}"
+          # The Wi-Fi helper is what makes macOS scans return networks.
+          pkgutil --payload-files "dist/${PKG}" | grep -Fx "./Library/Application Support/Seed/Seed Wi-Fi Helper.app"
+          helper="$(find "${expanded}" -type d -name 'Seed Wi-Fi Helper.app')"
+          test "$(echo "${helper}" | wc -l)" -eq 1
+          codesign --verify --deep --strict "${helper}"
+          xcrun stapler validate "${helper}"
+          codesign -dvv "${helper}" 2>&1 | grep -F "Authority=Developer ID Application"
+          codesign -d --entitlements - "${helper}" 2>&1 | grep -F "com.apple.security.personal-information.location"
+          daemon="$(find "${expanded}" -type f -path '*/usr/local/seed/seed')"
+          test "$(echo "${daemon}" | wc -l)" -eq 1
+          codesign --verify --strict "${daemon}"
+          codesign -dvv "${daemon}" 2>&1 | grep -F "Authority=Developer ID Application"
+          codesign -dvv "${daemon}" 2>&1 | grep -F "flags=0x10000(runtime)"
+          lipo -archs "${daemon}" | grep -Fx arm64
+
+      - name: Notarize and staple the .pkg
+        if: ${{ env.SIGN == 'true' }}
+        shell: bash
+        env:
+          NOTARY_KEY_BASE64: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}
+          NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          key="${RUNNER_TEMP}/notary.p8"
+          echo "${NOTARY_KEY_BASE64}" | base64 --decode > "${key}"
+          trap 'rm -f "${key}"' EXIT
+          # notarytool exits 0 for an Invalid submission, so read the verdict.
+          xcrun notarytool submit "dist/${PKG}" --key "${key}" --key-id "${NOTARY_KEY_ID}" \
+            --issuer "${NOTARY_ISSUER_ID}" --wait --output-format json > "${RUNNER_TEMP}/notary.json"
+          cat "${RUNNER_TEMP}/notary.json"
+          if [ "$(jq -r .status "${RUNNER_TEMP}/notary.json")" != "Accepted" ]; then
+            xcrun notarytool log "$(jq -r .id "${RUNNER_TEMP}/notary.json")" --key "${key}" \
+              --key-id "${NOTARY_KEY_ID}" --issuer "${NOTARY_ISSUER_ID}" || true
+            echo "::error::notarization was not Accepted"
+            exit 1
+          fi
+          # Stapling rewrites the package, so it runs before the SBOM, the
+          # signatures and the checksum are taken.
+          xcrun stapler staple "dist/${PKG}"
+          xcrun stapler validate "dist/${PKG}"
+          spctl --assess --type install --verbose=2 "dist/${PKG}"
+          pkgutil --check-signature "dist/${PKG}"
+
+      - name: Remove the signing keychain
+        if: ${{ always() && env.SIGN == 'true' }}
+        shell: bash
+        run: security delete-keychain "${KEYCHAIN:-${RUNNER_TEMP}/signing.keychain-db}" || true
 
       - name: Upload dry-run .pkg for inspection
         if: ${{ github.event_name != 'push' || inputs.dry_run }}

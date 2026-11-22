@@ -37,9 +37,13 @@ on 2026-05-18 when the tap token proved never to have been provisioned, and the
 owner closed the question on 2026-09-07. Do not re-add it.
 
 The macOS `.pkg` is built by the `macos-pkg` job of `release.yml` on a macOS
-runner, from the darwin `.tar.gz` goreleaser produced. It is not Developer ID
-signed or notarized and carries no Wi-Fi helper, which needs a Developer ID
-identity the release does not hold; verify it with its cosign bundle instead.
+runner, from the darwin `.tar.gz` goreleaser produced. The daemon and the Wi-Fi
+helper are signed with the Developer ID Application identity (hardened runtime,
+secure timestamp), the package with the Developer ID Installer identity, and the
+package is notarized and stapled, so Gatekeeper accepts it on a Mac that has
+never seen it. A tag push without the signing secrets fails that job instead of
+publishing an installer that cannot scan or open. The cosign bundle, SBOM and
+provenance cover the stapled package.
 
 ## 2. How it is built
 
@@ -80,8 +84,22 @@ bootstraps it. The daemon keeps its config in `/etc/seed`, and its database
 working directory. None of those are in the package payload, so an upgrade
 leaves them untouched; `uninstall.sh --purge` removes them.
 
+The package is signed and notarized, so double-clicking it in Finder works; the
+command line install is equivalent:
+
 ```bash
 sudo installer -pkg seed-<version>-darwin-arm64.pkg -target /
+```
+
+It includes the Wi-Fi helper, which macOS needs before it will return network
+names. Approve the Location Services prompt for Seed Wi-Fi Helper after install.
+
+Check the signature and the notarization ticket before installing:
+
+```bash
+pkgutil --check-signature seed-<version>-darwin-arm64.pkg
+spctl --assess --type install -vv seed-<version>-darwin-arm64.pkg
+xcrun stapler validate seed-<version>-darwin-arm64.pkg
 ```
 
 The `.tar.gz` carries the same binary with `install.sh`, `upgrade.sh` and

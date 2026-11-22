@@ -175,6 +175,62 @@ assert_rejected \
   $'      - name: Add the .pkg to the provenance subjects\n        if: ${{ github.event_name == \'push\' && !inputs.dry_run }}' \
   $'      - name: Add the .pkg to the provenance subjects\n        if: ${{ !inputs.dry_run }}'
 assert_rejected \
+  "pkg-signing-does-not-fail-closed-on-push" \
+  "if [ \"\${EVENT}\" = \"push\" ] || [ \"\${SIGN_MACOS}\" = \"true\" ]; then" \
+  "if [ \"\${EVENT}\" = \"never\" ] || [ \"\${SIGN_MACOS}\" = \"true\" ]; then"
+assert_rejected \
+  "pkg-sign-macos-input-ignored" \
+  "SIGN_MACOS: \${{ inputs.sign_macos }}" \
+  "SIGN_MACOS: false"
+assert_rejected \
+  "pkg-helper-staple-not-validated" \
+  "xcrun stapler validate \"\${helper}\"" \
+  'echo no helper validate'
+assert_rejected \
+  "pkg-authority-unreadable" \
+  "codesign -dvv \"\${helper}\" 2>&1 | grep -F \"Authority=Developer ID Application\"" \
+  "codesign -dv \"\${helper}\" 2>&1 | grep -F \"Authority=Developer ID Application\""
+assert_rejected \
+  "pkg-signing-ignores-p12-secret" \
+  $'P12_BASE64: ${{ secrets.MACOS_SIGNING_P12_BASE64 }}\n          P12_PASSWORD: ${{ secrets.MACOS_SIGNING_P12_PASSWORD }}\n          NOTARY_KEY_BASE64: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}' \
+  $'P12_BASE64: ${{ secrets.MACOS_SIGNING_P12_BASE64_RENAMED }}\n          P12_PASSWORD: ${{ secrets.MACOS_SIGNING_P12_PASSWORD }}\n          NOTARY_KEY_BASE64: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}'
+assert_rejected \
+  "pkg-notarize-step-gated-off-dispatch" \
+  $'      - name: Notarize and staple the .pkg\n        if: ${{ env.SIGN == \'true\' }}' \
+  $'      - name: Notarize and staple the .pkg\n        if: ${{ env.SIGN == \'true\' && github.event_name == \'push\' }}'
+assert_rejected \
+  "pkg-notarize-removed" \
+  "xcrun notarytool submit" \
+  "xcrun notarytool removed"
+assert_rejected \
+  "pkg-notarize-verdict-unchecked" \
+  '!= "Accepted"' \
+  '!= "Anything"'
+assert_rejected \
+  "pkg-staple-removed" \
+  "xcrun stapler staple \"dist/\${PKG}\"" \
+  'echo no staple'
+assert_rejected \
+  "pkg-staple-not-validated" \
+  "xcrun stapler validate \"dist/\${PKG}\"" \
+  'echo no validate'
+assert_rejected \
+  "pkg-gatekeeper-assessment-removed" \
+  'spctl --assess --type install --verbose=2' \
+  'echo no spctl'
+assert_rejected \
+  "pkg-installer-identity-dropped" \
+  'export SEED_INSTALLER_IDENTITY="Developer ID Installer"' \
+  'export SEED_INSTALLER_IDENTITY_UNUSED=1'
+assert_rejected \
+  "pkg-helper-presence-unchecked" \
+  "Seed Wi-Fi Helper.app\"" \
+  "Seed Wi-Fi Helper.appx\""
+assert_rejected \
+  "pkg-keychain-not-removed-always" \
+  $'      - name: Remove the signing keychain\n        if: ${{ always() && env.SIGN == \'true\' }}' \
+  $'      - name: Remove the signing keychain\n        if: ${{ env.SIGN == \'true\' }}'
+assert_rejected \
   "pkg-job-removed-from-build" \
   "deploy/macos/build-pkg.sh" \
   "deploy/macos/build-pkg-removed.sh"
