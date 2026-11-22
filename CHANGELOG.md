@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.285.0](https://github.com/MustardSeedNetworks/seed/compare/v0.284.3...v0.285.0) (2026-11-22)
+
+
+### Features
+
+* **release:** sign and notarize the macos pkg and ship the wi-fi helper ([#3875](https://github.com/MustardSeedNetworks/seed/issues/3875)) ([d11bd53](https://github.com/MustardSeedNetworks/seed/commit/d11bd531f355dac36c870b61b5819a18f89b068e))
+
+
+### Continuous Integration
+
+* run race and browser e2e in the merge queue only ([#3876](https://github.com/MustardSeedNetworks/seed/issues/3876)) ([3436d18](https://github.com/MustardSeedNetworks/seed/commit/3436d1823c4dd7609046cb3dd0b812268d91dfa7)), closes [#3874](https://github.com/MustardSeedNetworks/seed/issues/3874)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3872](https://github.com/MustardSeedNetworks/seed/issues/3872)) ([f839947](https://github.com/MustardSeedNetworks/seed/commit/f839947d05eb456fc4a35f1c6fe70d5925fdb3c4))
+
 ## [0.284.3](https://github.com/MustardSeedNetworks/seed/compare/v0.284.2...v0.284.3) (2026-11-22)
 
 
