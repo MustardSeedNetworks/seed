@@ -116,16 +116,17 @@ no local packaging target.
 On macOS, Seed supports **Apple silicon (arm64) only**; there is no Intel build.
 Install the `.pkg`, which puts Seed in `/usr/local/seed` and starts it as a
 launchd daemon. Upgrading keeps your config (`/etc/seed`), data and certificates
-(`/usr/local/seed/data` and `certs`). The `.pkg`
-is not Developer ID signed or notarized, so install it from Terminal and check
-its cosign bundle first (see [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md)):
+(`/usr/local/seed/data` and `certs`). The `.pkg` is Developer ID signed and
+notarized by Apple, so you can double-click it in Finder. The same install from
+Terminal:
 
 ```bash
 sudo installer -pkg seed-<version>-darwin-arm64.pkg -target /
 ```
 
-The `.pkg` does not include the Wi-Fi helper, so Wi-Fi scans on macOS report no
-networks.
+The `.pkg` includes the Wi-Fi helper, so Wi-Fi scanning works on macOS: approve
+the Location Services prompt for Seed Wi-Fi Helper when it appears. See
+[`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md) for how to verify the package.
 
 On Windows, extract the `.zip` and run `install.ps1` from an elevated
 PowerShell. It installs `seed.exe` to `C:\Program Files\Seed` and registers

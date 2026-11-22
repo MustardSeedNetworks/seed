@@ -14,9 +14,10 @@
 #   - Xcode command line tools (pkgbuild, productbuild, lipo)
 #   - Seed binary built for macOS
 #
-# The release workflow (macos-pkg job) runs this with SEED_SKIP_WIFI_HELPER=1
-# and no signing identity, so the installer it publishes is neither Developer ID
-# signed nor notarized and carries no Wi-Fi helper.
+# The release workflow (macos-pkg job) runs this with SEED_SIGN_IDENTITY and
+# SEED_INSTALLER_IDENTITY set, so the daemon, the Wi-Fi helper and the package
+# are Developer ID signed; the workflow then notarizes and staples the result.
+# Without SEED_INSTALLER_IDENTITY the package is left unsigned.
 #
 
 set -e
@@ -167,10 +168,19 @@ log_step "6/6 Building final package..."
 PKG_OUTPUT="$REPO_ROOT/dist/seed-${VERSION}-darwin-${ARCH}.pkg"
 mkdir -p "$(dirname "$PKG_OUTPUT")"
 
+# A Developer ID *Installer* certificate is a different certificate from the
+# Application one used on the binaries. Signing here, rather than with a later
+# productsign, keeps the package signed from the moment it exists.
+PRODUCTBUILD_SIGN=()
+if [[ -n "${SEED_INSTALLER_IDENTITY:-}" ]]; then
+    PRODUCTBUILD_SIGN=(--sign "$SEED_INSTALLER_IDENTITY" --timestamp)
+fi
+
 productbuild \
     --distribution "$BUILD_DIR/distribution.xml" \
     --resources "$BUILD_DIR/resources" \
     --package-path "$BUILD_DIR" \
+    "${PRODUCTBUILD_SIGN[@]}" \
     "$PKG_OUTPUT"
 
 # Clean up intermediate files

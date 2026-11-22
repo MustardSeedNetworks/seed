@@ -136,6 +136,44 @@ for step in "Install Syft and Cosign" "SBOM, sign, and publish the .pkg" "Add th
 done
 require_step_condition "Upload dry-run .pkg for inspection" \
   "if: \${{ github.event_name != 'push' || inputs.dry_run }}"
+# The .pkg must be Developer ID signed, notarized and stapled on a tag push.
+# The resolve step is what makes that fail closed: with any secret missing a
+# push errors out, and only a non-push run may fall back to an unsigned build.
+# Every signing step keys off its SIGN output, and cosign, the SBOM and the
+# checksum come after stapling, which rewrites the package bytes.
+require_step_condition "Import signing identities" "if: \${{ env.SIGN == 'true' }}"
+require_step_condition "Set up Go for the Wi-Fi helper" "if: \${{ env.SIGN == 'true' }}"
+require_step_condition "Check the signed package contract" "if: \${{ env.SIGN == 'true' }}"
+require_step_condition "Notarize and staple the .pkg" "if: \${{ env.SIGN == 'true' }}"
+require_step_condition "Remove the signing keychain" "if: \${{ always() && env.SIGN == 'true' }}"
+require_step_condition "Resolve the signing mode" "elif [ \"\${EVENT}\" = \"push\" ]; then"
+require_step_condition "Resolve the signing mode" "exit 1"
+require_step_condition "Resolve the signing mode" "EVENT: \${{ github.event_name }}"
+for secret in MACOS_SIGNING_P12_BASE64 MACOS_SIGNING_P12_PASSWORD APPLE_NOTARY_KEY_P8_BASE64 APPLE_NOTARY_KEY_ID APPLE_NOTARY_ISSUER_ID; do
+  require_step_condition "Resolve the signing mode" "\${{ secrets.$secret }}"
+done
+require_step_condition "Build the .pkg" 'export SEED_SIGN_IDENTITY="Developer ID Application"'
+require_step_condition "Build the .pkg" 'export SEED_INSTALLER_IDENTITY="Developer ID Installer"'
+require_step_condition "Check the signed package contract" 'grep -Fx "./Library/Application Support/Seed/Seed Wi-Fi Helper.app"'
+require_step_condition "Check the signed package contract" 'flags=0x10000(runtime)'
+require_step_condition "Notarize and staple the .pkg" "xcrun notarytool submit"
+require_step_condition "Notarize and staple the .pkg" '!= "Accepted"'
+require_step_condition "Notarize and staple the .pkg" "xcrun stapler staple"
+require_step_condition "Notarize and staple the .pkg" "xcrun stapler validate"
+require_step_condition "Notarize and staple the .pkg" "spctl --assess --type install"
+require_step_condition "Notarize and staple the .pkg" "pkgutil --check-signature"
+require_step_condition "Import signing identities" "security import"
+require_step_condition "Import signing identities" "Developer ID Installer"
+require "security delete-keychain"
+if ! awk '
+  /- name: Notarize and staple the .pkg/ { notarize = NR }
+  /- name: Install Syft and Cosign$/ { tools = NR }
+  /- name: SBOM, sign, and publish the .pkg/ { publish = NR }
+  END { exit !(notarize && tools && publish && notarize < tools && notarize < publish) }
+' "$workflow"; then
+  echo "release workflow contract: notarize and staple must run before the SBOM and cosign steps" >&2
+  exit 1
+fi
 if ! grep -Fxq 'seed-{version}-darwin-arm64.pkg' "$release_artifacts"; then
   echo "release workflow contract: $release_artifacts must list seed-{version}-darwin-arm64.pkg" >&2
   exit 1
@@ -299,6 +337,23 @@ attests() {
   [[ "$event" == push && "$dry_run" != true && "$goreleaser" == success && "$macos_pkg" == success ]]
 }
 
+# signs mirrors the "Resolve the signing mode" step: with every secret present
+# any run signs and notarizes (a dispatch included, so it proves the chain);
+# with one missing a push fails closed and a dispatch builds unsigned.
+signs() {
+  local event="$1"
+  local secrets="$2"
+
+  [[ "$secrets" == present ]]
+}
+
+fails_closed() {
+  local event="$1"
+  local secrets="$2"
+
+  [[ "$event" == push && "$secrets" != present ]]
+}
+
 assert_mode() {
   local model="$1"
   local name="$2"
@@ -326,6 +381,13 @@ assert_mode publishes "dispatch dry-run" false workflow_dispatch true
 assert_mode refuses "dispatch asking to publish" true workflow_dispatch false
 assert_mode refuses "dispatch dry-run" false workflow_dispatch true
 assert_mode refuses "pushed tag" false push false
+
+assert_mode signs "tag push with secrets" true push present
+assert_mode signs "dispatch with secrets" true workflow_dispatch present
+assert_mode signs "dispatch without secrets" false workflow_dispatch absent
+assert_mode fails_closed "tag push without secrets" true push absent
+assert_mode fails_closed "dispatch without secrets" false workflow_dispatch absent
+assert_mode fails_closed "tag push with secrets" false push present
 
 assert_mode attests "normal release" true push false success success
 assert_mode attests "dispatch dry-run" false workflow_dispatch true success success
