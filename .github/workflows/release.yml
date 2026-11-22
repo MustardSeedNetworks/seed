@@ -37,13 +37,15 @@
 #   silicon only. The daemon and the Wi-Fi helper are signed with the Developer
 #   ID Application identity, the package with the Developer ID Installer
 #   identity, and the package is notarized and stapled, so it installs by
-#   double-click and Wi-Fi scanning works. A pushed tag without the signing
-#   secrets fails there rather than ship an installer Gatekeeper refuses; a
-#   manual dispatch without them (a fork) builds unsigned and says so. Secrets:
+#   double-click and Wi-Fi scanning works. The Wi-Fi helper is notarized and
+#   stapled before it is packaged, so air-gapped installs validate offline. A
+#   pushed tag, or a dispatch with sign_macos, without the signing secrets
+#   fails there rather than ship an installer Gatekeeper refuses; any other
+#   dispatch builds unsigned and says so. Secrets:
 #   MACOS_SIGNING_P12_BASE64, MACOS_SIGNING_P12_PASSWORD (one .p12 holding both
 #   identities), APPLE_NOTARY_KEY_P8_BASE64, APPLE_NOTARY_KEY_ID,
-#   APPLE_NOTARY_ISSUER_ID. A dispatch signs and notarizes too, which is how
-#   the whole chain is proven without cutting a tag.
+#   APPLE_NOTARY_ISSUER_ID. A dispatch with sign_macos signs and
+#   notarizes too, which is how the whole chain is proven without cutting a tag.
 #   The release stays a draft until provenance, which needs macos-pkg, finishes.
 # =============================================================================
 
@@ -59,6 +61,10 @@ on:
         description: "Must stay true: a manual run is always snapshot-only. Publishing requires pushing a v* tag."
         type: boolean
         default: true
+      sign_macos:
+        description: "With dry_run: sign and notarize the macOS .pkg for real (needs the signing secrets) instead of building it unsigned. Still publishes nothing."
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -457,6 +463,7 @@ jobs:
         shell: bash
         env:
           EVENT: ${{ github.event_name }}
+          SIGN_MACOS: ${{ inputs.sign_macos }}
           P12_BASE64: ${{ secrets.MACOS_SIGNING_P12_BASE64 }}
           P12_PASSWORD: ${{ secrets.MACOS_SIGNING_P12_PASSWORD }}
           NOTARY_KEY_BASE64: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}
@@ -464,13 +471,14 @@ jobs:
           NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
         run: |
           set -euo pipefail
-          if [ -n "${P12_BASE64}" ] && [ -n "${P12_PASSWORD}" ] && [ -n "${NOTARY_KEY_BASE64}" ] && [ -n "${NOTARY_KEY_ID}" ] && [ -n "${NOTARY_ISSUER_ID}" ]; then
+          if [ "${EVENT}" = "push" ] || [ "${SIGN_MACOS}" = "true" ]; then
+            if [ -z "${P12_BASE64}" ] || [ -z "${P12_PASSWORD}" ] || [ -z "${NOTARY_KEY_BASE64}" ] || [ -z "${NOTARY_KEY_ID}" ] || [ -z "${NOTARY_ISSUER_ID}" ]; then
+              echo "::error::The macOS signing secrets (MACOS_SIGNING_P12_BASE64, MACOS_SIGNING_P12_PASSWORD, APPLE_NOTARY_KEY_P8_BASE64, APPLE_NOTARY_KEY_ID, APPLE_NOTARY_ISSUER_ID) are not all set. Without them the .pkg would be refused by Gatekeeper and carry no Wi-Fi helper, so this run is refused."
+              exit 1
+            fi
             echo "SIGN=true" >> "$GITHUB_ENV"
-          elif [ "${EVENT}" = "push" ]; then
-            echo "::error::The macOS signing secrets (MACOS_SIGNING_P12_BASE64, MACOS_SIGNING_P12_PASSWORD, APPLE_NOTARY_KEY_P8_BASE64, APPLE_NOTARY_KEY_ID, APPLE_NOTARY_ISSUER_ID) are not all set. A release without them would ship a package Gatekeeper refuses and a build with no Wi-Fi helper, so it is refused."
-            exit 1
           else
-            echo "::warning::The macOS signing secrets are not available to this run, so the .pkg is built UNSIGNED, UN-NOTARIZED and WITHOUT the Wi-Fi helper. It proves nothing about signing and must not be distributed."
+            echo "::warning::sign_macos is off, so the .pkg is built UNSIGNED, UN-NOTARIZED and WITHOUT the Wi-Fi helper. It proves nothing about signing and must not be distributed."
             echo "SIGN=false" >> "$GITHUB_ENV"
           fi
 
@@ -509,6 +517,10 @@ jobs:
 
       - name: Build the .pkg
         shell: bash
+        env:
+          NOTARY_KEY_BASE64: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}
+          NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
         run: |
           set -euo pipefail
           archives=("${RUNNER_TEMP}"/macos-pkg-inputs/seed-*-darwin-arm64.tar.gz)
@@ -523,12 +535,14 @@ jobs:
           tar -xzf "${archives[0]}" -C "${RUNNER_TEMP}/darwin" seed
           if [ "${SIGN}" = "true" ]; then
             # build-pkg.sh signs the daemon (hardened runtime, secure
-            # timestamp), build-helper.sh signs the entitled Wi-Fi helper, and
-            # productbuild signs the package with the Installer identity.
+            # timestamp), build-helper.sh signs the entitled Wi-Fi helper and
+            # build-pkg.sh notarizes and staples it, and productbuild signs
+            # the package with the Installer identity.
             export SEED_SIGN_IDENTITY="Developer ID Application"
             export SEED_INSTALLER_IDENTITY="Developer ID Installer"
           else
             export SEED_SKIP_WIFI_HELPER=1
+            unset NOTARY_KEY_BASE64 NOTARY_KEY_ID NOTARY_ISSUER_ID
           fi
           deploy/macos/build-pkg.sh "${RUNNER_TEMP}/darwin/seed" "${version}"
           echo "PKG=seed-${version}-darwin-arm64.pkg" >> "$GITHUB_ENV"
@@ -538,7 +552,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          set -x
           expanded="${RUNNER_TEMP}/pkg-expanded"
           pkgutil --check-signature "dist/${PKG}" | grep -F "Developer ID Installer"
           pkgutil --expand-full "dist/${PKG}" "${expanded}"
@@ -547,13 +560,14 @@ jobs:
           helper="$(find "${expanded}" -type d -name 'Seed Wi-Fi Helper.app')"
           test "$(echo "${helper}" | wc -l)" -eq 1
           codesign --verify --deep --strict "${helper}"
-          codesign -dv "${helper}" 2>&1 | grep -F "Authority=Developer ID Application"
+          xcrun stapler validate "${helper}"
+          codesign -dvv "${helper}" 2>&1 | grep -F "Authority=Developer ID Application"
           codesign -d --entitlements - "${helper}" 2>&1 | grep -F "com.apple.security.personal-information.location"
           daemon="$(find "${expanded}" -type f -path '*/usr/local/seed/seed')"
           test "$(echo "${daemon}" | wc -l)" -eq 1
           codesign --verify --strict "${daemon}"
-          codesign -dv "${daemon}" 2>&1 | grep -F "Authority=Developer ID Application"
-          codesign -dv "${daemon}" 2>&1 | grep -F "flags=0x10000(runtime)"
+          codesign -dvv "${daemon}" 2>&1 | grep -F "Authority=Developer ID Application"
+          codesign -dvv "${daemon}" 2>&1 | grep -F "flags=0x10000(runtime)"
           lipo -archs "${daemon}" | grep -Fx arm64
 
       - name: Notarize and staple the .pkg

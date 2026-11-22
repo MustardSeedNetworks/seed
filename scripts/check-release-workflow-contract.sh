@@ -146,7 +146,13 @@ require_step_condition "Set up Go for the Wi-Fi helper" "if: \${{ env.SIGN == 't
 require_step_condition "Check the signed package contract" "if: \${{ env.SIGN == 'true' }}"
 require_step_condition "Notarize and staple the .pkg" "if: \${{ env.SIGN == 'true' }}"
 require_step_condition "Remove the signing keychain" "if: \${{ always() && env.SIGN == 'true' }}"
-require_step_condition "Resolve the signing mode" "elif [ \"\${EVENT}\" = \"push\" ]; then"
+require_step_condition "Resolve the signing mode" "if [ \"\${EVENT}\" = \"push\" ] || [ \"\${SIGN_MACOS}\" = \"true\" ]; then"
+require_step_condition "Resolve the signing mode" "SIGN_MACOS: \${{ inputs.sign_macos }}"
+require "sign_macos:"
+require_step_condition "Build the .pkg" "NOTARY_KEY_ID: \${{ secrets.APPLE_NOTARY_KEY_ID }}"
+require_step_condition "Check the signed package contract" "xcrun stapler validate \"\${helper}\""
+require_step_condition "Check the signed package contract" "codesign -dvv \"\${daemon}\""
+require_step_condition "Check the signed package contract" "codesign -dvv \"\${helper}\""
 require_step_condition "Resolve the signing mode" "exit 1"
 require_step_condition "Resolve the signing mode" "EVENT: \${{ github.event_name }}"
 for secret in MACOS_SIGNING_P12_BASE64 MACOS_SIGNING_P12_PASSWORD APPLE_NOTARY_KEY_P8_BASE64 APPLE_NOTARY_KEY_ID APPLE_NOTARY_ISSUER_ID; do
@@ -337,21 +343,23 @@ attests() {
   [[ "$event" == push && "$dry_run" != true && "$goreleaser" == success && "$macos_pkg" == success ]]
 }
 
-# signs mirrors the "Resolve the signing mode" step: with every secret present
-# any run signs and notarizes (a dispatch included, so it proves the chain);
-# with one missing a push fails closed and a dispatch builds unsigned.
+# signs mirrors the "Resolve the signing mode" step: a push, or a dispatch
+# that sets sign_macos, signs and notarizes and needs every secret (it fails
+# closed without them); any other run builds unsigned.
 signs() {
   local event="$1"
-  local secrets="$2"
+  local sign_macos="$2"
+  local secrets="$3"
 
-  [[ "$secrets" == present ]]
+  [[ ( "$event" == push || "$sign_macos" == true ) && "$secrets" == present ]]
 }
 
 fails_closed() {
   local event="$1"
-  local secrets="$2"
+  local sign_macos="$2"
+  local secrets="$3"
 
-  [[ "$event" == push && "$secrets" != present ]]
+  [[ ( "$event" == push || "$sign_macos" == true ) && "$secrets" != present ]]
 }
 
 assert_mode() {
@@ -382,12 +390,12 @@ assert_mode refuses "dispatch asking to publish" true workflow_dispatch false
 assert_mode refuses "dispatch dry-run" false workflow_dispatch true
 assert_mode refuses "pushed tag" false push false
 
-assert_mode signs "tag push with secrets" true push present
-assert_mode signs "dispatch with secrets" true workflow_dispatch present
-assert_mode signs "dispatch without secrets" false workflow_dispatch absent
-assert_mode fails_closed "tag push without secrets" true push absent
-assert_mode fails_closed "dispatch without secrets" false workflow_dispatch absent
-assert_mode fails_closed "tag push with secrets" false push present
+assert_mode signs "tag push with secrets" true push false present
+assert_mode signs "dispatch with sign_macos" true workflow_dispatch true present
+assert_mode signs "dispatch without sign_macos" false workflow_dispatch false present
+assert_mode fails_closed "tag push without secrets" true push false absent
+assert_mode fails_closed "sign_macos dispatch without secrets" true workflow_dispatch true absent
+assert_mode fails_closed "plain dispatch without secrets" false workflow_dispatch false absent
 
 assert_mode attests "normal release" true push false success success
 assert_mode attests "dispatch dry-run" false workflow_dispatch true success success

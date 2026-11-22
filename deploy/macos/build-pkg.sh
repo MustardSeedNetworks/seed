@@ -17,6 +17,8 @@
 # The release workflow (macos-pkg job) runs this with SEED_SIGN_IDENTITY and
 # SEED_INSTALLER_IDENTITY set, so the daemon, the Wi-Fi helper and the package
 # are Developer ID signed; the workflow then notarizes and staples the result.
+# With NOTARY_KEY_BASE64, NOTARY_KEY_ID and NOTARY_ISSUER_ID also set, the
+# Wi-Fi helper is notarized and stapled before it is packaged.
 # Without SEED_INSTALLER_IDENTITY the package is left unsigned.
 #
 
@@ -137,6 +139,21 @@ else
         log_error "Wi-Fi scanning will report no networks on macOS."
         exit 1
     fi
+fi
+
+# Notarize and staple the helper before it goes into the package, so its ticket
+# travels with the bundle and Gatekeeper accepts it offline (an air-gapped
+# install cannot fetch one). Runs only when notary credentials are in the
+# environment, as in the release workflow.
+if [[ "${SEED_SKIP_WIFI_HELPER:-0}" != "1" && -n "${NOTARY_KEY_ID:-}" ]]; then
+    log_step "3c/6 Notarizing and stapling the Wi-Fi helper..."
+    HELPER_APP="$HELPER_SUPPORT_DIR/Seed Wi-Fi Helper.app"
+    HELPER_ZIP="$BUILD_DIR/helper.zip"
+    ditto -c -k --keepParent "$HELPER_APP" "$HELPER_ZIP"
+    "$SCRIPT_DIR/notarize-ci.sh" "$HELPER_ZIP"
+    rm -f "$HELPER_ZIP"
+    xcrun stapler staple "$HELPER_APP"
+    xcrun stapler validate "$HELPER_APP"
 fi
 
 # Copy scripts

@@ -176,8 +176,20 @@ assert_rejected \
   $'      - name: Add the .pkg to the provenance subjects\n        if: ${{ !inputs.dry_run }}'
 assert_rejected \
   "pkg-signing-does-not-fail-closed-on-push" \
-  "elif [ \"\${EVENT}\" = \"push\" ]; then" \
-  "elif [ \"\${EVENT}\" = \"never\" ]; then"
+  "if [ \"\${EVENT}\" = \"push\" ] || [ \"\${SIGN_MACOS}\" = \"true\" ]; then" \
+  "if [ \"\${EVENT}\" = \"never\" ] || [ \"\${SIGN_MACOS}\" = \"true\" ]; then"
+assert_rejected \
+  "pkg-sign-macos-input-ignored" \
+  "SIGN_MACOS: \${{ inputs.sign_macos }}" \
+  "SIGN_MACOS: false"
+assert_rejected \
+  "pkg-helper-staple-not-validated" \
+  "xcrun stapler validate \"\${helper}\"" \
+  'echo no helper validate'
+assert_rejected \
+  "pkg-authority-unreadable" \
+  "codesign -dvv \"\${helper}\" 2>&1 | grep -F \"Authority=Developer ID Application\"" \
+  "codesign -dv \"\${helper}\" 2>&1 | grep -F \"Authority=Developer ID Application\""
 assert_rejected \
   "pkg-signing-ignores-p12-secret" \
   $'P12_BASE64: ${{ secrets.MACOS_SIGNING_P12_BASE64 }}\n          P12_PASSWORD: ${{ secrets.MACOS_SIGNING_P12_PASSWORD }}\n          NOTARY_KEY_BASE64: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}' \
