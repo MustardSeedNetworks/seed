@@ -3,10 +3,12 @@
 package paths_test
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
 	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/svc/mgr"
 
 	"github.com/MustardSeedNetworks/seed/internal/paths"
 )
@@ -47,10 +49,33 @@ func TestResolve_SystemMode_Windows(t *testing.T) {
 	}
 }
 
-// A console process is not a service, so ModeAuto keeps resolving user paths
-// for it; only the SCM-started service flips to the system layout.
-func TestResolve_AutoMode_ConsoleIsUser_Windows(t *testing.T) {
+// A directory under %ProgramData% is not proof of an install: any user can
+// create one. With no service registered, ModeAuto must stay on the user layout
+// even when %ProgramData%\Seed\config exists.
+func TestResolve_AutoMode_IgnoresPlantedConfigDir_Windows(t *testing.T) {
+	scm, err := mgr.Connect()
+	if err != nil {
+		t.Skipf("cannot query the SCM: %v", err)
+	}
+	defer func() { _ = scm.Disconnect() }()
+	if service, openErr := scm.OpenService(paths.WindowsServiceName); openErr == nil {
+		_ = service.Close()
+		t.Skip("a Seed service is registered on this machine")
+	}
+
+	system := paths.Resolve(paths.ModeSystem)
+	if _, statErr := os.Stat(system.Root); statErr == nil {
+		t.Skipf("%s already exists", system.Root)
+	}
+	if mkErr := os.MkdirAll(system.ConfigDir, 0o750); mkErr != nil {
+		t.Fatalf("plant config directory: %v", mkErr)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(system.Root) })
+
 	if p := paths.Resolve(paths.ModeAuto); p.Mode != paths.ModeUser {
-		t.Errorf("console process resolved mode %v, want ModeUser", p.Mode)
+		t.Errorf("a planted %s selected mode %v, want ModeUser", system.ConfigDir, p.Mode)
+	}
+	if dir, ok := paths.WindowsSystemConfigDir(); ok {
+		t.Errorf("WindowsSystemConfigDir = %q, true; want false with no service registered", dir)
 	}
 }

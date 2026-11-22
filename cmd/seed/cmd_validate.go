@@ -13,9 +13,10 @@ import (
 
 func initValidateCmd(state *cliState) {
 	validateCmd := &cobra.Command{
-		Use:   "validate-config",
-		Short: "Validate configuration file",
-		Long:  "Validate the configuration file against the schema without starting the server",
+		Use:     "validate-config",
+		PreRunE: func(_ *cobra.Command, _ []string) error { return guardConfigRead(state) },
+		Short:   "Validate configuration file",
+		Long:    "Validate the configuration file against the schema without starting the server",
 		Example: `  # Validate the active config (uses XDG/--config resolution)
   seed validate-config
 

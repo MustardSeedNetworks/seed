@@ -6,6 +6,8 @@ import (
 	"time"
 
 	fnd "github.com/MustardSeedNetworks/foundation/pkg/license"
+
+	"github.com/MustardSeedNetworks/seed/internal/paths"
 )
 
 // The manager, activation state and parsed-license types are the foundation
@@ -27,7 +29,15 @@ type (
 
 // NewManager creates a license manager rooted at Seed's default config
 // directory, verifying tokens against the embedded production key.
+//
+// On Windows with a service install, that directory is the service's, not the
+// caller's profile: foundation's default is ~/.config/seed, which is the SYSTEM
+// profile for the service and the administrator's for a console, so an
+// activation made at the console would never reach the service.
 func NewManager() (*Manager, error) {
+	if dir, ok := paths.WindowsSystemConfigDir(); ok {
+		return NewManagerWithDir(dir)
+	}
 	return fnd.NewManager(fnd.NewProductionVerifier(Policy()), Policy())
 }
 

@@ -109,6 +109,10 @@ jobs:
           - 'deploy/windows/**'
           - 'cmd/seed/cmd_service*'
           - 'cmd/seed/service_*'
+          - 'cmd/seed/elevation_*'
+          - 'cmd/seed/instance_guard*'
+          - 'cmd/seed/datadir_*'
+          - 'internal/license/**'
           - 'internal/paths/**'
           - '.github/workflows/ci.yml'
         docs:
@@ -356,8 +360,8 @@ jobs:
         env:
           CGO_ENABLED: "0"
         run: |
-          go test -count=1 ./internal/paths
-          go test -count=1 -run 'TestCheckServiceExecutable|TestAnchorServicePaths|TestPrepareServiceDirs|TestVerifyDataDir|TestSavePrivateConfig' ./cmd/seed
+          go test -count=1 ./internal/paths ./internal/license
+          go test -count=1 -run 'TestCheckServiceExecutable|TestAnchorServicePaths|TestPrepareServiceDirs|TestVerifyDataDir|TestSavePrivateConfig|TestCheckElevation|TestCheckProtectedDACL|TestVerifyDirSecurity|TestCheckSystemTree' ./cmd/seed
 
       # The Makefile's GO_LDFLAGS, with a version that names this run so the
       # assertion below cannot be satisfied by a stale binary.
@@ -482,6 +486,25 @@ jobs:
 
           $rule = Get-NetFirewallRule -DisplayName Seed
           if ($rule.Profile -ne "Domain, Private") { throw "firewall rule applies to $($rule.Profile)" }
+
+          # An elevated console must read the service's config, not the user
+          # profile's (which does not exist here, so a wrong path cannot pass).
+          $seed = "$env:ProgramFiles\Seed\seed.exe"
+          $validation = & $seed validate-config --json | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw "validate-config exited $LASTEXITCODE" }
+          if ($validation.path -ne (Join-Path $dataDir "config\seed.json")) { throw "validate-config read $($validation.path), not the service config" }
+          $exported = & $seed export-config | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw "export-config exited $LASTEXITCODE" }
+          if ($exported.server.port -ne 8443) { throw "export-config sees port $($exported.server.port), not the service's 8443" }
+
+          # status reads the single-instance lock the service holds and asks it
+          # for /__version, so this fails if the service took no lock or the
+          # console looked in the wrong tree.
+          $status = & $seed status --json | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw "status exited $LASTEXITCODE" }
+          if (-not $status.running) { throw "status reports the service not running" }
+          if ($status.port -ne 8443) { throw "status sees port $($status.port), not 8443" }
+          if ($status.version -ne $env:EXPECTED_VERSION) { throw "status sees version $($status.version), expected $env:EXPECTED_VERSION" }
 
       - name: Stop and uninstall
         shell: pwsh

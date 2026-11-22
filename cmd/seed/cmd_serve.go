@@ -74,7 +74,7 @@ func runServe(_ *cobra.Command, _ []string, state *cliState) {
 	if lockErr != nil {
 		if held, ok := errors.AsType[*instance.HeldError](lockErr); ok {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", held)
-			os.Exit(exitDaemonRunning)
+			os.Exit(exitRefused)
 		}
 		fmt.Fprintf(os.Stderr, "Error: could not take the single-instance lock: %v\n", lockErr)
 		os.Exit(1)

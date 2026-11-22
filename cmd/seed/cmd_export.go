@@ -15,9 +15,10 @@ const redactedValue = "[REDACTED]"
 
 func initExportCmd(state *cliState) {
 	exportCmd := &cobra.Command{
-		Use:   "export-config",
-		Short: "Export configuration",
-		Long:  "Export configuration as JSON with secrets redacted (safe for sharing)",
+		Use:     "export-config",
+		PreRunE: func(_ *cobra.Command, _ []string) error { return guardConfigRead(state) },
+		Short:   "Export configuration",
+		Long:    "Export configuration as JSON with secrets redacted (safe for sharing)",
 		Example: `  # Print redacted config to stdout
   seed export-config
 

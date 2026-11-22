@@ -60,8 +60,10 @@ type Paths struct {
 // For ModeAuto, it detects whether to use system or user paths by checking:
 //   - If running as root (UID 0)
 //   - If running under systemd (NOTIFY_SOCKET or INVOCATION_ID env vars)
-//   - If running as a Windows service (os.Getuid is -1 on Windows, so the UID
-//     test alone would put a service in user mode)
+//   - On Windows, if the process is the service or a Windows service install
+//     exists (os.Getuid is -1 there, so the UID test alone would put both the
+//     service and an administrator's console in user mode, two different
+//     configs for one install)
 //
 // Returns a Paths structure with all resolved directory and file paths.
 func Resolve(mode Mode) *Paths {
@@ -79,12 +81,23 @@ func Resolve(mode Mode) *Paths {
 	return p
 }
 
+// WindowsSystemConfigDir returns the system config directory and true when
+// ModeAuto resolves to the Windows system layout, and "", false everywhere else.
+// Code that cannot take a path from [Resolve], such as the license manager,
+// uses it to follow the same layout as the config.
+func WindowsSystemConfigDir() (string, bool) {
+	if !windowsSystemLayout() {
+		return "", false
+	}
+	return Resolve(ModeSystem).ConfigDir, true
+}
+
 // detectActualMode resolves ModeAuto to either ModeSystem or ModeUser.
 func detectActualMode(mode Mode) Mode {
 	if mode != ModeAuto {
 		return mode
 	}
-	if isSystemdService() || isWindowsService() || os.Getuid() == 0 {
+	if isSystemdService() || windowsSystemLayout() || os.Getuid() == 0 {
 		return ModeSystem
 	}
 	return ModeUser

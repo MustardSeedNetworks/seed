@@ -8,7 +8,8 @@ import "errors"
 // across products: 0 running, 1 not running, 2 could not tell (an error, or a
 // daemon that holds the lock but does not answer). The other operations
 // commands (logs, support-bundle, backup, restore) exit 1 on failure, as niac's
-// do, and 2 when they refuse to touch a running install (exitDaemonRunning).
+// do, and 2 (exitRefused) when they refuse to touch an install: a running daemon
+// owns it, or on Windows it needs an elevated shell or failed verification.
 const (
 	exitFailure       = 1
 	exitStatusDown    = 1

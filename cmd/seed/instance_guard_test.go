@@ -87,8 +87,8 @@ func assertRefused(t *testing.T, execErr error, args []string, wantsRoute string
 	if _, ok := errors.AsType[*daemonRunningError](execErr); !ok {
 		t.Fatalf("error is %T (%v); want *daemonRunningError", execErr, execErr)
 	}
-	if got := exitCodeFor(execErr); got != exitDaemonRunning {
-		t.Errorf("exit code = %d, want %d", got, exitDaemonRunning)
+	if got := exitCodeFor(execErr); got != exitRefused {
+		t.Errorf("exit code = %d, want %d", got, exitRefused)
 	}
 	msg := execErr.Error()
 	if !strings.Contains(msg, wantsRoute) {
