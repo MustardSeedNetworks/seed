@@ -552,7 +552,9 @@ jobs:
   # built UI is the frontend-dist artifact from build-ui.
   race:
     needs: [changes, build-ui]
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
+    if: |
+      (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci')) &&
+      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true')
     permissions:
       contents: read
       actions: read
@@ -1430,6 +1432,7 @@ jobs:
     needs: [changes, build-ui, backend, frontend]
     if: |
       !cancelled() &&
+      (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci')) &&
       (github.event_name != 'pull_request' || github.event.pull_request.draft == false) &&
       needs.build-ui.result == 'success' &&
       needs.frontend.result == 'success' &&
@@ -1626,9 +1629,23 @@ jobs:
       - name: Verify upstream results
         env:
           RESULTS: ${{ toJSON(needs) }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           echo "Upstream job results:"
           echo "$RESULTS" | jq '.'
+          # The race detector and browser E2E run only in the merge queue (a PR
+          # opts in with the full-ci label). A skip is fine on a PR, but in the
+          # queue every path filter is true, so a skip there means a broken `if`
+          # and would let code land untested.
+          if [ "$EVENT_NAME" = "merge_group" ]; then
+            for job in race e2e; do
+              result=$(echo "$RESULTS" | jq -r --arg job "$job" '.[$job].result // "missing"')
+              if [ "$result" != "success" ]; then
+                echo "::error::$job must succeed in the merge queue, got $result."
+                exit 1
+              fi
+            done
+          fi
           # Fail if any upstream is anything other than success or skipped.
           # (cancelled and failure both fail this gate.)
           if ! echo "$RESULTS" | jq -e 'to_entries | map(.value.result) | all(. == "success" or . == "skipped")' >/dev/null; then
