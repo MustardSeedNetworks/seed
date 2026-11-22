@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -210,11 +211,18 @@ func (s *Server) startHTTPS() error {
 		return errors.New("server.cert_file and server.key_file must be configured together")
 	}
 
+	// securedir, which httpserver uses for the generated pair, refuses a
+	// relative path, and the default is "certs" under the working directory.
+	certDir, absErr := filepath.Abs(s.certDir)
+	if absErr != nil {
+		return fmt.Errorf("resolve certificate directory: %w", absErr)
+	}
+
 	ln, listenErr := httpserver.Listen(context.Background(), httpserver.Config{
 		Addr:     net.JoinHostPort("", strconv.Itoa(s.config.Server.Port)),
 		CertFile: certFile,
 		KeyFile:  keyFile,
-		CertDir:  s.certDir,
+		CertDir:  certDir,
 		Cert:     selfSignedCertOptions(),
 		Logger:   logging.GetLogger(),
 	})

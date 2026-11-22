@@ -2,91 +2,91 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"path/filepath"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/securedir"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/paths"
 )
 
-const (
-	privateDirMode  = 0o750
-	privateFileMode = 0o600
-)
+// The Windows service keeps its state in one tree under %ProgramData%, and
+// reaches it only through foundation's securedir, which fails closed on a
+// directory a user could have planted, a link anywhere in the path, an owner
+// or ACL outside SYSTEM and Administrators, and a hard link or FIFO inside.
+// securedir judges who can change a path, not who can read it; Ensure is what
+// closes reads, by replacing the ACL of the tree it takes over.
 
-// The service reaches its data directory only through the three seams below,
-// so adopting foundation's pkg/securedir (protected DACLs, fail-closed on
-// Windows) is a change to these bodies and nothing else.
-//
-// On Windows today they are no stronger than their Unix mode bits: MkdirAll
-// and a file mode set no DACL, so the directory is as private as its parent
-// under %ProgramData% makes it. deploy/windows/install.ps1 creates the root
-// with a protected ACL, which is what keeps this safe until the swap.
-
-// ensureDataDir creates path and any missing parents.
-//
-// TODO(#3848): use securedir.Ensure.
-func ensureDataDir(path string) error {
-	return os.MkdirAll(path, privateDirMode)
-}
-
-// verifyDataDir fails unless path is a real directory (not a link), on Windows
-// owned by SYSTEM or Administrators and closed to everyone else, and every file
-// in files that exists is a regular file. Run it before an elevated process
-// reads or writes the tree: anything less trusts a directory a user may have
-// made.
-//
-// TODO(#3848): use securedir.Verify.
-func verifyDataDir(path string, files ...string) error {
-	info, err := os.Lstat(path)
+// canonicalServicePaths returns sp with every path under Root rebased onto
+// Root's securedir.Canonical form. securedir never follows a link in the paths
+// it is given, so everything downstream uses these and not the raw layout.
+func canonicalServicePaths(sp *paths.Paths, opts securedir.Options) (*paths.Paths, error) {
+	root, err := securedir.Canonical(sp.Root, opts)
 	if err != nil {
-		return fmt.Errorf("data directory %s: %w", path, err)
+		return nil, fmt.Errorf("resolve service directory %s: %w", sp.Root, err)
 	}
-	if !info.IsDir() {
-		return fmt.Errorf("data directory %s is not a directory (mode %s)", path, info.Mode().Type())
-	}
-	if err = verifyDirSecurity(path); err != nil {
-		return err
-	}
-	for _, file := range files {
-		fileInfo, statErr := os.Lstat(file)
-		if os.IsNotExist(statErr) {
+	resolved := *sp
+	for _, field := range []*string{
+		&resolved.Root, &resolved.ConfigDir, &resolved.ConfigFile,
+		&resolved.DataDir, &resolved.LogDir, &resolved.CacheDir, &resolved.CertDir,
+	} {
+		if *field == "" {
 			continue
 		}
-		if statErr != nil {
-			return fmt.Errorf("data file %s: %w", file, statErr)
+		rel, relErr := filepath.Rel(sp.Root, *field)
+		if relErr != nil {
+			return nil, fmt.Errorf("place %s under %s: %w", *field, sp.Root, relErr)
 		}
-		if !fileInfo.Mode().IsRegular() {
-			return fmt.Errorf("data file %s is not a regular file (mode %s)", file, fileInfo.Mode().Type())
+		*field = filepath.Join(root, rel)
+	}
+	return &resolved, nil
+}
+
+// prepareServiceDirs makes the service's directory tree private and returns the
+// canonical layout to use from here on. It runs at service start as SYSTEM,
+// which may take over a directory install.ps1 created (the descriptor Ensure
+// writes is the installer's: SYSTEM and Administrators, protected) or create
+// the tree itself. An SCM-started service has C:\Windows\System32 as its
+// working directory, so nothing the service writes may rely on one.
+func prepareServiceDirs(sp *paths.Paths, opts securedir.Options) (*paths.Paths, error) {
+	resolved, err := canonicalServicePaths(sp, opts)
+	if err != nil {
+		return nil, err
+	}
+	for _, dir := range []string{
+		resolved.Root, resolved.ConfigDir, resolved.DataDir, resolved.LogDir, resolved.CertDir,
+	} {
+		if ensureErr := securedir.Ensure(dir, opts); ensureErr != nil {
+			return nil, fmt.Errorf("secure service directory %s: %w", dir, ensureErr)
 		}
+	}
+	if verifyErr := securedir.Verify(resolved.Root, opts); verifyErr != nil {
+		return nil, fmt.Errorf("verify service directory %s: %w", resolved.Root, verifyErr)
+	}
+	return resolved, nil
+}
+
+// verifyDataDir fails unless root is a private tree securedir can show nobody
+// untrusted can change. Run it before an elevated process reads or writes the
+// tree: anything less trusts a directory a user may have made.
+func verifyDataDir(root string, opts securedir.Options) error {
+	canonical, err := securedir.Canonical(root, opts)
+	if err != nil {
+		return fmt.Errorf("data directory %s: %w", root, err)
+	}
+	if verifyErr := securedir.Verify(canonical, opts); verifyErr != nil {
+		return fmt.Errorf("data directory %s: %w", root, verifyErr)
 	}
 	return nil
 }
 
-// writePrivateFile replaces path with data, readable by its owner only. The
-// replacement is atomic: a crash mid-write leaves the previous contents.
-//
-// TODO(#3848): use securedir.WriteFile.
-func writePrivateFile(path string, data []byte) error {
-	return config.WriteFileAtomically(path, data, privateFileMode)
-}
-
-// savePrivateConfig is cfg.Save through writePrivateFile.
-func savePrivateConfig(cfg *config.Config, path string) error {
+// savePrivateConfig is cfg.Save through securedir.WriteFile: atomic, owner
+// only from the first byte, and refused unless path sits in a private
+// directory. path must be absolute and canonical.
+func savePrivateConfig(cfg *config.Config, path string, opts securedir.Options) error {
 	data, err := cfg.Marshal()
 	if err != nil {
 		return err
 	}
-	return writePrivateFile(path, data)
-}
-
-// prepareServiceDirs creates the service's directory tree and checks its root.
-// An SCM-started service has C:\Windows\System32 as its working directory, so
-// nothing the service writes may rely on one.
-func prepareServiceDirs(sp *paths.Paths) error {
-	for _, dir := range []string{sp.Root, sp.ConfigDir, sp.DataDir, sp.LogDir, sp.CertDir} {
-		if err := ensureDataDir(dir); err != nil {
-			return fmt.Errorf("create service directory: %w", err)
-		}
-	}
-	return verifyDataDir(sp.Root, sp.ConfigFile)
+	return securedir.WriteFile(path, data, opts)
 }

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/instance"
+	"github.com/MustardSeedNetworks/foundation/pkg/securedir"
 	"github.com/kardianos/service"
 	"github.com/spf13/cobra"
 
@@ -57,18 +58,22 @@ func (p *seedProgram) Start(_ service.Service) error {
 	// ModeSystem, not ModeAuto: os.Getuid is -1 on Windows, so auto-detection
 	// said "user" and put the config and JWT secret under the profile of the
 	// account the service runs as.
-	sp := paths.Resolve(paths.ModeSystem)
-	if err := prepareServiceDirs(sp); err != nil {
+	system := paths.Resolve(paths.ModeSystem)
+	sp, err := prepareServiceDirs(system, securedir.Options{})
+	if err != nil {
 		return err
 	}
 	// The SCM starts the service in C:\Windows\System32. Every storage path in
 	// the config is made absolute below; this catches the ones that are code
 	// constants, such as the report directory, so none can fall back there.
-	if err := os.Chdir(sp.Root); err != nil {
-		return fmt.Errorf("enter service directory: %w", err)
+	if chdirErr := os.Chdir(sp.Root); chdirErr != nil {
+		return fmt.Errorf("enter service directory: %w", chdirErr)
 	}
 	p.certDir = sp.CertDir
 	p.configPath = paths.ResolveConfigPath(p.state.cfgFile, paths.ModeSystem)
+	if sameConfigPath(p.configPath, system.ConfigFile) {
+		p.configPath = sp.ConfigFile
+	}
 	// The single-instance lock is what `seed status` and the write guards read.
 	// Without it a console could not tell the service from nothing running.
 	lock, err := instance.Acquire(lockDir(p.configPath))
@@ -76,7 +81,7 @@ func (p *seedProgram) Start(_ service.Service) error {
 		return fmt.Errorf("take the single-instance lock: %w", err)
 	}
 	p.lock = lock
-	cfg, err := loadAndConfigureConfigForService(p.configPath)
+	cfg, err := loadAndConfigureConfigForService(p.configPath, securedir.Options{})
 	if err != nil {
 		_ = lock.Release()
 		return err
@@ -191,7 +196,7 @@ func (p *seedProgram) run() {
 func setupLoggingForService(cfg *config.Config) string {
 	logPath := cfg.Logging.File
 
-	_ = ensureDataDir(filepath.Dir(logPath))
+	_ = os.MkdirAll(filepath.Dir(logPath), 0o750)
 
 	// A service has no console: os.Stdout is an invalid handle, and InitLogger
 	// writes to stdout ahead of the file through an io.MultiWriter, which stops
@@ -241,7 +246,7 @@ func setupNetworkInterfaceForService(cfg *config.Config, configPath string) *net
 
 	if activeInterface != "" && activeInterface != cfg.Interface.Default {
 		cfg.Interface.Default = activeInterface
-		_ = savePrivateConfig(cfg, configPath)
+		_ = savePrivateConfig(cfg, configPath, securedir.Options{})
 		_ = netMgr.SetCurrentInterface(activeInterface)
 	}
 

@@ -35,6 +35,10 @@ command -v niac >/dev/null || {
 }
 
 run_dir=$(mktemp -d "${TMPDIR:-/tmp}/seed-niac-link.XXXXXX")
+# The daemons run as root, and securedir (foundation) refuses a certificate
+# directory with an ancestor another account owns, so their working and
+# certificate directories live in a root-owned tree, not under run_dir.
+root_dir=$(sudo mktemp -d "${TMPDIR:-/tmp}/seed-niac-link-root.XXXXXX")
 netns=seed-e2e-$$
 seed_link=sdl$$
 niac_link=nil$$
@@ -68,7 +72,7 @@ cleanup() {
       sudo tail -60 "$run_dir/$log" >&2 || true
     done
   fi
-  sudo rm -rf "$run_dir"
+  sudo rm -rf "$run_dir" "$root_dir"
   trap - EXIT HUP INT TERM
   exit "$exit_status"
 }
@@ -144,7 +148,7 @@ sudo ip addr add "$seed_cidr" dev "$seed_link"
 sudo ip link set "$seed_link" up
 
 setsid sudo ip netns exec "$netns" niac daemon --once "$niac_link" "$run_dir/scenario.yaml" \
-  --storage disabled --cert-dir "$run_dir/niac-certs" >"$run_dir/niac.log" 2>&1 &
+  --storage disabled --cert-dir "$root_dir/niac-certs" >"$run_dir/niac.log" 2>&1 &
 niac_pid=$!
 
 attempt=0
@@ -164,8 +168,8 @@ printf '%s\n' \
 
 # Root for the raw sockets the sweep uses; HOME repointed so the host's own
 # licence file cannot change the tier under test (seed#2688). Started from
-# the run directory because seed writes its certs/ and data/ relative to the
-# working directory, and as root they would land in the checkout.
+# the root-owned directory because seed writes its certs/ and data/ relative
+# to the working directory, and as root they would land in the checkout.
 #
 # The tier under test is a Pro trial started in that HOME. Polling and the
 # topology reconcilers are Starter engines, registered only when the daemon
@@ -174,8 +178,8 @@ printf '%s\n' \
 (cd "$run_dir" && sudo env HOME="$run_dir" "$repo_dir/seed" license trial >/dev/null)
 started_at=$(python3 -c 'import time; print(int(time.time() * 1000))')
 (
-  cd "$run_dir"
   exec setsid sudo env HOME="$run_dir" SEED_LOGIN_MAX_ATTEMPTS=200 \
+    sh -c 'cd "$1" && shift && exec "$@"' sh "$root_dir" \
     "$repo_dir/seed" --config "$run_dir/config.json" >"$run_dir/seed.out" 2>&1
 ) &
 seed_pid=$!

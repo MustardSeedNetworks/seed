@@ -26,7 +26,17 @@ func CompleteWebAuthnLoginForTest(
 func EnsureSelfSignedCert() (string, string, error) {
 	certFile := filepath.Join(selfSignedCertDir, httpserver.DefaultCertFileName)
 	keyFile := filepath.Join(selfSignedCertDir, httpserver.DefaultKeyFileName)
-	if _, err := httpserver.EnsureCertificate(nil, certFile, keyFile, selfSignedCertOptions()); err != nil {
+	// securedir refuses a relative path, so the pair is made at the absolute
+	// one; the caller gets the working-directory-relative names.
+	absCert, err := filepath.Abs(certFile)
+	if err != nil {
+		return "", "", err
+	}
+	absKey, err := filepath.Abs(keyFile)
+	if err != nil {
+		return "", "", err
+	}
+	if _, err = httpserver.EnsureCertificate(nil, absCert, absKey, selfSignedCertOptions()); err != nil {
 		return "", "", err
 	}
 	return certFile, keyFile, nil
