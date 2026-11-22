@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.284.2](https://github.com/MustardSeedNetworks/seed/compare/v0.284.1...v0.284.2) (2026-11-22)
+
+
+### Bug Fixes
+
+* **windows:** keep service data under programdata and lock it down ([#3852](https://github.com/MustardSeedNetworks/seed/issues/3852)) ([7967ccb](https://github.com/MustardSeedNetworks/seed/commit/7967ccb03eb68cfeb3548094354e4d83236b7d25))
+* **windows:** point console commands at the service config ([#3866](https://github.com/MustardSeedNetworks/seed/issues/3866)) ([3fc3ad1](https://github.com/MustardSeedNetworks/seed/commit/3fc3ad154e21c27ef21f474a36e70e3791c3da44))
+
 ## [0.284.1](https://github.com/MustardSeedNetworks/seed/compare/v0.284.0...v0.284.1) (2026-11-22)
 
 
