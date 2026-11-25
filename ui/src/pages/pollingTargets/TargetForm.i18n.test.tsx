@@ -48,7 +48,9 @@ describe('TargetForm — Spanish, with no English left behind', () => {
       'Intervalo de sondeo (segundos)',
     ]) {
       // A required field's label carries a visible marker after its text.
-      expect(screen.getByLabelText(new RegExp(`^${label.replace(/[()]/g, '\\$&')}`))).toBeVisible();
+      expect(
+        screen.getByLabelText(new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`)),
+      ).toBeVisible();
     }
     for (const english of [
       'Add polling target',
