@@ -1,3 +1,5 @@
+import { ConfirmDialog } from '../../shared/ConfirmDialog';
+import { Modal } from '../../shared/Modal';
 import { Tooltip } from '../../shared/Tooltip';
 /** Create, edit, switch and transfer saved profiles. */
 
@@ -5,8 +7,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useProfileContext } from '../../contexts/profileContext';
-import { useFocusTrap } from '../../hooks/useFocusTrap';
-import { cn, icon as iconTokens, layout, modal, radius, spacing } from '../../styles/theme';
+import { cn, radius, spacing } from '../../styles/theme';
 import type { Profile, ProfileRequest } from '../../types/profile';
 import { WriteGate } from '../ui/WriteGate';
 import { ProfileEditor } from './ProfileEditor';
@@ -39,8 +40,6 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-
-  const modalRef = useFocusTrap<HTMLDivElement>({ isActive: true, onEscape: onClose });
 
   // Filter profiles by search
   const query = searchQuery.toLowerCase();
@@ -98,47 +97,36 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
 
   return (
     <>
-      {/* Modal overlay */}
-      <div className={modal.overlay}>
-        {/* Backdrop */}
-        <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
+      <Modal
+        open
+        onClose={onClose}
+        title={t('profile.management')}
+        closeLabel={t('common.close')}
+        data-testid="profile-modal"
+      >
+        <p className="body-small text-text-muted mb-content">{t('profile.managementDesc')}</p>
 
-        {/* Modal content */}
+        {/* Actions bar */}
         <div
-          ref={modalRef}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="profile-modal-title"
-          className={cn('relative', modal.content, modal.size.lg, 'flex flex-col')}
-          style={{ maxHeight: '85vh' }}
+          className={cn(
+            spacing.pad.default,
+            'border-b border-surface-border bg-surface-base flex items-center gap-compact shrink-0',
+          )}
         >
-          {/* Header */}
-          <div
-            className={cn(
-              layout.flex.between,
-              spacing.pad.lg,
-              'border-b border-surface-border shrink-0',
-            )}
-          >
-            <div>
-              <h2 id="profile-modal-title" className="heading-2">
-                {t('profile.management')}
-              </h2>
-              <p className="body-small text-text-muted mt-tight">{t('profile.managementDesc')}</p>
-            </div>
+          <WriteGate>
             <button
               type="button"
-              onClick={onClose}
-              data-testid="profile-modal-close"
+              onClick={handleCreate}
+              data-testid="profile-create"
               className={cn(
-                'pad-xs',
+                spacing.pad.sm,
+                'px-4',
                 radius.md,
-                'hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary',
+                'bg-brand-primary hover:bg-brand-accent text-on-brand body-small font-medium flex items-center gap-compact',
               )}
-              aria-label={t('common.close')}
             >
               <svg
-                className={iconTokens.size.lg}
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -148,195 +136,158 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
+                  d="M12 4v16m8-8H4"
                 />
               </svg>
+              {t('profile.create')}
             </button>
-          </div>
+          </WriteGate>
+          <Tooltip text={t('profile.export')}>
+            <button
+              type="button"
+              onClick={handleExport}
+              className={cn(
+                spacing.pad.sm,
+                'px-4',
+                radius.md,
+                'border border-surface-border bg-surface-raised hover:bg-surface-hover text-text-primary body-small font-medium flex items-center gap-compact',
+              )}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
+              </svg>
+              {t('profile.export')}
+            </button>
+          </Tooltip>
 
-          {/* Actions bar */}
+          {/* Search bar */}
+          <div className="relative flex-1 ml-content">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <input
+              type="text"
+              placeholder={t('profile.searchPlaceholder')}
+              value={searchQuery}
+              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                setSearchQuery(e.target.value)
+              }
+              className={cn(
+                'w-full pl-9 pr-4 py-row',
+                radius.md,
+                'border border-surface-border bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary body-small',
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Error message */}
+        {error ? (
           <div
             className={cn(
-              spacing.pad.default,
-              'border-b border-surface-border bg-surface-base flex items-center gap-compact shrink-0',
+              'mt-content',
+              spacing.pad.sm,
+              radius.md,
+              'bg-status-error/10 border border-status-error/20 text-status-error-strong body-small shrink-0',
             )}
           >
-            <WriteGate>
-              <button
-                type="button"
-                onClick={handleCreate}
-                data-testid="profile-create"
-                className={cn(
-                  spacing.pad.sm,
-                  'px-4',
-                  radius.md,
-                  'bg-brand-primary hover:bg-brand-accent text-on-brand body-small font-medium flex items-center gap-compact',
-                )}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                {t('profile.create')}
-              </button>
-            </WriteGate>
-            <Tooltip text={t('profile.export')}>
-              <button
-                type="button"
-                onClick={handleExport}
-                className={cn(
-                  spacing.pad.sm,
-                  'px-4',
-                  radius.md,
-                  'border border-surface-border bg-surface-raised hover:bg-surface-hover text-text-primary body-small font-medium flex items-center gap-compact',
-                )}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                {t('profile.export')}
-              </button>
-            </Tooltip>
-
-            {/* Search bar */}
-            <div className="relative flex-1 ml-content">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                type="text"
-                placeholder={t('profile.searchPlaceholder')}
-                value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setSearchQuery(e.target.value)
-                }
-                className={cn(
-                  'w-full pl-9 pr-4 py-row',
-                  radius.md,
-                  'border border-surface-border bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary body-small',
-                )}
-              />
-            </div>
+            {error}
           </div>
+        ) : null}
 
-          {/* Error message */}
-          {error ? (
-            <div
-              className={cn(
-                'mx-4 mt-content',
-                spacing.pad.sm,
-                radius.md,
-                'bg-status-error/10 border border-status-error/20 text-status-error-strong body-small shrink-0',
-              )}
-            >
-              {error}
+        {/* Scrollable content */}
+        <div className="mt-content">
+          {/* Loading state */}
+          {isLoading && profiles.length === 0 ? (
+            <div className="text-center py-centered">
+              <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary" />
+              <p className="mt-heading body-small text-text-muted">{t('common.loading')}</p>
             </div>
           ) : null}
 
-          {/* Scrollable content */}
-          <div className={cn(spacing.pad.lg, 'overflow-y-auto flex-1')}>
-            {/* Loading state */}
-            {isLoading && profiles.length === 0 ? (
-              <div className="text-center py-centered">
-                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary" />
-                <p className="mt-heading body-small text-text-muted">{t('common.loading')}</p>
-              </div>
-            ) : null}
-
-            {/* Profile grid */}
-            {!isLoading && filteredProfiles.length === 0 ? (
-              <div className="text-center py-centered">
-                <svg
-                  className="mx-auto w-16 h-16 text-text-muted mb-content"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                  />
-                </svg>
-                <h3 className="body font-medium text-text-primary mb-2">
-                  {searchQuery ? t('profile.noResults') : t('profile.noProfiles')}
-                </h3>
-                <p className="body-small text-text-muted mb-section">
-                  {searchQuery ? t('profile.noResultsDesc') : t('profile.noProfilesDesc')}
-                </p>
-                {searchQuery ? null : (
-                  <WriteGate>
-                    <button
-                      type="button"
-                      onClick={handleCreate}
-                      className={cn(
-                        spacing.pad.sm,
-                        'px-4',
-                        radius.md,
-                        'bg-brand-primary hover:bg-brand-accent text-on-brand body-small font-medium',
-                      )}
-                    >
-                      {t('profile.createFirst')}
-                    </button>
-                  </WriteGate>
-                )}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-comfortable">
-                {filteredProfiles.map((profile) => (
-                  <ProfileCard
-                    key={profile.id}
-                    profile={profile}
-                    isActive={profile.id === activeProfile?.id}
-                    onEdit={(): void => handleEdit(profile)}
-                    onDelete={(): void => setDeleteConfirm(profile.id)}
-                    onDuplicate={(): void => {
-                      handleDuplicate(profile).catch(() => undefined);
-                    }}
-                    onSetActive={(): void => {
-                      handleSetActive(profile.id).catch(() => undefined);
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Profile grid */}
+          {!isLoading && filteredProfiles.length === 0 ? (
+            <div className="text-center py-centered">
+              <svg
+                className="mx-auto w-16 h-16 text-text-muted mb-content"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                />
+              </svg>
+              <h3 className="body font-medium text-text-primary mb-2">
+                {searchQuery ? t('profile.noResults') : t('profile.noProfiles')}
+              </h3>
+              <p className="body-small text-text-muted mb-section">
+                {searchQuery ? t('profile.noResultsDesc') : t('profile.noProfilesDesc')}
+              </p>
+              {searchQuery ? null : (
+                <WriteGate>
+                  <button
+                    type="button"
+                    onClick={handleCreate}
+                    className={cn(
+                      spacing.pad.sm,
+                      'px-4',
+                      radius.md,
+                      'bg-brand-primary hover:bg-brand-accent text-on-brand body-small font-medium',
+                    )}
+                  >
+                    {t('profile.createFirst')}
+                  </button>
+                </WriteGate>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-comfortable">
+              {filteredProfiles.map((profile) => (
+                <ProfileCard
+                  key={profile.id}
+                  profile={profile}
+                  isActive={profile.id === activeProfile?.id}
+                  onEdit={(): void => handleEdit(profile)}
+                  onDelete={(): void => setDeleteConfirm(profile.id)}
+                  onDuplicate={(): void => {
+                    handleDuplicate(profile).catch(() => undefined);
+                  }}
+                  onSetActive={(): void => {
+                    handleSetActive(profile.id).catch(() => undefined);
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      </Modal>
       {/* Profile editor modal */}
       {isEditorOpen ? (
         <ProfileEditor
@@ -348,13 +299,20 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
       ) : null}
       {/* Delete confirmation modal */}
       {deleteConfirm ? (
-        <DeleteConfirmModal
-          profileName={profiles.find((p) => p.id === deleteConfirm)?.name || ''}
+        <ConfirmDialog
+          open
+          title={t('profile.deleteConfirm')}
+          message={t('profile.deleteConfirmDesc', {
+            name: profiles.find((p) => p.id === deleteConfirm)?.name || '',
+          })}
+          confirmLabel={t('common.delete')}
+          cancelLabel={t('common.cancel')}
+          closeLabel={t('common.close')}
           onConfirm={(): void => {
             handleDelete(deleteConfirm).catch(() => undefined);
           }}
           onCancel={(): void => setDeleteConfirm(null)}
-          isLoading={isLoading}
+          confirming={isLoading}
         />
       ) : null}
     </>
@@ -546,76 +504,6 @@ function ProfileCard({
             )}
           </div>
         </WriteGate>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// Delete Confirmation Modal
-// ============================================================================
-
-interface DeleteConfirmModalProps {
-  profileName: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-  isLoading: boolean;
-}
-
-function DeleteConfirmModal({
-  profileName,
-  onConfirm,
-  onCancel,
-  isLoading,
-}: DeleteConfirmModalProps): React.ReactElement {
-  const { t } = useTranslation();
-  const dialogRef = useFocusTrap<HTMLDivElement>({ isActive: true, onEscape: onCancel });
-
-  return (
-    // z-60 required: nested modal must appear above parent modal (z-50)
-    <div className={cn(modal.overlay, 'z-60')}>
-      <div className={modal.backdrop} onClick={onCancel} aria-hidden="true" />
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="profile-delete-title"
-        className={cn('relative', modal.content, modal.size.sm, modal.padding.md)}
-      >
-        <h3 id="profile-delete-title" className="heading-2 text-text-primary mb-2">
-          {t('profile.deleteConfirm')}
-        </h3>
-        <p className="body-small text-text-secondary mb-section">
-          {t('profile.deleteConfirmDesc', { name: profileName })}
-        </p>
-        <div className="flex justify-end gap-default">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isLoading}
-            className={cn(
-              spacing.pad.sm,
-              'px-4',
-              radius.md,
-              'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary body-small font-medium disabled:control-disabled',
-            )}
-          >
-            {t('common.cancel')}
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={isLoading}
-            className={cn(
-              spacing.pad.sm,
-              'px-4',
-              radius.md,
-              'bg-status-error hover:bg-status-error/90 text-text-inverse body-small font-medium disabled:control-disabled',
-            )}
-          >
-            {isLoading ? t('common.deleting') : t('common.delete')}
-          </button>
-        </div>
       </div>
     </div>
   );

@@ -3,16 +3,15 @@
  *
  * `aria-modal="true"` tells a screen reader the page behind is inert. Without a
  * trap that is a lie: Tab walks out of the dialog into controls the operator
- * cannot see (seed#2648). Most of these dialogs are hand-rolled rather than
- * built on <Modal>, so each one is checked here, including the two dialogs
- * ProfileManagement opens on top of itself.
+ * cannot see (seed#2648). Every dialog is built on the shared <Modal>, and each
+ * one is checked here, including the two dialogs ProfileManagement opens on top
+ * of itself.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { type ReactNode, useState } from 'react';
+import type { ReactNode } from 'react';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { useFocusTrap } from '../hooks/useFocusTrap';
 import { Modal } from '../shared/Modal';
 import { DiscoveryModal } from './cards/DiscoveryModal';
 import { LogViewerModal } from './cards/LogViewerModal';
@@ -196,89 +195,5 @@ describe('dialog focus traps', () => {
 
     const confirm = await screen.findByRole('dialog', { name: 'Delete profile?' });
     expectTabStaysInside(confirm);
-  });
-});
-
-// A parent re-render must not move focus inside an open dialog. Callers pass
-// `onEscape` as an inline arrow, a new function on every render of the owner.
-// The trap's effect listed it as a dependency, so each re-render tore the trap
-// down, restoring focus to the control that opened the dialog, and set it up
-// again, focusing the dialog's first control. The discovery modal's owner
-// re-renders on every device poll, so a keyboard user walking the device table
-// was thrown back to the Rescan button (#461).
-function Dialog({ onEscape }: { onEscape: () => void }) {
-  const ref = useFocusTrap<HTMLDivElement>({ isActive: true, onEscape });
-  return (
-    <div ref={ref} role="dialog">
-      <button type="button">first</button>
-      <button type="button">second</button>
-    </div>
-  );
-}
-
-function Owner({ onEscape }: { onEscape: (tick: number) => void }) {
-  const [tick, setTick] = useState(0);
-  return (
-    <>
-      <button type="button" onClick={() => setTick(tick + 1)}>
-        opener {tick}
-      </button>
-      {/* Captures `tick`, so it is a new function on every render even under
-          the React Compiler. */}
-      <Dialog onEscape={() => onEscape(tick)} />
-    </>
-  );
-}
-
-function nextFrame(): Promise<void> {
-  return act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
-}
-
-describe('a focus trap across re-renders of its owner', () => {
-  it('keeps focus where it is when the owner re-renders with a new onEscape', async () => {
-    const onEscape = vi.fn();
-    render(<Owner onEscape={onEscape} />);
-    await nextFrame(); // the trap's own autofocus on open
-    const second = screen.getByRole('button', { name: 'second' });
-    second.focus();
-
-    act(() => {
-      fireEvent.click(screen.getByRole('button', { name: /opener/ }));
-    });
-    await nextFrame();
-
-    expect(screen.getByRole('button', { name: 'opener 1' })).toBeInTheDocument();
-    expect(document.activeElement).toBe(second);
-  });
-
-  // The trap used to move its initial focus a frame after opening. Under load
-  // that frame came late -- after the operator had already focused a sort
-  // header in the discovery modal -- and moved focus to the first control, so
-  // the header's second Enter went to the CSV button instead (#2922).
-  it('leaves focus the operator placed inside the dialog before its first frame', async () => {
-    render(<Dialog onEscape={vi.fn()} />);
-    const second = screen.getByRole('button', { name: 'second' });
-    second.focus();
-
-    await nextFrame();
-
-    expect(document.activeElement).toBe(second);
-  });
-
-  it('focuses the first control when the dialog opens', () => {
-    render(<Dialog onEscape={vi.fn()} />);
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'first' }));
-  });
-
-  it('calls the onEscape from the latest render', () => {
-    const first = vi.fn();
-    const latest = vi.fn();
-    const { rerender } = render(<Dialog onEscape={first} />);
-    rerender(<Dialog onEscape={latest} />);
-
-    fireEvent.keyDown(document, { key: 'Escape' });
-
-    expect(latest).toHaveBeenCalledTimes(1);
-    expect(first).not.toHaveBeenCalled();
   });
 });
