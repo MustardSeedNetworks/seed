@@ -19,6 +19,8 @@ import {
   type PathMonitorUpdate,
   usePathMonitor,
 } from '../../hooks/usePathMonitor';
+import { useTableLabels } from '../../hooks/useTableLabels';
+import { DataTable, type DataTableColumn } from '../../shared/DataTable';
 import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
 import type { HopStats } from '../../types/generated/path-monitor-update';
 import { Button } from '../ui/Button';
@@ -223,27 +225,58 @@ function MonitorRunning({
   );
 }
 
-interface Column {
-  key: string;
-  label: string;
-  width: string;
-  /** Hidden below sm so the table fits a 390 px phone without scrolling. */
-  wide?: boolean;
-}
+const MAX_HOPS = 64;
 
 function HopTable({ snapshot }: { snapshot: PathMonitorUpdate }): JSX.Element {
   const { t } = useTranslation('cards');
-  // A phone keeps hop, address, loss, average and jitter: enough to name the
-  // hop that drops packets or adds delay. Last, best and worst join from sm up.
-  const columns: Column[] = [
-    { key: 'ttl', label: t('pathMonitor.colHop'), width: 'w-[16%] sm:w-[9%]' },
-    { key: 'address', label: t('pathMonitor.colAddress'), width: 'w-[30%] sm:w-[27%]' },
-    { key: 'loss', label: t('pathMonitor.colLoss'), width: 'w-[18%] sm:w-[12%]' },
-    { key: 'last', label: t('pathMonitor.colLast'), width: 'sm:w-[10%]', wide: true },
-    { key: 'avg', label: t('pathMonitor.colAvg'), width: 'w-[18%] sm:w-[11%]' },
-    { key: 'best', label: t('pathMonitor.colBest'), width: 'sm:w-[10%]', wide: true },
-    { key: 'worst', label: t('pathMonitor.colWorst'), width: 'sm:w-[11%]', wide: true },
-    { key: 'jitter', label: t('pathMonitor.colJitter'), width: 'w-[18%] sm:w-[10%]' },
+  const labels = useTableLabels<HopStats>({ loading: t('pathMonitor.title') });
+  const columns: DataTableColumn<HopStats>[] = [
+    {
+      key: 'ttl',
+      header: t('pathMonitor.colHop'),
+      cell: (hop) => (
+        <span data-testid="path-monitor-hop-ttl" data-ttl={hop.ttl}>
+          {hop.ttl}
+        </span>
+      ),
+    },
+    {
+      key: 'address',
+      header: t('pathMonitor.colAddress'),
+      cell: (hop) => {
+        const [primary, ...others] = hop.addresses;
+        const name = primary ? (primary.hostname ?? primary.ip) : '*';
+        const address =
+          others.length > 0 ? t('pathMonitor.moreAddresses', { name, count: others.length }) : name;
+        const full = hop.addresses.map((a) => (a.hostname ? `${a.hostname} (${a.ip})` : a.ip));
+        return (
+          <span
+            className="font-mono"
+            title={full.length > 0 ? full.join(', ') : address}
+            data-testid="path-monitor-hop-address"
+          >
+            {address}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'loss',
+      header: t('pathMonitor.colLoss'),
+      cell: (hop) => (
+        <span
+          className={hop.lossPct > 0 ? 'text-status-warning-strong' : undefined}
+          data-testid="path-monitor-hop-loss"
+        >
+          {formatLoss(hop.lossPct)}
+        </span>
+      ),
+    },
+    rttColumn('last', t('pathMonitor.colLast'), (hop) => hop.lastRtt),
+    rttColumn('avg', t('pathMonitor.colAvg'), (hop) => hop.avgRtt),
+    rttColumn('best', t('pathMonitor.colBest'), (hop) => hop.bestRtt),
+    rttColumn('worst', t('pathMonitor.colWorst'), (hop) => hop.worstRtt),
+    rttColumn('jitter', t('pathMonitor.colJitter'), (hop) => hop.jitter),
   ];
 
   return (
@@ -256,81 +289,34 @@ function HopTable({ snapshot }: { snapshot: PathMonitorUpdate }): JSX.Element {
           {t('pathMonitor.empty')}
         </p>
       ) : (
-        // See NeighbourCacheCard: table-fixed, not overflow-x-auto (#2708).
-        <div className={cn(radius.default, 'border border-surface-border')}>
-          <table className="w-full table-fixed body-small" data-testid="path-monitor-hops">
-            <thead>
-              <tr className="border-b border-surface-border text-text-muted">
-                {columns.map((column) => (
-                  <th
-                    key={column.key}
-                    scope="col"
-                    className={cn(
-                      'px-cell py-row text-left truncate',
-                      column.width,
-                      column.wide && 'hidden sm:table-cell',
-                    )}
-                    title={column.label}
-                  >
-                    {column.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {snapshot.hops.map((hop) => (
-                <HopRow key={hop.ttl} hop={hop} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          rows={snapshot.hops}
+          columns={columns}
+          getRowKey={(hop) => String(hop.ttl)}
+          caption={t('pathMonitor.title')}
+          empty={null}
+          labels={labels}
+          pageSize={MAX_HOPS}
+          data-testid="path-monitor-hops"
+        />
       )}
     </div>
   );
 }
 
-function HopRow({ hop }: { hop: HopStats }): JSX.Element {
-  const { t } = useTranslation('cards');
-  const [primary, ...others] = hop.addresses;
-  const name = primary ? (primary.hostname ?? primary.ip) : '*';
-  const address =
-    others.length > 0 ? t('pathMonitor.moreAddresses', { name, count: others.length }) : name;
-  const silent = hop.received === 0;
-  const cells: { key: string; value: string; wide?: boolean; mono?: boolean }[] = [
-    { key: 'ttl', value: String(hop.ttl) },
-    { key: 'address', value: address, mono: true },
-    { key: 'loss', value: formatLoss(hop.lossPct) },
-    { key: 'last', value: silent ? '---' : formatRtt(hop.lastRtt), wide: true },
-    { key: 'avg', value: silent ? '---' : formatRtt(hop.avgRtt) },
-    { key: 'best', value: silent ? '---' : formatRtt(hop.bestRtt), wide: true },
-    { key: 'worst', value: silent ? '---' : formatRtt(hop.worstRtt), wide: true },
-    { key: 'jitter', value: silent ? '---' : formatRtt(hop.jitter) },
-  ];
-  const addressTitle = hop.addresses.map((a) => (a.hostname ? `${a.hostname} (${a.ip})` : a.ip));
-
-  return (
-    <tr
-      className="border-b border-surface-border last:border-0"
-      data-testid="path-monitor-hop"
-      data-ttl={hop.ttl}
-    >
-      {cells.map((cell) => (
-        <td
-          key={cell.key}
-          className={cn(
-            'px-cell py-row truncate',
-            cell.mono && 'font-mono',
-            cell.key === 'loss' && hop.lossPct > 0 && statusColor.text.warning,
-            cell.wide && 'hidden sm:table-cell',
-          )}
-          title={
-            cell.key === 'address' && addressTitle.length > 0 ? addressTitle.join(', ') : cell.value
-          }
-          data-testid={`path-monitor-hop-${cell.key}`}
-        >
-          {cell.value}
-        </td>
-      ))}
-    </tr>
-  );
+/** A round-trip column: a hop that never answered shows dashes, not zero. */
+function rttColumn(
+  key: string,
+  header: string,
+  value: (hop: HopStats) => number,
+): DataTableColumn<HopStats> {
+  return {
+    key,
+    header,
+    cell: (hop) => (
+      <span data-testid={`path-monitor-hop-${key}`}>
+        {hop.received === 0 ? '---' : formatRtt(value(hop))}
+      </span>
+    ),
+  };
 }

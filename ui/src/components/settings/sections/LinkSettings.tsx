@@ -18,6 +18,8 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
+import { FormField } from '../../../shared/FormField';
+import { Select } from '../../../shared/Select';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import type {
   CardSettings,
@@ -156,32 +158,16 @@ export function LinkSettings({
         </div>
 
         {/* Combined Speed/Duplex Dropdown */}
-        <div>
-          <label className="caption text-text-muted font-medium" htmlFor="link-mode">
-            {t('link.speedDuplex')}
-          </label>
-          <select
-            id="link-mode"
-            value={linkSettings.mode}
-            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-              handleModeChange(e.target.value)
-            }
-            className={cn(
-              'w-full',
-              spacing.margin.top.tight,
-              spacing.chip.lg,
-              'bg-surface-base border border-surface-border',
-              radius.default,
-              'body-small text-text-primary',
-            )}
-          >
-            {LINK_MODE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <FormField label={t('link.speedDuplex')}>
+          {(control) => (
+            <Select
+              {...control}
+              value={linkSettings.mode}
+              onValueChange={handleModeChange}
+              options={LINK_MODE_OPTIONS}
+            />
+          )}
+        </FormField>
 
         {/* Warning for manual settings */}
         {isManualMode ? (

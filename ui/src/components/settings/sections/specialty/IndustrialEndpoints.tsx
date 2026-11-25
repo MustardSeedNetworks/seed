@@ -11,6 +11,7 @@ import type React from 'react';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useArrayItem } from '../../../../hooks/useArrayItem';
+import { Select } from '../../../../shared/Select';
 import { cn, input, layout, spacing } from '../../../../styles/theme';
 import type { TestsSettings } from '../../../../types/settings';
 
@@ -89,21 +90,24 @@ export function IndustrialEndpoints({
               placeholder="opc.tcp://host:4840"
               className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
             />
-            <select
-              value={endpoint.securityMode}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                updateOpcuaEndpoint(
-                  endpoint.id ?? '',
-                  'securityMode',
-                  e.target.value as 'None' | 'Sign' | 'SignAndEncrypt',
-                )
-              }
-              className={cn(input.base, input.state.default, input.size.md, 'w-32')}
-            >
-              <option value="None">{t('health.opcuaSecurityNone')}</option>
-              <option value="Sign">{t('health.opcuaSecuritySign')}</option>
-              <option value="SignAndEncrypt">{t('health.opcuaSecuritySignAndEncrypt')}</option>
-            </select>
+            <div className="w-36 shrink-0">
+              <Select
+                aria-label={t('health.opcuaSecurityMode')}
+                value={endpoint.securityMode}
+                onValueChange={(value): void =>
+                  updateOpcuaEndpoint(
+                    endpoint.id ?? '',
+                    'securityMode',
+                    value as 'None' | 'Sign' | 'SignAndEncrypt',
+                  )
+                }
+                options={[
+                  { value: 'None', label: t('health.opcuaSecurityNone') },
+                  { value: 'Sign', label: t('health.opcuaSecuritySign') },
+                  { value: 'SignAndEncrypt', label: t('health.opcuaSecuritySignAndEncrypt') },
+                ]}
+              />
+            </div>
             <button
               type="button"
               onClick={(): void => removeOpcuaEndpoint(endpoint.id ?? '')}

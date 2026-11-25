@@ -10,6 +10,7 @@ import type React from 'react';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useArrayItem } from '../../../hooks/useArrayItem';
+import { Select } from '../../../shared/Select';
 import { cn, input, layout, radius, spacing } from '../../../styles/theme';
 import type { SqlEndpoint, TestsSettings } from '../../../types/settings';
 
@@ -114,28 +115,16 @@ export function HealthChecksSettingsEnterprise({
                   'flex-1 bg-surface-raised',
                 )}
               />
-              <select
-                value={endpoint.driver}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                  updateSqlEndpoint(
-                    endpoint.id ?? '',
-                    'driver',
-                    e.target.value as SqlEndpoint['driver'],
-                  )
-                }
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'w-28 bg-surface-raised',
-                )}
-              >
-                {SQL_DRIVERS.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
+              <div className="w-32 shrink-0">
+                <Select
+                  aria-label={t('health.sqlDriver')}
+                  value={endpoint.driver}
+                  onValueChange={(value): void =>
+                    updateSqlEndpoint(endpoint.id ?? '', 'driver', value as SqlEndpoint['driver'])
+                  }
+                  options={SQL_DRIVERS}
+                />
+              </div>
               <button
                 type="button"
                 onClick={(): void => removeSqlEndpoint(endpoint.id ?? '')}
@@ -224,20 +213,19 @@ export function HealthChecksSettingsEnterprise({
               placeholder={t('common.name')}
               className={cn(input.base, input.state.default, input.size.md, 'w-24')}
             />
-            <select
-              value={endpoint.protocol}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                updateFileShareEndpoint(
-                  endpoint.id ?? '',
-                  'protocol',
-                  e.target.value as 'smb' | 'nfs',
-                )
-              }
-              className={cn(input.base, input.state.default, input.size.md, 'w-20')}
-            >
-              <option value="smb">SMB</option>
-              <option value="nfs">NFS</option>
-            </select>
+            <div className="w-24 shrink-0">
+              <Select
+                aria-label={t('health.fileShareProtocol')}
+                value={endpoint.protocol}
+                onValueChange={(value): void =>
+                  updateFileShareEndpoint(endpoint.id ?? '', 'protocol', value as 'smb' | 'nfs')
+                }
+                options={[
+                  { value: 'smb', label: 'SMB' },
+                  { value: 'nfs', label: 'NFS' },
+                ]}
+              />
+            </div>
             <input
               type="text"
               value={endpoint.host}

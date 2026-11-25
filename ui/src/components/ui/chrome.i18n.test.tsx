@@ -18,12 +18,11 @@ import { Router } from 'wouter';
 import { memoryLocation } from 'wouter/memory-location';
 
 import i18n from '../../i18n';
-import { useTestRunStore } from '../../stores/testRunStore';
 import { NotFoundPage } from '../../pages/NotFoundPage';
+import { useTestRunStore } from '../../stores/testRunStore';
 import { SidebarLayout } from '../../ui/Sidebar';
 import { Alert } from './Alert';
 import { CommandPalette } from './CommandPalette';
-import { type Column, DataTable } from './DataTable';
 import { DeviceSelector } from './DeviceSelector';
 import { Fab } from './Fab';
 import { Modal } from './Modal';
@@ -82,25 +81,6 @@ describe('shared chrome — Spanish, with no English left behind', () => {
     expect(screen.queryByPlaceholderText('Search pages and actions…')).not.toBeInTheDocument();
     // The prototype stub must not leak into other test files.
     Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
-  });
-
-  it('labels the DataTable empty, loading and search states', () => {
-    const columns: Column<{ name: string }>[] = [
-      { key: 'name', header: 'N', accessor: (r) => r.name },
-    ];
-    const { rerender } = render(
-      <DataTable data={[]} columns={columns} keyExtractor={(r) => r.name} />,
-    );
-
-    expect(screen.getByText('No se encontraron datos')).toBeInTheDocument();
-    expect(screen.queryByText('No data found')).not.toBeInTheDocument();
-    const search = screen.getByPlaceholderText('Buscar…');
-    fireEvent.change(search, { target: { value: 'x' } });
-    expect(screen.getByRole('button', { name: 'Limpiar búsqueda' })).toBeInTheDocument();
-
-    rerender(<DataTable data={[]} columns={columns} keyExtractor={(r) => r.name} loading={true} />);
-    expect(screen.getByRole('status', { name: 'Cargando datos...' })).toBeInTheDocument();
-    expect(screen.queryByLabelText('Loading data')).not.toBeInTheDocument();
   });
 
   it('shows the DeviceSelector placeholder', () => {

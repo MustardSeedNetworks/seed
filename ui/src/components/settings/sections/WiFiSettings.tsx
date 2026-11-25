@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
 import { useRole } from '../../../contexts/RoleContext';
+import { Select } from '../../../shared/Select';
 import {
   cn,
   icon as iconTokens,
@@ -283,30 +284,18 @@ export function WiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFi
             {t('wifi.title')}
           </label>
           {wifiSettings.availableWifi.length > 0 ? (
-            <select
+            <Select
               id="wifi-interface"
+              className="mt-1"
               value={wifiSettings.interface}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+              onValueChange={(value): void =>
                 setWifiSettings((prev) => ({
                   ...prev,
-                  interface: e.target.value,
+                  interface: value,
                 }))
               }
-              className={cn(
-                'w-full',
-                spacing.margin.top.tight,
-                spacing.chip.lg,
-                'bg-surface-base border border-surface-border',
-                radius.default,
-                'body-small text-text-primary',
-              )}
-            >
-              {wifiSettings.availableWifi.map((iface) => (
-                <option key={iface} value={iface}>
-                  {iface}
-                </option>
-              ))}
-            </select>
+              options={wifiSettings.availableWifi.map((iface) => ({ value: iface, label: iface }))}
+            />
           ) : (
             <input
               id="wifi-interface-input"

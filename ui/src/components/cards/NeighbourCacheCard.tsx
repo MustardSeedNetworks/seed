@@ -11,18 +11,74 @@
  * MAC on the segment they are plugged into.
  */
 
-import type { JSX } from 'react';
+import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useNeighbourCache } from '../../hooks/useNeighbourCache';
-import { cn, radius, spacing } from '../../styles/theme';
+import { useTableLabels } from '../../hooks/useTableLabels';
+import { DataTable, type DataTableColumn } from '../../shared/DataTable';
+import { EmptyState } from '../../shared/EmptyState';
+import { SearchInput } from '../../shared/SearchInput';
+import type { NeighbourEntry } from '../../types/generated/neighbour-cache-response';
 import { Button } from '../ui/Button';
 import { Card, type Status } from '../ui/Card';
 import { Network } from '../ui/Icons';
 
 export function NeighbourCacheCard(): JSX.Element {
-  const { t } = useTranslation('cards');
+  const { t } = useTranslation(['cards', 'common']);
   const { entries, loading, error, refresh } = useNeighbourCache();
+  const [filter, setFilter] = useState('');
+  const labels = useTableLabels<NeighbourEntry>({ loading: t('neighbours.title') });
+
+  const needle = filter.trim().toLowerCase();
+  const visible = entries.filter((entry) =>
+    [entry.ip, entry.mac, entry.vendor, entry.interface, entry.state].some((value) =>
+      value?.toLowerCase().includes(needle),
+    ),
+  );
+
+  const columns: DataTableColumn<NeighbourEntry>[] = [
+    {
+      key: 'address',
+      header: t('neighbours.address'),
+      sortValue: (entry) => entry.ip,
+      cell: (entry) => (
+        <span className="inline-flex items-baseline gap-1 font-mono">
+          <span>{entry.ip}</span>
+          {/* The family is on the row rather than inferred from the address,
+              so an IPv4 and an IPv6 entry are distinguishable at a glance and
+              by a screen reader. */}
+          <span className="text-xs text-text-muted">
+            {entry.family === 'ipv6' ? t('neighbours.familyIpv6') : t('neighbours.familyIpv4')}
+          </span>
+        </span>
+      ),
+    },
+    {
+      key: 'mac',
+      header: t('neighbours.mac'),
+      sortValue: (entry) => entry.mac,
+      cell: (entry) => <span className="font-mono">{entry.mac || '—'}</span>,
+    },
+    {
+      key: 'vendor',
+      header: t('neighbours.vendor'),
+      sortValue: (entry) => entry.vendor ?? '',
+      cell: (entry) => entry.vendor || '—',
+    },
+    {
+      key: 'interface',
+      header: t('neighbours.interface'),
+      sortValue: (entry) => entry.interface ?? '',
+      cell: (entry) => entry.interface || '—',
+    },
+    {
+      key: 'state',
+      header: t('neighbours.state'),
+      sortValue: (entry) => entry.state ?? '',
+      cell: (entry) => entry.state || '—',
+    },
+  ];
 
   let cardStatus: Status = 'success';
   if (loading) {
@@ -56,101 +112,24 @@ export function NeighbourCacheCard(): JSX.Element {
         ) : null}
 
         {entries.length > 0 ? (
-          // No overflow-x-auto: table-fixed makes fitting the card structural
-          // rather than a tuning exercise, so a long vendor string or a full
-          // IPv6 address cannot push the last column off-card the way it did
-          // at 1280 and 1440 px (#2708). What does not fit is truncated and
-          // carries the full text in `title`.
-          <div className={cn(radius.default, 'border border-surface-border')}>
-            <table className="w-full table-fixed body-small">
-              <caption className="sr-only">{t('neighbours.tableCaption')}</caption>
-              <thead>
-                <tr className="border-b border-surface-border text-text-muted">
-                  <th
-                    scope="col"
-                    className="px-cell py-row text-left w-[30%] truncate"
-                    title={t('neighbours.address')}
-                  >
-                    {t('neighbours.address')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-cell py-row text-left w-[26%] truncate"
-                    title={t('neighbours.mac')}
-                  >
-                    {t('neighbours.mac')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-cell py-row text-left w-[20%] truncate"
-                    title={t('neighbours.vendor')}
-                  >
-                    {t('neighbours.vendor')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-cell py-row text-left w-[12%] truncate"
-                    title={t('neighbours.interface')}
-                  >
-                    {t('neighbours.interface')}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-cell py-row text-left w-[12%] truncate"
-                    title={t('neighbours.state')}
-                  >
-                    {t('neighbours.state')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((entry) => (
-                  <tr
-                    key={`${entry.ip}-${entry.interface ?? ''}`}
-                    className="border-b border-surface-border last:border-b-0"
-                  >
-                    <td className="px-cell py-row font-mono">
-                      {/* A table cell is not a flex container, so the address
-                          and its tag need one: truncating the address makes it
-                          a block, which would otherwise drop the tag onto a
-                          second line and double the height of every row. */}
-                      <div className={cn('flex items-baseline', spacing.gap.tight)}>
-                        {/* The address truncates and the family tag does not:
-                            a clipped "IPv" tells the reader nothing, and it is
-                            the tag that makes the row scannable. */}
-                        <span className="truncate min-w-0" title={entry.ip}>
-                          {entry.ip}
-                        </span>
-                        {/* The family is on the row rather than inferred from the
-                            address, so an IPv4 and an IPv6 entry are
-                            distinguishable at a glance and by a screen reader. */}
-                        <span className="caption text-text-muted shrink-0">
-                          {entry.family === 'ipv6'
-                            ? t('neighbours.familyIpv6')
-                            : t('neighbours.familyIpv4')}
-                        </span>
-                      </div>
-                    </td>
-                    <td
-                      className="px-cell py-row font-mono truncate"
-                      title={entry.mac || undefined}
-                    >
-                      {entry.mac || '—'}
-                    </td>
-                    <td className="px-cell py-row truncate" title={entry.vendor || undefined}>
-                      {entry.vendor || '—'}
-                    </td>
-                    <td className="px-cell py-row truncate" title={entry.interface || undefined}>
-                      {entry.interface || '—'}
-                    </td>
-                    <td className="px-cell py-row truncate" title={entry.state || undefined}>
-                      {entry.state || '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <SearchInput
+              value={filter}
+              onValueChange={setFilter}
+              label={t('common:dataTable.filterRows')}
+              clearLabel={t('common:dataTable.clearFilter')}
+            />
+            <DataTable
+              rows={visible}
+              columns={columns}
+              getRowKey={(entry) => `${entry.ip}-${entry.interface ?? ''}`}
+              caption={t('neighbours.tableCaption')}
+              empty={<EmptyState title={t('common:dataTable.noMatches')} />}
+              labels={labels}
+              pageSize={10}
+              defaultSort={{ key: 'address', direction: 'asc' }}
+            />
+          </>
         ) : null}
 
         <Button

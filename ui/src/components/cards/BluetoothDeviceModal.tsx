@@ -10,13 +10,17 @@
 
 import type { TFunction } from 'i18next';
 import type React from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useTableLabels } from '../../hooks/useTableLabels';
+import { DataTable, type DataTableColumn } from '../../shared/DataTable';
+import { EmptyState } from '../../shared/EmptyState';
+import { SearchInput } from '../../shared/SearchInput';
 import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
 import type {
   BluetoothDevice,
   BluetoothDiscoveryStats,
 } from '../../types/generated/bluetooth-scan-response';
-import { type Column, DataTable } from '../ui/DataTable';
 import { BluetoothConnected, Bluetooth as BluetoothIcon } from '../ui/Icons';
 import { Modal } from '../ui/Modal';
 
@@ -58,7 +62,14 @@ function DetailRow({
   );
 }
 
-function expandedDetail(d: BluetoothDevice, t: TFunction<'cards'>): React.ReactElement {
+function deviceKey(d: BluetoothDevice): string {
+  return d.id || d.address;
+}
+
+function expandedDetail(
+  d: BluetoothDevice,
+  t: TFunction<readonly ['cards', 'common']>,
+): React.ReactElement {
   const flags = [
     d.isConnected ? t('bluetooth.flagConnected') : null,
     d.isPaired ? t('bluetooth.flagPaired') : null,
@@ -100,16 +111,26 @@ export function BluetoothDeviceModal({
   devices,
   stats,
 }: BluetoothDeviceModalProps): React.ReactElement {
-  const { t } = useTranslation('cards');
+  const { t } = useTranslation(['cards', 'common']);
+  const [filter, setFilter] = useState('');
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  const labels = useTableLabels<BluetoothDevice>({ loading: t('bluetooth.modalTitle') });
 
-  const columns: Column<BluetoothDevice>[] = [
+  const needle = filter.trim().toLowerCase();
+  const visible = devices.filter((d) =>
+    [d.name, d.alias, d.address, d.companyName, d.vendor].some((value) =>
+      value?.toLowerCase().includes(needle),
+    ),
+  );
+  const openDevice = devices.find((d) => deviceKey(d) === openKey);
+
+  const columns: DataTableColumn<BluetoothDevice>[] = [
     {
       key: 'name',
       header: t('bluetooth.colName'),
-      accessor: (d) => displayName(d),
-      sortable: true,
-      render: (d) => (
-        <span className="flex items-center gap-tight">
+      sortValue: (d) => displayName(d),
+      cell: (d) => (
+        <span className="flex items-center gap-1">
           {d.isConnected ? (
             <BluetoothConnected className={cn(iconTokens.size.xs, 'text-brand-primary')} />
           ) : (
@@ -122,37 +143,32 @@ export function BluetoothDeviceModal({
     {
       key: 'address',
       header: t('bluetooth.colAddress'),
-      accessor: (d) => d.address,
-      sortable: true,
+      sortValue: (d) => d.address,
+      cell: (d) => d.address,
     },
     {
       key: 'type',
       header: t('bluetooth.colType'),
-      accessor: (d) => d.type,
-      sortable: true,
-      hiddenOnMobile: true,
+      sortValue: (d) => d.type,
+      cell: (d) => d.type,
     },
     {
       key: 'company',
       header: t('bluetooth.colManufacturer'),
-      accessor: (d) => d.companyName || d.vendor || '',
-      sortable: true,
-      hiddenOnMobile: true,
+      sortValue: (d) => d.companyName || d.vendor || '',
+      cell: (d) => d.companyName || d.vendor || '',
     },
     {
       key: 'rssi',
       header: t('bluetooth.colSignal'),
-      accessor: (d) => d.rssi,
-      sortable: true,
-      render: (d) => <span className="text-text-secondary">{rssiLabel(d.rssi)}</span>,
+      sortValue: (d) => d.rssi,
+      cell: (d) => <span className="text-text-secondary">{rssiLabel(d.rssi)}</span>,
     },
     {
       key: 'distance',
       header: t('bluetooth.colDistance'),
-      accessor: (d) => d.estDistanceM,
-      sortable: true,
-      hiddenOnMobile: true,
-      render: (d) => <span className="text-text-secondary">{distanceLabel(d.estDistanceM)}</span>,
+      sortValue: (d) => d.estDistanceM,
+      cell: (d) => <span className="text-text-secondary">{distanceLabel(d.estDistanceM)}</span>,
     },
   ];
 
@@ -167,18 +183,30 @@ export function BluetoothDeviceModal({
             <StatChip label={t('bluetooth.statConnected')} value={stats.connectedDevices} />
           </div>
         ) : null}
-        <div data-testid="bluetooth-device-table">
-          <DataTable<BluetoothDevice>
-            data={devices}
-            columns={columns}
-            keyExtractor={(d) => d.id || d.address}
-            searchKeys={['name', 'alias', 'address', 'companyName', 'vendor']}
-            searchPlaceholder={t('bluetooth.searchPlaceholder')}
-            emptyMessage={t('bluetooth.empty')}
-            expandedContent={(d) => expandedDetail(d, t)}
-            maxHeight="max-h-[60vh]"
-          />
-        </div>
+        <SearchInput
+          value={filter}
+          onValueChange={setFilter}
+          label={t('bluetooth.searchPlaceholder')}
+          clearLabel={t('common:dataTable.clearFilter')}
+          placeholder={t('bluetooth.searchPlaceholder')}
+        />
+        <DataTable
+          rows={visible}
+          columns={columns}
+          getRowKey={deviceKey}
+          caption={t('bluetooth.modalTitle')}
+          empty={
+            <EmptyState
+              title={devices.length === 0 ? t('bluetooth.empty') : t('common:dataTable.noMatches')}
+            />
+          }
+          labels={labels}
+          maxHeight={480}
+          onRowClick={(d) => setOpenKey(openKey === deviceKey(d) ? null : deviceKey(d))}
+          selectedRowKey={openKey ?? undefined}
+          data-testid="bluetooth-device-table"
+        />
+        {openDevice ? expandedDetail(openDevice, t) : null}
       </div>
     </Modal>
   );

@@ -251,7 +251,11 @@
     "fhirAuthOauth2": "OAuth2",
     "opcuaSecurityNone": "None",
     "opcuaSecuritySign": "Sign",
-    "opcuaSecuritySignAndEncrypt": "Sign+Encrypt"
+    "opcuaSecuritySignAndEncrypt": "Sign+Encrypt",
+    "opcuaSecurityMode": "Security mode",
+    "fhirAuthType": "Authentication",
+    "sqlDriver": "Database driver",
+    "fileShareProtocol": "Share protocol"
   },
   "dns": {
     "title": "DNS",
@@ -518,13 +522,14 @@
     "revoke": "Revoke",
     "statusActive": "active",
     "statusRevoked": "revoked",
-    "confirmRevoke": "Revoke token \"{{name}}\"? Any script using it will stop working immediately.",
+    "confirmRevoke": "Any script using it will stop working immediately.",
     "mintNeedsOperator": "Read-only — the operator role is required to mint API tokens.",
     "mintNeedsPro": "Minting API tokens requires the Pro tier.",
     "revokeNeedsOperator": "Read-only — the operator role is required to revoke tokens.",
     "loadFailed": "The API tokens could not be loaded.",
     "mintFailed": "The token could not be created.",
-    "revokeFailed": "The token could not be revoked."
+    "revokeFailed": "The token could not be revoked.",
+    "confirmRevokeTitle": "Revoke token \"{{name}}\"?"
   },
   "guestAudit": {
     "title": "Guest Network Audit",

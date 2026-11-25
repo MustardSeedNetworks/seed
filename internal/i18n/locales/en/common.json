@@ -129,7 +129,6 @@
     "skipToMainContent": "Skip to main content",
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar",
-    "toggleFilters": "Toggle filters",
     "manageProfiles": "Create, edit, and delete profiles",
     "pageHelpHint": "What is {{title}}?",
     "openPageHelp": "Open help for {{title}}",
@@ -230,11 +229,9 @@
     "previousPage": "Previous page",
     "nextPage": "Next page",
     "pageStatus": "Page {{page}} of {{pageCount}} ({{total}} rows)",
-    "clearAll": "Clear all",
-    "showingResults": "Showing {{shown}} of {{total}} results",
-    "loadingData": "Loading data...",
-    "scrollRegion": "Table contents",
-    "noData": "No data found"
+    "filterRows": "Filter rows",
+    "clearFilter": "Clear filter",
+    "noMatches": "No rows match the filter"
   },
   "capabilities": {
     "warning": {

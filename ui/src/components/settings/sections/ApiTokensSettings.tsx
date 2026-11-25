@@ -24,6 +24,11 @@ import { Trans, useTranslation } from 'react-i18next';
 import { api } from '../../../api/client';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useRole } from '../../../contexts/RoleContext';
+import { useTableLabels } from '../../../hooks/useTableLabels';
+import { Button as SharedButton } from '../../../shared/Button';
+import { ConfirmDialog } from '../../../shared/ConfirmDialog';
+import { DataTable, type DataTableColumn } from '../../../shared/DataTable';
+import { StatusPill } from '../../../shared/StatusPill';
 import { Button } from '../../ui/Button';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Key, Plus, Trash2 } from '../../ui/Icons';
@@ -71,6 +76,44 @@ export function ApiTokensSettings(): React.ReactElement {
   const [newTokenName, setNewTokenName] = useState('');
   const [minting, setMinting] = useState(false);
   const [mintedToken, setMintedToken] = useState<MintTokenResponse | null>(null);
+  const [revokeTarget, setRevokeTarget] = useState<ApiToken | null>(null);
+  const labels = useTableLabels<ApiToken>({ loading: t('apiTokens.title') });
+
+  const columns: DataTableColumn<ApiToken>[] = [
+    {
+      key: 'name',
+      header: t('apiTokens.colName'),
+      sortValue: (token) => token.name,
+      cell: (token) => token.name,
+    },
+    {
+      key: 'prefix',
+      header: t('apiTokens.colPrefix'),
+      cell: (token) => <span className="font-mono text-xs">{token.prefix}…</span>,
+    },
+    {
+      key: 'created',
+      header: t('apiTokens.colCreated'),
+      sortValue: (token) => token.createdAt,
+      cell: (token) => formatDate(token.createdAt),
+    },
+    {
+      key: 'lastUsed',
+      header: t('apiTokens.lastUsed'),
+      sortValue: (token) => (isZeroTime(token.lastUsedAt) ? '' : (token.lastUsedAt ?? '')),
+      cell: (token) => formatDate(token.lastUsedAt),
+    },
+    {
+      key: 'status',
+      header: t('apiTokens.colStatus'),
+      cell: (token) =>
+        isZeroTime(token.revokedAt) ? (
+          <StatusPill tone="success" label={t('apiTokens.statusActive')} />
+        ) : (
+          <StatusPill tone="error" label={t('apiTokens.statusRevoked')} />
+        ),
+    },
+  ];
 
   const refresh = async (): Promise<void> => {
     setError(null);
@@ -104,8 +147,7 @@ export function ApiTokensSettings(): React.ReactElement {
   };
 
   const handleRevoke = async (token: ApiToken): Promise<void> => {
-    const ok = window.confirm(t('apiTokens.confirmRevoke', { name: token.name }));
-    if (!ok) return;
+    setRevokeTarget(null);
     setError(null);
     try {
       await api.delete(`/api/v1/tokens/${token.id}`);
@@ -217,55 +259,44 @@ export function ApiTokensSettings(): React.ReactElement {
         ) : tokens.length === 0 ? (
           <div className="text-sm text-text-muted">{t('apiTokens.none')}</div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="text-xs text-text-muted text-left">
-              <tr>
-                <th className="py-row pr-2">{t('apiTokens.colName')}</th>
-                <th className="py-row pr-2">{t('apiTokens.colPrefix')}</th>
-                <th className="py-row pr-2">{t('apiTokens.colCreated')}</th>
-                <th className="py-row pr-2">{t('apiTokens.lastUsed')}</th>
-                <th className="py-row pr-2">{t('apiTokens.colStatus')}</th>
-                <th className="py-row" />
-              </tr>
-            </thead>
-            <tbody>
-              {tokens.map((token) => {
-                const revoked = !isZeroTime(token.revokedAt);
-                return (
-                  <tr key={token.id} className="border-t border-surface-border">
-                    <td className="py-row pr-2">{token.name}</td>
-                    <td className="py-row pr-2 font-mono text-xs">{token.prefix}…</td>
-                    <td className="py-row pr-2">{formatDate(token.createdAt)}</td>
-                    <td className="py-row pr-2">{formatDate(token.lastUsedAt)}</td>
-                    <td className="py-row pr-2">
-                      {revoked ? (
-                        <span className="text-status-error">{t('apiTokens.statusRevoked')}</span>
-                      ) : (
-                        <span className="text-status-success">{t('apiTokens.statusActive')}</span>
-                      )}
-                    </td>
-                    <td className="py-row text-right">
-                      {!revoked && (
-                        <Button
-                          variant="ghost"
-                          tone="red"
-                          size="xs"
-                          leftIcon={<Trash2 className="w-3 h-3" />}
-                          disabled={!canWrite}
-                          title={canWrite ? undefined : t('apiTokens.revokeNeedsOperator')}
-                          onClick={() => void handleRevoke(token)}
-                        >
-                          {t('apiTokens.revoke')}
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <DataTable
+            rows={tokens}
+            columns={columns}
+            getRowKey={(token) => token.id}
+            caption={t('apiTokens.title')}
+            empty={null}
+            labels={labels}
+            pageSize={10}
+            defaultSort={{ key: 'created', direction: 'desc' }}
+            rowActions={(token) =>
+              isZeroTime(token.revokedAt) ? (
+                <SharedButton
+                  variant="destructive"
+                  size="sm"
+                  icon={<Trash2 className="w-3 h-3" />}
+                  disabled={!canWrite}
+                  title={canWrite ? undefined : t('apiTokens.revokeNeedsOperator')}
+                  onClick={() => setRevokeTarget(token)}
+                >
+                  {t('apiTokens.revoke')}
+                </SharedButton>
+              ) : null
+            }
+          />
         )}
       </div>
+      <ConfirmDialog
+        open={revokeTarget !== null}
+        title={t('apiTokens.confirmRevokeTitle', { name: revokeTarget?.name ?? '' })}
+        message={t('apiTokens.confirmRevoke')}
+        confirmLabel={t('apiTokens.revoke')}
+        cancelLabel={t('common:buttons.cancel')}
+        closeLabel={t('common:buttons.close')}
+        onConfirm={() => {
+          if (revokeTarget) void handleRevoke(revokeTarget);
+        }}
+        onCancel={() => setRevokeTarget(null)}
+      />
     </CollapsibleSection>
   );
 }

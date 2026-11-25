@@ -129,7 +129,6 @@
     "skipToMainContent": "Saltar al contenido principal",
     "collapseSidebar": "Contraer barra lateral",
     "expandSidebar": "Expandir barra lateral",
-    "toggleFilters": "Mostrar u ocultar filtros",
     "manageProfiles": "Crear, editar y eliminar perfiles",
     "pageHelpHint": "¿Qué es {{title}}?",
     "openPageHelp": "Abrir ayuda para {{title}}",
@@ -230,11 +229,9 @@
     "previousPage": "Página anterior",
     "nextPage": "Página siguiente",
     "pageStatus": "Página {{page}} de {{pageCount}} ({{total}} filas)",
-    "clearAll": "Limpiar todo",
-    "showingResults": "Mostrando {{shown}} de {{total}} resultados",
-    "loadingData": "Cargando datos...",
-    "scrollRegion": "Contenido de la tabla",
-    "noData": "No se encontraron datos"
+    "filterRows": "Filtrar filas",
+    "clearFilter": "Borrar filtro",
+    "noMatches": "Ninguna fila coincide con el filtro"
   },
   "capabilities": {
     "warning": {

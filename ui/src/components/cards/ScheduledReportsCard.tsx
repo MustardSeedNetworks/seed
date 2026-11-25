@@ -20,6 +20,7 @@ import {
   type ScheduleFrequency,
   scheduleTime,
 } from '../../hooks/useReportSchedules';
+import { Select } from '../../shared/Select';
 import { cn, input as inputTokens, spacing } from '../../styles/theme';
 import type { ReportScheduleInfo } from '../../types/generated/report-schedule-info';
 import { Button } from '../ui/Button';
@@ -111,12 +112,12 @@ function ScheduleEditor({ initial, onSave, onCancel }: EditorProps): JSX.Element
 
       <div className="flex flex-wrap gap-default">
         <Field id="schedule-template" label={t('reportSchedules.template')}>
-          <select
+          <Select
             id="schedule-template"
             data-testid="schedule-template"
             value={draft.template}
-            onChange={(e): void => {
-              const template = e.target.value as ReportTemplate;
+            onValueChange={(value): void => {
+              const template = value as ReportTemplate;
               const formats = REPORT_TEMPLATE_FORMATS[template];
               // Keep the format when the new template produces it.
               edit({
@@ -124,87 +125,67 @@ function ScheduleEditor({ initial, onSave, onCancel }: EditorProps): JSX.Element
                 format: formats.includes(draft.format) ? draft.format : formats[0],
               });
             }}
-            className={inputTokens.base}
-          >
-            {REPORT_TEMPLATES.map((template) => (
-              <option key={template} value={template}>
-                {t(`reportSchedules.templates.${template}`)}
-              </option>
-            ))}
-          </select>
+            options={REPORT_TEMPLATES.map((template) => ({
+              value: template,
+              label: t(`reportSchedules.templates.${template}`),
+            }))}
+          />
         </Field>
         <Field id="schedule-format" label={t('reportSchedules.format')}>
-          <select
+          <Select
             id="schedule-format"
             data-testid="schedule-format"
             value={draft.format}
-            onChange={(e): void => {
-              const format = REPORT_TEMPLATE_FORMATS[draft.template].find(
-                (f) => f === e.target.value,
-              );
+            onValueChange={(value): void => {
+              const format = REPORT_TEMPLATE_FORMATS[draft.template].find((f) => f === value);
               if (format) {
                 edit({ format });
               }
             }}
-            className={inputTokens.base}
-          >
-            {REPORT_TEMPLATE_FORMATS[draft.template].map((format) => (
-              <option key={format} value={format}>
-                {format.toUpperCase()}
-              </option>
-            ))}
-          </select>
+            options={REPORT_TEMPLATE_FORMATS[draft.template].map((format) => ({
+              value: format,
+              label: format.toUpperCase(),
+            }))}
+          />
         </Field>
       </div>
 
       <div className="flex flex-wrap gap-default">
         <Field id="schedule-frequency" label={t('reportSchedules.frequency')}>
-          <select
+          <Select
             id="schedule-frequency"
             data-testid="schedule-frequency"
             value={draft.frequency}
-            onChange={(e): void => edit({ frequency: e.target.value as ScheduleFrequency })}
-            className={inputTokens.base}
-          >
-            {FREQUENCIES.map((frequency) => (
-              <option key={frequency} value={frequency}>
-                {t(`reportSchedules.frequencies.${frequency}`)}
-              </option>
-            ))}
-          </select>
+            onValueChange={(value): void => edit({ frequency: value as ScheduleFrequency })}
+            options={FREQUENCIES.map((frequency) => ({
+              value: frequency,
+              label: t(`reportSchedules.frequencies.${frequency}`),
+            }))}
+          />
         </Field>
         {draft.frequency === 'weekly' ? (
           <Field id="schedule-day-of-week" label={t('reportSchedules.dayOfWeek')}>
-            <select
+            <Select
               id="schedule-day-of-week"
               data-testid="schedule-day-of-week"
-              value={draft.dayOfWeek}
-              onChange={(e): void => edit({ dayOfWeek: Number(e.target.value) })}
-              className={inputTokens.base}
-            >
-              {WEEKDAYS.map((day) => (
-                <option key={day} value={day}>
-                  {weekdayName(day, i18n.language)}
-                </option>
-              ))}
-            </select>
+              value={String(draft.dayOfWeek)}
+              onValueChange={(value): void => edit({ dayOfWeek: Number(value) })}
+              options={WEEKDAYS.map((day) => ({
+                value: String(day),
+                label: weekdayName(day, i18n.language),
+              }))}
+            />
           </Field>
         ) : null}
         {draft.frequency === 'monthly' ? (
           <Field id="schedule-day-of-month" label={t('reportSchedules.dayOfMonth')}>
-            <select
+            <Select
               id="schedule-day-of-month"
               data-testid="schedule-day-of-month"
-              value={draft.dayOfMonth}
-              onChange={(e): void => edit({ dayOfMonth: Number(e.target.value) })}
-              className={inputTokens.base}
-            >
-              {MONTH_DAYS.map((day) => (
-                <option key={day} value={day}>
-                  {day}
-                </option>
-              ))}
-            </select>
+              value={String(draft.dayOfMonth)}
+              onValueChange={(value): void => edit({ dayOfMonth: Number(value) })}
+              options={MONTH_DAYS.map((day) => ({ value: String(day), label: String(day) }))}
+            />
           </Field>
         ) : null}
         <Field id="schedule-time" label={t('reportSchedules.time')}>

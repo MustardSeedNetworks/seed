@@ -100,8 +100,8 @@ test.describe('Path monitor card', () => {
         timeout: 15000,
       },
     );
-    const hop = page.getByTestId('path-monitor-hop').first();
-    await expect(hop).toHaveAttribute('data-ttl', '1');
+    const hop = page.getByTestId('path-monitor-hops').locator('tbody tr').first();
+    await expect(hop.getByTestId('path-monitor-hop-ttl')).toHaveAttribute('data-ttl', '1');
     await expect(hop.getByTestId('path-monitor-hop-address')).toHaveText(
       /^(127\.0\.0\.1|localhost)$/,
     );
@@ -109,7 +109,7 @@ test.describe('Path monitor card', () => {
 
     await page.getByTestId('path-monitor-stop').click();
     await expect(card).toHaveAttribute('data-phase', 'stopped', { timeout: 10000 });
-    await expect(page.getByTestId('path-monitor-hop')).not.toHaveCount(0);
+    await expect(page.getByTestId('path-monitor-hop-ttl')).not.toHaveCount(0);
     await expect(page.getByTestId('path-monitor-start')).toBeEnabled();
   });
 });

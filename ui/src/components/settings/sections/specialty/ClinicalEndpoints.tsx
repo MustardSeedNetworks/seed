@@ -10,6 +10,7 @@ import type React from 'react';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useArrayItem } from '../../../../hooks/useArrayItem';
+import { Select } from '../../../../shared/Select';
 import { cn, input, layout, radius, spacing } from '../../../../styles/theme';
 import type { TestsSettings } from '../../../../types/settings';
 
@@ -309,21 +310,24 @@ export function ClinicalEndpoints({
               placeholder="https://fhir.example.com/r4"
               className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
             />
-            <select
-              value={endpoint.authType}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                updateFhirEndpoint(
-                  endpoint.id ?? '',
-                  'authType',
-                  e.target.value as 'none' | 'basic' | 'oauth2',
-                )
-              }
-              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-            >
-              <option value="none">{t('health.fhirAuthNone')}</option>
-              <option value="basic">{t('health.fhirAuthBasic')}</option>
-              <option value="oauth2">{t('health.fhirAuthOauth2')}</option>
-            </select>
+            <div className="w-28 shrink-0">
+              <Select
+                aria-label={t('health.fhirAuthType')}
+                value={endpoint.authType}
+                onValueChange={(value): void =>
+                  updateFhirEndpoint(
+                    endpoint.id ?? '',
+                    'authType',
+                    value as 'none' | 'basic' | 'oauth2',
+                  )
+                }
+                options={[
+                  { value: 'none', label: t('health.fhirAuthNone') },
+                  { value: 'basic', label: t('health.fhirAuthBasic') },
+                  { value: 'oauth2', label: t('health.fhirAuthOauth2') },
+                ]}
+              />
+            </div>
             <button
               type="button"
               onClick={(): void => removeFhirEndpoint(endpoint.id ?? '')}

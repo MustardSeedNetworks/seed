@@ -7,7 +7,7 @@
  * an IPv4 and an IPv6 entry are distinguishable.
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { NeighbourCacheCard } from './NeighbourCacheCard';
@@ -90,5 +90,43 @@ describe('NeighbourCacheCard', () => {
     render(<NeighbourCacheCard />);
 
     expect(await screen.findByText('permission denied')).toBeInTheDocument();
+  });
+
+  it('filters the entries from the search box and says when none match', async () => {
+    mockGet.mockResolvedValue({
+      entries: [
+        { ip: '192.0.2.1', mac: 'aa:bb:cc:dd:ee:01', vendor: 'Ubiquiti', family: 'ipv4' },
+        { ip: '192.0.2.2', mac: 'aa:bb:cc:dd:ee:02', vendor: 'Cisco', family: 'ipv4' },
+      ],
+      total: 2,
+    });
+    render(<NeighbourCacheCard />);
+    await screen.findByText('192.0.2.1');
+
+    const search = screen.getByRole('searchbox', { name: 'Filter rows' });
+    fireEvent.change(search, { target: { value: 'cisco' } });
+    expect(screen.queryByText('192.0.2.1')).not.toBeInTheDocument();
+    expect(screen.getByText('192.0.2.2')).toBeInTheDocument();
+
+    fireEvent.change(search, { target: { value: 'nothing-like-this' } });
+    expect(screen.getByText('No rows match the filter')).toBeInTheDocument();
+  });
+
+  it('sorts by a column header', async () => {
+    mockGet.mockResolvedValue({
+      entries: [
+        { ip: '192.0.2.9', mac: 'aa:bb:cc:dd:ee:09', family: 'ipv4' },
+        { ip: '192.0.2.1', mac: 'aa:bb:cc:dd:ee:01', family: 'ipv4' },
+      ],
+      total: 2,
+    });
+    render(<NeighbourCacheCard />);
+    await screen.findByText('192.0.2.9');
+
+    // Sorted by address ascending to begin with.
+    const body = (): HTMLElement => screen.getAllByRole('rowgroup')[1] as HTMLElement;
+    expect(within(body()).getAllByRole('row')[0]).toHaveTextContent('192.0.2.1');
+    fireEvent.click(screen.getByRole('button', { name: /Address/ }));
+    expect(within(body()).getAllByRole('row')[0]).toHaveTextContent('192.0.2.9');
   });
 });

@@ -293,9 +293,9 @@ function ListenSummary({ result }: { result: ListenResult }): JSX.Element {
           testId="multicast-listen-sources"
           caption={t('multicastListen.sourcesCaption')}
           columns={[
-            { label: t('multicastListen.colSender'), width: 'w-[50%]', mono: true },
-            { label: t('multicastListen.colPackets'), width: 'w-[25%]' },
-            { label: t('multicastListen.colBytes'), width: 'w-[25%]' },
+            { label: t('multicastListen.colSender'), mono: true },
+            { label: t('multicastListen.colPackets') },
+            { label: t('multicastListen.colBytes') },
           ]}
           rows={result.sources.map((source) => ({
             key: source.address,

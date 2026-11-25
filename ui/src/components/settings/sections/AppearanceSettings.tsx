@@ -5,7 +5,7 @@
  * Allows users to customize the visual appearance of the application.
  *
  * Key Features:
- * - Theme selector: dropdown with Light, Dark, and System options
+ * - Theme selector: Light, Dark and System, as a segmented control
  * - Quick toggle: button to quickly switch between light and dark themes
  * - System detection: respects OS dark mode preference when "System" is selected
  * - Icon feedback: shows moon emoji (🌙) for dark, sun emoji (☀️) for light
@@ -30,6 +30,9 @@ import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import i18n, { languages } from '../../../i18n';
 import { accessibleNameIncluding } from '../../../lib/accessibleName';
+import { FormField } from '../../../shared/FormField';
+import { SegmentedControl } from '../../../shared/SegmentedControl';
+import { Select } from '../../../shared/Select';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Palette } from '../../ui/Icons';
@@ -40,6 +43,13 @@ interface AppearanceSettingsProps {
   isDark: boolean;
   unitSystem: 'sae' | 'metric';
   setUnitSystem: (unit: 'sae' | 'metric') => void;
+}
+
+function toTheme(value: string): 'light' | 'dark' | 'system' {
+  if (value === 'light' || value === 'dark') {
+    return value;
+  }
+  return 'system';
 }
 
 /**
@@ -81,90 +91,44 @@ export function AppearanceSettings({
       defaultOpen={false}
     >
       <div className="stack-sm">
-        <label
-          className={cn(
-            layout.flex.between,
-            spacing.pad.sm,
-            'bg-surface-base',
-            radius.default,
-            'border border-surface-border',
-          )}
-        >
-          <span className="body-small text-text-primary">{t('appearance.theme')}</span>
-          <select
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-hairline bg-surface-base p-3">
+          <span className="text-sm text-text-primary">{t('appearance.theme')}</span>
+          <SegmentedControl
+            label={t('appearance.theme')}
             value={theme}
-            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-              setTheme(e.target.value as 'light' | 'dark' | 'system')
-            }
-            className={cn(
-              'bg-surface-raised border border-surface-border',
-              radius.default,
-              spacing.chip.sm,
-              'body-small text-text-primary',
-            )}
-          >
-            <option value="light">{t('appearance.themeLight')}</option>
-            <option value="dark">{t('appearance.themeDark')}</option>
-            <option value="system">{t('appearance.themeSystem')}</option>
-          </select>
-        </label>
+            onChange={(value): void => setTheme(toTheme(value))}
+            options={[
+              { value: 'light', label: t('appearance.themeLight') },
+              { value: 'dark', label: t('appearance.themeDark') },
+              { value: 'system', label: t('appearance.themeSystem') },
+            ]}
+          />
+        </div>
 
-        <label
-          className={cn(
-            layout.flex.between,
-            spacing.pad.sm,
-            'bg-surface-base',
-            radius.default,
-            'border border-surface-border',
+        <FormField label={t('appearance.language')}>
+          {(control) => (
+            <Select
+              {...control}
+              value={currentLanguage}
+              onValueChange={handleLanguageChange}
+              options={languages.map((lang) => ({ value: lang.code, label: lang.nativeLabel }))}
+            />
           )}
-        >
-          <span className="body-small text-text-primary">{t('appearance.language')}</span>
-          <select
-            value={currentLanguage}
-            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-              handleLanguageChange(e.target.value)
-            }
-            className={cn(
-              'bg-surface-raised border border-surface-border',
-              radius.default,
-              spacing.chip.sm,
-              'body-small text-text-primary',
-            )}
-          >
-            {languages.map((lang) => (
-              <option key={lang.code} value={lang.code}>
-                {lang.nativeLabel}
-              </option>
-            ))}
-          </select>
-        </label>
+        </FormField>
 
-        <label
-          className={cn(
-            layout.flex.between,
-            spacing.pad.sm,
-            'bg-surface-base',
-            radius.default,
-            'border border-surface-border',
+        <FormField label={t('appearance.measurementUnits')}>
+          {(control) => (
+            <Select
+              {...control}
+              value={unitSystem}
+              onValueChange={(value): void => setUnitSystem(value === 'metric' ? 'metric' : 'sae')}
+              options={[
+                { value: 'sae', label: t('appearance.unitSae') },
+                { value: 'metric', label: t('appearance.unitMetric') },
+              ]}
+            />
           )}
-        >
-          <span className="body-small text-text-primary">{t('appearance.measurementUnits')}</span>
-          <select
-            value={unitSystem}
-            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-              setUnitSystem(e.target.value as 'sae' | 'metric')
-            }
-            className={cn(
-              'bg-surface-raised border border-surface-border',
-              radius.default,
-              spacing.chip.sm,
-              'body-small text-text-primary',
-            )}
-          >
-            <option value="sae">{t('appearance.unitSae')}</option>
-            <option value="metric">{t('appearance.unitMetric')}</option>
-          </select>
-        </label>
+        </FormField>
 
         <button
           type="button"

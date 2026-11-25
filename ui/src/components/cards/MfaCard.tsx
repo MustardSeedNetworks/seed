@@ -22,6 +22,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '../../api';
 import { isPasskeySupported, registerPasskey } from '../../lib/webauthn';
+import { Button as SharedButton } from '../../shared/Button';
 import { icon as iconTokens } from '../../styles/theme';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -249,15 +250,15 @@ export function MfaCard(): JSX.Element {
               data-testid="mfa-disable-code"
             />
             <div className="flex flex-wrap gap-compact">
-              <Button
+              <SharedButton
                 type="submit"
-                tone="red"
+                variant="destructive"
                 size="sm"
                 disabled={busy || password === '' || disableCode.length !== 6}
                 data-testid="mfa-disable-confirm"
               >
                 {t('mfa.disableTotp')}
-              </Button>
+              </SharedButton>
               <Button
                 type="button"
                 variant="secondary"
@@ -298,9 +299,8 @@ export function MfaCard(): JSX.Element {
           ) : null}
 
           {status?.totpEnabled && !disabling ? (
-            <Button
-              variant="outline"
-              tone="red"
+            <SharedButton
+              variant="destructive"
               size="sm"
               disabled={busy}
               data-testid="mfa-disable-totp"
@@ -310,7 +310,7 @@ export function MfaCard(): JSX.Element {
               }}
             >
               {t('mfa.disableTotp')}
-            </Button>
+            </SharedButton>
           ) : null}
 
           <Button

@@ -30,6 +30,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { PathDiscoverySchema } from '../../schemas/auth';
+import { Select } from '../../shared/Select';
 import {
   button as buttonTokens,
   cn,
@@ -331,24 +332,24 @@ export function PathDiscoveryCard({
           <div className="flex items-center gap-compact shrink-0">
             {/* Protocol selector - styled to match design system */}
             <Tooltip text={t('pathDiscovery.protocol')}>
-              <select
-                {...register('protocol')}
-                disabled={loading}
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  'w-20 body-small cursor-pointer',
-                )}
-                // title alone does not name a form control (axe
-                // label-title-only); the inline layout has no room for a
-                // visible label beside a 20-wide select.
-                aria-label={t('pathDiscovery.protocol')}
-              >
-                <option value="icmp">ICMP</option>
-                <option value="udp">UDP</option>
-                <option value="tcp">TCP</option>
-              </select>
+              <div className="w-24 shrink-0">
+                {/* title alone does not name a form control (axe
+                    label-title-only); the inline layout has no room for a
+                    visible label beside a select this narrow. */}
+                <Select
+                  aria-label={t('pathDiscovery.protocol')}
+                  value={protocol}
+                  disabled={loading}
+                  onValueChange={(value): void =>
+                    setValue('protocol', value as Protocol, { shouldDirty: true })
+                  }
+                  options={[
+                    { value: 'icmp', label: 'ICMP' },
+                    { value: 'udp', label: 'UDP' },
+                    { value: 'tcp', label: 'TCP' },
+                  ]}
+                />
+              </div>
             </Tooltip>
 
             {/* Port input (only for TCP/UDP) */}

@@ -251,7 +251,11 @@
     "fhirAuthOauth2": "OAuth2",
     "opcuaSecurityNone": "Ninguna",
     "opcuaSecuritySign": "Firmar",
-    "opcuaSecuritySignAndEncrypt": "Firmar+Cifrar"
+    "opcuaSecuritySignAndEncrypt": "Firmar+Cifrar",
+    "opcuaSecurityMode": "Modo de seguridad",
+    "fhirAuthType": "Autenticación",
+    "sqlDriver": "Controlador de base de datos",
+    "fileShareProtocol": "Protocolo de recurso compartido"
   },
   "dns": {
     "title": "DNS",
@@ -518,13 +522,14 @@
     "revoke": "Revocar",
     "statusActive": "activo",
     "statusRevoked": "revocado",
-    "confirmRevoke": "¿Revocar el token «{{name}}»? Cualquier script que lo use dejará de funcionar de inmediato.",
+    "confirmRevoke": "Cualquier script que lo use dejará de funcionar de inmediato.",
     "mintNeedsOperator": "Solo lectura: se requiere el rol de operador para crear tokens de API.",
     "mintNeedsPro": "La creación de tokens de API requiere el nivel Pro.",
     "revokeNeedsOperator": "Solo lectura: se requiere el rol de operador para revocar tokens.",
     "loadFailed": "No se pudieron cargar los tokens de API.",
     "mintFailed": "No se pudo crear el token.",
-    "revokeFailed": "No se pudo revocar el token."
+    "revokeFailed": "No se pudo revocar el token.",
+    "confirmRevokeTitle": "¿Revocar el token «{{name}}»?"
   },
   "guestAudit": {
     "title": "Auditoría de red de invitados",

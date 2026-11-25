@@ -11,12 +11,19 @@
  */
 
 import type { TFunction } from 'i18next';
-import type { JSX } from 'react';
+import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useBonjourBrowse } from '../../hooks/useBonjourBrowse';
-import { cn, radius } from '../../styles/theme';
-import type { BrowseResult, ReflectorStatus } from '../../types/generated/bonjour-browse-response';
+import { useTableLabels } from '../../hooks/useTableLabels';
+import { DataTable, type DataTableColumn } from '../../shared/DataTable';
+import { EmptyState } from '../../shared/EmptyState';
+import { SearchInput } from '../../shared/SearchInput';
+import type {
+  ServiceInstance as BonjourService,
+  BrowseResult,
+  ReflectorStatus,
+} from '../../types/generated/bonjour-browse-response';
 import { Button } from '../ui/Button';
 import { Card, type Status } from '../ui/Card';
 import { Network } from '../ui/Icons';
@@ -70,7 +77,7 @@ function originLabel(t: TFunction<'cards'>, origin: string): string {
 }
 
 export function BonjourCard(): JSX.Element {
-  const { t } = useTranslation('cards');
+  const { t } = useTranslation(['cards', 'common']);
   const { result, loading, error, browse } = useBonjourBrowse();
 
   let cardStatus: Status = 'unknown';
@@ -125,7 +132,7 @@ export function BonjourCard(): JSX.Element {
 }
 
 function ReflectorVerdict({ result }: { result: BrowseResult }): JSX.Element {
-  const { t } = useTranslation('cards');
+  const { t } = useTranslation(['cards', 'common']);
   const { state } = result.reflector;
 
   const sentence = reflectorSentence(
@@ -142,7 +149,56 @@ function ReflectorVerdict({ result }: { result: BrowseResult }): JSX.Element {
 }
 
 function ServiceTable({ result }: { result: BrowseResult }): JSX.Element {
-  const { t } = useTranslation('cards');
+  const { t } = useTranslation(['cards', 'common']);
+  const [filter, setFilter] = useState('');
+  const labels = useTableLabels<BonjourService>({ loading: t('bonjour.title') });
+
+  const needle = filter.trim().toLowerCase();
+  const visible = result.services.filter((service) =>
+    [service.instance, service.type, service.host, String(service.port)].some((value) =>
+      value?.toLowerCase().includes(needle),
+    ),
+  );
+
+  const columns: DataTableColumn<BonjourService>[] = [
+    {
+      key: 'instance',
+      header: t('bonjour.instance'),
+      sortValue: (service) => service.instance,
+      cell: (service) => service.instance,
+    },
+    {
+      key: 'type',
+      header: t('bonjour.type'),
+      sortValue: (service) => service.type,
+      cell: (service) => <span className="font-mono">{service.type}</span>,
+    },
+    {
+      key: 'host',
+      header: t('bonjour.host'),
+      sortValue: (service) => service.host ?? '',
+      cell: (service) => (
+        <span className="font-mono">{service.host ?? t('bonjour.hostUnknown')}</span>
+      ),
+    },
+    {
+      key: 'port',
+      header: t('bonjour.port'),
+      sortValue: (service) => service.port,
+      // A zero port means no SRV record was seen, not port 0.
+      cell: (service) => (
+        <span className="font-mono">
+          {service.port === 0 ? t('bonjour.portUnknown') : service.port}
+        </span>
+      ),
+    },
+    {
+      key: 'origin',
+      header: t('bonjour.origin'),
+      sortValue: (service) => originLabel(t, service.origin),
+      cell: (service) => originLabel(t, service.origin),
+    },
+  ];
 
   if (result.services.length === 0) {
     return (
@@ -153,73 +209,23 @@ function ServiceTable({ result }: { result: BrowseResult }): JSX.Element {
   }
 
   return (
-    // See NeighbourCacheCard: table-fixed, not overflow-x-auto (#2708).
-    <div className={cn(radius.default, 'border border-surface-border')}>
-      <table className="w-full table-fixed body-small">
-        <caption className="sr-only">{t('bonjour.tableCaption')}</caption>
-        <thead>
-          <tr className="border-b border-surface-border text-text-muted">
-            <th
-              scope="col"
-              className="px-cell py-row text-left w-[28%] truncate"
-              title={t('bonjour.instance')}
-            >
-              {t('bonjour.instance')}
-            </th>
-            <th
-              scope="col"
-              className="px-cell py-row text-left w-[24%] truncate"
-              title={t('bonjour.type')}
-            >
-              {t('bonjour.type')}
-            </th>
-            <th
-              scope="col"
-              className="px-cell py-row text-left w-[24%] truncate"
-              title={t('bonjour.host')}
-            >
-              {t('bonjour.host')}
-            </th>
-            <th
-              scope="col"
-              className="px-cell py-row text-left w-[10%] truncate"
-              title={t('bonjour.port')}
-            >
-              {t('bonjour.port')}
-            </th>
-            <th
-              scope="col"
-              className="px-cell py-row text-left w-[14%] truncate"
-              title={t('bonjour.origin')}
-            >
-              {t('bonjour.origin')}
-            </th>
-          </tr>
-        </thead>
-        <tbody data-testid="bonjour-services">
-          {result.services.map((service) => (
-            <tr
-              key={`${service.instance}.${service.type}`}
-              className="border-b border-surface-border last:border-0"
-            >
-              <td className="px-cell py-row truncate" title={service.instance}>
-                {service.instance}
-              </td>
-              <td className="px-cell py-row font-mono truncate" title={service.type}>
-                {service.type}
-              </td>
-              <td className="px-cell py-row font-mono truncate" title={service.host ?? undefined}>
-                {service.host ?? t('bonjour.hostUnknown')}
-              </td>
-              <td className="px-cell py-row font-mono truncate">
-                {/* A zero port means no SRV record was seen, not port 0. */}
-                {service.port === 0 ? t('bonjour.portUnknown') : service.port}
-              </td>
-              <td className="px-cell py-row truncate">{originLabel(t, service.origin)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <SearchInput
+        value={filter}
+        onValueChange={setFilter}
+        label={t('common:dataTable.filterRows')}
+        clearLabel={t('common:dataTable.clearFilter')}
+      />
+      <DataTable
+        rows={visible}
+        columns={columns}
+        getRowKey={(service) => `${service.instance}.${service.type}`}
+        caption={t('bonjour.tableCaption')}
+        empty={<EmptyState title={t('common:dataTable.noMatches')} />}
+        labels={labels}
+        pageSize={10}
+        data-testid="bonjour-services"
+      />
+    </>
   );
 }

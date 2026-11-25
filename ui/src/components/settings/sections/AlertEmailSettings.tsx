@@ -13,6 +13,7 @@ import type { JSX, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { type AlertEmailTLS, useAlertEmailSettings } from '../../../hooks/useAlertEmailSettings';
+import { Select } from '../../../shared/Select';
 import {
   button as buttonTokens,
   cn,
@@ -83,19 +84,19 @@ export function AlertEmailSettings(): JSX.Element {
 
           <div className="flex flex-wrap gap-default">
             <Field id="alert-email-tls" label={t('alertEmail.tls')}>
-              <select
+              <Select
                 id="alert-email-tls"
                 data-testid="alert-email-tls"
                 value={email.tls}
-                onChange={(e): void => {
-                  const tls = e.target.value as AlertEmailTLS;
+                onValueChange={(value): void => {
+                  const tls: AlertEmailTLS = value === 'tls' ? 'tls' : 'starttls';
                   setEmail((current) => ({ ...current, tls }));
                 }}
-                className={inputTokens.base}
-              >
-                <option value="starttls">{t('alertEmail.tlsStartTls')}</option>
-                <option value="tls">{t('alertEmail.tlsImplicit')}</option>
-              </select>
+                options={[
+                  { value: 'starttls', label: t('alertEmail.tlsStartTls') },
+                  { value: 'tls', label: t('alertEmail.tlsImplicit') },
+                ]}
+              />
             </Field>
             <Field id="alert-email-port" label={t('alertEmail.port')}>
               <input

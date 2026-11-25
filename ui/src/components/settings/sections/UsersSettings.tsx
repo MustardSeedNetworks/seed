@@ -20,6 +20,14 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api/client';
 import { useLicense } from '../../../contexts/LicenseContext';
+import { useTableLabels } from '../../../hooks/useTableLabels';
+import { Button as SharedButton } from '../../../shared/Button';
+import { CategoryChip } from '../../../shared/CategoryChip';
+import { ConfirmDialog } from '../../../shared/ConfirmDialog';
+import { DataTable, type DataTableColumn } from '../../../shared/DataTable';
+import { FormField } from '../../../shared/FormField';
+import { Select } from '../../../shared/Select';
+import { StatusPill, type StatusTone } from '../../../shared/StatusPill';
 import { Button } from '../../ui/Button';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Plus, Trash2, Users } from '../../ui/Icons';
@@ -64,6 +72,15 @@ function statusOf(u: UserRow, t: StatusT): string {
   return t('settings:users.status.active');
 }
 
+function statusTone(u: UserRow): StatusTone {
+  if (!u.isActive) return 'unknown';
+  return u.lockedUntilFuture ? 'warning' : 'success';
+}
+
+function toRole(value: string): Role {
+  return ROLES.find((r) => r === value) ?? 'viewer';
+}
+
 function listUsers(): Promise<UserRow[]> {
   return api.get<UserRow[] | null>('/api/v1/users').then((list) => list ?? []);
 }
@@ -83,7 +100,66 @@ export function UsersSettings(): React.ReactElement {
   const [newRole, setNewRole] = useState<Role>('viewer');
   const [creating, setCreating] = useState(false);
 
+  const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
+  const labels = useTableLabels<UserRow>({ loading: t('settings:users.title') });
+
   const isAdmin = me?.role === 'admin';
+  const roleOptions = [
+    { value: 'admin', label: t('settings:users.roles.admin') },
+    { value: 'operator', label: t('settings:users.roles.operator') },
+    { value: 'viewer', label: t('settings:users.roles.viewer') },
+  ];
+
+  const columns: DataTableColumn<UserRow>[] = [
+    {
+      key: 'username',
+      header: t('settings:users.columns.username'),
+      sortValue: (u) => u.username,
+      cell: (u) => (
+        <span data-testid={`user-row-${u.username}`}>
+          {u.username}
+          {me?.username === u.username && (
+            <span className="ml-1 text-xs text-text-muted">{t('settings:users.currentUser')}</span>
+          )}
+        </span>
+      ),
+    },
+    {
+      key: 'role',
+      header: t('settings:users.columns.role'),
+      sortValue: (u) => u.role,
+      cell: (u) =>
+        isAdmin && me?.username !== u.username ? (
+          <Select
+            aria-label={t('settings:users.columns.role')}
+            value={u.role}
+            options={roleOptions}
+            onValueChange={(value) => void handleRoleChange(u, toRole(value))}
+            data-testid={`role-select-${u.username}`}
+          />
+        ) : (
+          t(`settings:users.roles.${u.role}`)
+        ),
+    },
+    {
+      key: 'authProvider',
+      header: t('settings:users.columns.authProvider'),
+      sortValue: (u) => u.authProvider,
+      cell: (u) => <CategoryChip label={t(`settings:users.providers.${u.authProvider}`)} />,
+    },
+    {
+      key: 'lastLogin',
+      header: t('settings:users.columns.lastLogin'),
+      sortValue: (u) => u.lastLogin ?? '',
+      cell: (u) => formatLastLogin(u.lastLogin),
+    },
+    {
+      key: 'status',
+      header: t('settings:users.columns.status'),
+      sortValue: (u) => statusOf(u, t),
+      cell: (u) => <StatusPill tone={statusTone(u)} label={statusOf(u, t)} />,
+    },
+  ];
   const canCreate =
     isAdmin && licenseStatus !== null && Boolean(licenseStatus?.features?.includes?.('multi_user'));
 
@@ -140,12 +216,7 @@ export function UsersSettings(): React.ReactElement {
   };
 
   const handleDelete = async (target: UserRow): Promise<void> => {
-    const ok = window.confirm(
-      t('settings:users.confirmDelete', { username: target.username }) +
-        '\n\n' +
-        t('settings:users.confirmDeletePrompt', { username: target.username }),
-    );
-    if (!ok) return;
+    setDeleteTarget(null);
     setError(null);
     try {
       await api.delete(`/api/v1/users/${target.username}`);
@@ -215,25 +286,18 @@ export function UsersSettings(): React.ReactElement {
                 data-testid="new-password-input"
               />
             </div>
-            <div className="min-w-[8rem]">
-              <label className="block text-xs text-text-muted mb-tight" htmlFor="new-role">
-                {t('settings:users.columns.role')}
-              </label>
-              <select
-                id="new-role"
-                value={newRole}
-                onChange={(e) => setNewRole(e.target.value as Role)}
-                disabled={!canCreate || creating}
-                className="w-full rounded-lg border border-surface-border bg-surface-raised px-cell py-1.5 text-sm"
-                data-testid="new-role-select"
-              >
-                {ROLES.map((r) => (
-                  <option key={r} value={r}>
-                    {t(`settings:users.roles.${r}`)}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <FormField label={t('settings:users.columns.role')} className="min-w-[8rem]">
+              {(control) => (
+                <Select
+                  {...control}
+                  value={newRole}
+                  options={roleOptions}
+                  onValueChange={(value) => setNewRole(toRole(value))}
+                  disabled={!canCreate || creating}
+                  data-testid="new-role-select"
+                />
+              )}
+            </FormField>
             <Button
               variant="solid"
               tone="violet"
@@ -255,80 +319,46 @@ export function UsersSettings(): React.ReactElement {
         ) : users.length === 0 ? (
           <div className="text-sm text-text-muted">{t('settings:users.none')}</div>
         ) : (
-          <table className="w-full text-sm" data-testid="users-table">
-            <thead className="text-xs text-text-muted text-left">
-              <tr>
-                <th className="py-2 pr-2">{t('settings:users.columns.username')}</th>
-                <th className="py-2 pr-2">{t('settings:users.columns.role')}</th>
-                <th className="py-2 pr-2">{t('settings:users.columns.authProvider')}</th>
-                <th className="py-2 pr-2">{t('settings:users.columns.lastLogin')}</th>
-                <th className="py-2 pr-2">{t('settings:users.columns.status')}</th>
-                <th className="py-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => {
-                const isSelf = me?.username === u.username;
-                return (
-                  <tr
-                    key={u.id}
-                    className="border-t border-surface-border"
-                    data-testid={`user-row-${u.username}`}
-                  >
-                    <td className="py-2 pr-2">
-                      {u.username}
-                      {isSelf && (
-                        <span className="ml-tight text-xs text-text-muted">
-                          {t('settings:users.currentUser')}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2 pr-2">
-                      {isAdmin && !isSelf ? (
-                        <select
-                          value={u.role}
-                          onChange={(e) => void handleRoleChange(u, e.target.value as Role)}
-                          className="rounded border border-surface-border bg-surface-raised px-1 py-0.5 text-xs"
-                          data-testid={`role-select-${u.username}`}
-                        >
-                          {ROLES.map((r) => (
-                            <option key={r} value={r}>
-                              {t(`settings:users.roles.${r}`)}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        t(`settings:users.roles.${u.role}`)
-                      )}
-                    </td>
-                    <td className="py-2 pr-2">
-                      <span className="rounded bg-surface-raised px-1.5 py-0.5 text-xs">
-                        {t(`settings:users.providers.${u.authProvider}`)}
-                      </span>
-                    </td>
-                    <td className="py-2 pr-2">{formatLastLogin(u.lastLogin)}</td>
-                    <td className="py-2 pr-2">{statusOf(u, t)}</td>
-                    <td className="py-2 text-right">
-                      {isAdmin && !isSelf && (
-                        <Button
-                          variant="ghost"
-                          tone="red"
-                          size="xs"
-                          leftIcon={<Trash2 className="w-3 h-3" />}
-                          onClick={() => void handleDelete(u)}
-                          data-testid={`delete-user-${u.username}`}
-                        >
-                          {t('settings:users.deleteUser')}
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <DataTable
+            rows={users}
+            columns={columns}
+            getRowKey={(u) => String(u.id)}
+            caption={t('settings:users.title')}
+            empty={null}
+            labels={labels}
+            pageSize={10}
+            defaultSort={{ key: 'username', direction: 'asc' }}
+            data-testid="users-table"
+            rowActions={(u) =>
+              isAdmin && me?.username !== u.username ? (
+                <SharedButton
+                  variant="destructive"
+                  size="sm"
+                  icon={<Trash2 className="w-3 h-3" />}
+                  onClick={() => setDeleteTarget(u)}
+                  data-testid={`delete-user-${u.username}`}
+                >
+                  {t('settings:users.deleteUser')}
+                </SharedButton>
+              ) : null
+            }
+          />
         )}
       </div>
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title={t('settings:users.confirmDelete', { username: deleteTarget?.username ?? '' })}
+        message={t('settings:users.confirmDeletePrompt', {
+          username: deleteTarget?.username ?? '',
+        })}
+        confirmLabel={t('settings:users.deleteUser')}
+        cancelLabel={t('common:buttons.cancel')}
+        closeLabel={t('common:buttons.close')}
+        onConfirm={() => {
+          if (deleteTarget) void handleDelete(deleteTarget);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </CollapsibleSection>
   );
 }

@@ -306,9 +306,9 @@ function CaptureSummary({ result }: { result: CaptureResult }): JSX.Element {
             testId="packet-capture-protocols"
             caption={t('packetCapture.protocolsCaption')}
             columns={[
-              { label: t('packetCapture.colProtocol'), width: 'w-[50%]' },
-              { label: t('packetCapture.colPackets'), width: 'w-[25%]' },
-              { label: t('packetCapture.colBytes'), width: 'w-[25%]' },
+              { label: t('packetCapture.colProtocol') },
+              { label: t('packetCapture.colPackets') },
+              { label: t('packetCapture.colBytes') },
             ]}
             rows={summary.protocols.map((p) => ({
               key: p.name,
@@ -319,10 +319,10 @@ function CaptureSummary({ result }: { result: CaptureResult }): JSX.Element {
             testId="packet-capture-talkers"
             caption={t('packetCapture.talkersCaption')}
             columns={[
-              { label: t('packetCapture.colAddress'), width: 'w-[40%]', mono: true },
-              { label: t('packetCapture.colPackets'), width: 'w-[20%]' },
-              { label: t('packetCapture.colSent'), width: 'w-[20%]' },
-              { label: t('packetCapture.colReceived'), width: 'w-[20%]' },
+              { label: t('packetCapture.colAddress'), mono: true },
+              { label: t('packetCapture.colPackets') },
+              { label: t('packetCapture.colSent') },
+              { label: t('packetCapture.colReceived') },
             ]}
             rows={summary.topTalkers.map((talker) => ({
               key: talker.address,
@@ -338,11 +338,11 @@ function CaptureSummary({ result }: { result: CaptureResult }): JSX.Element {
             testId="packet-capture-flows"
             caption={t('packetCapture.flowsCaption')}
             columns={[
-              { label: t('packetCapture.colProtocol'), width: 'w-[12%]' },
-              { label: t('packetCapture.colFrom'), width: 'w-[30%]', mono: true },
-              { label: t('packetCapture.colTo'), width: 'w-[30%]', mono: true },
-              { label: t('packetCapture.colPackets'), width: 'w-[13%]' },
-              { label: t('packetCapture.colBytes'), width: 'w-[15%]' },
+              { label: t('packetCapture.colProtocol') },
+              { label: t('packetCapture.colFrom'), mono: true },
+              { label: t('packetCapture.colTo'), mono: true },
+              { label: t('packetCapture.colPackets') },
+              { label: t('packetCapture.colBytes') },
             ]}
             rows={summary.topFlows.map((flow) => ({
               key: `${flow.transport} ${flow.source} ${flow.destination}`,
