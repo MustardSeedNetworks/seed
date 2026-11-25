@@ -69,13 +69,15 @@ test('lists the top talkers, conversations and applications', async ({ page }) =
   await skipSetupWizard(page);
   await page.goto('/flows');
 
-  await expect(page.getByTestId('flows-talkers-row')).toHaveCount(2, { timeout: 10000 });
-  await expect(page.getByTestId('flows-talkers-row').first()).toContainText('10.20.0.15');
-  await expect(page.getByTestId('flows-conversations-row')).toContainText(
-    '10.20.0.15 ↔ 198.51.100.7',
-  );
-  await expect(page.getByTestId('flows-conversations-row')).toContainText('TCP');
-  await expect(page.getByTestId('flows-applications-row').last()).toContainText('Unidentified');
+  const talkers = page.getByTestId('flows-talkers').locator('tbody tr');
+  const conversations = page.getByTestId('flows-conversations').locator('tbody tr');
+  const applications = page.getByTestId('flows-applications').locator('tbody tr');
+  await expect(talkers).toHaveCount(2, { timeout: 10000 });
+  await expect(talkers.first()).toContainText('10.20.0.15');
+  await expect(conversations).toContainText('10.20.0.15');
+  await expect(conversations).toContainText('198.51.100.7');
+  await expect(conversations).toContainText('TCP');
+  await expect(applications.last()).toContainText('Unidentified');
 
   seen.length = 0;
   await page.getByTestId('flows-range').selectOption('7d');

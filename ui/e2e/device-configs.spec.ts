@@ -91,7 +91,9 @@ test('an operator opens a device and sees what changed in its configuration', as
   await expect(diff.locator('[data-kind="removed"]')).toHaveText('- ip helper-address 10.0.0.5');
   await expect(diff.locator('[data-kind="added"]')).toHaveText('+ ip helper-address 10.0.0.6');
   await expect(page.getByTestId('config-diff-counts')).toContainText('+1 −1 lines');
-  await expect(page.getByTestId(`config-backup-${SAVED}`)).toHaveAttribute('aria-pressed', 'true');
+  await expect(
+    page.getByTestId(`config-backup-${SAVED}`).locator('xpath=ancestor::tr'),
+  ).toHaveAttribute('aria-selected', 'true');
 
   await page.getByTestId(`config-backup-${FAILED}`).click();
   await expect(page.getByTestId('config-backup-failed')).toContainText('Sign-in failed');

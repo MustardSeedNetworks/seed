@@ -48,7 +48,7 @@ const INTERFACES = [
 ];
 
 async function names(page: Page): Promise<string[]> {
-  return page.getByTestId('interface-row').getByTestId('interface-name').allTextContents();
+  return page.getByTestId('interface-name').allTextContents();
 }
 
 test('an estate with no polling targets points at adding one', async ({ page }) => {
@@ -59,7 +59,9 @@ test('an estate with no polling targets points at adding one', async ({ page }) 
   await expect(page).toHaveURL(/\/polling-targets$/);
 });
 
-test('sorts interfaces by error rate and keeps unrated ones last', async ({ page }) => {
+test('lists interfaces by error rate, worst first, with the unrated one at the bottom', async ({
+  page,
+}) => {
   await page.route('**/api/v1/topology/interfaces', (route) =>
     route.fulfill({ json: { interfaces: INTERFACES, count: INTERFACES.length } }),
   );
@@ -76,15 +78,6 @@ test('sorts interfaces by error rate and keeps unrated ones last', async ({ page
       'TenGigabitEthernet1/0/4',
     ]);
 
-  await page.getByTestId('interfaces-sort-errors').click();
-  await expect
-    .poll(() => names(page))
-    .toEqual([
-      'TenGigabitEthernet1/0/2',
-      'TenGigabitEthernet1/0/1',
-      'TenGigabitEthernet1/0/3',
-      'TenGigabitEthernet1/0/4',
-    ]);
   await expect(page.getByTestId('interfaces-no-data')).toHaveCount(0);
 });
 

@@ -99,10 +99,10 @@ test.describe('IP SLA', () => {
     await expect(page.getByTestId('ipsla-counts')).toHaveText('2 operations · 1 failing', {
       timeout: 10000,
     });
-    await expect(page.getByTestId('ipsla-op-t1#20')).toContainText('Timed out');
+    await expect(page.getByRole('row').filter({ hasText: '10.9.0.1' })).toContainText('Timed out');
     await expect(page.getByTestId('ipsla-history-empty')).toHaveCount(0);
 
-    await page.getByTestId('ipsla-op-t1#10').click();
+    await page.getByRole('row').filter({ hasText: '10.9.0.5' }).click();
     await expect(page.getByTestId('ipsla-type')).toHaveText(/UDP jitter/);
     await expect(page.getByTestId('ipsla-history-timing-peaks')).toHaveText(
       'Peak RTT 31 ms · Peak Jitter 4 ms',
