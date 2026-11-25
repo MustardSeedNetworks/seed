@@ -24,10 +24,10 @@ import { useTranslation } from 'react-i18next';
 import { useRole } from '../../contexts/RoleContext';
 import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useInsecurePortScan } from '../../hooks/useInsecurePortScan';
-import { Button } from '../../shared/Button';
 import { Card } from '../../shared/Card';
 import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
 import type { ServiceInfo } from '../../types/generated/port-scan-response';
+import { GatedButton } from '../../ui/GatedButton';
 import { AlertTriangle, CheckCircle, ShieldAlert } from '../ui/Icons';
 
 /**
@@ -179,16 +179,16 @@ export function InsecurePortScanCard(): JSX.Element {
             </span>
           )}
         </Tooltip>
-        <Button
+        <GatedButton
           variant="primary"
           onClick={run}
-          disabled={!canWrite || target.trim() === ''}
+          disabled={canWrite && target.trim() === ''}
+          reason={canWrite ? undefined : readOnlyReason}
           loading={scanning}
-          title={readOnlyReason}
           className="w-full"
         >
           {scanning ? t('insecurePorts.scanning') : t('insecurePorts.scan')}
-        </Button>
+        </GatedButton>
 
         {error ? <p className="caption text-status-error">{error}</p> : null}
         {result?.error ? <p className="caption text-status-error">{result.error}</p> : null}

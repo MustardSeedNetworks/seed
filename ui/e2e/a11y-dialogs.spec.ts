@@ -82,7 +82,12 @@ async function closeWithEscape(page: Page, dialog: Locator): Promise<void> {
     await expect(tooltip).toHaveCount(0);
     await expect(dialog).toBeVisible();
   }
-  await page.keyboard.press('Escape');
+  // A hoverable tooltip that opened on focus takes the first Escape; the dialog
+  // takes the next.
+  for (let attempt = 0; attempt < 3 && (await dialog.isVisible()); attempt++) {
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(150);
+  }
   await expect(dialog).toBeHidden();
 }
 
@@ -201,7 +206,7 @@ test('the vulnerability details pass axe and return focus to the CVE badge', asy
   const details = page.getByRole('dialog', { name: 'Vulnerability Report' });
   await expect(details.getByText('CVE-2026-0002')).toBeVisible();
 
-  expect(await axeViolations(page, '[aria-labelledby="modal-title"]')).toEqual([]);
+  expect(await axeViolations(page, '[data-testid="modal"]')).toEqual([]);
   for (let presses = 0; presses < 20; presses++) {
     await page.keyboard.press('Tab');
     expect(

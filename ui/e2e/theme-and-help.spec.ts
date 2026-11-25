@@ -267,23 +267,23 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await expect(drawer).not.toBeVisible({ timeout: 3000 });
     });
 
-    test('should switch sections when clicking a table-of-contents entry', async ({ page }) => {
+    test('should switch sections from the contents selector', async ({ page }) => {
       const helpButton = sidebarHelpButton(page);
       await helpButton.click();
 
       const drawer = page.getByTestId('help-drawer');
       await expect(drawer).toBeVisible();
 
-      const tocButtons = drawer.locator('nav button');
-      expect(
-        await tocButtons.count(),
-        'help drawer should list navigable sections',
-      ).toBeGreaterThan(1);
+      const select = drawer.getByTestId('help-section-select');
+      const options = select.locator('option');
+      expect(await options.count(), 'help drawer should list navigable sections').toBeGreaterThan(
+        1,
+      );
 
       // Selecting a section keeps the drawer open and swaps the content pane.
       const content = page.getByTestId('help-drawer-content');
       const before = await content.innerText();
-      await tocButtons.nth(1).click();
+      await select.selectOption({ index: 1 });
       await expect(drawer).toBeVisible();
       // The active section's title heads the content pane and changes on switch.
       await expect.poll(async () => content.innerText()).not.toBe(before);

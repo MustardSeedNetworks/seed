@@ -23,7 +23,7 @@ test('opens, tabs through every control in order, and escapes by keyboard', asyn
   // disabled control is skipped by Tab.
   await expect(dialog.getByLabel(/^Credential/)).toBeEnabled();
 
-  const close = dialog.getByRole('button', { name: 'Close modal' });
+  const close = dialog.getByRole('button', { name: 'Close' });
   const rest = [
     dialog.getByLabel(/^Name/),
     dialog.getByLabel(/^IP address/),

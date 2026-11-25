@@ -26,30 +26,30 @@ test.describe('Dashboard', () => {
 
   test('should display Link Status card', async ({ page }) => {
     // LinkCard renders on /link route (default after redirect from /).
-    // Card.tsx generates id="card-title-<slug>"; "Link Status" -> "link-status".
+    // The card title is its h2.
     await page.goto('/link');
-    // Card.tsx generates id="card-title-<slug>" on every card's H3 — same
+    // The card title is its h2.
     // pattern as the Gateway/DNS assertions below. Drops the brittle
     // `h3:has-text("Link")` fallback that matched any element containing
     // "Link" as a substring (including the sidebar nav item).
-    await expect(page.locator('#card-title-link-status')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Link Status', exact: true })).toBeVisible();
   });
 
   test('should display Gateway card', async ({ page }) => {
     // GatewayCard renders on /network route. Test originally navigated to /
     // which redirects to /link where GatewayCard is NOT rendered.
     await page.goto('/network');
-    // Card.tsx generates id="card-title-<slug>" on every card's H3 —
+    // The card title is its h2.
     // stable across i18n drift since slug derives from the title prop
     // at component-mount time (still English in the dev backend).
-    await expect(page.locator('#card-title-gateway')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Gateway', exact: true })).toBeVisible();
   });
 
   test('should display DNS card', async ({ page }) => {
     // DnsCard renders on /network route. Test originally navigated to /
     // which redirects to /link where DnsCard is NOT rendered.
     await page.goto('/network');
-    await expect(page.locator('#card-title-dns')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^DNS/ })).toBeVisible();
   });
 
   test('should open settings drawer', async ({ page }) => {
