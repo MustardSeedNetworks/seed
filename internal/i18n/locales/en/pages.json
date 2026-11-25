@@ -636,5 +636,13 @@
     "airspaceLabel": "Airspace",
     "anomaliesLabel": "Association anomalies",
     "channelGraphAlt": "Wi-Fi channel signal graph"
+  },
+  "notFound": {
+    "label": "Not found",
+    "title": "Page not found",
+    "kicker": "Not found",
+    "emptyTitle": "This page does not exist",
+    "emptyHint": "The address may be mistyped or the page may have moved.",
+    "back": "Go to Link"
   }
 }

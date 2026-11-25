@@ -921,7 +921,7 @@ jobs:
   # of .github@main (a canonical change there reaches this repo only when this
   # pin moves).
   ci-conformance:
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@1b2763fa57a88f5e3abbf986ed5197b4bb3e0301 # .github#274, untagged
     permissions:
       contents: read
       id-token: write
@@ -1184,6 +1184,13 @@ jobs:
 
       - name: Run shared i18n validator
         uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@d2aa4161d10bf8cb5a9ffb0e0985224df0faa617 # .github#105 + #106, untagged
+
+      # The theme and ui/src/shared/ are byte-identical copies of the
+      # canonical files in MustardSeedNetworks/.github (sha256 manifest).
+      # ci-conformance verifies the same set; this step fails the i18n job's
+      # run early and names the drifted file.
+      - name: Verify shared UI copies
+        uses: MustardSeedNetworks/.github/.github/actions/ui-shared-verify@1b2763fa57a88f5e3abbf986ed5197b4bb3e0301 # .github#274, untagged
 
   # ===========================================================================
   # Documentation Checks

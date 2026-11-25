@@ -11,7 +11,7 @@
 import type { JSX } from 'react';
 import { lazy, type ReactNode, Suspense, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Redirect, Route, Switch, useLocation } from 'wouter';
+import { Link, Redirect, Route, Switch, useLocation } from 'wouter';
 import { AppFooter } from '../components/app/AppFooter';
 import { CapabilityWarnings } from '../components/app/CapabilityWarnings';
 import { ConnectionNotice } from '../components/app/ConnectionNotice';
@@ -26,9 +26,9 @@ import { useDeviceIdentity } from '../hooks/useDeviceIdentity';
 import { useIsPhone } from '../hooks/useIsPhone';
 import { useNavGroups } from '../navGroups';
 import { type PageConfig, usePages } from '../pageRegistry';
+import { NotFoundPage } from '../pages/NotFoundPage';
+import { PageHeader } from '../shared/PageHeader';
 import { cn, section } from '../styles/theme';
-import { Breadcrumbs } from '../ui/Breadcrumbs';
-import { PageHeader } from '../ui/PageHeader';
 import { PageLoader } from '../ui/PageLoader';
 import { type RailStatus, SidebarLayout } from '../ui/Sidebar';
 import type { AppOrchestration } from './useAppOrchestration';
@@ -212,7 +212,7 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
                 </Route>
               ))}
               <Route>
-                <Redirect to="/link" replace={true} />
+                <NotFoundPage />
               </Route>
             </Switch>
           </Suspense>
@@ -311,18 +311,29 @@ function PageWithHeader({
 
   return (
     <section className="stack-xl">
-      <Breadcrumbs />
       <PageHeader
-        icon={page.icon}
-        iconColorClass={page.iconColorClass}
-        eyebrow={page.eyebrow}
-        title={page.title}
-        description={page.description}
+        kicker={page.eyebrow}
+        title={page.label}
+        subtitle={page.description}
+        breadcrumbs={[{ label: t('accessibility.home'), href: '/' }, { label: page.label }]}
+        breadcrumbsLabel={t('accessibility.breadcrumb')}
+        renderBreadcrumbLink={({ href, className, children }) => (
+          <Link to={href} className={className}>
+            {children}
+          </Link>
+        )}
         // On a phone the run control is a labelled button here rather than a
         // FAB on the fixed layer, which had nowhere to sit clear of the page's
         // own content (#2646). Above `sm` it stays a FAB, rendered by AppShell.
         actions={isPhone ? <Fab variant="inline" /> : undefined}
-        onHelp={helpSection ? () => onOpenHelp(helpSection) : undefined}
+        {...(helpSection
+          ? {
+              help: {
+                label: t('accessibility.openPageHelp', { title: page.label }),
+                onClick: () => onOpenHelp(helpSection),
+              },
+            }
+          : {})}
       />
       {children}
     </section>

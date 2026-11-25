@@ -19,7 +19,7 @@ import { memoryLocation } from 'wouter/memory-location';
 
 import i18n from '../../i18n';
 import { useTestRunStore } from '../../stores/testRunStore';
-import { Breadcrumbs } from '../../ui/Breadcrumbs';
+import { NotFoundPage } from '../../pages/NotFoundPage';
 import { SidebarLayout } from '../../ui/Sidebar';
 import { Alert } from './Alert';
 import { CommandPalette } from './CommandPalette';
@@ -180,11 +180,11 @@ describe('shared chrome — Spanish, with no English left behind', () => {
     expect(screen.queryByLabelText(`Status: ${status}`)).not.toBeInTheDocument();
   });
 
-  it('labels the breadcrumb trail and its home link', () => {
-    const { hook } = memoryLocation({ path: '/network' });
+  it('labels the breadcrumb trail and its home link on the not-found page', () => {
+    const { hook } = memoryLocation({ path: '/nowhere' });
     render(
       <Router hook={hook}>
-        <Breadcrumbs />
+        <NotFoundPage />
       </Router>,
     );
 
@@ -192,6 +192,7 @@ describe('shared chrome — Spanish, with no English left behind', () => {
     expect(screen.getByRole('link', { name: 'Inicio' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Breadcrumb')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Home')).not.toBeInTheDocument();
+    expect(screen.getByText('Esta página no existe')).toBeInTheDocument();
   });
 
   it('names the phone drawer scrim', () => {
