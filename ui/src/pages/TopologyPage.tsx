@@ -153,6 +153,12 @@ function NodeList({
         labels={labels}
         loading={loading}
         pageSize={25}
+        search={{
+          label: t('topology.searchNodes'),
+          clearLabel: t('topology.clearSearch'),
+          text: (n) => [n.displayName, n.sysName, n.id, n.primaryIp].filter(Boolean).join(' '),
+          noResults: <EmptyState title={t('topology.noMatchTitle')} />,
+        }}
         defaultSort={{ key: 'node', direction: 'asc' }}
         onRowClick={(n): void => onSelect(n.id)}
         selectedRowKey={selectedID}

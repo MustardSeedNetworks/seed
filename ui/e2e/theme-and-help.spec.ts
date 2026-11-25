@@ -304,8 +304,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         'precondition: help drawer search input must be visible',
       ).toBeVisible();
 
-      // Narrow to a single section, then confirm the TOC shrank.
-      const tocButtons = drawer.locator('nav button');
+      // Narrow to a single section, then confirm the contents list shrank.
+      const tocButtons = drawer.getByTestId('help-section-select').locator('option');
       const allCount = await tocButtons.count();
       await searchInput.fill('wifi troubleshooting');
       await expect.poll(async () => tocButtons.count()).toBeLessThan(allCount);

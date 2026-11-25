@@ -675,7 +675,10 @@
     "noEdgesHint": "LLDP/CDP/FDP necesita que ambos extremos sean nodos conocidos.",
     "interfacesCaption": "Interfaces del nodo seleccionado",
     "linksCaption": "Enlaces vecinos del nodo seleccionado",
-    "colSeen": "Visto"
+    "colSeen": "Visto",
+    "searchNodes": "Buscar dispositivos",
+    "clearSearch": "Borrar búsqueda",
+    "noMatchTitle": "Ningún dispositivo coincide"
   },
   "wifi": {
     "description": "Enlace inalámbrico, utilización de canales y solapamiento de canales.",

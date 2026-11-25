@@ -295,13 +295,12 @@ test('viewer settings retain disabled controls and a reachable reason', async ({
   await sidebarSettingsButton(page).click();
   await page.getByRole('tab', { name: 'Discovery' }).click();
   const section = page.getByTestId('discovery-settings-section');
-  // The section's header carries the read-only reason in its own name, so it is
-  // reachable by keyboard and read on focus.
-  const header = section.getByRole('button').first();
-  await tabTo(page, header);
-  await expect(header).toHaveAccessibleName(/read.only|viewer|operator/i);
-  await page.keyboard.press('Enter');
-  await expect(section.locator('fieldset[disabled] input').first()).toBeDisabled();
+  await section.getByRole('button').first().click();
+  const fieldset = section.locator('fieldset[disabled]').first();
+  const reason = fieldset.locator('legend button');
+  await tabTo(page, reason);
+  await expect(reason).toHaveAccessibleDescription(/read.only|viewer/i);
+  await expect(fieldset.locator('input').first()).toBeDisabled();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('tooltip')).toHaveCount(0);
   await expect(page.getByTestId('settings-drawer')).toBeVisible();

@@ -675,7 +675,10 @@
     "noEdgesHint": "LLDP/CDP/FDP needs both endpoints to be known nodes.",
     "interfacesCaption": "Interfaces of the selected node",
     "linksCaption": "Neighbor links of the selected node",
-    "colSeen": "Seen"
+    "colSeen": "Seen",
+    "searchNodes": "Search devices",
+    "clearSearch": "Clear search",
+    "noMatchTitle": "No device matches"
   },
   "wifi": {
     "description": "Wireless link, channel utilization, and channel-overlap visualisation.",
