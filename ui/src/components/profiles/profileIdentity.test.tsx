@@ -43,7 +43,7 @@ const { tooltipRenders, context } = vi.hoisted(() => {
   };
 });
 
-vi.mock('../ui/Tooltip', () => ({
+vi.mock('../../shared/Tooltip', () => ({
   Tooltip: ({ children }: { children: ReactNode }): ReactNode => {
     tooltipRenders();
     return children;

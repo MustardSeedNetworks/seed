@@ -1,5 +1,5 @@
+import { Tooltip } from '../../../shared/Tooltip';
 import { Info } from '../../ui/Icons';
-import { Tooltip } from '../../ui/Tooltip';
 /**
  * Performance testing configuration: which tests run automatically, and the
  * speedtest.net server to use. The iperf3 (LAN speed) half lives in

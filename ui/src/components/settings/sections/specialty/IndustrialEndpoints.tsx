@@ -1,4 +1,4 @@
-import { Tooltip } from '../../../ui/Tooltip';
+import { Tooltip } from '../../../../shared/Tooltip';
 /**
  * OPC-UA / Modbus TCP industrial endpoint editors.
  *

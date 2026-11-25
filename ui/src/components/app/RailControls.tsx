@@ -15,6 +15,7 @@
 import { type JSX, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useProfileContext } from '../../contexts/profileContext';
+import { Tooltip } from '../../shared/Tooltip';
 import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
 import type { InterfaceInfo } from '../../types/generated/categorized-interfaces-response';
 import type { Profile } from '../../types/profile';
@@ -30,7 +31,6 @@ import {
   User,
   Wifi,
 } from '../ui/Icons';
-import { Tooltip } from '../ui/Tooltip';
 
 export interface RailControlsProps {
   profiles: Profile[];

@@ -1,8 +1,8 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Tooltip } from '../../../../shared/Tooltip';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../../styles/theme';
 import type { SaveStatus, SubnetConfig } from '../../../../types/settings';
-import { Tooltip } from '../../../ui/Tooltip';
 import { AutoSaveIndicator } from '../AutoSaveIndicator';
 
 interface SubnetManagerProps {

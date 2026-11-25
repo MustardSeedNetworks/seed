@@ -9,11 +9,11 @@
 
 import type { TFunction } from 'i18next';
 import type { JSX } from 'react';
+import { Tooltip } from '../../shared/Tooltip';
 import { cn, layout, radius, spacing, status as statusColor } from '../../styles/theme';
 import type { HealthCheckRunResponse } from '../../types/generated/health-check-run-response';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { StatusBadge } from '../ui/StatusBadge';
-import { Tooltip } from '../ui/Tooltip';
 import { failuresFirst } from './healthCheckResultOrder';
 
 /** One protocol result, reduced to what its row shows. */

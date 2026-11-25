@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/Tooltip';
+import { Tooltip } from '../../shared/Tooltip';
 /**
  * Pre-render helpers shared between NetworkDiscoveryCard and its summary.
  *

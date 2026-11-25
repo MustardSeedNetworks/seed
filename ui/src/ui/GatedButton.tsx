@@ -5,8 +5,9 @@
  * on focus as well as on hover. With no reason it is an ordinary Button, and a
  * `hint` is shown the same way.
  */
-import { Tooltip } from '../components/ui/Tooltip';
+
 import { Button, type ButtonProps } from '../shared/Button';
+import { Tooltip } from '../shared/Tooltip';
 
 type GatedButtonProps = Extract<ButtonProps, { iconOnly?: false }> & {
   /** Why the action is unavailable; absent when it is available. */

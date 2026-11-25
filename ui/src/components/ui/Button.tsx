@@ -13,7 +13,7 @@
 import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../constants/sizes';
-import { Tooltip } from './Tooltip';
+import { Tooltip } from '../../shared/Tooltip';
 
 type ButtonVariant = 'solid' | 'outline' | 'ghost' | 'secondary';
 type ButtonTone = 'violet' | 'red' | 'green' | 'blue' | 'gray';

@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/Tooltip';
+import { Tooltip } from '../../shared/Tooltip';
 /** Create, edit, switch and transfer saved profiles. */
 
 import type React from 'react';

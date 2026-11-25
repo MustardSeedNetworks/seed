@@ -19,7 +19,7 @@ import { Slider } from './Slider';
 import { HealthScoreBadge } from './Sparkline';
 
 const { tooltipRenders } = vi.hoisted(() => ({ tooltipRenders: vi.fn() }));
-vi.mock('./Tooltip', () => ({
+vi.mock('../../shared/Tooltip', () => ({
   Tooltip: ({ children }: { children: ReactNode }): ReactNode => {
     tooltipRenders();
     return children;

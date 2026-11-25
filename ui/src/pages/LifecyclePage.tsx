@@ -13,7 +13,6 @@ import { type ChangeEvent, type JSX, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '../api/client';
 import { Cpu, Upload } from '../components/ui/Icons';
-import { Tooltip } from '../components/ui/Tooltip';
 import { useRole } from '../contexts/RoleContext';
 import { NotJsonError, useLifecycle } from '../hooks/useLifecycle';
 import { useTableLabels } from '../hooks/useTableLabels';
@@ -22,6 +21,7 @@ import { Button } from '../shared/Button';
 import { DataTable, type DataTableColumn } from '../shared/DataTable';
 import { EmptyState } from '../shared/EmptyState';
 import { StatusPill, type StatusTone } from '../shared/StatusPill';
+import { Tooltip } from '../shared/Tooltip';
 import type {
   LifecycleComponent,
   LifecycleDevice,

@@ -11,13 +11,13 @@
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CategoryChip } from '../../shared/CategoryChip';
+import { Tooltip } from '../../shared/Tooltip';
 import { cn, radius, severity as severityTheme } from '../../styles/theme';
 import type {
   DiscoveredDevice,
   Vulnerability,
 } from '../../types/generated/engine-discovery-response';
 import { AlertTriangle } from '../ui/Icons';
-import { Tooltip } from '../ui/Tooltip';
 import { formatLastSeen } from './NetworkDiscoveryCardHelpers';
 
 /**

@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { type AlertEmailTLS, useAlertEmailSettings } from '../../../hooks/useAlertEmailSettings';
 import { Select } from '../../../shared/Select';
+import { Tooltip } from '../../../shared/Tooltip';
 import {
   button as buttonTokens,
   cn,
@@ -23,7 +24,6 @@ import {
 } from '../../../styles/theme';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Mail } from '../../ui/Icons';
-import { Tooltip } from '../../ui/Tooltip';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 interface FieldProps {

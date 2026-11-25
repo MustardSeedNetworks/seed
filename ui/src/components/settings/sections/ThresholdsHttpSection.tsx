@@ -9,6 +9,7 @@
 
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Tooltip } from '../../../shared/Tooltip';
 import {
   cn,
   icon as iconTokens,
@@ -19,7 +20,6 @@ import {
 } from '../../../styles/theme';
 import type { ThresholdSettings } from '../../../types/generated/settings-response';
 import { Info } from '../../ui/Icons';
-import { Tooltip } from '../../ui/Tooltip';
 
 interface ThresholdsHttpSectionProps {
   thresholds: ThresholdSettings;

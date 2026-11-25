@@ -23,6 +23,7 @@ import {
   stageDraft,
   useAlertEscalationSettings,
 } from '../../../hooks/useAlertEscalationSettings';
+import { Tooltip } from '../../../shared/Tooltip';
 import {
   button as buttonTokens,
   cn,
@@ -32,7 +33,6 @@ import {
 } from '../../../styles/theme';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Bell } from '../../ui/Icons';
-import { Tooltip } from '../../ui/Tooltip';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 const RULE_OPTIONS_ID = 'alert-escalation-rules';

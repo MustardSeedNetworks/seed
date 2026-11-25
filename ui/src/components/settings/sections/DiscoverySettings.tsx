@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { logger } from '../../../lib/logger';
+import { Tooltip } from '../../../shared/Tooltip';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import type { DiscoveryServiceStatusResponse } from '../../../types/generated/discovery-service-status-response';
 import type {
@@ -14,7 +15,6 @@ import type {
 } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Info, ScanSearch } from '../../ui/Icons';
-import { Tooltip } from '../../ui/Tooltip';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { DiscoveryCustomOptions } from './discovery/DiscoveryCustomOptions';
 import { DiscoveryServiceStatus } from './discovery/DiscoveryServiceStatus';

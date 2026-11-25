@@ -11,9 +11,9 @@ import type { JSX } from 'react';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isValidNumber } from '../../lib/format';
+import { Tooltip } from '../../shared/Tooltip';
 import { cn, radius } from '../../styles/theme';
 import { ChevronDown, ChevronUp } from '../ui/Icons';
-import { Tooltip } from '../ui/Tooltip';
 import {
   ALL_COLUMNS_SHOWN_HIDDEN,
   ColumnSummary,

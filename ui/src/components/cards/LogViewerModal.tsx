@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/Tooltip';
+import { Tooltip } from '../../shared/Tooltip';
 /** Full-screen log filtering, streaming and export. */
 
 import { useState } from 'react';

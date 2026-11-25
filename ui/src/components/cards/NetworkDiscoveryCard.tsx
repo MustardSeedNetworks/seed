@@ -6,6 +6,7 @@ import { useEnginePhase } from '../../hooks/useEnginePhase';
 import { useEngineScan } from '../../hooks/useEngineScan';
 import { useNetworkDiscoveryAutoScan } from '../../hooks/useNetworkDiscoveryAutoScan';
 import { accessibleNameIncluding } from '../../lib/accessibleName';
+import { Tooltip } from '../../shared/Tooltip';
 import {
   button,
   cn,
@@ -16,7 +17,6 @@ import {
 } from '../../styles/theme';
 import { Card, CardValue, type Status } from '../ui/Card';
 import { Maximize2, RefreshCw, ScanSearch } from '../ui/Icons';
-import { Tooltip } from '../ui/Tooltip';
 import { DiscoveryEmptyState, discoveryPhase } from './DiscoveryEmptyState';
 import { DiscoveryModal } from './DiscoveryModal';
 import { LearnedNetworksNotice } from './LearnedNetworksNotice';

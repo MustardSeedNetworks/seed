@@ -32,6 +32,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { useSettings } from '../../contexts/useSettings';
+import { Tooltip } from '../../shared/Tooltip';
 import { useTestRunSignal, useTestRunStore } from '../../stores/testRunStore';
 import {
   cn,
@@ -50,7 +51,6 @@ import { Card, type Status } from '../ui/Card';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { HeartPulse } from '../ui/Icons';
 import { StatusBadge } from '../ui/StatusBadge';
-import { Tooltip } from '../ui/Tooltip';
 import { HealthCheckCardProtocolSections } from './HealthCheckCardProtocolSections';
 import { failuresFirst, testResultRank } from './healthCheckResultOrder';
 

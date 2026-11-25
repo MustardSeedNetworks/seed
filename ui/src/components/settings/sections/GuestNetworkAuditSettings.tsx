@@ -1,5 +1,5 @@
+import { Tooltip } from '../../../shared/Tooltip';
 import { Info } from '../../ui/Icons';
-import { Tooltip } from '../../ui/Tooltip';
 /**
  * GuestNetworkAuditSettings — the in-app editor for the guest-isolation audit's
  * target list (#1004).

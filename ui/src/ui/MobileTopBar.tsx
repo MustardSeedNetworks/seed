@@ -5,8 +5,8 @@
 import { Menu, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SeedLogo } from '../components/app/SeedLogo';
-import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
+import { Tooltip } from '../shared/Tooltip';
 import { ProductTitle } from './ProductTitle';
 
 interface MobileTopBarProps {

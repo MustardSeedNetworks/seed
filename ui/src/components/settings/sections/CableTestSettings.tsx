@@ -1,5 +1,5 @@
+import { Tooltip } from '../../../shared/Tooltip';
 import { Info } from '../../ui/Icons';
-import { Tooltip } from '../../ui/Tooltip';
 /**
  * CableTestSettings Component
  *

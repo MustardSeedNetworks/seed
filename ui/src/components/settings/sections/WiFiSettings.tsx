@@ -1,4 +1,4 @@
-import { Tooltip } from '../../ui/Tooltip';
+import { Tooltip } from '../../../shared/Tooltip';
 /** Wireless interface selection, scanning and saved network configuration. */
 
 import type React from 'react';
