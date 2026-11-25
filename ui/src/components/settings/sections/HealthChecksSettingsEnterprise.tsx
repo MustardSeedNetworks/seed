@@ -348,7 +348,7 @@ export function HealthChecksSettingsEnterprise({
                 )}
               />
               <Checkbox
-                label="TLS"
+                label={<>TLS</>}
                 checked={endpoint.useTls}
                 onChange={(checked: boolean): void =>
                   updateLdapEndpoint(endpoint.id ?? '', 'useTls', checked)

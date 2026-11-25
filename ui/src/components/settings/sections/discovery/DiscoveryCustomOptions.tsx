@@ -40,7 +40,7 @@ export function DiscoveryCustomOptions({
           >
             <div className={cn('flex flex-wrap', spacing.gap.compact)}>
               <Checkbox
-                label="LLDP"
+                label={<>LLDP</>}
                 checked={settings.options?.passiveProtocols?.lldp ?? true}
                 onChange={(checked: boolean): void =>
                   onSettingsChange((prev) => ({
@@ -59,7 +59,7 @@ export function DiscoveryCustomOptions({
                 }
               />
               <Checkbox
-                label="CDP"
+                label={<>CDP</>}
                 checked={settings.options?.passiveProtocols?.cdp ?? true}
                 onChange={(checked: boolean): void =>
                   onSettingsChange((prev) => ({
@@ -78,7 +78,7 @@ export function DiscoveryCustomOptions({
                 }
               />
               <Checkbox
-                label="EDP"
+                label={<>EDP</>}
                 checked={settings.options?.passiveProtocols?.edp ?? true}
                 onChange={(checked: boolean): void =>
                   onSettingsChange((prev) => ({
@@ -97,7 +97,7 @@ export function DiscoveryCustomOptions({
                 }
               />
               <Checkbox
-                label="NDP"
+                label={<>NDP</>}
                 checked={settings.options?.passiveProtocols?.ndp ?? true}
                 onChange={(checked: boolean): void =>
                   onSettingsChange((prev) => ({

@@ -707,7 +707,6 @@
   },
   "notFound": {
     "label": "No encontrada",
-    "title": "Página no encontrada",
     "kicker": "No encontrada",
     "emptyTitle": "Esta página no existe",
     "emptyHint": "Puede que la dirección esté mal escrita o que la página se haya movido.",
