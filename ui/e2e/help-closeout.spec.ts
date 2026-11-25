@@ -82,12 +82,7 @@ for (const width of [1440, 390]) {
           body: await page.screenshot({ animations: 'disabled' }),
           contentType: 'image/png',
         });
-      if (width === 390) await page.getByTestId('help-section-select').selectOption('glossary');
-      else
-        await page
-          .getByTestId('help-drawer')
-          .getByRole('button', { name: esHelp.sections.glossary, exact: true })
-          .click();
+      await page.getByTestId('help-section-select').selectOption('glossary');
       await page.getByTestId('help-drawer-close').click();
       await revealSidebar(page);
       await sidebarHelpButton(page).click();
@@ -320,7 +315,7 @@ for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 700 });
     await page.goto('/network');
     await page.getByTestId('page-header-help-button').click();
-    const back = page.getByTestId(width === 390 ? 'help-return-to-select' : 'help-return-to-toc');
+    const back = page.getByTestId('help-return-to-select');
     // macOS WebKit uses Option+Tab to include native links in keyboard navigation.
     const linkTab = browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
     await tabTo(page, back, linkTab);
@@ -329,8 +324,6 @@ for (const width of [1440, 390]) {
     await page.keyboard.press('PageDown');
     await expect.poll(() => content.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
     await page.keyboard.press('Enter');
-    await expectFocused(
-      page.getByTestId(width === 390 ? 'help-section-select' : 'help-section-network'),
-    );
+    await expectFocused(page.getByTestId('help-section-select'));
   });
 }

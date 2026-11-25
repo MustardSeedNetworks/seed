@@ -67,8 +67,8 @@ test('an operator groups a polling target and the membership round-trips', async
     await expect(edit.getByTestId(`group-member-${targetId}`)).toBeChecked();
     await edit.getByRole('button', { name: 'Cancel' }).click();
 
-    page.once('dialog', (confirm) => void confirm.accept());
     await page.getByTestId('group-delete').click();
+    await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Delete' }).click();
     await expect(row).toBeHidden();
     await page.reload();
     await expect(page.getByRole('button', { name: new RegExp(groupName) })).toBeHidden();

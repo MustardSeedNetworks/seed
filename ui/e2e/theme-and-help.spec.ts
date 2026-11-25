@@ -262,7 +262,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       // `if (await backdrop.isVisible())` gate that silently passed
       // when the locator missed — flagged by the cleanup audit as
       // the last hidden-failure test in seed E2E.
-      const backdrop = page.getByTestId('help-drawer-backdrop');
+      const backdrop = page.getByTestId('help-drawer-scrim');
       await expect(backdrop).toBeVisible();
       await backdrop.click({ position: { x: 10, y: 10 } });
       await expect(drawer).not.toBeVisible({ timeout: 3000 });

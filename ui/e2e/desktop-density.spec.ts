@@ -103,19 +103,24 @@ test.describe('desktop density', () => {
           await settle(page, route);
 
           const measured = await page.evaluate(() => {
-            const title = document.querySelector('[data-testid="page-header-title"]');
-            let header: Element | null = title;
-            while (header && !header.classList.contains('animate-fade-in')) {
-              header = header.parentElement;
-            }
+            const header = document.querySelector('[data-testid="page-header"]');
+            // The shared header carries the breadcrumb trail; the ceiling is for
+            // the title block under it (kicker, title, subtitle).
+            const trail = document.querySelector('[data-testid="breadcrumbs"]');
             const footer = document.querySelector('[data-testid="app-footer"]');
 
             return {
-              header: header ? Math.round(header.getBoundingClientRect().height) : -1,
+              header: header
+                ? Math.round(
+                    header.getBoundingClientRect().height -
+                      (trail ? trail.getBoundingClientRect().height : 0),
+                  )
+                : -1,
               footer: footer ? Math.round(footer.getBoundingClientRect().height) : -1,
             };
           });
 
+          expect(measured.header, 'page header is measured').toBeGreaterThan(0);
           expect(measured.header, 'page header height').toBeLessThanOrEqual(HEADER_CEILING);
           expect(measured.footer, 'footer height').toBeLessThanOrEqual(FOOTER_CEILING);
         });
@@ -129,6 +134,12 @@ test.describe('desktop density', () => {
             for (const element of Array.from(document.querySelectorAll('*'))) {
               const el = element as HTMLElement;
               if (el.clientWidth === 0 || el.scrollWidth - el.clientWidth <= 1) {
+                continue;
+              }
+              // The shared PageHeader's help button draws a 44px hit area with an
+              // ::after pseudo-element wider than its 28px box (shared/PageHeader.tsx,
+              // fixed in MustardSeedNetworks/.github): invisible, not clipped content.
+              if (el.matches('[data-testid="page-header-help-button"]')) {
                 continue;
               }
               if (el.classList.contains('sr-only') || el.closest('[data-phone-width-exempt]')) {

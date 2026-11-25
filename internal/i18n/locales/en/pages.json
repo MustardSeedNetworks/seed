@@ -120,7 +120,7 @@
     "reporting": "Reporting"
   },
   "interfaces": {
-    "description": "Every interface your polling targets report, with its latest traffic, utilization, errors and discards.",
+    "description": "Every polled interface, with its latest traffic, utilization, errors and discards.",
     "label": "Interfaces",
     "title": "Interfaces",
     "count_one": "{{count}} interface",
@@ -265,7 +265,7 @@
     "columnResult": "Result"
   },
   "link": {
-    "description": "Physical link state, cable diagnostics, and Wi-Fi association for the active interface.",
+    "description": "Link state, cable diagnostics and Wi-Fi association for the active interface.",
     "label": "Link",
     "title": "Link",
     "rollupWireless": "This interface is wireless",
@@ -332,7 +332,7 @@
     "title": "Performance"
   },
   "pollingTargets": {
-    "description": "SNMP-polled devices. New targets pick up the default collector chain and start polling on the next tick.",
+    "description": "SNMP-polled devices. New targets use the default collector chain.",
     "label": "Polling targets",
     "title": "Polling targets",
     "addTarget": "Add target",
@@ -462,7 +462,7 @@
   "ipam": {
     "label": "IP addresses",
     "title": "IP addresses",
-    "description": "How full each network and DHCP scope is, from the addresses seen in use in the last day.",
+    "description": "Fill level of each network and DHCP scope, from addresses seen in the last day.",
     "addScope": "Add DHCP scope",
     "readOnly": "Read-only — operator role required to add or delete a DHCP scope",
     "loadFailed": "Could not load address use: {{reason}}",
@@ -505,7 +505,7 @@
   "lifecycle": {
     "label": "Hardware lifecycle",
     "title": "Hardware lifecycle",
-    "description": "Where each inventoried part stands in its vendor's end-of-life schedule, from Cisco EoX data.",
+    "description": "Where each inventoried part stands in its vendor's end-of-life schedule.",
     "import": "Import EoX file",
     "readOnly": "Read-only — operator role required to import EoX data",
     "loadFailed": "Could not load hardware lifecycle: {{reason}}",
@@ -549,7 +549,7 @@
   "ipSla": {
     "label": "IP SLA",
     "title": "IP SLA",
-    "description": "The Cisco IP SLA operations your polling targets run, with each one's latest result and its trend.",
+    "description": "Cisco IP SLA operations on your polling targets, with their latest result and trend.",
     "loadFailed": "Could not load IP SLA operations: {{reason}}",
     "operationCount_one": "{{count}} operation",
     "operationCount_other": "{{count}} operations",

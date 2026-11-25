@@ -54,8 +54,8 @@ test('an operator adds a DHCP scope, sees what the daemon counts and deletes it'
     await expect(page.getByTestId('ipam-used')).toHaveText(/^In use\s*0$/);
     await expect(page.getByTestId('ipam-in-use-empty')).toBeVisible();
 
-    page.once('dialog', (confirm) => void confirm.accept());
     await page.getByTestId('scope-delete').click();
+    await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Delete' }).click();
     await expect(row).toBeHidden();
     await page.reload();
     await expect(page.getByTestId('ipam-counts')).toBeVisible();

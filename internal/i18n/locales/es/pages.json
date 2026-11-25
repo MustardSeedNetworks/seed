@@ -82,7 +82,7 @@
   "flows": {
     "label": "Flujos",
     "title": "Flujos",
-    "description": "Principales hosts, conversaciones y aplicaciones de los flujos que los exportadores envían a Seed.",
+    "description": "Principales hosts, conversaciones y aplicaciones de los flujos enviados a Seed.",
     "windowLabel": "Periodo",
     "window": {
       "1d": "Últimas 24 horas",
@@ -120,7 +120,7 @@
     "reporting": "Informes"
   },
   "interfaces": {
-    "description": "Todas las interfaces que informan sus destinos de sondeo, con su tráfico, utilización, errores y descartes más recientes.",
+    "description": "Cada interfaz sondeada, con su tráfico, utilización, errores y descartes recientes.",
     "label": "Interfaces",
     "title": "Interfaces",
     "count_one": "{{count}} interfaz",
@@ -265,7 +265,7 @@
     "columnResult": "Resultado"
   },
   "link": {
-    "description": "Estado del enlace físico, diagnóstico de cableado y asociación Wi-Fi de la interfaz activa.",
+    "description": "Estado del enlace, diagnóstico de cableado y asociación Wi-Fi de la interfaz activa.",
     "label": "Enlace",
     "title": "Enlace",
     "rollupWireless": "Esta interfaz es inalámbrica",
@@ -322,7 +322,7 @@
     "rollupNoDnsForInterfaceBody": "La interfaz seleccionada no tiene resolutores propios, por lo que no se pueden resolver nombres por este enlace."
   },
   "path": {
-    "description": "Descubrimiento de rutas L2/L3, saltos de traceroute y descubrimiento de dispositivos en el enlace.",
+    "description": "Rutas L2/L3, saltos de traceroute y descubrimiento de dispositivos en el enlace.",
     "label": "Análisis de ruta",
     "title": "Análisis de ruta"
   },
@@ -332,7 +332,7 @@
     "title": "Rendimiento"
   },
   "pollingTargets": {
-    "description": "Dispositivos sondeados por SNMP. Los destinos nuevos adoptan la cadena de colectores predeterminada y comienzan a sondear en el siguiente ciclo.",
+    "description": "Dispositivos sondeados por SNMP; los nuevos usan la cadena de colectores predeterminada.",
     "label": "Destinos de sondeo",
     "title": "Destinos de sondeo",
     "addTarget": "Agregar destino",
@@ -462,7 +462,7 @@
   "ipam": {
     "label": "Direcciones IP",
     "title": "Direcciones IP",
-    "description": "Ocupación de cada red y ámbito DHCP, según las direcciones vistas en uso en el último día.",
+    "description": "Ocupación de cada red y ámbito DHCP, según las direcciones vistas el último día.",
     "addScope": "Añadir ámbito DHCP",
     "readOnly": "Solo lectura: se requiere el rol de operador para añadir o eliminar un ámbito DHCP",
     "loadFailed": "No se pudo cargar el uso de direcciones: {{reason}}",
@@ -505,7 +505,7 @@
   "lifecycle": {
     "label": "Ciclo de vida del hardware",
     "title": "Ciclo de vida del hardware",
-    "description": "En qué punto de su calendario de fin de vida está cada pieza inventariada, según los datos EoX de Cisco.",
+    "description": "En qué punto del calendario de fin de vida está cada pieza inventariada.",
     "import": "Importar archivo EoX",
     "readOnly": "Solo lectura: se requiere el rol de operador para importar datos EoX",
     "loadFailed": "No se pudo cargar el ciclo de vida del hardware: {{reason}}",
@@ -549,7 +549,7 @@
   "ipSla": {
     "label": "IP SLA",
     "title": "IP SLA",
-    "description": "Las operaciones Cisco IP SLA que ejecutan sus destinos de sondeo, con el último resultado y la tendencia de cada una.",
+    "description": "Operaciones Cisco IP SLA de sus destinos de sondeo, con su último resultado y tendencia.",
     "loadFailed": "No se pudieron cargar las operaciones IP SLA: {{reason}}",
     "operationCount_one": "{{count}} operación",
     "operationCount_other": "{{count}} operaciones",
@@ -613,12 +613,12 @@
     "title": "Informes"
   },
   "security": {
-    "description": "Auditoría de aislamiento de la red de invitados y comprobaciones de postura de seguridad.",
+    "description": "Auditoría de la red de invitados y comprobaciones de postura de seguridad.",
     "label": "Seguridad",
     "title": "Seguridad"
   },
   "topology": {
-    "description": "Dispositivos sondeados y enlaces aprendidos mediante el descubrimiento de vecinos LLDP/CDP/FDP.",
+    "description": "Dispositivos sondeados y enlaces aprendidos por descubrimiento de vecinos LLDP/CDP/FDP.",
     "label": "Topología",
     "title": "Topología",
     "selectNode": "Seleccione un nodo para ver las interfaces y los enlaces.",
@@ -678,7 +678,7 @@
     "colSeen": "Visto"
   },
   "wifi": {
-    "description": "Enlace inalámbrico, utilización de canales y visualización de solapamiento de canales.",
+    "description": "Enlace inalámbrico, utilización de canales y solapamiento de canales.",
     "label": "Wi-Fi",
     "title": "Wi-Fi",
     "airspaceLoading": "Cargando el espacio radioeléctrico…",
