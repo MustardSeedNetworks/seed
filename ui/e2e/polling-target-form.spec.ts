@@ -21,15 +21,15 @@ test('opens, tabs through every control in order, and escapes by keyboard', asyn
   await expect(dialog).toBeVisible();
   // The credential select is disabled until the vault list answers, and a
   // disabled control is skipped by Tab.
-  await expect(dialog.getByLabel('Credential', { exact: true })).toBeEnabled();
+  await expect(dialog.getByLabel(/^Credential/)).toBeEnabled();
 
   const close = dialog.getByRole('button', { name: 'Close modal' });
   const rest = [
-    dialog.getByLabel('Name', { exact: true }),
-    dialog.getByLabel('IP address', { exact: true }),
-    dialog.getByLabel('SNMP version', { exact: true }),
-    dialog.getByLabel('Credential', { exact: true }),
-    dialog.getByLabel('Poll interval (seconds)', { exact: true }),
+    dialog.getByLabel(/^Name/),
+    dialog.getByLabel(/^IP address/),
+    dialog.getByLabel(/^SNMP version/),
+    dialog.getByLabel(/^Credential/),
+    dialog.getByLabel(/^Poll interval/),
     dialog.getByRole('checkbox'),
     dialog.getByRole('button', { name: 'Cancel' }),
     dialog.getByRole('button', { name: 'Add target' }),
@@ -62,7 +62,7 @@ test('takes mouse clicks on its own controls', async ({ page }) => {
   await expect(dialog).toBeVisible();
   // Under the scrim bug the click never lands: Playwright reports the scrim
   // intercepting pointer events until the action times out.
-  const name = dialog.getByLabel('Name', { exact: true });
+  const name = dialog.getByLabel(/^Name/);
   await name.click();
   await expect(name).toBeFocused();
 

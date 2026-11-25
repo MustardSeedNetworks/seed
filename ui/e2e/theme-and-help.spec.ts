@@ -209,19 +209,18 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await expect(drawer).toHaveAttribute('aria-modal', 'true');
     });
 
-    test('should display help drawer with navigation/table of contents', async ({ page }) => {
+    test('should display help drawer with a section selector', async ({ page }) => {
       const helpButton = sidebarHelpButton(page);
       await helpButton.click();
 
       const drawer = page.getByTestId('help-drawer');
       await expect(drawer).toBeVisible();
 
-      // The drawer lists navigable sections in its sidebar nav.
-      const tocButtons = drawer.locator('nav button');
-      expect(
-        await tocButtons.count(),
-        'help drawer should list navigable sections',
-      ).toBeGreaterThan(0);
+      // The drawer lists its sections in the contents selector.
+      const sections = drawer.getByTestId('help-section-select').locator('option');
+      expect(await sections.count(), 'help drawer should list navigable sections').toBeGreaterThan(
+        0,
+      );
     });
 
     test('should close help drawer with close button', async ({ page }) => {
