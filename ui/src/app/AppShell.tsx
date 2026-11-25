@@ -11,7 +11,7 @@
 import type { JSX } from 'react';
 import { lazy, type ReactNode, Suspense, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, Redirect, Route, Switch, useLocation } from 'wouter';
+import { Redirect, Route, Switch, useLocation } from 'wouter';
 import { AppFooter } from '../components/app/AppFooter';
 import { CapabilityWarnings } from '../components/app/CapabilityWarnings';
 import { ConnectionNotice } from '../components/app/ConnectionNotice';
@@ -30,6 +30,7 @@ import { NotFoundPage } from '../pages/NotFoundPage';
 import { PageHeader } from '../shared/PageHeader';
 import { cn, section } from '../styles/theme';
 import { PageLoader } from '../ui/PageLoader';
+import { renderBreadcrumbLink } from '../ui/renderBreadcrumbLink';
 import { type RailStatus, SidebarLayout } from '../ui/Sidebar';
 import type { AppOrchestration } from './useAppOrchestration';
 
@@ -317,11 +318,7 @@ function PageWithHeader({
         subtitle={page.description}
         breadcrumbs={[{ label: t('accessibility.home'), href: '/' }, { label: page.label }]}
         breadcrumbsLabel={t('accessibility.breadcrumb')}
-        renderBreadcrumbLink={({ href, className, children }) => (
-          <Link to={href} className={className}>
-            {children}
-          </Link>
-        )}
+        renderBreadcrumbLink={renderBreadcrumbLink}
         // On a phone the run control is a labelled button here rather than a
         // FAB on the fixed layer, which had nowhere to sit clear of the page's
         // own content (#2646). Above `sm` it stays a FAB, rendered by AppShell.

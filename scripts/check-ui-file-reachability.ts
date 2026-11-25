@@ -144,7 +144,9 @@ export function unreachableModules(uiRoot: string): string[] {
   const loaded = walk(entryPoints(uiRoot), (typeOnly) => !typeOnly);
   const typed = walk([...loaded], () => true);
   const src = join(uiRoot, 'src');
-  return candidates(src, [join(src, 'test'), join(src, 'types/generated')])
+  // src/shared is the fleet's canonical set, copied byte-for-byte: a component
+  // this product does not mount yet is not dead code, and it cannot be deleted.
+  return candidates(src, [join(src, 'test'), join(src, 'types/generated'), join(src, 'shared')])
     .filter((file) => !loaded.has(file) && (!typed.has(file) || shapeOf(file).runtimeExports))
     .map((file) => relative(uiRoot, file))
     .sort();

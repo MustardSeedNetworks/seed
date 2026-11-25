@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'wouter';
 import { EmptyState } from '../shared/EmptyState';
 import { PageHeader } from '../shared/PageHeader';
+import { renderBreadcrumbLink } from '../ui/renderBreadcrumbLink';
 
 export function NotFoundPage() {
   const { t } = useTranslation(['pages', 'common']);
@@ -23,11 +24,7 @@ export function NotFoundPage() {
           { label: t('pages:notFound.label') },
         ]}
         breadcrumbsLabel={t('common:accessibility.breadcrumb')}
-        renderBreadcrumbLink={({ href, className, children }) => (
-          <Link to={href} className={className}>
-            {children}
-          </Link>
-        )}
+        renderBreadcrumbLink={renderBreadcrumbLink}
       />
       <EmptyState
         icon={<SearchX className="h-6 w-6" />}
