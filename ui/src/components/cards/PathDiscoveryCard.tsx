@@ -29,7 +29,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
+import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { PathDiscoverySchema } from '../../schemas/auth';
+import { Card, CardDivider, CardValue } from '../../shared/Card';
 import { Select } from '../../shared/Select';
 import {
   button as buttonTokens,
@@ -42,7 +44,6 @@ import {
   status as statusColor,
 } from '../../styles/theme';
 import type { PathResponse, TracerouteHop } from '../../types';
-import { Card, CardDivider, CardValue, type Status } from '../ui/Card';
 import { Route } from '../ui/Icons';
 import { PathTimeline } from './PathDiscoveryTimeline';
 import { formatRtt, getMaxRtt } from './pathDiscoveryHelpers';
@@ -70,7 +71,7 @@ function pathCardStatus(
   loading: boolean,
   error: string | null,
   result: PathResponse | null,
-): Status {
+): LabelledStatus {
   if (loading) {
     return 'loading';
   }
@@ -294,6 +295,7 @@ export function PathDiscoveryCard({
   };
 
   const cardStatus = pathCardStatus(loading, error, result);
+  const statusLabel = useStatusLabel();
 
   const maxRtt = result?.l3Path ? getMaxRtt(result.l3Path.hops) : 1;
 
@@ -302,6 +304,7 @@ export function PathDiscoveryCard({
       title={t('pathDiscovery.title')}
       icon={<Route className={iconTokens.size.md} />}
       status={cardStatus}
+      statusLabel={statusLabel(cardStatus)}
     >
       {/* Target Input Form - Responsive layout for various screen sizes */}
       <form

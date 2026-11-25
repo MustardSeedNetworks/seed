@@ -11,9 +11,10 @@ import { useTranslation } from 'react-i18next';
 
 import { useRole } from '../../contexts/RoleContext';
 import type { BoundedJobState, UseBoundedJobReturn } from '../../hooks/useBoundedJob';
-import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
 
 export function isBusy<Result>(state: BoundedJobState<Result>): boolean {
   return state.phase === 'starting' || state.phase === 'running' || state.phase === 'stopping';
@@ -47,15 +48,18 @@ export function PathCheckForm<Result>({
             }
           }}
         >
-          <Input
-            id={`${testId}-target`}
-            label={t('pathCheck.target')}
-            value={target}
-            placeholder={t('pathCheck.targetPlaceholder')}
-            onChange={(event) => setTarget(event.target.value)}
-            disabled={busy}
-            data-testid={`${testId}-target`}
-          />
+          <FormField id={`${testId}-target`} label={t('pathCheck.target')}>
+            {(control) => (
+              <Input
+                {...control}
+                value={target}
+                placeholder={t('pathCheck.targetPlaceholder')}
+                onChange={(event) => setTarget(event.target.value)}
+                disabled={busy}
+                data-testid={`${testId}-target`}
+              />
+            )}
+          </FormField>
           {busy ? (
             <div className="stack-xs" data-testid={`${testId}-running`}>
               <p className="body-small text-text-secondary" aria-live="polite">
@@ -64,8 +68,7 @@ export function PathCheckForm<Result>({
               <div className="flex items-center gap-compact">
                 <Button
                   type="button"
-                  variant="outline"
-                  tone="red"
+                  variant="destructive"
                   size="sm"
                   onClick={() => void stop()}
                   disabled={state.phase !== 'running'}
@@ -74,16 +77,16 @@ export function PathCheckForm<Result>({
                   {state.phase === 'stopping' ? t('pathCheck.stopping') : t('pathCheck.stop')}
                 </Button>
                 {state.phase === 'running' && state.stopFailed ? (
-                  <p className="caption text-status-error" role="alert">
+                  <Alert tone="error" size="sm">
                     {t('pathCheck.stopFailed')}
-                  </p>
+                  </Alert>
                 ) : null}
               </div>
             </div>
           ) : (
             <Button
               type="submit"
-              variant="solid"
+              variant="primary"
               size="sm"
               disabled={!destination}
               data-testid={`${testId}-start`}
@@ -99,21 +102,17 @@ export function PathCheckForm<Result>({
       )}
 
       {state.phase === 'failed' ? (
-        <div
-          className={cn(spacing.pad.sm, statusColor.bg.errorSoft, radius.md, 'stack-xs')}
-          role="alert"
-          data-testid={`${testId}-failed`}
-        >
-          <p className="body-small text-status-error-strong">{copy.failed}</p>
+        <Alert tone="error" size="sm" data-testid={`${testId}-failed`}>
+          <p className="font-medium">{copy.failed}</p>
           {state.error ? (
             <p
-              className="caption font-mono text-text-secondary break-words"
+              className="figure mt-1 break-words text-text-secondary"
               data-testid={`${testId}-error-detail`}
             >
               {state.error}
             </p>
           ) : null}
-        </div>
+        </Alert>
       ) : null}
     </>
   );

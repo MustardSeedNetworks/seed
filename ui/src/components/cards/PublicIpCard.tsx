@@ -26,10 +26,11 @@
 
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LabelledStatus } from '../../hooks/useStatusLabel';
+import { CardDivider, CardRow, CardValue } from '../../shared/Card';
+import { CollapsibleSection } from '../../shared/CollapsibleSection';
 import { icon as iconTokens } from '../../styles/theme';
 import type { PublicIPResponse } from '../../types/generated/public-ip-response';
-import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
-import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { Globe } from '../ui/Icons';
 import { BaseCard } from './BaseCard';
 
@@ -111,7 +112,7 @@ function formatLocation(city?: string, region?: string, country?: string): strin
   return parts.length > 0 ? parts.join(', ') : null;
 }
 
-function getStatus(data: PublicIPResponse): Status {
+function getStatus(data: PublicIPResponse): LabelledStatus {
   if (data.error && !data.ipv4 && !data.ipv6) {
     return 'error';
   }

@@ -20,12 +20,15 @@ import {
   type CaptureState,
   usePacketCapture,
 } from '../../hooks/usePacketCapture';
+import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { formatBytes } from '../../lib/format';
-import { button, cn, radius, spacing, status as statusColor } from '../../styles/theme';
-import { Button } from '../ui/Button';
-import { Card, type Status } from '../ui/Card';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { Card } from '../../shared/Card';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
+import { button, cn } from '../../styles/theme';
 import { Activity } from '../ui/Icons';
-import { Input } from '../ui/Input';
 import { SummaryTable } from './SummaryTable';
 
 // The job's bounds (internal/diagnostics/packetcapture): a minute when the
@@ -40,7 +43,7 @@ function parseSeconds(raw: string): number | null {
   return Number.isInteger(seconds) && seconds >= 1 && seconds <= MAX_SECONDS ? seconds : null;
 }
 
-function cardStatus(state: CaptureState): Status {
+function cardStatus(state: CaptureState): LabelledStatus {
   switch (state.phase) {
     case 'starting':
     case 'running':
@@ -75,6 +78,8 @@ export function PacketCaptureCard({
   const { t } = useTranslation('cards');
   const { canWrite } = useRole();
   const { state, start, stop } = usePacketCapture();
+  const statusLabel = useStatusLabel();
+  const status = cardStatus(state);
 
   // null until the operator edits the field, so a current interface that
   // loads after mount still fills it.
@@ -104,11 +109,11 @@ export function PacketCaptureCard({
     <Card
       title={t('packetCapture.title')}
       icon={<Activity className="w-4 h-4" />}
-      status={cardStatus(state)}
-      ariaLabel={t('packetCapture.title')}
-      // Three summary tables need more than a quarter of a 4-up grid; see
-      // BonjourCard for why max-w-none rides with the span.
-      className="sm:col-span-2 max-w-none"
+      status={status}
+      statusLabel={statusLabel(status)}
+      aria-label={t('packetCapture.title')}
+      // Three summary tables need more than a quarter of a 4-up grid.
+      className="sm:col-span-2"
     >
       <div className="stack-sm" data-testid="packet-capture" data-phase={state.phase}>
         <p className="caption text-text-muted">{t('packetCapture.description')}</p>
@@ -122,44 +127,59 @@ export function PacketCaptureCard({
             }}
           >
             <div className="grid gap-compact sm:grid-cols-3">
-              <Input
-                id="packet-capture-interface"
-                label={t('packetCapture.interface')}
-                value={iface ?? defaultInterface}
-                placeholder={t('packetCapture.interfacePlaceholder')}
-                onChange={(event) => setIface(event.target.value)}
-                disabled={busy}
-                data-testid="packet-capture-interface"
-              />
-              <Input
+              <FormField id="packet-capture-interface" label={t('packetCapture.interface')}>
+                {(control) => (
+                  <Input
+                    {...control}
+                    value={iface ?? defaultInterface}
+                    placeholder={t('packetCapture.interfacePlaceholder')}
+                    onChange={(event) => setIface(event.target.value)}
+                    disabled={busy}
+                    data-testid="packet-capture-interface"
+                  />
+                )}
+              </FormField>
+              <FormField
                 id="packet-capture-filter"
                 label={t('packetCapture.filter')}
-                value={filter}
-                placeholder={t('packetCapture.filterPlaceholder')}
                 hint={t('packetCapture.filterHint')}
-                onChange={(event) => setFilter(event.target.value)}
-                disabled={busy}
-                data-testid="packet-capture-filter"
-              />
-              <Input
+              >
+                {(control) => (
+                  <Input
+                    {...control}
+                    value={filter}
+                    placeholder={t('packetCapture.filterPlaceholder')}
+                    onChange={(event) => setFilter(event.target.value)}
+                    disabled={busy}
+                    data-testid="packet-capture-filter"
+                  />
+                )}
+              </FormField>
+              <FormField
                 id="packet-capture-duration"
                 label={t('packetCapture.duration')}
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={MAX_SECONDS}
-                step={1}
-                value={secondsRaw}
-                onChange={(event) => setSecondsRaw(event.target.value)}
-                disabled={busy}
+                hint={t('packetCapture.durationHint', { size: formatBytes(MAX_FILE_BYTES, 0) })}
                 error={
                   seconds === null
                     ? t('packetCapture.durationInvalid', { max: MAX_SECONDS })
                     : undefined
                 }
-                hint={t('packetCapture.durationHint', { size: formatBytes(MAX_FILE_BYTES, 0) })}
-                data-testid="packet-capture-duration"
-              />
+              >
+                {(control) => (
+                  <Input
+                    {...control}
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={MAX_SECONDS}
+                    step={1}
+                    value={secondsRaw}
+                    onChange={(event) => setSecondsRaw(event.target.value)}
+                    disabled={busy}
+                    data-testid="packet-capture-duration"
+                  />
+                )}
+              </FormField>
             </div>
 
             {busy ? (
@@ -172,7 +192,7 @@ export function PacketCaptureCard({
             ) : (
               <Button
                 type="submit"
-                variant="solid"
+                variant="primary"
                 size="sm"
                 disabled={seconds === null}
                 data-testid="packet-capture-start"
@@ -188,21 +208,17 @@ export function PacketCaptureCard({
         )}
 
         {state.phase === 'failed' ? (
-          <div
-            className={cn(spacing.pad.sm, statusColor.bg.errorSoft, radius.md, 'stack-xs')}
-            role="alert"
-            data-testid="packet-capture-failed"
-          >
-            <p className="body-small text-status-error-strong">{t('packetCapture.failed')}</p>
+          <Alert tone="error" size="sm" data-testid="packet-capture-failed">
+            <p className="font-medium">{t('packetCapture.failed')}</p>
             {state.error ? (
               <p
-                className="caption font-mono text-text-secondary break-words"
+                className="figure mt-1 break-words text-text-secondary"
                 data-testid="packet-capture-error-detail"
               >
                 {state.error}
               </p>
             ) : null}
-          </div>
+          </Alert>
         ) : null}
 
         {state.phase === 'finished' ? <CaptureSummary result={state.result} /> : null}
@@ -239,8 +255,7 @@ function CaptureRunning({
       <div className="flex items-center gap-compact">
         <Button
           type="button"
-          variant="outline"
-          tone="red"
+          variant="destructive"
           size="sm"
           onClick={onStop}
           disabled={state.phase !== 'running'}
@@ -249,9 +264,9 @@ function CaptureRunning({
           {stopping ? t('packetCapture.stopping') : t('packetCapture.stop')}
         </Button>
         {state.phase === 'running' && state.stopFailed ? (
-          <p className="caption text-status-error" role="alert">
+          <Alert tone="error" size="sm">
             {t('packetCapture.stopFailed')}
-          </p>
+          </Alert>
         ) : null}
       </div>
     </div>

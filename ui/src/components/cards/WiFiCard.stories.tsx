@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Signal, Wifi, WifiOff } from 'lucide-react';
 import type { JSX } from 'react';
+import { Card, CardDivider, CardRow, CardValue } from '../../shared/Card';
+import { Skeleton } from '../../shared/Skeleton';
 import { cn, spacing } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue } from '../ui/Card';
-import { Skeleton } from '../ui/Skeleton';
 
 /**
  * WiFiCard displays wireless network connection status and signal quality.
@@ -35,6 +35,7 @@ export const Connected: StoryObj = {
       subtitle="Wireless Network"
       icon={<Wifi className="w-4 h-4" />}
       status="success"
+      statusLabel="Status: success"
     >
       <CardValue value="HomeNetwork" size="lg" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
@@ -57,6 +58,7 @@ export const WeakSignal: StoryObj = {
       subtitle="Wireless Network"
       icon={<Wifi className="w-4 h-4" />}
       status="warning"
+      statusLabel="Status: warning"
     >
       <CardValue value="OfficeWiFi" size="lg" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
@@ -81,6 +83,7 @@ export const VeryWeakSignal: StoryObj = {
       subtitle="Wireless Network"
       icon={<Wifi className="w-4 h-4" />}
       status="error"
+      statusLabel="Status: error"
     >
       <CardValue value="GuestNetwork" size="lg" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
@@ -103,6 +106,7 @@ export const Disconnected: StoryObj = {
       subtitle="Wireless Network"
       icon={<WifiOff className="w-4 h-4" />}
       status="error"
+      statusLabel="Status: error"
     >
       <CardValue value="Not Connected" size="lg" status="error" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
@@ -123,6 +127,7 @@ export const Scanning: StoryObj = {
       subtitle="Scanning Networks"
       icon={<Wifi className="w-4 h-4" />}
       status="loading"
+      statusLabel="Status: loading"
     >
       <Skeleton className={cn('h-8 w-40', spacing.margin.bottom.content)} />
       <div className={cn(spacing.stack.sm, spacing.margin.top.content)}>
@@ -150,6 +155,7 @@ export const MultipleNetworks: StoryObj = {
       subtitle="Available Networks"
       icon={<Signal className="w-4 h-4" />}
       status="success"
+      statusLabel="Status: success"
     >
       <CardValue value="5 Networks Found" size="md" />
       <div className={cn(spacing.margin.top.content, spacing.stack.sm)}>
@@ -201,6 +207,7 @@ export const NoAdapter: StoryObj = {
       subtitle="Wireless Network"
       icon={<WifiOff className="w-4 h-4" />}
       status="unknown"
+      statusLabel="Status: unknown"
     >
       <CardValue value="Not Available" size="md" />
       <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>

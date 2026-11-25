@@ -14,16 +14,17 @@ import { useTranslation } from 'react-i18next';
 
 import type { BoundedJobState } from '../../hooks/useBoundedJob';
 import { type MultiPathResult, type PathVariant, useMultiPath } from '../../hooks/usePathChecks';
+import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
+import { Card } from '../../shared/Card';
 import { cn, radius } from '../../styles/theme';
-import { Card, type Status } from '../ui/Card';
 import { Network } from '../ui/Icons';
 import { isBusy, PathCheckForm } from './PathCheckForm';
 
-function resultStatus(result: MultiPathResult): Status {
+function resultStatus(result: MultiPathResult): LabelledStatus {
   return result.paths.some((path) => path.completed) ? 'success' : 'warning';
 }
 
-function cardStatus(state: BoundedJobState<MultiPathResult>): Status {
+function cardStatus(state: BoundedJobState<MultiPathResult>): LabelledStatus {
   if (isBusy(state)) {
     return 'loading';
   }
@@ -41,13 +42,16 @@ export function MultiPathCard(): JSX.Element {
   const { t } = useTranslation('cards');
   const check = useMultiPath();
   const { state } = check;
+  const statusLabel = useStatusLabel();
+  const status = cardStatus(state);
 
   return (
     <Card
       title={t('multiPath.title')}
       icon={<Network className="w-4 h-4" />}
-      status={cardStatus(state)}
-      ariaLabel={t('multiPath.title')}
+      status={status}
+      statusLabel={statusLabel(status)}
+      aria-label={t('multiPath.title')}
     >
       <div className="stack-sm" data-testid="multi-path" data-phase={state.phase}>
         <p className="caption text-text-muted">{t('multiPath.description')}</p>

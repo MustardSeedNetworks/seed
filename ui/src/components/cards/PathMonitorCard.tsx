@@ -19,14 +19,17 @@ import {
   type PathMonitorUpdate,
   usePathMonitor,
 } from '../../hooks/usePathMonitor';
+import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { useTableLabels } from '../../hooks/useTableLabels';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { Card } from '../../shared/Card';
 import { DataTable, type DataTableColumn } from '../../shared/DataTable';
-import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
+import { cn, status as statusColor } from '../../styles/theme';
 import type { HopStats } from '../../types/generated/path-monitor-update';
-import { Button } from '../ui/Button';
-import { Card, type Status } from '../ui/Card';
 import { Activity } from '../ui/Icons';
-import { Input } from '../ui/Input';
 import { formatRtt } from './pathDiscoveryHelpers';
 
 function snapshotOf(state: PathMonitorState): PathMonitorUpdate | undefined {
@@ -37,7 +40,7 @@ function lastHop(snapshot: PathMonitorUpdate | undefined): HopStats | undefined 
   return snapshot?.hops.at(-1);
 }
 
-function cardStatus(state: PathMonitorState): Status {
+function cardStatus(state: PathMonitorState): LabelledStatus {
   switch (state.phase) {
     case 'starting':
     case 'running':
@@ -74,6 +77,8 @@ export function PathMonitorCard({
   const { t } = useTranslation('cards');
   const { canWrite } = useRole();
   const { state, start, stop } = usePathMonitor(subscribe);
+  const statusLabel = useStatusLabel();
+  const status = cardStatus(state);
 
   // null until the operator edits the field, so a gateway that loads after
   // mount still fills it.
@@ -102,11 +107,11 @@ export function PathMonitorCard({
     <Card
       title={t('pathMonitor.title')}
       icon={<Activity className="w-4 h-4" />}
-      status={cardStatus(state)}
-      ariaLabel={t('pathMonitor.title')}
-      // A hop table needs more than a quarter of a 4-up grid; see BonjourCard
-      // for why max-w-none rides with the span.
-      className="sm:col-span-2 max-w-none"
+      status={status}
+      statusLabel={statusLabel(status)}
+      aria-label={t('pathMonitor.title')}
+      // A hop table needs more than a quarter of a 4-up grid.
+      className="sm:col-span-2"
     >
       <div className="stack-sm" data-testid="path-monitor" data-phase={state.phase}>
         <p className="caption text-text-muted">{t('pathMonitor.description')}</p>
@@ -123,21 +128,24 @@ export function PathMonitorCard({
               }
             }}
           >
-            <Input
-              id="path-monitor-target"
-              label={t('pathMonitor.target')}
-              value={target ?? defaultTarget}
-              placeholder={t('pathMonitor.targetPlaceholder')}
-              onChange={(event) => setTarget(event.target.value)}
-              disabled={busy}
-              data-testid="path-monitor-target"
-            />
+            <FormField id="path-monitor-target" label={t('pathMonitor.target')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  value={target ?? defaultTarget}
+                  placeholder={t('pathMonitor.targetPlaceholder')}
+                  onChange={(event) => setTarget(event.target.value)}
+                  disabled={busy}
+                  data-testid="path-monitor-target"
+                />
+              )}
+            </FormField>
             {busy ? (
               <MonitorRunning state={state} target={destination} onStop={() => void stop()} />
             ) : (
               <Button
                 type="submit"
-                variant="solid"
+                variant="primary"
                 size="sm"
                 disabled={!destination}
                 data-testid="path-monitor-start"
@@ -153,21 +161,17 @@ export function PathMonitorCard({
         )}
 
         {state.phase === 'failed' ? (
-          <div
-            className={cn(spacing.pad.sm, statusColor.bg.errorSoft, radius.md, 'stack-xs')}
-            role="alert"
-            data-testid="path-monitor-failed"
-          >
-            <p className="body-small text-status-error-strong">{t('pathMonitor.failed')}</p>
+          <Alert tone="error" size="sm" data-testid="path-monitor-failed">
+            <p className="font-medium">{t('pathMonitor.failed')}</p>
             {state.error ? (
               <p
-                className="caption font-mono text-text-secondary break-words"
+                className="figure mt-1 break-words text-text-secondary"
                 data-testid="path-monitor-error-detail"
               >
                 {state.error}
               </p>
             ) : null}
-          </div>
+          </Alert>
         ) : null}
 
         {stoppedOnLinkDown && state.phase === 'stopped' ? (
@@ -206,8 +210,7 @@ function MonitorRunning({
       <div className="flex items-center gap-compact">
         <Button
           type="button"
-          variant="outline"
-          tone="red"
+          variant="destructive"
           size="sm"
           onClick={onStop}
           disabled={state.phase !== 'running'}
@@ -216,9 +219,9 @@ function MonitorRunning({
           {state.phase === 'stopping' ? t('pathMonitor.stopping') : t('pathMonitor.stop')}
         </Button>
         {state.phase === 'running' && state.stopFailed ? (
-          <p className="caption text-status-error" role="alert">
+          <Alert tone="error" size="sm">
             {t('pathMonitor.stopFailed')}
-          </p>
+          </Alert>
         ) : null}
       </div>
     </div>

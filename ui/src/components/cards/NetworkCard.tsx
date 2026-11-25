@@ -22,10 +22,11 @@
 
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LabelledStatus } from '../../hooks/useStatusLabel';
 import { formatTime, isValidNumber } from '../../lib/format';
+import { CardDivider, CardRow, CardValue } from '../../shared/Card';
+import { CollapsibleSection } from '../../shared/CollapsibleSection';
 import { border, cn, icon as iconTokens, spacing } from '../../styles/theme';
-import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
-import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { Network } from '../ui/Icons';
 import { SimpleBaseCard } from './BaseCard';
 
@@ -109,7 +110,7 @@ interface DhcpCardProps {
 function getTimingStatus(
   value: number | undefined | null,
   thresholds: { warning: number; critical: number },
-): Status {
+): LabelledStatus {
   if (!isValidNumber(value)) {
     return 'unknown';
   }
@@ -334,7 +335,7 @@ export function NetworkCard({
   })).filter((group) => group.entries.length > 0);
 
   // Determine overall status using priority: error > warning > success
-  const getOverallStatus = (): Status => {
+  const getOverallStatus = (): LabelledStatus => {
     if (loading) {
       return 'loading';
     }
@@ -371,7 +372,7 @@ export function NetworkCard({
     return 'success';
   };
 
-  const status: Status = getOverallStatus();
+  const status: LabelledStatus = getOverallStatus();
 
   // Primary display value
   const primaryIpRaw =

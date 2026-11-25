@@ -15,18 +15,20 @@ import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useNeighbourCache } from '../../hooks/useNeighbourCache';
+import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { useTableLabels } from '../../hooks/useTableLabels';
+import { Button } from '../../shared/Button';
+import { Card } from '../../shared/Card';
 import { DataTable, type DataTableColumn } from '../../shared/DataTable';
 import { EmptyState } from '../../shared/EmptyState';
 import { SearchInput } from '../../shared/SearchInput';
 import type { NeighbourEntry } from '../../types/generated/neighbour-cache-response';
-import { Button } from '../ui/Button';
-import { Card, type Status } from '../ui/Card';
 import { Network } from '../ui/Icons';
 
 export function NeighbourCacheCard(): JSX.Element {
   const { t } = useTranslation(['cards', 'common']);
   const { entries, loading, error, refresh } = useNeighbourCache();
+  const statusLabel = useStatusLabel();
   const [filter, setFilter] = useState('');
   const labels = useTableLabels<NeighbourEntry>({ loading: t('neighbours.title') });
 
@@ -80,7 +82,7 @@ export function NeighbourCacheCard(): JSX.Element {
     },
   ];
 
-  let cardStatus: Status = 'success';
+  let cardStatus: LabelledStatus = 'success';
   if (loading) {
     cardStatus = 'loading';
   } else if (error) {
@@ -94,13 +96,11 @@ export function NeighbourCacheCard(): JSX.Element {
       title={t('neighbours.title')}
       icon={<Network className="w-4 h-4" />}
       status={cardStatus}
-      ariaLabel={t('neighbours.title')}
+      statusLabel={statusLabel(cardStatus)}
+      aria-label={t('neighbours.title')}
       // Two grid columns: this is a device list, not a single-reading
       // facet, and at a quarter of a 4-up grid it is 202 px wide (#2708).
-      // max-w-none so the two columns this asks for are two columns wide:
-      // Card's default max-w-sm otherwise capped the span at one card,
-      // leaving the rest of it blank (UI-SEED-20).
-      className="sm:col-span-2 max-w-none"
+      className="sm:col-span-2"
     >
       <div className="stack-sm">
         <p className="caption text-text-muted">{t('neighbours.description')}</p>

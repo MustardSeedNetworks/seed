@@ -20,12 +20,12 @@ import {
   type ScheduleFrequency,
   scheduleTime,
 } from '../../hooks/useReportSchedules';
+import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
+import { Button } from '../../shared/Button';
+import { Card, CardDivider, CardRow } from '../../shared/Card';
 import { Select } from '../../shared/Select';
 import { cn, input as inputTokens, spacing } from '../../styles/theme';
 import type { ReportScheduleInfo } from '../../types/generated/report-schedule-info';
-import { Button } from '../ui/Button';
-import { Card, CardDivider, CardRow } from '../ui/Card';
-import type { Status } from '../ui/StatusBadge';
 
 export interface ScheduledReportsCardProps {
   schedules: ReportScheduleInfo[];
@@ -51,7 +51,7 @@ function cardStatus(
   schedules: ReportScheduleInfo[],
   loading: boolean,
   error: string | null,
-): Status {
+): LabelledStatus {
   if (loading) {
     return 'loading';
   }
@@ -232,6 +232,7 @@ function ScheduleEditor({ initial, onSave, onCancel }: EditorProps): JSX.Element
 
       <div className="flex gap-compact">
         <Button
+          variant="primary"
           size="sm"
           loading={saving}
           // Nothing to send without a name, or an hour once the time is cleared.
@@ -259,6 +260,8 @@ export function ScheduledReportsCard({
   onDelete,
 }: ScheduledReportsCardProps): JSX.Element {
   const { t, i18n } = useTranslation('cards');
+  const statusLabel = useStatusLabel();
+  const status = cardStatus(schedules, loading, error);
   // null id: a new schedule. Only one editor is open at a time.
   const [editing, setEditing] = useState<{ id: string | null; draft: ScheduleDraft } | null>(null);
 
@@ -299,10 +302,12 @@ export function ScheduledReportsCard({
   return (
     <Card
       title={t('reportSchedules.title')}
-      status={cardStatus(schedules, loading, error)}
+      status={status}
+      statusLabel={statusLabel(status)}
       headerAction={
         onSave && editing === null ? (
           <Button
+            variant="primary"
             size="sm"
             onClick={(): void => setEditing({ id: null, draft: newScheduleDraft() })}
             data-testid="schedule-new"

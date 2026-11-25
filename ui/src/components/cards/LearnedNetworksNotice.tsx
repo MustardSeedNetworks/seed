@@ -11,8 +11,9 @@
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDecideNetwork, usePendingNetworks } from '../../hooks/useLearnedNetworks';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
 import { cn, radius, spacing } from '../../styles/theme';
-import { Button } from '../ui/Button';
 
 export function LearnedNetworksNotice(): JSX.Element | null {
   const { t } = useTranslation('cards');
@@ -53,7 +54,7 @@ export function LearnedNetworksNotice(): JSX.Element | null {
             </div>
             <Button
               size="xs"
-              variant="solid"
+              variant="primary"
               disabled={decide.isPending}
               aria-label={t('discovery.learned.addAria', { cidr: network.cidr })}
               onClick={() => decide.mutate({ cidr: network.cidr, decision: 'added' })}
@@ -75,9 +76,9 @@ export function LearnedNetworksNotice(): JSX.Element | null {
         ))}
       </ul>
       {decide.isError ? (
-        <p className="caption text-status-error" role="alert" data-testid="learned-networks-error">
+        <Alert tone="error" size="sm" data-testid="learned-networks-error">
           {t('discovery.learned.error')}
-        </p>
+        </Alert>
       ) : null}
     </section>
   );

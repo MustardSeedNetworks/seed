@@ -30,15 +30,15 @@ import { Server } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LabelledStatus } from '../../hooks/useStatusLabel';
 import { formatBytes } from '../../lib/format';
+import { CardDivider, CardRow } from '../../shared/Card';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
 import type {
   Health,
   ProcessInfo,
   SystemHealthResponse,
 } from '../../types/generated/system-health-response';
-import { CardDivider, CardRow } from '../ui/Card';
-import type { Status } from '../ui/StatusBadge';
 import { BaseCard } from './BaseCard';
 
 function formatUptime(seconds: number): string {
@@ -55,7 +55,7 @@ function formatUptime(seconds: number): string {
   return `${minutes}m`;
 }
 
-function getResourceStatus(percent: number): Status {
+function getResourceStatus(percent: number): LabelledStatus {
   if (percent >= 90) {
     return 'error';
   }
@@ -198,7 +198,7 @@ export function SystemHealthCard(): React.ReactElement {
     return (): void => clearInterval(interval);
   }, [fetchHealth]);
 
-  const getStatus = (health: Health): Status => {
+  const getStatus = (health: Health): LabelledStatus => {
     const maxPercent = Math.max(health.cpuPercent, health.memoryPercent, health.diskPercent);
     return getResourceStatus(maxPercent);
   };

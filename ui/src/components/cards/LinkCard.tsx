@@ -28,10 +28,11 @@ export type { LinkHistoryEvent };
 
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LabelledStatus } from '../../hooks/useStatusLabel';
+import { CardDivider, CardRow, CardValue } from '../../shared/Card';
+import { Skeleton } from '../../shared/Skeleton';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
-import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
 import { Cable } from '../ui/Icons';
-import { Skeleton } from '../ui/Skeleton';
 import { BaseCard } from './BaseCard';
 
 /**
@@ -114,7 +115,7 @@ interface LinkCardProps {
  * @param data - Link status data
  * @returns Status indicator ('success', 'warning', 'error')
  */
-function getStatus(data: LinkData): Status {
+function getStatus(data: LinkData): LabelledStatus {
   if (!data.carrier) {
     return 'error'; // No physical link
   }

@@ -21,13 +21,14 @@ import type { FormEvent, JSX } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '../../api';
+import { useStatusLabel } from '../../hooks/useStatusLabel';
 import { isPasskeySupported, registerPasskey } from '../../lib/webauthn';
-import { Button as SharedButton } from '../../shared/Button';
+import { Button } from '../../shared/Button';
+import { Card } from '../../shared/Card';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
 import { icon as iconTokens } from '../../styles/theme';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
 import { Shield } from '../ui/Icons';
-import { Input } from '../ui/Input';
 
 /** Backend response shape for GET /api/v1/auth/mfa/status. */
 interface MfaStatus {
@@ -45,6 +46,7 @@ interface TotpSetup {
 
 export function MfaCard(): JSX.Element {
   const { t } = useTranslation(['cards', 'common']);
+  const statusLabel = useStatusLabel();
   const [status, setStatus] = useState<MfaStatus | null>(null);
   const [setup, setSetup] = useState<TotpSetup | null>(null);
   const [code, setCode] = useState<string>('');
@@ -172,11 +174,14 @@ export function MfaCard(): JSX.Element {
     return t('mfa.none');
   })();
 
+  const cardStatus = status?.totpEnabled || status?.webauthnEnabled ? 'success' : 'unknown';
+
   return (
     <Card
       title={t('mfa.title')}
       icon={<Shield className={iconTokens.size.md} />}
-      status={status?.totpEnabled || status?.webauthnEnabled ? 'success' : 'unknown'}
+      status={cardStatus}
+      statusLabel={statusLabel(cardStatus)}
     >
       <div className="stack-sm">
         <p className="body-small text-text-muted">{statusLine}</p>
@@ -194,19 +199,23 @@ export function MfaCard(): JSX.Element {
               width={200}
               height={200}
             />
-            <Input
-              id="mfa-totp-code"
-              label={t('mfa.scanAndEnter')}
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={6}
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-              placeholder="123456"
-              data-testid="mfa-totp-code"
-            />
+            <FormField id="mfa-totp-code" label={t('mfa.scanAndEnter')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={code}
+                  onChange={(event) => setCode(event.target.value)}
+                  placeholder="123456"
+                  data-testid="mfa-totp-code"
+                />
+              )}
+            </FormField>
             <Button
+              variant="primary"
               size="sm"
               disabled={busy || code.length !== 6}
               data-testid="mfa-verify-totp"
@@ -228,29 +237,35 @@ export function MfaCard(): JSX.Element {
             }}
           >
             <p className="body-small text-text-muted">{t('mfa.disablePrompt')}</p>
-            <Input
-              id="mfa-disable-password"
-              label={t('mfa.password')}
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              data-testid="mfa-disable-password"
-            />
-            <Input
-              id="mfa-disable-code"
-              label={t('mfa.currentCode')}
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={6}
-              value={disableCode}
-              onChange={(event) => setDisableCode(event.target.value)}
-              placeholder="123456"
-              data-testid="mfa-disable-code"
-            />
+            <FormField id="mfa-disable-password" label={t('mfa.password')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  data-testid="mfa-disable-password"
+                />
+              )}
+            </FormField>
+            <FormField id="mfa-disable-code" label={t('mfa.currentCode')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={disableCode}
+                  onChange={(event) => setDisableCode(event.target.value)}
+                  placeholder="123456"
+                  data-testid="mfa-disable-code"
+                />
+              )}
+            </FormField>
             <div className="flex flex-wrap gap-compact">
-              <SharedButton
+              <Button
                 type="submit"
                 variant="destructive"
                 size="sm"
@@ -258,7 +273,7 @@ export function MfaCard(): JSX.Element {
                 data-testid="mfa-disable-confirm"
               >
                 {t('mfa.disableTotp')}
-              </SharedButton>
+              </Button>
               <Button
                 type="button"
                 variant="secondary"
@@ -276,13 +291,7 @@ export function MfaCard(): JSX.Element {
           </form>
         ) : null}
 
-        {/*
-          Both enrolment choices sit in one flex row. `Button` wraps itself in a
-          Tooltip span with `display: contents`, which generates no box, so the
-          `stack-sm` margins that used to separate these were dropped on the
-          floor and the two unstyled buttons read as one word (#2641). A flex
-          `gap-compact` spaces the buttons themselves and survives that wrapper.
-        */}
+        {/* Both enrolment choices sit in one flex row so a `gap` spaces the buttons (#2641). */}
         <div className="flex flex-wrap gap-compact">
           {!(status?.totpEnabled || setup) ? (
             <Button
@@ -299,7 +308,7 @@ export function MfaCard(): JSX.Element {
           ) : null}
 
           {status?.totpEnabled && !disabling ? (
-            <SharedButton
+            <Button
               variant="destructive"
               size="sm"
               disabled={busy}
@@ -310,16 +319,15 @@ export function MfaCard(): JSX.Element {
               }}
             >
               {t('mfa.disableTotp')}
-            </SharedButton>
+            </Button>
           ) : null}
 
           <Button
             variant="secondary"
             size="sm"
-            // Button renders its own Tooltip from `title`, which keeps an
-            // unavailable action in the tab order so the reason can be read. A
-            // browser without WebAuthn cannot enrol, and an enabled button that
-            // silently does nothing is what this card shipped with.
+            // A browser without WebAuthn cannot enrol, and an enabled button that
+            // silently does nothing is what this card shipped with: the title
+            // says why it is unavailable.
             title={isPasskeySupported() ? undefined : t('mfa.passkeyUnsupported')}
             disabled={busy || !isPasskeySupported()}
             data-testid="mfa-add-passkey"

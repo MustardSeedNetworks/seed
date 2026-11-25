@@ -35,7 +35,9 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { useSettings } from '../../contexts/useSettings';
 import { useIperfServerSync } from '../../hooks/useIperfServerSync';
+import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { LogComponents, logger } from '../../lib/logger';
+import { Card, CardDivider, CardRow, CardValue } from '../../shared/Card';
 import { useTestRunSignal, useTestRunStore } from '../../stores/testRunStore';
 import {
   cn,
@@ -47,7 +49,6 @@ import {
 } from '../../styles/theme';
 import type { IperfClientRequest } from '../../types/generated/iperf-client-request';
 import type { ServerStatus } from '../../types/generated/iperf-server-status';
-import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
 import { Gauge } from '../ui/Icons';
 import { ProgressRing, PulsingDot, SpeedGauge } from '../ui/SpeedGauge';
 
@@ -129,6 +130,7 @@ export function PerformanceCard({
   runIperfEnabled = true,
 }: PerformanceCardProps): React.ReactElement {
   const { t } = useTranslation('cards');
+  const statusLabel = useStatusLabel();
   // Get iperf settings from context
   const { iperfSettings } = useSettings();
 
@@ -403,7 +405,7 @@ export function PerformanceCard({
     return `${mbps.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Mbps`;
   };
 
-  const getStatus = (): Status => {
+  const getStatus = (): LabelledStatus => {
     if (!(runSpeedtestEnabled || runIperfEnabled)) {
       return 'unknown';
     }
@@ -419,12 +421,15 @@ export function PerformanceCard({
     return 'unknown';
   };
 
+  const status = getStatus();
+
   return (
     <Card
       title={t('performance.title')}
       subtitle={t('performance.subtitle')}
       icon={<Gauge className={iconTokens.size.md} />}
-      status={getStatus()}
+      status={status}
+      statusLabel={statusLabel(status)}
     >
       <div>
         {/* Internet Speed Section */}

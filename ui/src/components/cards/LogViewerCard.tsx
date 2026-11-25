@@ -19,8 +19,9 @@ import type { JSX } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLogs } from '../../hooks/useLogs';
+import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
+import { Card, CardDivider, CardRow, CardValue } from '../../shared/Card';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
 import { AlertCircle, AlertTriangle, FileText, Maximize2 } from '../ui/Icons';
 import { LogViewerModal } from './LogViewerModal';
 
@@ -43,13 +44,14 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const statusLabel = useStatusLabel();
 
   // Calculate error and warning counts
   const errorCount = stats?.byLevel && 'ERROR' in stats.byLevel ? stats.byLevel.ERROR : 0;
   const warnCount = stats?.byLevel && 'WARN' in stats.byLevel ? stats.byLevel.WARN : 0;
 
   // Determine card status based on errors
-  const getCardStatus = (): Status => {
+  const getCardStatus = (): LabelledStatus => {
     if (isLoading) {
       return 'loading';
     }
@@ -62,12 +64,15 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
     return 'success';
   };
 
+  const cardStatus = getCardStatus();
+
   if (isLoading) {
     return (
       <Card
         title={t('logs.title')}
         icon={<FileText className={iconTokens.size.md} />}
         status="loading"
+        statusLabel={statusLabel('loading')}
         className={className}
       >
         <CardValue value={t('logs.loading')} size="md" />
@@ -81,6 +86,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
         title={t('logs.title')}
         icon={<FileText className={iconTokens.size.md} />}
         status="error"
+        statusLabel={statusLabel('error')}
         className={className}
       >
         <CardValue value={error} size="md" />
@@ -92,7 +98,8 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
     <Card
       title={t('logs.title')}
       icon={<FileText className={iconTokens.size.md} />}
-      status={getCardStatus()}
+      status={cardStatus}
+      statusLabel={statusLabel(cardStatus)}
       className={className}
       headerAction={
         <div className="flex items-center gap-compact">

@@ -10,9 +10,10 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { useStatusLabel } from '../../hooks/useStatusLabel';
+import { Card } from '../../shared/Card';
 import type { PathResponse } from '../../types';
 import { PathTimeline } from '../cards/PathDiscoveryTimeline';
-import { Card } from '../ui/Card';
 
 const SAMPLE_PATH: PathResponse = {
   l2Path: {
@@ -59,9 +60,10 @@ const SAMPLE_MAX_RTT = 11.7;
 
 export function PathAnalysisPreview(): React.ReactElement {
   const { t } = useTranslation('cards');
+  const statusLabel = useStatusLabel();
 
   return (
-    <Card title={t('pathDiscovery.title')} status="success">
+    <Card title={t('pathDiscovery.title')} status="success" statusLabel={statusLabel('success')}>
       <PathTimeline
         result={SAMPLE_PATH}
         maxRtt={SAMPLE_MAX_RTT}
