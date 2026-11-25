@@ -49,7 +49,7 @@ describe('BaseCard', () => {
 
       expect(screen.getByText('Test Card')).toBeInTheDocument();
       // Default skeleton has specific structure with multiple skeleton elements
-      const skeletons = document.querySelectorAll('.animate-pulse');
+      const skeletons = document.querySelectorAll('.motion-safe\\:animate-pulse');
       expect(skeletons.length).toBeGreaterThan(0);
     });
 
@@ -202,7 +202,7 @@ describe('SimpleBaseCard', () => {
       render(<SimpleBaseCard {...defaultProps} loading={true} />);
 
       expect(screen.getByText('Simple Card')).toBeInTheDocument();
-      const skeletons = document.querySelectorAll('.animate-pulse');
+      const skeletons = document.querySelectorAll('.motion-safe\\:animate-pulse');
       expect(skeletons.length).toBeGreaterThan(0);
     });
 
@@ -301,7 +301,7 @@ describe('state priority', () => {
     );
 
     // Loading state should be shown, not error
-    const skeletons = document.querySelectorAll('.animate-pulse');
+    const skeletons = document.querySelectorAll('.motion-safe\\:animate-pulse');
     expect(skeletons.length).toBeGreaterThan(0);
     expect(screen.queryByText('Should not show')).not.toBeInTheDocument();
   });
@@ -313,7 +313,7 @@ describe('state priority', () => {
       </SimpleBaseCard>,
     );
 
-    const skeletons = document.querySelectorAll('.animate-pulse');
+    const skeletons = document.querySelectorAll('.motion-safe\\:animate-pulse');
     expect(skeletons.length).toBeGreaterThan(0);
     expect(screen.queryByText('Should not show')).not.toBeInTheDocument();
   });

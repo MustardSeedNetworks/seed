@@ -152,6 +152,7 @@
       "warning": "Estado: advertencia",
       "error": "Estado: error",
       "unknown": "Estado: desconocido",
+      "info": "Estado: información",
       "loading": "Estado: cargando"
     }
   },

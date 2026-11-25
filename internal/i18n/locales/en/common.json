@@ -152,6 +152,7 @@
       "warning": "Status: warning",
       "error": "Status: error",
       "unknown": "Status: unknown",
+      "info": "Status: info",
       "loading": "Status: loading"
     }
   },

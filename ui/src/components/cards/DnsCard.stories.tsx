@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Globe } from 'lucide-react';
 import type { JSX } from 'react';
+import { Card, CardDivider, CardRow, CardValue } from '../../shared/Card';
+import { Skeleton } from '../../shared/Skeleton';
 import { cn, spacing } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue } from '../ui/Card';
-import { Skeleton } from '../ui/Skeleton';
 
 /**
  * DNSCard displays DNS resolver status and resolution times.
@@ -35,6 +35,7 @@ export const Healthy: StoryObj = {
       subtitle="Name Resolution"
       icon={<Globe className="w-4 h-4" />}
       status="success"
+      statusLabel="Success"
     >
       <CardValue value="8.8.8.8" size="lg" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
@@ -56,6 +57,7 @@ export const SlowResolution: StoryObj = {
       subtitle="Name Resolution"
       icon={<Globe className="w-4 h-4" />}
       status="warning"
+      statusLabel="Warning"
     >
       <CardValue value="192.168.1.1" size="lg" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
@@ -79,6 +81,7 @@ export const Failed: StoryObj = {
       subtitle="Name Resolution"
       icon={<Globe className="w-4 h-4" />}
       status="error"
+      statusLabel="Error"
     >
       <CardValue value="Failed" size="lg" status="error" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
@@ -100,6 +103,7 @@ export const MultipleDns: StoryObj = {
       subtitle="Multiple Resolvers"
       icon={<Globe className="w-4 h-4" />}
       status="success"
+      statusLabel="Success"
     >
       <CardValue value="All Healthy" size="lg" status="success" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
@@ -119,6 +123,7 @@ export const Loading: StoryObj = {
       subtitle="Name Resolution"
       icon={<Globe className="w-4 h-4" />}
       status="loading"
+      statusLabel="Loading"
     >
       <Skeleton className={cn('h-8 w-32', spacing.margin.bottom.content)} />
       <div className={cn(spacing.stack.sm, spacing.margin.top.content)}>
@@ -142,6 +147,7 @@ export const NoDns: StoryObj = {
       subtitle="Name Resolution"
       icon={<Globe className="w-4 h-4" />}
       status="unknown"
+      statusLabel="Unknown"
     >
       <CardValue value="Not Configured" size="md" />
       <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>

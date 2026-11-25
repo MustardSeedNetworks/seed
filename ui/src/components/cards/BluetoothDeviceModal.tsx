@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useTableLabels } from '../../hooks/useTableLabels';
 import { DataTable, type DataTableColumn } from '../../shared/DataTable';
 import { EmptyState } from '../../shared/EmptyState';
+import { Modal } from '../../shared/Modal';
 import { SearchInput } from '../../shared/SearchInput';
 import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
 import type {
@@ -22,7 +23,6 @@ import type {
   BluetoothDiscoveryStats,
 } from '../../types/generated/bluetooth-scan-response';
 import { BluetoothConnected, Bluetooth as BluetoothIcon } from '../ui/Icons';
-import { Modal } from '../ui/Modal';
 
 interface BluetoothDeviceModalProps {
   isOpen: boolean;
@@ -173,7 +173,13 @@ export function BluetoothDeviceModal({
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="full" title={t('bluetooth.modalTitle')}>
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      size="full"
+      title={t('bluetooth.modalTitle')}
+      closeLabel={t('common:buttons.close')}
+    >
       <div className="stack-md" data-testid="bluetooth-modal">
         {stats ? (
           <div className={cn('flex flex-wrap gap-default', spacing.margin.bottom.inline)}>

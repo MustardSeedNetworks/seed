@@ -9,11 +9,12 @@
 
 import type { TFunction } from 'i18next';
 import type { JSX } from 'react';
+import { CollapsibleSection } from '../../shared/CollapsibleSection';
+import { StatusIndicator } from '../../shared/StatusPill';
 import { Tooltip } from '../../shared/Tooltip';
 import { cn, layout, radius, spacing, status as statusColor } from '../../styles/theme';
 import type { HealthCheckRunResponse } from '../../types/generated/health-check-run-response';
-import { CollapsibleSection } from '../ui/CollapsibleSection';
-import { StatusBadge } from '../ui/StatusBadge';
+import { useCardStatusLabel } from './CardStatusLabel';
 import { failuresFirst } from './healthCheckResultOrder';
 
 /** One protocol result, reduced to what its row shows. */
@@ -200,6 +201,8 @@ function sections(data: HealthCheckRunResponse, t: TFunction<'cards'>): Protocol
  * card's edge. The total is the one value that never gives way.
  */
 function ProtocolResultRow({ row }: { row: ProtocolRow }): JSX.Element {
+  const labelFor = useCardStatusLabel();
+  const tone = row.success ? 'success' : 'error';
   const details = row.success ? row.details.filter((d): d is string => d !== null) : [];
   return (
     <div
@@ -212,7 +215,7 @@ function ProtocolResultRow({ row }: { row: ProtocolRow }): JSX.Element {
       )}
     >
       <div className={cn('flex min-w-0 flex-1 items-start', spacing.gap.compact)}>
-        <StatusBadge status={row.success ? 'success' : 'error'} />
+        <StatusIndicator tone={tone} label={labelFor(tone)} />
         <div className={cn(layout.stack.tight, 'min-w-0 flex-1')}>
           <Tooltip text={row.name}>
             <span className="body-small font-medium truncate">{row.name}</span>
@@ -242,24 +245,29 @@ export function HealthCheckCardProtocolSections({
   data,
   t,
 }: HealthCheckCardProtocolSectionsProps): JSX.Element {
+  const labelFor = useCardStatusLabel();
   return (
     <>
       {sections(data, t)
         .filter((s) => s.rows.length > 0)
-        .map((s) => (
-          <CollapsibleSection
-            key={s.id}
-            title={s.title}
-            count={s.rows.length}
-            variant="compact"
-            defaultOpen={true}
-            status={s.rows.some((r) => !r.success) ? 'error' : 'success'}
-          >
-            {failuresFirst(s.rows, (r) => (r.success ? 2 : 0)).map((r) => (
-              <ProtocolResultRow key={`${s.id}-${r.name}`} row={r} />
-            ))}
-          </CollapsibleSection>
-        ))}
+        .map((s) => {
+          const tone = s.rows.some((r) => !r.success) ? 'error' : 'success';
+          return (
+            <CollapsibleSection
+              key={s.id}
+              title={s.title}
+              count={s.rows.length}
+              variant="compact"
+              defaultOpen={true}
+              status={tone}
+              statusLabel={labelFor(tone)}
+            >
+              {failuresFirst(s.rows, (r) => (r.success ? 2 : 0)).map((r) => (
+                <ProtocolResultRow key={`${s.id}-${r.name}`} row={r} />
+              ))}
+            </CollapsibleSection>
+          );
+        })}
     </>
   );
 }

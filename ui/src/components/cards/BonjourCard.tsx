@@ -16,6 +16,9 @@ import { useTranslation } from 'react-i18next';
 
 import { useBonjourBrowse } from '../../hooks/useBonjourBrowse';
 import { useTableLabels } from '../../hooks/useTableLabels';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { Card, type CardStatus } from '../../shared/Card';
 import { DataTable, type DataTableColumn } from '../../shared/DataTable';
 import { EmptyState } from '../../shared/EmptyState';
 import { SearchInput } from '../../shared/SearchInput';
@@ -24,9 +27,8 @@ import type {
   BrowseResult,
   ReflectorStatus,
 } from '../../types/generated/bonjour-browse-response';
-import { Button } from '../ui/Button';
-import { Card, type Status } from '../ui/Card';
 import { Network } from '../ui/Icons';
+import { useCardStatusLabel } from './CardStatusLabel';
 
 const MS_PER_SECOND = 1000;
 
@@ -78,9 +80,10 @@ function originLabel(t: TFunction<'cards'>, origin: string): string {
 
 export function BonjourCard(): JSX.Element {
   const { t } = useTranslation(['cards', 'common']);
+  const labelFor = useCardStatusLabel();
   const { result, loading, error, browse } = useBonjourBrowse();
 
-  let cardStatus: Status = 'unknown';
+  let cardStatus: CardStatus = 'unknown';
   if (loading) {
     cardStatus = 'loading';
   } else if (error) {
@@ -97,13 +100,12 @@ export function BonjourCard(): JSX.Element {
       title={t('bonjour.title')}
       icon={<Network className="w-4 h-4" />}
       status={cardStatus}
-      ariaLabel={t('bonjour.title')}
+      statusLabel={labelFor(cardStatus)}
+      aria-label={t('bonjour.title')}
+      data-testid="card"
       // See NeighbourCacheCard: a service table needs more than a quarter
       // of a 4-up grid (#2708).
-      // max-w-none so the two columns this asks for are two columns wide:
-      // Card's default max-w-sm otherwise capped the span at one card,
-      // leaving the rest of it blank (UI-SEED-20).
-      className="sm:col-span-2 max-w-none"
+      className="sm:col-span-2"
     >
       <div className="stack-sm">
         <p className="caption text-text-muted">{t('bonjour.description')}</p>
@@ -119,9 +121,9 @@ export function BonjourCard(): JSX.Element {
         </Button>
 
         {error ? (
-          <p className="caption text-status-error" data-testid="bonjour-error">
+          <Alert tone="error" size="sm" data-testid="bonjour-error">
             {error}
-          </p>
+          </Alert>
         ) : null}
 
         {result ? <ReflectorVerdict result={result} /> : null}

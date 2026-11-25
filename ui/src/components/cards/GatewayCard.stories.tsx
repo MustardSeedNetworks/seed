@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { JSX } from 'react';
+import { Card, CardDivider, CardRow, CardValue } from '../../shared/Card';
+import { Skeleton } from '../../shared/Skeleton';
 import { cn, spacing } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue } from '../ui/Card';
 import { Router } from '../ui/Icons';
-import { Skeleton } from '../ui/Skeleton';
 
 /**
  * GatewayCard monitors network gateway (default router) reachability via ICMP ping.
@@ -35,6 +35,7 @@ export const Reachable: StoryObj = {
       subtitle="Default Router"
       icon={<Router className="w-4 h-4" />}
       status="success"
+      statusLabel="Success"
     >
       <CardValue value="192.168.1.1" size="lg" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
@@ -57,6 +58,7 @@ export const HighLatency: StoryObj = {
       subtitle="Default Router"
       icon={<Router className="w-4 h-4" />}
       status="warning"
+      statusLabel="Warning"
     >
       <CardValue value="192.168.1.1" size="lg" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
@@ -79,6 +81,7 @@ export const Unreachable: StoryObj = {
       subtitle="Default Router"
       icon={<Router className="w-4 h-4" />}
       status="error"
+      statusLabel="Error"
     >
       <CardValue value="192.168.1.1" size="lg" status="error" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
@@ -100,6 +103,7 @@ export const DualStack: StoryObj = {
       subtitle="IPv4 + IPv6"
       icon={<Router className="w-4 h-4" />}
       status="success"
+      statusLabel="Success"
     >
       <div className={spacing.stack.default}>
         <div>
@@ -127,6 +131,7 @@ export const Loading: StoryObj = {
       subtitle="Default Router"
       icon={<Router className="w-4 h-4" />}
       status="loading"
+      statusLabel="Loading"
     >
       <Skeleton className={cn('h-8 w-32', spacing.margin.bottom.content)} />
       <div className={cn(spacing.stack.sm, spacing.margin.top.content)}>
@@ -154,6 +159,7 @@ export const NoGateway: StoryObj = {
       subtitle="Default Router"
       icon={<Router className="w-4 h-4" />}
       status="unknown"
+      statusLabel="Unknown"
     >
       <CardValue value="Not Configured" size="md" />
       <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>

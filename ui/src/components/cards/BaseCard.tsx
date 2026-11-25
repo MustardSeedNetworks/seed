@@ -1,8 +1,9 @@
 import type { JSX, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Card, type CardStatus, CardValue } from '../../shared/Card';
+import { Skeleton } from '../../shared/Skeleton';
 import { cn, layout, spacing } from '../../styles/theme';
-import { Card, CardValue, type Status } from '../ui/Card';
-import { Skeleton } from '../ui/Skeleton';
+import { useCardStatusLabel } from './CardStatusLabel';
 
 interface BaseCardProps<T> {
   title: string;
@@ -11,7 +12,7 @@ interface BaseCardProps<T> {
   data: T | null;
   loading?: boolean;
   error?: string | null;
-  getStatus: (data: T) => Status;
+  getStatus: (data: T) => CardStatus;
   children: (data: T) => ReactNode;
   loadingContent?: ReactNode;
   emptyMessage?: string;
@@ -58,6 +59,7 @@ export function BaseCard<T>({
   onClick,
 }: BaseCardProps<T>): JSX.Element {
   const { t } = useTranslation('common');
+  const labelFor = useCardStatusLabel();
   const resolvedEmptyMessage = emptyMessage ?? t('status.noDataAvailable');
 
   // Loading state
@@ -68,8 +70,10 @@ export function BaseCard<T>({
         subtitle={subtitle}
         icon={icon}
         status="loading"
+        statusLabel={labelFor('loading')}
         className={className}
-        enableLiveRegion={true}
+        liveRegion
+        data-testid="card"
       >
         {loadingContent || <DefaultLoadingSkeleton />}
       </Card>
@@ -84,8 +88,10 @@ export function BaseCard<T>({
         subtitle={subtitle}
         icon={icon}
         status="error"
+        statusLabel={labelFor('error')}
         className={className}
-        enableLiveRegion={true}
+        liveRegion
+        data-testid="card"
       >
         <CardValue value={t('status.error')} size="md" status="error" />
         <p className={cn('caption text-status-error', spacing.margin.top.tight)}>{error}</p>
@@ -101,8 +107,10 @@ export function BaseCard<T>({
         subtitle={subtitle}
         icon={icon}
         status="unknown"
+        statusLabel={labelFor('unknown')}
         className={className}
-        enableLiveRegion={true}
+        liveRegion
+        data-testid="card"
       >
         <CardValue value={resolvedEmptyMessage} size="md" />
       </Card>
@@ -118,9 +126,11 @@ export function BaseCard<T>({
       subtitle={subtitle}
       icon={icon}
       status={status}
+      statusLabel={labelFor(status)}
       className={className}
       onClick={onClick}
-      enableLiveRegion={true}
+      liveRegion
+      data-testid="card"
     >
       {children(data)}
     </Card>
@@ -161,7 +171,7 @@ interface SimpleBaseCardProps {
   title: string;
   subtitle?: string;
   icon?: ReactNode;
-  status: Status;
+  status: CardStatus;
   loading?: boolean;
   error?: string | null;
   children: ReactNode;
@@ -186,6 +196,7 @@ export function SimpleBaseCard({
   onClick,
 }: SimpleBaseCardProps): JSX.Element {
   const { t } = useTranslation('common');
+  const labelFor = useCardStatusLabel();
 
   // Loading state (fixes #674: enable live region for dynamic updates)
   if (loading) {
@@ -195,8 +206,10 @@ export function SimpleBaseCard({
         subtitle={subtitle}
         icon={icon}
         status="loading"
+        statusLabel={labelFor('loading')}
         className={className}
-        enableLiveRegion={true}
+        liveRegion
+        data-testid="card"
       >
         {loadingContent || <DefaultLoadingSkeleton />}
       </Card>
@@ -211,8 +224,10 @@ export function SimpleBaseCard({
         subtitle={subtitle}
         icon={icon}
         status="error"
+        statusLabel={labelFor('error')}
         className={className}
-        enableLiveRegion={true}
+        liveRegion
+        data-testid="card"
       >
         <CardValue value={t('status.error')} size="md" status="error" />
         <p className={cn('caption text-status-error', spacing.margin.top.tight)}>{error}</p>
@@ -226,9 +241,11 @@ export function SimpleBaseCard({
       subtitle={subtitle}
       icon={icon}
       status={status}
+      statusLabel={labelFor(status)}
       className={className}
       onClick={onClick}
-      enableLiveRegion={true}
+      liveRegion
+      data-testid="card"
     >
       {children}
     </Card>

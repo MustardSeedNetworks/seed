@@ -31,11 +31,14 @@ import {
   isSingleHostResult,
   useDscpCheck,
 } from '../../hooks/useDscpCheck';
-import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
-import { Button } from '../ui/Button';
-import { Card, type Status } from '../ui/Card';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { Card, type CardStatus } from '../../shared/Card';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
+import { cn, radius, spacing } from '../../styles/theme';
 import { Gauge } from '../ui/Icons';
-import { Input } from '../ui/Input';
+import { useCardStatusLabel } from './CardStatusLabel';
 import { DscpCheckResult, verdictOf } from './DscpCheckResult';
 
 const FEATURE = 'dscp_verification';
@@ -55,7 +58,7 @@ function parseWhole(raw: string, max: number): number | null {
   return raw.trim() !== '' && Number.isInteger(value) && value >= 1 && value <= max ? value : null;
 }
 
-function resultStatus(result: DscpResult): Status {
+function resultStatus(result: DscpResult): CardStatus {
   if (isListenResult(result)) {
     const verdicts = result.runs.map((run) => verdictOf(run.classes));
     if (verdicts.length === 0 || verdicts.includes(null)) {
@@ -70,7 +73,7 @@ function resultStatus(result: DscpResult): Status {
   return result.marked ? 'success' : 'warning';
 }
 
-function cardStatus(state: DscpState): Status {
+function cardStatus(state: DscpState): CardStatus {
   switch (state.phase) {
     case 'starting':
     case 'running':
@@ -120,6 +123,7 @@ export function DscpCheckCard({
   defaultInterface: string;
 }): JSX.Element {
   const { t } = useTranslation('cards');
+  const labelFor = useCardStatusLabel();
   const { t: tErrors } = useTranslation('errors');
   const { hasFeature, loading } = useLicense();
   const { canWrite } = useRole();
@@ -134,15 +138,18 @@ export function DscpCheckCard({
   const result =
     state.phase === 'finished' && isModeResult(mode, state.result) ? state.result : null;
 
+  const status = licensed ? cardStatus(state) : 'unknown';
+
   return (
     <Card
       title={t('dscpCheck.title')}
       icon={<Gauge className="w-4 h-4" />}
-      status={licensed ? cardStatus(state) : 'unknown'}
-      ariaLabel={t('dscpCheck.title')}
-      // A per-class table needs more than a quarter of a 4-up grid; see
-      // BonjourCard for why max-w-none rides with the span.
-      className="sm:col-span-2 max-w-none"
+      status={status}
+      statusLabel={labelFor(status)}
+      aria-label={t('dscpCheck.title')}
+      data-testid="card"
+      // A per-class table needs more than a quarter of a 4-up grid.
+      className="sm:col-span-2"
     >
       <div className="stack-sm" data-testid="dscp-check" data-phase={state.phase} data-mode={mode}>
         <p className="caption text-text-muted">{t('dscpCheck.description')}</p>
@@ -170,21 +177,17 @@ export function DscpCheckCard({
         )}
 
         {licensed && state.phase === 'failed' ? (
-          <div
-            className={cn(spacing.pad.sm, statusColor.bg.errorSoft, radius.md, 'stack-xs')}
-            role="alert"
-            data-testid="dscp-check-failed"
-          >
-            <p className="body-small text-status-error-strong">{t('dscpCheck.failed')}</p>
+          <Alert tone="error" size="sm" data-testid="dscp-check-failed">
+            <p className="font-medium">{t('dscpCheck.failed')}</p>
             {state.error ? (
               <p
-                className="caption font-mono text-text-secondary break-words"
+                className="mt-1 break-words font-mono text-text-secondary"
                 data-testid="dscp-check-error-detail"
               >
                 {state.error}
               </p>
             ) : null}
-          </div>
+          </Alert>
         ) : null}
 
         {licensed && result !== null ? <DscpCheckResult result={result} /> : null}
@@ -237,20 +240,26 @@ function CheckForm({
   })();
 
   const portField = (
-    <Input
+    <FormField
       id="dscp-check-port"
       label={t('dscpCheck.port')}
-      type="number"
-      inputMode="numeric"
-      min={1}
-      max={MAX_PORT}
-      step={1}
-      value={portRaw}
-      onChange={(event) => setPortRaw(event.target.value)}
-      disabled={busy}
       error={port === null ? t('dscpCheck.portInvalid', { max: MAX_PORT }) : undefined}
-      data-testid="dscp-check-port"
-    />
+    >
+      {(control) => (
+        <Input
+          {...control}
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={MAX_PORT}
+          step={1}
+          value={portRaw}
+          onChange={(event) => setPortRaw(event.target.value)}
+          disabled={busy}
+          data-testid="dscp-check-port"
+        />
+      )}
+    </FormField>
   );
 
   return (
@@ -272,63 +281,81 @@ function CheckForm({
         {mode === 'listen' ? (
           <>
             {portField}
-            <Input
+            <FormField
               id="dscp-check-duration"
               label={t('dscpCheck.duration')}
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={MAX_SECONDS}
-              step={1}
-              value={secondsRaw}
-              onChange={(event) => setSecondsRaw(event.target.value)}
-              disabled={busy}
               error={
                 seconds === null ? t('dscpCheck.durationInvalid', { max: MAX_SECONDS }) : undefined
               }
-              data-testid="dscp-check-duration"
-            />
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={MAX_SECONDS}
+                  step={1}
+                  value={secondsRaw}
+                  onChange={(event) => setSecondsRaw(event.target.value)}
+                  disabled={busy}
+                  data-testid="dscp-check-duration"
+                />
+              )}
+            </FormField>
           </>
         ) : null}
         {mode === 'send' ? (
           <>
-            <Input
-              id="dscp-check-target"
-              label={t('dscpCheck.target')}
-              value={target}
-              placeholder="192.0.2.10"
-              onChange={(event) => setTarget(event.target.value)}
-              disabled={busy}
-              data-testid="dscp-check-target"
-            />
+            <FormField id="dscp-check-target" label={t('dscpCheck.target')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  value={target}
+                  placeholder="192.0.2.10"
+                  onChange={(event) => setTarget(event.target.value)}
+                  disabled={busy}
+                  data-testid="dscp-check-target"
+                />
+              )}
+            </FormField>
             {portField}
           </>
         ) : null}
         {mode === 'single-host' ? (
           <>
-            <Input
-              id="dscp-check-send-interface"
-              label={t('dscpCheck.sendInterface')}
-              value={sendInterface}
-              placeholder="wlan0"
-              onChange={(event) => setSendInterface(event.target.value)}
-              disabled={busy}
-              data-testid="dscp-check-send-interface"
-            />
-            <Input
+            <FormField id="dscp-check-send-interface" label={t('dscpCheck.sendInterface')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  value={sendInterface}
+                  placeholder="wlan0"
+                  onChange={(event) => setSendInterface(event.target.value)}
+                  disabled={busy}
+                  data-testid="dscp-check-send-interface"
+                />
+              )}
+            </FormField>
+            <FormField
               id="dscp-check-capture-interface"
               label={t('dscpCheck.captureInterface')}
-              value={captureInterface ?? defaultInterface}
-              placeholder="eth0"
-              onChange={(event) => setCaptureInterface(event.target.value)}
-              disabled={busy}
               error={
                 sendName !== '' && sendName === captureName
                   ? t('dscpCheck.sameInterface')
                   : undefined
               }
-              data-testid="dscp-check-capture-interface"
-            />
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  value={captureInterface ?? defaultInterface}
+                  placeholder="eth0"
+                  onChange={(event) => setCaptureInterface(event.target.value)}
+                  disabled={busy}
+                  data-testid="dscp-check-capture-interface"
+                />
+              )}
+            </FormField>
           </>
         ) : null}
       </div>
@@ -338,7 +365,7 @@ function CheckForm({
       ) : (
         <Button
           type="submit"
-          variant="solid"
+          variant="primary"
           size="sm"
           disabled={request === null}
           data-testid="dscp-check-start"
@@ -424,8 +451,7 @@ function CheckRunning({
       <div className="flex items-center gap-compact">
         <Button
           type="button"
-          variant="outline"
-          tone="red"
+          variant="secondary"
           size="sm"
           onClick={onStop}
           disabled={state.phase !== 'running'}
@@ -434,9 +460,9 @@ function CheckRunning({
           {state.phase === 'stopping' ? t('dscpCheck.stopping') : t('dscpCheck.stop')}
         </Button>
         {state.phase === 'running' && state.stopFailed ? (
-          <p className="caption text-status-error" role="alert">
+          <Alert tone="error" size="sm">
             {t('dscpCheck.stopFailed')}
-          </p>
+          </Alert>
         ) : null}
       </div>
     </div>

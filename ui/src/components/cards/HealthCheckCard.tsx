@@ -32,6 +32,11 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { useSettings } from '../../contexts/useSettings';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { Card, type CardStatus } from '../../shared/Card';
+import { CollapsibleSection } from '../../shared/CollapsibleSection';
+import { StatusIndicator } from '../../shared/StatusPill';
 import { Tooltip } from '../../shared/Tooltip';
 import { useTestRunSignal, useTestRunStore } from '../../stores/testRunStore';
 import {
@@ -47,10 +52,8 @@ import type {
   HealthCheckRunResponse,
   TestResult,
 } from '../../types/generated/health-check-run-response';
-import { Card, type Status } from '../ui/Card';
-import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { HeartPulse } from '../ui/Icons';
-import { StatusBadge } from '../ui/StatusBadge';
+import { useCardStatusLabel } from './CardStatusLabel';
 import { HealthCheckCardProtocolSections } from './HealthCheckCardProtocolSections';
 import { failuresFirst, testResultRank } from './healthCheckResultOrder';
 
@@ -63,6 +66,7 @@ interface HealthCheckCardProps {
 
 export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.Element | null {
   const { t } = useTranslation('cards');
+  const labelFor = useCardStatusLabel();
   const { cardSettings } = useSettings();
   const run = useQuery({
     queryKey: healthCheckRunKey,
@@ -120,7 +124,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.El
     return null;
   }
 
-  const getStatus = (): Status => {
+  const getStatus = (): CardStatus => {
     if (loading || isRunning) {
       return 'loading';
     }
@@ -224,7 +228,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.El
             </span>
           </Tooltip>
           <span className={cn('inline-flex items-center', spacing.gap.compact)}>
-            <StatusBadge status={statusLabel} size="sm" />
+            <StatusIndicator tone={statusLabel} label={labelFor(statusLabel)} />
             <span className={cn('body-small font-medium', statusClass)}>
               {result.success ? formatLatency(result.latency) : t('health.fail')}
             </span>
@@ -491,14 +495,19 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.El
     );
   };
 
+  const cardStatus = getStatus();
+
   return (
     <Card
       title={t('health.title')}
       icon={<HeartPulse className={iconTokens.size.md} />}
-      status={getStatus()}
+      status={cardStatus}
+      statusLabel={labelFor(cardStatus)}
+      data-testid="card"
       headerAction={
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="xs"
           onClick={(): void => {
             fetchTests().catch((): void => {
               /* surfaced through the query error */
@@ -506,15 +515,9 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.El
           }}
           disabled={isRunning}
           data-testid="health-check-run"
-          className={cn(
-            spacing.chip.sm,
-            'bg-brand-primary text-on-brand',
-            radius.md,
-            'hover:bg-brand-primary/90 transition-colors font-medium caption disabled:control-disabled disabled:cursor-not-allowed',
-          )}
         >
           {t('health.run')}
-        </button>
+        </Button>
       }
     >
       {isRunning ? <p className="body-small text-text-muted">{t('health.runningTests')}</p> : null}
@@ -531,6 +534,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.El
               variant="compact"
               defaultOpen={true}
               status={getSectionStatus(data.pingResults)}
+              statusLabel={labelFor(getSectionStatus(data.pingResults))}
             >
               {failuresFirst(data.pingResults, testResultRank).map((r) =>
                 renderTestResult(r, 'ping'),
@@ -546,6 +550,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.El
               variant="compact"
               defaultOpen={true}
               status={getSectionStatus(data.tcpResults)}
+              statusLabel={labelFor(getSectionStatus(data.tcpResults))}
             >
               {failuresFirst(data.tcpResults, testResultRank).map((r) =>
                 renderTestResult(r, 'tcp'),
@@ -561,6 +566,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.El
               variant="compact"
               defaultOpen={true}
               status={getSectionStatus(data.udpResults)}
+              statusLabel={labelFor(getSectionStatus(data.udpResults))}
             >
               {failuresFirst(data.udpResults, testResultRank).map((r) =>
                 renderTestResult(r, 'udp'),
@@ -576,6 +582,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.El
               variant="compact"
               defaultOpen={true}
               status={getSectionStatus(data.httpResults, true)}
+              statusLabel={labelFor(getSectionStatus(data.httpResults, true))}
             >
               {failuresFirst(data.httpResults, testResultRank).map((r) => renderHttpResult(r))}
             </CollapsibleSection>
@@ -584,7 +591,11 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.El
           <HealthCheckCardProtocolSections data={data} t={t} />
         </>
       ) : null}
-      {error ? <p className="body-small text-status-error">{error}</p> : null}
+      {error ? (
+        <Alert tone="error" size="sm">
+          {error}
+        </Alert>
+      ) : null}
     </Card>
   );
 }
