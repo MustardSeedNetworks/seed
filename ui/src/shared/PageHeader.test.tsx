@@ -60,6 +60,22 @@ describe('PageHeader', () => {
     expect(onClick).toHaveBeenCalledOnce();
   });
 
+  it('takes focus on click, which Safari and Firefox on macOS do not do themselves', () => {
+    render(<PageHeader {...base} help={{ label: 'Help', onClick: vi.fn() }} />);
+    const button = screen.getByRole('button', { name: 'Help' });
+    expect(document.activeElement).not.toBe(button);
+    fireEvent.click(button);
+    expect(document.activeElement).toBe(button);
+  });
+
+  it('marks the help button whose after: hit area extends past its box, for density specs', () => {
+    render(<PageHeader {...base} help={{ label: 'Help', onClick: vi.fn() }} />);
+    const button = screen.getByTestId('page-header-help-button');
+    expect(button.hasAttribute('data-touch-target-overflow')).toBe(true);
+    expect(button.className).toContain('after:-inset-2');
+    expect(document.querySelectorAll('[data-touch-target-overflow]')).toHaveLength(1);
+  });
+
   it('exposes the title as a programmatic focus target for route changes', () => {
     render(<PageHeader {...base} />);
     expect(screen.getByTestId('page-header-title').getAttribute('tabindex')).toBe('-1');

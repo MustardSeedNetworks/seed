@@ -8,9 +8,11 @@
  * The popup's own colours follow `color-scheme`, which the shared theme sets
  * per mode.
  *
- * It reports changes through `onValueChange(value)` only; the native `onChange`
- * is not exposed, so there is one way to listen. Pair it with a FormField,
- * which supplies `id` and the aria props.
+ * `onValueChange(value)` is the way to listen in app code. The native `onChange`
+ * (the event) is also passed through, for react-hook-form's `register`, which
+ * reads `event.target`; use one or the other. `ref`, `name`, `id`, `data-testid`
+ * and `aria-*` land on the `<select>`. Pair it with a FormField, which supplies
+ * `id` and the aria props.
  */
 import { ChevronDown } from 'lucide-react';
 import type { Ref, SelectHTMLAttributes } from 'react';
@@ -22,10 +24,9 @@ export interface SelectOption {
   disabled?: boolean;
 }
 
-export interface SelectProps
-  extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'children' | 'onChange'> {
+export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'children'> {
   options: readonly SelectOption[];
-  /** The one change callback: the chosen option's value, as seed's callers pass it. */
+  /** The chosen option's value, as seed's callers pass it. */
   onValueChange?: (value: string) => void;
   /** A disabled first option shown while nothing is chosen. */
   placeholder?: string;
@@ -36,6 +37,7 @@ export function Select({
   options,
   placeholder,
   onValueChange,
+  onChange,
   className,
   ref,
   ...rest
@@ -48,7 +50,10 @@ export function Select({
           'min-h-10 w-full min-w-0 appearance-none truncate rounded-lg border border-surface-border bg-surface-raised py-2 pl-3 pr-9 text-sm text-text-primary hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-text-disabled aria-[invalid=true]:border-status-error',
           className,
         )}
-        onChange={(event) => onValueChange?.(event.target.value)}
+        onChange={(event) => {
+          onChange?.(event);
+          onValueChange?.(event.target.value);
+        }}
         {...rest}
       >
         {placeholder ? (

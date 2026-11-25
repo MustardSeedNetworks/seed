@@ -50,3 +50,28 @@ describe('Alert', () => {
     expect(screen.getByText('Message').parentElement?.className).toContain('min-w-0');
   });
 });
+
+describe('Alert, in-card use', () => {
+  it('is tighter at size sm, and keeps the default at md', () => {
+    const { rerender } = render(<Alert tone="error">Message</Alert>);
+    expect(screen.getByRole('alert').className).toContain('p-3');
+    rerender(
+      <Alert tone="error" size="sm">
+        Message
+      </Alert>,
+    );
+    const { className } = screen.getByRole('alert');
+    expect(className).toContain('p-2');
+    expect(className).toContain('text-xs');
+    expect(className).not.toContain('p-3');
+  });
+
+  it('takes a test id', () => {
+    render(
+      <Alert tone="warning" size="sm" data-testid="card-alert">
+        Message
+      </Alert>,
+    );
+    expect(screen.getByTestId('card-alert').getAttribute('role')).toBe('alert');
+  });
+});

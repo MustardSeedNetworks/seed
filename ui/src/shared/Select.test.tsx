@@ -51,3 +51,45 @@ describe('Select', () => {
     expect(className).toContain('min-w-0');
   });
 });
+
+describe('Select pass-through', () => {
+  it('passes id, name, data-testid and aria-* to the <select>, and ref to it', () => {
+    let node: HTMLSelectElement | null = null;
+    render(
+      <Select
+        options={[{ value: 'a', label: 'A' }]}
+        id="s"
+        name="iface"
+        data-testid="s-select"
+        aria-label="Interface"
+        ref={(element) => {
+          node = element;
+        }}
+      />,
+    );
+    const select = screen.getByTestId('s-select');
+    expect(select.id).toBe('s');
+    expect(select.getAttribute('name')).toBe('iface');
+    expect(node).toBe(select);
+  });
+
+  it('also passes the native onChange through, for register(), alongside onValueChange', () => {
+    const onChange = vi.fn();
+    const onValueChange = vi.fn();
+    render(
+      <Select
+        aria-label="Interface"
+        options={[
+          { value: 'a', label: 'A' },
+          { value: 'b', label: 'B' },
+        ]}
+        onChange={onChange}
+        onValueChange={onValueChange}
+      />,
+    );
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'b' } });
+    expect(onChange).toHaveBeenCalledOnce();
+    expect(onChange.mock.calls[0]?.[0].target.value).toBe('b');
+    expect(onValueChange).toHaveBeenCalledExactlyOnceWith('b');
+  });
+});

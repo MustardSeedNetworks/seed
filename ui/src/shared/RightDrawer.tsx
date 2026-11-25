@@ -10,12 +10,18 @@
  * locked from scrolling while it is open.
  *
  * The body scrolls; the header (title and close) and the optional footer stay
- * put. The dialog is mounted only while open.
+ * put. A body that scrolls and holds nothing tabbable takes `tabIndex={0}`, so
+ * the keyboard can scroll it. The dialog is mounted only while open.
+ *
+ * Focus lands in the drawer in the commit that shows it, and returns to the
+ * opener on close. Where the opener cannot be found (Safari does not focus a
+ * clicked button; the drawer was opened from a timer) pass `returnFocusRef`.
  */
 import { X } from 'lucide-react';
-import { type ReactNode, useId } from 'react';
+import { type ReactNode, type RefObject, useId } from 'react';
 import { cx } from './cx';
 import { useDialog } from './useDialog';
+import { useScrollable } from './useScrollable';
 
 export interface RightDrawerProps {
   open: boolean;
@@ -27,6 +33,8 @@ export interface RightDrawerProps {
   children: ReactNode;
   /** Pinned under the body, e.g. Save and Cancel. */
   footer?: ReactNode;
+  /** Where focus goes on close when the opener cannot be found from focus or the click. */
+  returnFocusRef?: RefObject<HTMLElement | null>;
   className?: string;
   'data-testid'?: string;
 }
@@ -38,11 +46,18 @@ export function RightDrawer({
   closeLabel,
   children,
   footer,
+  returnFocusRef,
   className,
   'data-testid': testId = 'right-drawer',
 }: RightDrawerProps) {
   const titleId = useId();
-  const { panelRef, onKeyDown } = useDialog(open, onClose);
+  const { panelRef, onKeyDown } = useDialog(
+    open,
+    onClose,
+    returnFocusRef ? { returnFocusRef } : {},
+  );
+  const body = useScrollable<HTMLDivElement>({ trackTabbables: true });
+  const bodyAttributes = body.needsFocus ? { tabIndex: 0, role: 'group', 'aria-label': title } : {};
 
   if (!open) {
     return null;
@@ -83,7 +98,13 @@ export function RightDrawer({
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4">{children}</div>
+        <div
+          ref={body.ref}
+          {...bodyAttributes}
+          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-primary"
+        >
+          {children}
+        </div>
         {footer ? (
           <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-hairline px-4 py-3">
             {footer}

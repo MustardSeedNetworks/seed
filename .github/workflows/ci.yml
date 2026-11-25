@@ -921,7 +921,7 @@ jobs:
   # of .github@main (a canonical change there reaches this repo only when this
   # pin moves).
   ci-conformance:
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@1b2763fa57a88f5e3abbf986ed5197b4bb3e0301 # .github#274, untagged
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@986e485c5e832d29b52b100d77658e22b7764523 # .github#290, untagged
     permissions:
       contents: read
       id-token: write
@@ -1190,7 +1190,7 @@ jobs:
       # ci-conformance verifies the same set; this step fails the i18n job's
       # run early and names the drifted file.
       - name: Verify shared UI copies
-        uses: MustardSeedNetworks/.github/.github/actions/ui-shared-verify@1b2763fa57a88f5e3abbf986ed5197b4bb3e0301 # .github#274, untagged
+        uses: MustardSeedNetworks/.github/.github/actions/ui-shared-verify@986e485c5e832d29b52b100d77658e22b7764523 # .github#290, untagged
 
   # ===========================================================================
   # Documentation Checks

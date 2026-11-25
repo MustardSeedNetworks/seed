@@ -9,17 +9,26 @@
  * A real button with `role="switch"` and `aria-checked`, named by its label
  * (a <label> names any labelable element, a button included), so a click on
  * the text toggles it and a screen reader announces "<label>, switch, on".
+ * The track is 24px tall (WCAG 2.5.8). `id`, `name`, `data-testid` and any
+ * `aria-*` land on the switch button, so a spec's `getByTestId` reaches the
+ * control and a plain `<label htmlFor>` elsewhere can name it.
  */
-import { useId } from 'react';
+import { type ButtonHTMLAttributes, type ReactNode, useId } from 'react';
 import { cx } from './cx';
 
-export interface ToggleProps {
+type NativeProps = Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  'onChange' | 'onClick' | 'role' | 'type' | 'className' | 'children' | 'aria-checked' | 'disabled'
+>;
+
+export interface ToggleProps extends NativeProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
-  label: string;
+  label: ReactNode;
   /** One line under the label, linked as the switch's description. */
   description?: string;
   disabled?: boolean;
+  /** Classes for the wrapper. */
   className?: string;
 }
 
@@ -30,8 +39,11 @@ export function Toggle({
   description,
   disabled,
   className,
+  id: requestedId,
+  ...rest
 }: ToggleProps) {
-  const id = useId();
+  const generatedId = useId();
+  const id = requestedId ?? generatedId;
   const descriptionId = `${id}-description`;
   return (
     <div className={cx('flex items-start justify-between gap-4', className)}>
@@ -52,11 +64,16 @@ export function Toggle({
         ) : null}
       </div>
       <button
+        {...rest}
         id={id}
         type="button"
         role="switch"
         aria-checked={checked}
-        aria-describedby={description ? descriptionId : undefined}
+        aria-describedby={
+          [rest['aria-describedby'], description ? descriptionId : undefined]
+            .filter(Boolean)
+            .join(' ') || undefined
+        }
         disabled={disabled}
         onClick={() => onChange(!checked)}
         data-state={checked ? 'on' : 'off'}

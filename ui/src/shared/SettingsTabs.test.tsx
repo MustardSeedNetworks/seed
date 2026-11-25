@@ -73,12 +73,48 @@ describe('SettingsTabs', () => {
     expect(screen.getByRole('tab', { name: 'General' }).getAttribute('aria-selected')).toBe('true');
   });
 
-  it('scrolls the strip inside itself at 390px and declares it', () => {
+  it('wraps onto more rows at 390px instead of scrolling, so no tab is hidden', () => {
     render(<Harness />);
-    const scroller = screen.getByRole('tablist').parentElement;
-    expect(scroller?.className).toContain('overflow-x-auto');
-    expect(scroller?.getAttribute('data-phone-width-exempt')).toBe('tab-scroll');
-    expect(screen.getByRole('tablist').className).toContain('min-w-max');
+    const list = screen.getByRole('tablist');
+    expect(list.className).toContain('flex-wrap');
+    expect(list.className).not.toContain('min-w-max');
+    expect(list.className).not.toContain('overflow-x');
+    expect(list.parentElement?.className).not.toContain('overflow-x');
+    expect(document.querySelector('[data-phone-width-exempt]')).toBeNull();
+  });
+
+  it('shows all eight tabs of a Help drawer, each a visible, focusable-by-arrow tab', () => {
+    const help = ['overview', 'pages', 'shortcuts', 'glossary', 'faq', 'tips', 'support', 'about'];
+    render(
+      <SettingsTabs
+        tabs={help.map((id) => ({ id, label: id }))}
+        value="overview"
+        onChange={() => {}}
+        label="Help sections"
+      >
+        <p>x</p>
+      </SettingsTabs>,
+    );
+    expect(screen.getAllByRole('tab')).toHaveLength(8);
+    for (const tab of screen.getAllByRole('tab')) {
+      expect(tab.hasAttribute('hidden')).toBe(false);
+      expect(tab.className).not.toContain('sr-only');
+    }
+  });
+
+  it('adds no vertical overflow: no negative margin on the tabs, the underline is inside the tab', () => {
+    render(<Harness />);
+    for (const tab of screen.getAllByRole('tab')) {
+      expect(tab.className).not.toMatch(/(^|\s)-m[btlrxy]?-/);
+      expect(tab.className).toContain('border-b-2');
+    }
+  });
+
+  it('keeps every tab at the 44px touch target', () => {
+    render(<Harness />);
+    for (const tab of screen.getAllByRole('tab')) {
+      expect(tab.className).toContain('min-h-11');
+    }
   });
 
   it('hides tab icons from assistive technology', () => {
@@ -86,11 +122,12 @@ describe('SettingsTabs', () => {
     expect(screen.getByTestId('icon').parentElement?.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('keeps the strip pinned on its own, with a background and no dependence on the container padding', () => {
+  it('pins the strip from sm up on its own, with a background and no dependence on the container padding', () => {
     render(<Harness />);
-    const strip = screen.getByRole('tablist').parentElement?.parentElement;
-    expect(strip?.className).toContain('sticky');
-    expect(strip?.className).toContain('top-0');
+    const strip = screen.getByRole('tablist').parentElement;
+    expect(strip?.className).toContain('sm:sticky');
+    expect(strip?.className).toContain('sm:top-0');
+    expect(strip?.className).not.toMatch(/(^|\s)sticky/);
     expect(strip?.className).toContain('bg-surface-raised');
     expect(strip?.className).not.toMatch(/(^|\s)-(m|mx|mt|top)-/);
   });

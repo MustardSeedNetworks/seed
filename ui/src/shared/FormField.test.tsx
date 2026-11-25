@@ -60,3 +60,65 @@ describe('FormField', () => {
     expect(container.firstElementChild?.className).toContain('w-full');
   });
 });
+
+describe('FormField, covering niac and seed forms', () => {
+  it('takes a ReactNode label', () => {
+    render(
+      <FormField label={<span data-testid="rich">Timeout (ms)</span>}>
+        {(control) => <input {...control} />}
+      </FormField>,
+    );
+    expect(screen.getByTestId('rich')).toBeTruthy();
+    expect(screen.getByLabelText('Timeout (ms)').tagName).toBe('INPUT');
+  });
+
+  it('puts a help control beside the label, not inside it, so the label names only the control', () => {
+    render(
+      <FormField
+        label="Community"
+        labelAccessory={
+          <button type="button" aria-label="About community">
+            ?
+          </button>
+        }
+      >
+        {(control) => <input {...control} />}
+      </FormField>,
+    );
+    expect(screen.getByLabelText('Community').tagName).toBe('INPUT');
+    const help = screen.getByRole('button', { name: 'About community' });
+    expect(help.closest('label')).toBeNull();
+    expect(help.parentElement).toBe(screen.getByText('Community').closest('label')?.parentElement);
+  });
+
+  it('takes a ReactNode hint and error', () => {
+    render(
+      <FormField label="Name" hint={<em>Shown in the rail</em>} error={<strong>Required</strong>}>
+        {(control) => <input {...control} />}
+      </FormField>,
+    );
+    expect(screen.getByRole('alert').querySelector('strong')?.textContent).toBe('Required');
+    expect(screen.getByText('Shown in the rail').tagName).toBe('EM');
+  });
+
+  it('accepts plain children with an explicit id and derives the hint and error ids from it', () => {
+    render(
+      <FormField label="Name" id="name" hint="A hint" error="Bad">
+        <input id="name" aria-describedby="name-hint name-error" />
+      </FormField>,
+    );
+    expect(screen.getByLabelText('Name').id).toBe('name');
+    expect(document.getElementById('name-hint')?.textContent).toBe('A hint');
+    expect(document.getElementById('name-error')?.textContent).toBe('Bad');
+  });
+
+  it('shows the required marker next to the label and keeps it out of the accessible name', () => {
+    render(
+      <FormField label="Name" required>
+        {(control) => <input {...control} />}
+      </FormField>,
+    );
+    expect(screen.getByRole('textbox', { name: 'Name' })).toBeTruthy();
+    expect(screen.getByText('*').className).toContain('text-status-error-strong');
+  });
+});

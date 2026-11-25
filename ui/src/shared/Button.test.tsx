@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Button } from './Button';
+import { Button, ButtonLink } from './Button';
 
 afterEach(cleanup);
 
@@ -118,5 +118,135 @@ describe('Button', () => {
       const missing = <Button iconOnly icon={<svg />} />;
       expect(missing).toBeTruthy();
     });
+  });
+});
+
+describe('Button xs', () => {
+  it('is a 24px target, the WCAG 2.5.8 floor, with the small type', () => {
+    render(<Button size="xs">Edit</Button>);
+    const { className } = screen.getByRole('button', { name: 'Edit' });
+    expect(className).toContain('min-h-6');
+    expect(className).toContain('px-2');
+    expect(className).toContain('text-xs');
+  });
+
+  it('is a 24px square when icon-only', () => {
+    render(<Button size="xs" iconOnly icon={<svg />} aria-label="Edit" />);
+    const { className } = screen.getByRole('button', { name: 'Edit' });
+    expect(className).toContain('h-6');
+    expect(className).toContain('w-6');
+  });
+});
+
+describe('ButtonLink', () => {
+  it('is an anchor with the Button look, variant marker and icon', () => {
+    render(
+      <ButtonLink href="/surveys" variant="primary" icon={<svg data-testid="icon" />}>
+        Surveys
+      </ButtonLink>,
+    );
+    const link = screen.getByRole('link', { name: 'Surveys' });
+    expect(link.getAttribute('href')).toBe('/surveys');
+    expect(link.getAttribute('data-variant')).toBe('primary');
+    expect(link.className).toContain('bg-brand-primary');
+    expect(link.className).toContain('min-h-10');
+    expect(link.className).toContain('no-underline');
+    expect(screen.getByTestId('icon').parentElement?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('has exactly the classes of the Button of the same variant and size', () => {
+    render(
+      <>
+        <Button variant="destructive" size="sm">
+          Act
+        </Button>
+        <ButtonLink href="/x" variant="destructive" size="sm">
+          Go
+        </ButtonLink>
+      </>,
+    );
+    const button = screen.getByRole('button', { name: 'Act' }).className;
+    const link = screen.getByRole('link', { name: 'Go' }).className.replace(' no-underline', '');
+    expect(link).toBe(button);
+  });
+
+  it('renders a router link through renderLink with the same look and the content', () => {
+    render(
+      <ButtonLink
+        variant="secondary"
+        size="xs"
+        renderLink={(props) => <a href="/routed" data-router="" {...props} />}
+      >
+        Routed
+      </ButtonLink>,
+    );
+    const link = screen.getByRole('link', { name: 'Routed' });
+    expect(link.getAttribute('data-router')).toBe('');
+    expect(link.getAttribute('data-variant')).toBe('secondary');
+    expect(link.className).toContain('min-h-6');
+    expect(link.className).toContain('border-surface-border');
+  });
+
+  it('needs an aria-label when icon-only, and passes it through renderLink', () => {
+    render(
+      <ButtonLink
+        iconOnly
+        icon={<svg />}
+        aria-label="Open survey"
+        renderLink={(props) => <a href="/s" {...props} />}
+      />,
+    );
+    const link = screen.getByRole('link', { name: 'Open survey' });
+    expect(link.className).toContain('h-10');
+    expect(link.className).toContain('w-10');
+  });
+
+  it('when disabled is not navigable: no href, out of the tab order, aria-disabled', () => {
+    const onClick = vi.fn();
+    render(
+      <ButtonLink href="/x" disabled onClick={onClick}>
+        Locked
+      </ButtonLink>,
+    );
+    const link = screen.getByRole('link', { name: 'Locked' });
+    expect(link.hasAttribute('href')).toBe(false);
+    expect(link.getAttribute('aria-disabled')).toBe('true');
+    expect(link.getAttribute('tabindex')).toBe('-1');
+    expect(link.className).toContain('aria-disabled:cursor-not-allowed');
+    fireEvent.click(link);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('swallows the click of a disabled routed link', () => {
+    const onClick = vi.fn();
+    render(
+      <ButtonLink
+        disabled
+        renderLink={(props) => (
+          <a href="/x" {...props} data-testid="routed">
+            {props.children}
+          </a>
+        )}
+      >
+        Locked
+      </ButtonLink>,
+    );
+    const routed = screen.getByTestId('routed');
+    routed.addEventListener('click', onClick);
+    expect(fireEvent.click(routed)).toBe(false);
+    expect(routed.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('forwards anchor attributes and calls onClick when enabled', () => {
+    const onClick = vi.fn();
+    render(
+      <ButtonLink href="/x" target="_blank" rel="noreferrer" onClick={onClick}>
+        Out
+      </ButtonLink>,
+    );
+    const link = screen.getByRole('link', { name: 'Out' });
+    expect(link.getAttribute('target')).toBe('_blank');
+    fireEvent.click(link);
+    expect(onClick).toHaveBeenCalledOnce();
   });
 });

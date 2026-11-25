@@ -4,6 +4,10 @@
  * FormField, which supplies `id` and the aria props to spread on the control:
  *
  *   <FormField label="Name">{(control) => <Input {...control} value={v} onChange={...} />}</FormField>
+ *
+ * Every native attribute passes through to the input (`id`, `name`,
+ * `data-testid`, `aria-*`, `autoComplete`, `inputMode`...), and `ref` is the
+ * input's, so react-hook-form's `{...register('name')}` works unchanged.
  */
 import type { InputHTMLAttributes, Ref } from 'react';
 import { cx } from './cx';

@@ -56,3 +56,31 @@ describe('Toggle', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
+describe('Toggle, pass-through and target size', () => {
+  it('passes id, name, data-testid and aria-* to the switch, and the label follows the id', () => {
+    render(
+      <Toggle
+        checked={false}
+        onChange={() => {}}
+        label="Updates"
+        id="updates"
+        name="updates"
+        data-testid="updates-switch"
+        aria-describedby="elsewhere"
+        description="Off by default"
+      />,
+    );
+    const toggle = screen.getByTestId('updates-switch');
+    expect(toggle).toBe(screen.getByRole('switch', { name: 'Updates' }));
+    expect(toggle.id).toBe('updates');
+    expect(toggle.getAttribute('name')).toBe('updates');
+    expect(toggle.getAttribute('aria-describedby')).toBe('elsewhere updates-description');
+  });
+
+  it('is a 24px-tall track and takes a ReactNode label', () => {
+    render(<Toggle checked onChange={() => {}} label={<b data-testid="rich">Rich</b>} />);
+    expect(screen.getByRole('switch').className).toContain('h-6');
+    expect(screen.getByTestId('rich')).toBeTruthy();
+  });
+});

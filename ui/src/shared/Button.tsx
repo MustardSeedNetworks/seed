@@ -24,15 +24,30 @@
  * and a not-allowed cursor, not just a fade. A fade makes a primary button
  * read as a secondary one. Say why in a `title` or the surrounding copy.
  *
+ * `size` is `xs` (24px, the WCAG 2.5.8 floor, for dense toolbars and table
+ * rows), `sm` (32px) or `md` (40px).
+ *
+ * ButtonLink is the same control as a link: an `<a href>` by default, or a
+ * router link through `renderLink`, with the same variants, sizes and icon.
+ * Use it where the action navigates; use Button where it acts. It replaces
+ * trellis's and niac's LinkButton.
+ *
  * There is no permission hook. A product decides whether to render or disable
  * a button at the call site, where the permission is known.
  */
 import { LoaderCircle } from 'lucide-react';
-import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
+import type {
+  AnchorHTMLAttributes,
+  ButtonHTMLAttributes,
+  MouseEvent,
+  MouseEventHandler,
+  ReactNode,
+  Ref,
+} from 'react';
 import { cx } from './cx';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
-export type ButtonSize = 'sm' | 'md';
+export type ButtonSize = 'xs' | 'sm' | 'md';
 
 type NativeProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
@@ -81,14 +96,26 @@ const variants: Record<ButtonVariant, string> = {
 };
 
 const sizes: Record<ButtonSize, string> = {
+  xs: 'min-h-6 px-2 text-xs',
   sm: 'min-h-8 px-3 text-xs',
   md: 'min-h-10 px-4 text-sm',
 };
 
 const iconOnlySizes: Record<ButtonSize, string> = {
+  xs: 'h-6 w-6',
   sm: 'h-8 w-8',
   md: 'h-10 w-10',
 };
+
+/** The look shared by Button and ButtonLink, so a link reads as the same control. */
+export function buttonClass(
+  variant: ButtonVariant,
+  size: ButtonSize,
+  iconOnly: boolean,
+  className?: string,
+): string {
+  return cx(base, variants[variant], iconOnly ? iconOnlySizes[size] : sizes[size], className);
+}
 
 export function Button(props: ButtonProps) {
   const {
@@ -111,12 +138,7 @@ export function Button(props: ButtonProps) {
       data-variant={variant}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={cx(
-        base,
-        variants[variant],
-        iconOnly ? iconOnlySizes[size] : sizes[size],
-        className,
-      )}
+      className={buttonClass(variant, size, iconOnly === true, className)}
       {...rest}
     >
       {loading ? (
@@ -126,5 +148,97 @@ export function Button(props: ButtonProps) {
       )}
       {props.iconOnly ? undefined : props.children}
     </button>
+  );
+}
+
+/** What `renderLink` receives: spread it onto the router's link component. */
+export interface ButtonLinkRenderProps {
+  className: string;
+  children: ReactNode;
+  'data-variant': ButtonVariant;
+  'aria-label'?: string;
+  'aria-disabled'?: true;
+  tabIndex?: -1;
+  onClick?: MouseEventHandler<HTMLElement>;
+}
+
+interface LinkCommonProps {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  /** Not navigable: rendered `aria-disabled`, out of the tab order, its click swallowed. */
+  disabled?: boolean;
+  className?: string;
+  ref?: Ref<HTMLAnchorElement>;
+}
+
+type PlainLinkProps = LinkCommonProps &
+  Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'className' | 'children' | 'aria-label'> & {
+    /** Renders a router link instead of an `<a>`; omit `href` then, the router owns it. */
+    renderLink?: never;
+  };
+
+type RoutedLinkProps = LinkCommonProps & {
+  renderLink: (props: ButtonLinkRenderProps) => ReactNode;
+  href?: never;
+};
+
+type LinkContentProps =
+  | { iconOnly?: false; icon?: ReactNode; children: ReactNode; 'aria-label'?: string }
+  | { iconOnly: true; icon: ReactNode; 'aria-label': string; children?: never };
+
+export type ButtonLinkProps = (PlainLinkProps | RoutedLinkProps) & LinkContentProps;
+
+export function ButtonLink(props: ButtonLinkProps) {
+  const {
+    variant = 'secondary',
+    size = 'md',
+    disabled = false,
+    className,
+    icon,
+    iconOnly,
+    renderLink,
+    children: _children,
+    ref,
+    ...rest
+  } = props;
+  const content = (
+    <>
+      {icon === undefined ? null : <span aria-hidden="true">{icon}</span>}
+      {props.iconOnly ? undefined : props.children}
+    </>
+  );
+  const shared = {
+    className: buttonClass(variant, size, iconOnly === true, cx('no-underline', className)),
+    'data-variant': variant,
+    ...(disabled
+      ? {
+          'aria-disabled': true as const,
+          tabIndex: -1 as const,
+          onClick: (event: MouseEvent<HTMLElement>) => event.preventDefault(),
+        }
+      : {}),
+  };
+  if (renderLink) {
+    const label = props['aria-label'];
+    return renderLink({
+      ...shared,
+      ...(label === undefined ? {} : { 'aria-label': label }),
+      children: content,
+    });
+  }
+  // Without an href an <a> is inert, so a disabled link needs no click guard.
+  const { href, onClick, ...anchor } = rest as AnchorHTMLAttributes<HTMLAnchorElement>;
+  const live = disabled ? {} : { href, onClick };
+  return (
+    <a
+      ref={ref}
+      {...anchor}
+      {...live}
+      className={shared.className}
+      data-variant={variant}
+      {...(disabled ? { role: 'link', 'aria-disabled': true, tabIndex: -1 } : {})}
+    >
+      {content}
+    </a>
   );
 }

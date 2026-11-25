@@ -3,6 +3,12 @@
  * one). Tone is one of the status four; the icon and the text carry it as well
  * as the colour. `error` and `warning` announce at once (`role="alert"`),
  * `success` and `info` politely (`role="status"`).
+ *
+ * `size="sm"` is the in-card form: seed's dashboard cards hand-roll a padded,
+ * tinted `role="alert"` block with 12px text for a failed probe, and this is it,
+ * tighter padding and no title. A card whose whole body is an error or a loading
+ * state uses Card's own `error` and `loading`; use an Alert for a message that sits
+ * beside content.
  */
 import { CircleCheck, CircleX, Info, TriangleAlert, X } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -14,10 +20,13 @@ export interface AlertProps {
   tone: AlertTone;
   title?: string;
   children: ReactNode;
+  /** `sm` for inside a card. */
+  size?: 'md' | 'sm';
   onDismiss?: () => void;
   /** Accessible name of the dismiss button; required with `onDismiss`. */
   dismissLabel?: string;
   className?: string;
+  'data-testid'?: string;
 }
 
 const tones = {
@@ -43,14 +52,26 @@ const tones = {
   },
 } as const;
 
-export function Alert({ tone, title, children, onDismiss, dismissLabel, className }: AlertProps) {
+export function Alert({
+  tone,
+  title,
+  children,
+  size = 'md',
+  onDismiss,
+  dismissLabel,
+  className,
+  'data-testid': testId,
+}: AlertProps) {
   const { box, icon, Icon } = tones[tone];
+  const compact = size === 'sm';
   return (
     <div
       role={tone === 'error' || tone === 'warning' ? 'alert' : 'status'}
       data-tone={tone}
+      data-testid={testId}
       className={cx(
-        'flex items-start gap-3 rounded-lg border p-3 text-sm text-text-primary',
+        'flex items-start rounded-lg border text-text-primary',
+        compact ? 'gap-2 p-2 text-xs' : 'gap-3 p-3 text-sm',
         box,
         className,
       )}

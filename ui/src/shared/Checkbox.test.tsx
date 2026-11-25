@@ -31,3 +31,50 @@ describe('Checkbox', () => {
     expect(box.disabled).toBe(true);
   });
 });
+
+describe('Checkbox, target size and pass-through', () => {
+  it('is a 24px box, the WCAG 2.5.8 minimum, and its label is part of the target', () => {
+    render(<Checkbox checked={false} onChange={() => {}} label="A" />);
+    const box = screen.getByRole('checkbox');
+    expect(box.className).toContain('h-6');
+    expect(box.className).toContain('w-6');
+    expect(box.className).not.toMatch(/(^|\s)(h|w)-4(\s|$)/);
+    expect(screen.getByText('A').className).toContain('min-h-6');
+  });
+
+  it('passes id, name, data-testid and aria-* to the input, and the label follows the id', () => {
+    render(
+      <Checkbox
+        checked={false}
+        onChange={() => {}}
+        label="Include logs"
+        id="logs"
+        name="logs"
+        data-testid="logs-box"
+        aria-describedby="elsewhere"
+        description="Adds 2 MB"
+      />,
+    );
+    const box = screen.getByTestId('logs-box');
+    expect(box).toBe(screen.getByLabelText('Include logs'));
+    expect(box.id).toBe('logs');
+    expect(box.getAttribute('name')).toBe('logs');
+    expect(box.getAttribute('aria-describedby')).toBe('elsewhere logs-description');
+  });
+
+  it('takes a ReactNode label and a ref to the input', () => {
+    let node: HTMLInputElement | null = null;
+    render(
+      <Checkbox
+        checked
+        onChange={() => {}}
+        label={<span data-testid="rich">Rich</span>}
+        ref={(element) => {
+          node = element;
+        }}
+      />,
+    );
+    expect(screen.getByTestId('rich')).toBeTruthy();
+    expect((node as HTMLInputElement | null)?.type).toBe('checkbox');
+  });
+});

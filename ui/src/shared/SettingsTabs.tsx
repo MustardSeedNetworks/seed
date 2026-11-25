@@ -1,21 +1,30 @@
 /**
- * SettingsTabs: the tab strip and panel Settings uses in every product.
+ * SettingsTabs: the tab strip and panel Settings and Help use in every product.
  *
  * niac's Settings drawer is the reference (an icon and a label per tab, an
  * underline on the active one). seed's drawer, stem's accordion and trellis's
- * nothing all give way to it. It lives inside a RightDrawer.
+ * nothing all give way to it, and it replaces niac's Help tabs too. It lives
+ * inside a RightDrawer.
  *
- * The strip scrolls sideways inside itself when the tabs outrun the width
- * (390px), and says so with `data-phone-width-exempt`. Keyboard follows the
- * WAI-ARIA tabs pattern: arrows, Home and End move and select, and only the
- * active tab is in the Tab order.
+ * The strip WRAPS onto further rows when the tabs outrun the width; it never
+ * scrolls. At 390px an 8-tab Help drawer (Overview, Pages, Shortcuts, Glossary,
+ * FAQ, About ...) needs three rows, and every tab is visible and reachable
+ * without discovering a scroller. The alternatives lose: a scroll strip hides
+ * tabs off-screen behind an affordance a tester has to find (niac's Glossary,
+ * Shortcuts and FAQ sat off-screen in review, e2e D1), and a scroll strip with
+ * an overflow menu doubles the keyboard model (arrow keys inside, a menu for the
+ * rest). Wrapping costs vertical room, so the strip pins to the top of the
+ * scrolling panel only from `sm` up, where it is one or two rows; at 390px it
+ * scrolls away with the content instead of taking a third of the screen.
+ *
+ * Keyboard follows the WAI-ARIA tabs pattern: arrows, Home and End move and
+ * select, and only the active tab is in the Tab order (roving tabindex). The
+ * dialog's focus trap treats `tabindex="-1"` as not tabbable, so that is safe
+ * as the last stop in a modal drawer.
  *
  * Pass the active panel's content as `children`; the caller picks it from
- * `value`, so only one panel is mounted. The strip is self-contained: it
- * sticks to the top of whatever scrolls it, with its own background, and
- * assumes nothing about the container's padding. Inside a RightDrawer the body
- * is padded, so the strip sits inset with the content and the panel scrolls
- * under it.
+ * `value`, so only one panel is mounted. The strip has its own background and
+ * assumes nothing about the container's padding.
  */
 import { type KeyboardEvent, type ReactNode, useId, useRef } from 'react';
 import { cx } from './cx';
@@ -69,44 +78,39 @@ export function SettingsTabs({
 
   return (
     <div className={className}>
-      <div className="sticky top-0 z-10 bg-surface-raised">
+      <div className="border-b border-hairline bg-surface-raised sm:sticky sm:top-0 sm:z-10">
         <div
-          className="overflow-x-auto border-b border-hairline"
-          data-phone-width-exempt="tab-scroll"
+          ref={listRef}
+          role="tablist"
+          aria-label={label}
+          aria-orientation="horizontal"
+          onKeyDown={onKeyDown}
+          className="flex flex-wrap gap-x-1"
         >
-          <div
-            ref={listRef}
-            role="tablist"
-            aria-label={label}
-            aria-orientation="horizontal"
-            onKeyDown={onKeyDown}
-            className="flex min-w-max gap-1"
-          >
-            {tabs.map((tab) => {
-              const selected = tab.id === value;
-              return (
-                <button
-                  key={tab.id}
-                  id={tabId(tab.id)}
-                  type="button"
-                  role="tab"
-                  aria-selected={selected}
-                  aria-controls={`${prefix}-panel`}
-                  tabIndex={selected ? 0 : -1}
-                  onClick={() => onChange(tab.id)}
-                  className={cx(
-                    '-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-3 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-primary',
-                    selected
-                      ? 'border-brand-primary text-text-primary'
-                      : 'border-transparent text-text-muted hover:text-text-primary',
-                  )}
-                >
-                  {tab.icon ? <span aria-hidden="true">{tab.icon}</span> : null}
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+          {tabs.map((tab) => {
+            const selected = tab.id === value;
+            return (
+              <button
+                key={tab.id}
+                id={tabId(tab.id)}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                aria-controls={`${prefix}-panel`}
+                tabIndex={selected ? 0 : -1}
+                onClick={() => onChange(tab.id)}
+                className={cx(
+                  'inline-flex min-h-11 items-center gap-2 border-b-2 px-3 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-primary',
+                  selected
+                    ? 'border-brand-primary text-text-primary'
+                    : 'border-transparent text-text-muted hover:text-text-primary',
+                )}
+              >
+                {tab.icon ? <span aria-hidden="true">{tab.icon}</span> : null}
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
       <div id={`${prefix}-panel`} role="tabpanel" aria-labelledby={tabId(value)} className="pt-4">

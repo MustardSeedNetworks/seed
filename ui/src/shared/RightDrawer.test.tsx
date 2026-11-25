@@ -1,6 +1,8 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { useRef, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RightDrawer } from './RightDrawer';
+import { SettingsTabs } from './SettingsTabs';
 
 afterEach(cleanup);
 
@@ -87,5 +89,103 @@ describe('RightDrawer', () => {
     expect(screen.getByRole('button', { name: 'Done' }).parentElement?.className).toContain(
       'shrink-0',
     );
+  });
+});
+
+function Toggler() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        opener
+      </button>
+      <RightDrawer open={open} onClose={() => setOpen(false)} title="Help" closeLabel="Close">
+        <input aria-label="Search" />
+      </RightDrawer>
+    </>
+  );
+}
+
+function HelpDrawer() {
+  const [tab, setTab] = useState('overview');
+  const ids = ['overview', 'pages', 'shortcuts', 'glossary', 'faq', 'tips', 'support', 'about'];
+  return (
+    <RightDrawer open onClose={() => {}} title="Help" closeLabel="Close">
+      <SettingsTabs
+        tabs={ids.map((id) => ({ id, label: id }))}
+        value={tab}
+        onChange={setTab}
+        label="Help sections"
+      >
+        <p>{`panel:${tab}`}</p>
+      </SettingsTabs>
+    </RightDrawer>
+  );
+}
+
+function RefHost() {
+  const target = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" ref={target}>
+        owner
+      </button>
+      <button type="button" onClick={() => setOpen(true)}>
+        opener
+      </button>
+      <RightDrawer
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Help"
+        closeLabel="Close"
+        returnFocusRef={target}
+      >
+        <p>x</p>
+      </RightDrawer>
+    </>
+  );
+}
+
+describe('RightDrawer focus', () => {
+  it('returns focus to the opener when the click did not focus it (Safari, Firefox on macOS)', () => {
+    render(<Toggler />);
+    const opener = screen.getByRole('button', { name: 'opener' });
+    fireEvent.click(opener);
+    expect(document.activeElement).not.toBe(opener);
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it('honours an explicit returnFocusRef', () => {
+    render(<RefHost />);
+    fireEvent.click(screen.getByRole('button', { name: 'opener' }));
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'owner' }));
+  });
+
+  it('keeps Tab inside a drawer whose last stop is a roving-tabindex tab list (8-tab Help)', () => {
+    render(<HelpDrawer />);
+    const dialog = screen.getByRole('dialog');
+    const active = screen.getByRole('tab', { name: 'overview' });
+    act(() => active.focus());
+    expect(fireEvent.keyDown(active, { key: 'Tab' })).toBe(false);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Close' }));
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    expect(screen.getAllByRole('tab')).toHaveLength(8);
+  });
+
+  it('makes a scrolling body with nothing tabbable keyboard-scrollable', () => {
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(900);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(300);
+    render(
+      <RightDrawer open onClose={() => {}} title="Help" closeLabel="Close">
+        <p>Long read-only text</p>
+      </RightDrawer>,
+    );
+    const body = screen.getByText('Long read-only text').parentElement;
+    expect(body?.getAttribute('tabindex')).toBe('0');
+    expect(body?.getAttribute('aria-label')).toBe('Help');
+    vi.restoreAllMocks();
   });
 });

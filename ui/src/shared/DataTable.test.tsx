@@ -1,7 +1,13 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DataTable, type DataTableColumn, type DataTableLabels } from './DataTable';
+import {
+  DataTable,
+  type DataTableColumn,
+  type DataTableLabels,
+  type DataTableProps,
+  type DataTableSelection,
+} from './DataTable';
 
 afterEach(cleanup);
 
@@ -29,8 +35,8 @@ const columns: DataTableColumn<Device>[] = [
 ];
 
 const labels: DataTableLabels<Device> = {
-  selectAll: 'Select all',
   selectRow: (d) => `Select ${d.name}`,
+  selectAll: 'Select all',
   actions: 'Actions',
   loading: 'Loading devices',
   pagination: 'Pages',
@@ -46,7 +52,9 @@ function names(): string[] {
     .map((row) => within(row).getAllByRole('cell')[0]?.textContent ?? '');
 }
 
-const table = (extra: Partial<React.ComponentProps<typeof DataTable<Device>>> = {}) => (
+type Extra = Partial<DataTableProps<Device>>;
+
+const table = (extra: Extra = {}) => (
   <DataTable
     rows={devices}
     columns={columns}
@@ -60,7 +68,9 @@ const table = (extra: Partial<React.ComponentProps<typeof DataTable<Device>>> = 
 
 function SelectableTable() {
   const [selectedKeys, setSelected] = useState<ReadonlySet<string>>(new Set());
-  return table({ selection: { selectedKeys, onChange: setSelected } });
+  return table({
+    selection: { selectedKeys, onChange: setSelected },
+  });
 }
 
 describe('DataTable', () => {
@@ -307,5 +317,412 @@ describe('DataTable', () => {
       expect(screen.getByRole('navigation', { name: 'Pages' })).toBeTruthy();
       expect(screen.getByRole('table').getAttribute('aria-rowcount')).toBeNull();
     });
+  });
+});
+
+const ordered = (keys: Iterable<string>) => [...keys].sort((a, b) => a.localeCompare(b));
+const frameOf = () => screen.getByRole('table').parentElement as HTMLElement;
+const many = (count: number): Device[] =>
+  Array.from({ length: count }, (_, i) => ({ id: `${i}`, name: `d${i}`, ports: i }));
+
+describe('DataTable containment and keyboard access', () => {
+  it('makes the scroll frame a containing block, so sr-only text cannot widen the page', () => {
+    render(table({ rowActions: (d) => <button type="button">{`Edit ${d.name}`}</button> }));
+    expect(frameOf().className).toContain('relative');
+    expect(frameOf().className).toContain('overflow-x-auto');
+    const actionsHeader = screen.getByRole('columnheader', { name: 'Actions' });
+    expect(actionsHeader.className).toContain('relative');
+    expect(actionsHeader.querySelector('.sr-only')).toBeTruthy();
+    expect(screen.getByRole('table').querySelector('caption')?.className).toContain('sr-only');
+  });
+
+  describe('when the frame scrolls', () => {
+    function stubOverflow() {
+      vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(900);
+      vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(358);
+    }
+
+    it('is a focusable, labelled group', () => {
+      stubOverflow();
+      render(table());
+      const frame = screen.getByRole('group', { name: 'Devices' });
+      expect(frame).toBe(frameOf());
+      expect(frame.getAttribute('tabindex')).toBe('0');
+      expect(frame.className).toContain('focus-visible:outline');
+      vi.restoreAllMocks();
+    });
+
+    it('is focusable even when it also holds buttons', () => {
+      stubOverflow();
+      render(table({ rowActions: () => <button type="button">Edit</button> }));
+      expect(frameOf().getAttribute('tabindex')).toBe('0');
+      vi.restoreAllMocks();
+    });
+  });
+
+  it('leaves the frame out of the tab order and unlabelled while nothing overflows', () => {
+    render(table());
+    expect(frameOf().hasAttribute('tabindex')).toBe(false);
+    expect(screen.queryByRole('group')).toBeNull();
+  });
+
+  it('keeps sort buttons, checkboxes and expand toggles at least 24px', () => {
+    render(
+      table({
+        selection: { selectedKeys: new Set(), onChange: () => {} },
+        expandable: {
+          render: () => 'x',
+          columnLabel: 'Details',
+          toggleLabel: (d) => `Show ${d.name}`,
+        },
+      }),
+    );
+    for (const button of within(screen.getByRole('columnheader', { name: /Name/ })).getAllByRole(
+      'button',
+    )) {
+      expect(button.className).toContain('min-h-6');
+      expect(button.className).toContain('min-w-6');
+    }
+    for (const box of screen.getAllByRole('checkbox')) {
+      expect(box.className).toContain('h-6');
+      expect(box.className).toContain('w-6');
+    }
+    expect(screen.getByRole('button', { name: 'Show core' }).className).toContain('h-6');
+  });
+});
+
+function Selectable({
+  selection,
+  extra = {},
+}: {
+  selection: (
+    keys: ReadonlySet<string>,
+    set: (keys: ReadonlySet<string>) => void,
+  ) => DataTableSelection;
+  extra?: Extra;
+}) {
+  const [keys, setKeys] = useState<ReadonlySet<string>>(new Set());
+  return table({ rows: many(7), pageSize: 3, selection: selection(keys, setKeys), ...extra });
+}
+
+describe('DataTable select-all scope', () => {
+  it('page scope covers only the rows on the current page', () => {
+    render(<Selectable selection={(selectedKeys, onChange) => ({ selectedKeys, onChange })} />);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select all' }));
+    expect(screen.getAllByRole('checkbox', { checked: true })).toHaveLength(4);
+  });
+
+  it('all scope selects every row across pages, and names itself with the count', () => {
+    render(
+      <Selectable
+        selection={(selectedKeys, onChange) => ({
+          selectedKeys,
+          onChange,
+          scope: 'all',
+          selectAllLabel: (total) => `Select all ${total} devices`,
+          statusLabel: (selected, total) => `${selected} of ${total} selected`,
+        })}
+      />,
+    );
+    const all = screen.getByRole('checkbox', { name: 'Select all 7 devices' }) as HTMLInputElement;
+    fireEvent.click(all);
+    expect(all.checked).toBe(true);
+    expect(screen.getByTestId('data-table-selection-status').textContent).toBe('7 of 7 selected');
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+    expect(screen.getAllByRole('checkbox', { checked: true }).length).toBe(4);
+    fireEvent.click(all);
+    expect(screen.queryByTestId('data-table-selection-status')).toBeNull();
+  });
+
+  it('all scope is indeterminate when only some rows are selected, even off this page', () => {
+    render(
+      <Selectable
+        selection={(selectedKeys, onChange) => ({
+          selectedKeys,
+          onChange,
+          scope: 'all',
+          selectAllLabel: (total) => `Select all ${total}`,
+        })}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select d3' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Previous page' }));
+    const all = screen.getByRole('checkbox', { name: 'Select all 7' }) as HTMLInputElement;
+    expect(all.indeterminate).toBe(true);
+  });
+
+  it('all scope covers only the rows that match the search', () => {
+    const onChange = vi.fn();
+    render(
+      table({
+        rows: many(30),
+        search: {
+          label: 'Search',
+          clearLabel: 'Clear',
+          text: (d) => d.name,
+          noResults: <p>nothing</p>,
+        },
+        selection: {
+          selectedKeys: new Set(),
+          onChange,
+          scope: 'all',
+          selectAllLabel: (total) => `Select all ${total}`,
+        },
+      }),
+    );
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search' }), {
+      target: { value: 'd2' },
+    });
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select all 11' }));
+    const keys = onChange.mock.calls[0]?.[0] as ReadonlySet<string>;
+    expect(ordered(keys)).toEqual(
+      ordered(['2', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29']),
+    );
+  });
+
+  it('keeps selecting across a virtual window when the scope is all', () => {
+    const onChange = vi.fn();
+    render(
+      table({
+        rows: many(500),
+        virtualize: {},
+        maxHeight: 440,
+        selection: {
+          selectedKeys: new Set(),
+          onChange,
+          scope: 'all',
+          selectAllLabel: (total) => `Select all ${total}`,
+        },
+      }),
+    );
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select all 500' }));
+    const chosen: ReadonlySet<string> = onChange.mock.calls[0]?.[0] ?? new Set();
+    expect(chosen.size).toBe(500);
+  });
+});
+
+describe('DataTable row hook', () => {
+  it('puts a test id, class, style and tone on the row from getRowProps', () => {
+    render(
+      table({
+        getRowProps: (d) => ({
+          'data-testid': `row-${d.id}`,
+          className: d.id === 'a' ? 'font-bold' : 'italic',
+          style: { backgroundColor: d.id === 'a' ? 'rgb(255, 0, 0)' : '' },
+          ...(d.id === 'b' ? { tone: 'error' as const } : {}),
+        }),
+      }),
+    );
+    const a = screen.getByTestId('row-a');
+    expect(a.className).toContain('font-bold');
+    expect(a.style.backgroundColor).toBe('rgb(255, 0, 0)');
+    const b = screen.getByTestId('row-b');
+    expect(b.className).toContain('bg-status-error/10');
+    expect(b.className).toContain('italic');
+    expect(screen.getByTestId('row-c').className).not.toContain('bg-status');
+  });
+
+  it('keeps the base row classes alongside the hook', () => {
+    render(table({ getRowProps: () => ({ className: 'x' }) }));
+    expect(screen.getAllByRole('row')[1]?.className).toContain('h-11');
+  });
+});
+
+describe('DataTable sorting options', () => {
+  const named = (values: string[]): Device[] =>
+    values.map((name, i) => ({ id: `${i}`, name, ports: i }));
+
+  it('compares text in locale order by default and natural order on request', () => {
+    const rows = named(['eth10', 'eth2', 'eth1']);
+    const { unmount } = render(table({ rows, defaultSort: { key: 'name', direction: 'asc' } }));
+    expect(names()).toEqual(['eth1', 'eth10', 'eth2']);
+    unmount();
+    render(
+      table({
+        rows,
+        columns: [{ ...(columns[0] as DataTableColumn<Device>), collation: 'natural' }],
+        defaultSort: { key: 'name', direction: 'asc' },
+      }),
+    );
+    expect(names()).toEqual(['eth1', 'eth2', 'eth10']);
+  });
+
+  it('sorts addresses in natural order', () => {
+    render(
+      table({
+        rows: named(['10.0.0.10', '10.0.0.2', '9.0.0.1']),
+        columns: [{ ...(columns[0] as DataTableColumn<Device>), collation: 'natural' }],
+        defaultSort: { key: 'name', direction: 'desc' },
+      }),
+    );
+    expect(names()).toEqual(['10.0.0.10', '10.0.0.2', '9.0.0.1']);
+  });
+
+  it('sorts missing values last in both directions', () => {
+    const rows = [
+      { id: 'a', name: 'b', ports: 2 },
+      { id: 'b', name: 'x', ports: 0 },
+      { id: 'c', name: 'a', ports: 1 },
+    ];
+    const optional: DataTableColumn<Device>[] = [
+      {
+        key: 'name',
+        header: 'Name',
+        cell: (d) => d.name,
+        sortValue: (d) => (d.name === 'x' ? undefined : d.name),
+      },
+    ];
+    const { unmount } = render(
+      table({ rows, columns: optional, defaultSort: { key: 'name', direction: 'asc' } }),
+    );
+    expect(names()).toEqual(['a', 'b', 'x']);
+    unmount();
+    render(table({ rows, columns: optional, defaultSort: { key: 'name', direction: 'desc' } }));
+    expect(names()).toEqual(['b', 'a', 'x']);
+  });
+
+  it('can cycle ascending and descending only', () => {
+    render(table({ sortCycle: 'asc-desc' }));
+    const header = screen.getByRole('columnheader', { name: /Name/ });
+    const button = within(header).getByRole('button');
+    fireEvent.click(button);
+    fireEvent.click(button);
+    expect(header.getAttribute('aria-sort')).toBe('descending');
+    fireEvent.click(button);
+    expect(header.getAttribute('aria-sort')).toBe('ascending');
+    expect(names()).toEqual(['access', 'core', 'edge']);
+  });
+
+  it('reports each sort state', () => {
+    const onSortChange = vi.fn();
+    render(table({ onSortChange }));
+    const button = within(screen.getByRole('columnheader', { name: /Name/ })).getByRole('button');
+    fireEvent.click(button);
+    fireEvent.click(button);
+    fireEvent.click(button);
+    expect(onSortChange.mock.calls).toEqual([
+      [{ key: 'name', direction: 'asc' }],
+      [{ key: 'name', direction: 'desc' }],
+      [null],
+    ]);
+  });
+});
+
+describe('DataTable search and toolbar', () => {
+  const search = {
+    label: 'Search devices',
+    clearLabel: 'Clear search',
+    text: (d: Device) => d.name,
+    noResults: <p>No device matches</p>,
+  };
+
+  it('filters rows by the text, case-insensitively, before sorting and paging', () => {
+    render(table({ search, rows: many(40), pageSize: 5 }));
+    expect(screen.getByText('Page 1 of 8 (40 rows)')).toBeTruthy();
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search devices' }), {
+      target: { value: ' D3 ' },
+    });
+    expect(names()).toEqual(['d3', 'd30', 'd31', 'd32', 'd33']);
+    expect(screen.getByText('Page 1 of 3 (11 rows)')).toBeTruthy();
+  });
+
+  it('goes back to the first page when the query changes', () => {
+    render(table({ search, rows: many(40), pageSize: 5 }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'd' } });
+    expect(screen.getByText(/Page 1 of 8/)).toBeTruthy();
+  });
+
+  it('shows noResults in place of the table, keeps the search box, and recovers on clear', () => {
+    render(table({ search }));
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'zzz' } });
+    expect(screen.getByText('No device matches')).toBeTruthy();
+    expect(screen.queryByRole('table')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear search' }));
+    expect(screen.getByRole('table')).toBeTruthy();
+  });
+
+  it('renders a toolbar slot with or without search, and none otherwise', () => {
+    const { unmount } = render(table({ toolbar: <button type="button">Filter</button> }));
+    expect(screen.getByRole('button', { name: 'Filter' })).toBeTruthy();
+    expect(screen.queryByRole('searchbox')).toBeNull();
+    unmount();
+    render(table());
+    expect(screen.queryByRole('searchbox')).toBeNull();
+  });
+
+  it('shows empty rather than a search box when there are no rows at all', () => {
+    render(table({ rows: [], search }));
+    expect(screen.getByText('none')).toBeTruthy();
+    expect(screen.queryByRole('searchbox')).toBeNull();
+  });
+});
+
+describe('DataTable row detail', () => {
+  const expandable = (extra: Partial<NonNullable<Extra['expandable']>> = {}): Extra => ({
+    expandable: {
+      render: (d: Device) => <p>{`detail of ${d.name}`}</p>,
+      columnLabel: 'Details',
+      toggleLabel: (d: Device, open: boolean) => `${open ? 'Hide' : 'Show'} ${d.name}`,
+      ...extra,
+    },
+  });
+
+  it('adds a toggle column and shows the detail full width under an expanded row', () => {
+    render(table(expandable()));
+    expect(screen.getByRole('columnheader', { name: 'Details' })).toBeTruthy();
+    const toggle = screen.getByRole('button', { name: 'Show core' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByText('detail of core')).toBeNull();
+    fireEvent.click(toggle);
+    expect(screen.getByRole('button', { name: 'Hide core' }).getAttribute('aria-expanded')).toBe(
+      'true',
+    );
+    const detail = screen.getByText('detail of core').closest('td');
+    expect(detail?.getAttribute('colspan')).toBe('3');
+    expect(detail?.parentElement?.id).toBe(
+      screen.getByRole('button', { name: 'Hide core' }).getAttribute('aria-controls'),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Hide core' }));
+    expect(screen.queryByText('detail of core')).toBeNull();
+  });
+
+  it('does not activate the row when the toggle is clicked', () => {
+    const onRowClick = vi.fn();
+    render(table({ ...expandable(), onRowClick }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show core' }));
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+
+  it('starts expanded from defaultExpandedKeys and reports changes', () => {
+    const onExpandedChange = vi.fn();
+    render(table(expandable({ defaultExpandedKeys: new Set(['b']), onExpandedChange })));
+    expect(screen.getByText('detail of access')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Show core' }));
+    expect(ordered(onExpandedChange.mock.calls[0]?.[0] as ReadonlySet<string>)).toEqual(['a', 'b']);
+  });
+
+  it('is controlled when expandedKeys is passed', () => {
+    const onExpandedChange = vi.fn();
+    render(table(expandable({ expandedKeys: new Set(['c']), onExpandedChange })));
+    expect(screen.getByText('detail of edge')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Show core' }));
+    expect(screen.queryByText('detail of core')).toBeNull();
+    expect(onExpandedChange).toHaveBeenCalledOnce();
+  });
+
+  it('is refused together with virtualize, by type', () => {
+    // @ts-expect-error row detail cannot share a table with fixed-height virtual rows
+    const both: Extra = { virtualize: {}, ...expandable() };
+    expect(both).toBeTruthy();
+  });
+});
+
+describe('DataTable fits a ReactNode empty state', () => {
+  it('renders any node as the empty state', () => {
+    const node: ReactNode = <p>nothing here</p>;
+    render(table({ rows: [], empty: node }));
+    expect(screen.getByText('nothing here')).toBeTruthy();
   });
 });
