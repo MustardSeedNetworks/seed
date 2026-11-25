@@ -13,9 +13,8 @@
 
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useNeighbourCache } from '../../hooks/useNeighbourCache';
-import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { useTableLabels } from '../../hooks/useTableLabels';
 import { Button } from '../../shared/Button';
 import { Card } from '../../shared/Card';
@@ -28,7 +27,7 @@ import { Network } from '../ui/Icons';
 export function NeighbourCacheCard(): JSX.Element {
   const { t } = useTranslation(['cards', 'common']);
   const { entries, loading, error, refresh } = useNeighbourCache();
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
   const [filter, setFilter] = useState('');
   const labels = useTableLabels<NeighbourEntry>({ loading: t('neighbours.title') });
 
@@ -82,7 +81,7 @@ export function NeighbourCacheCard(): JSX.Element {
     },
   ];
 
-  let cardStatus: LabelledStatus = 'success';
+  let cardStatus: CardStatus = 'success';
   if (loading) {
     cardStatus = 'loading';
   } else if (error) {

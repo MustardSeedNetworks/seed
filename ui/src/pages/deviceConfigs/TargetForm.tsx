@@ -9,12 +9,12 @@
 import { type FormEvent, type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
-import { Modal, ModalFooter } from '../../components/ui/Modal';
 import { useDeviceCredentials } from '../../hooks/useDeviceCredentials';
 import { Alert } from '../../shared/Alert';
 import { Button } from '../../shared/Button';
 import { FormField } from '../../shared/FormField';
 import { Input } from '../../shared/Input';
+import { Modal } from '../../shared/Modal';
 import { Select } from '../../shared/Select';
 import type {
   DeviceConfigPlatform,
@@ -105,13 +105,35 @@ export function TargetForm({ target, onSubmit, onCancel }: TargetFormProps): JSX
 
   return (
     <Modal
-      isOpen
+      open
       onClose={onCancel}
+      closeLabel={t('common:buttons.close')}
+      size="md"
+      footer={
+        <>
+          <Button onClick={onCancel}>{t('common:buttons.cancel')}</Button>
+          <Button
+            type="submit"
+            form="device-config-target-form"
+            variant="primary"
+            loading={submitting}
+            disabled={vault.loading}
+            data-testid="config-target-save"
+          >
+            {submitting
+              ? t('common:common.saving')
+              : target
+                ? t('deviceConfigs.form.save')
+                : t('deviceConfigs.form.add')}
+          </Button>
+        </>
+      }
       title={target ? t('deviceConfigs.form.editTitle') : t('deviceConfigs.form.addTitle')}
       // A stray click outside would throw away a half-typed device.
-      closeOnBackdropClick={false}
+      closeOnBackdrop={false}
     >
       <form
+        id="device-config-target-form"
         onSubmit={(e): void => {
           void handleSubmit(e);
         }}
@@ -246,23 +268,6 @@ export function TargetForm({ target, onSubmit, onCancel }: TargetFormProps): JSX
             </fieldset>
           ) : null}
         </div>
-
-        <ModalFooter>
-          <Button onClick={onCancel}>{t('common:buttons.cancel')}</Button>
-          <Button
-            type="submit"
-            variant="primary"
-            loading={submitting}
-            disabled={vault.loading}
-            data-testid="config-target-save"
-          >
-            {submitting
-              ? t('common:common.saving')
-              : target
-                ? t('deviceConfigs.form.save')
-                : t('deviceConfigs.form.add')}
-          </Button>
-        </ModalFooter>
       </form>
     </Modal>
   );

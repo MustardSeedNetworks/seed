@@ -17,7 +17,7 @@
 
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
-
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useDriverStats } from '../../hooks/useDriverStats';
 import { Alert } from '../../shared/Alert';
 import { Button } from '../../shared/Button';
@@ -25,7 +25,6 @@ import { Card, type CardStatus } from '../../shared/Card';
 import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
 import { FeatureUnavailable } from '../ui/FeatureUnavailable';
 import { Activity } from '../ui/Icons';
-import { useCardStatusLabel } from './CardStatusLabel';
 
 interface DriverStatsCardProps {
   interfaceName?: string;

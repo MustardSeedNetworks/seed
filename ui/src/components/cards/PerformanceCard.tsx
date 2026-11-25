@@ -34,8 +34,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { useSettings } from '../../contexts/useSettings';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useIperfServerSync } from '../../hooks/useIperfServerSync';
-import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { LogComponents, logger } from '../../lib/logger';
 import { Card, CardDivider, CardRow, CardValue } from '../../shared/Card';
 import { useTestRunSignal, useTestRunStore } from '../../stores/testRunStore';
@@ -130,7 +130,7 @@ export function PerformanceCard({
   runIperfEnabled = true,
 }: PerformanceCardProps): React.ReactElement {
   const { t } = useTranslation('cards');
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
   // Get iperf settings from context
   const { iperfSettings } = useSettings();
 
@@ -405,7 +405,7 @@ export function PerformanceCard({
     return `${mbps.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Mbps`;
   };
 
-  const getStatus = (): LabelledStatus => {
+  const getStatus = (): CardStatus => {
     if (!(runSpeedtestEnabled || runIperfEnabled)) {
       return 'unknown';
     }

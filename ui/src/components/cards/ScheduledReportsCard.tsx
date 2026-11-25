@@ -9,6 +9,7 @@
  */
 import { type JSX, type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import {
   draftFromSchedule,
   MAX_SCHEDULE_DAY_OF_MONTH,
@@ -20,7 +21,6 @@ import {
   type ScheduleFrequency,
   scheduleTime,
 } from '../../hooks/useReportSchedules';
-import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { Button } from '../../shared/Button';
 import { Card, CardDivider, CardRow } from '../../shared/Card';
 import { Select } from '../../shared/Select';
@@ -51,7 +51,7 @@ function cardStatus(
   schedules: ReportScheduleInfo[],
   loading: boolean,
   error: string | null,
-): LabelledStatus {
+): CardStatus {
   if (loading) {
     return 'loading';
   }
@@ -260,7 +260,7 @@ export function ScheduledReportsCard({
   onDelete,
 }: ScheduledReportsCardProps): JSX.Element {
   const { t, i18n } = useTranslation('cards');
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
   const status = cardStatus(schedules, loading, error);
   // null id: a new schedule. Only one editor is open at a time.
   const [editing, setEditing] = useState<{ id: string | null; draft: ScheduleDraft } | null>(null);

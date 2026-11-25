@@ -15,12 +15,12 @@ import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useRole } from '../../contexts/RoleContext';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import {
   type CaptureResult,
   type CaptureState,
   usePacketCapture,
 } from '../../hooks/usePacketCapture';
-import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { formatBytes } from '../../lib/format';
 import { Alert } from '../../shared/Alert';
 import { Button } from '../../shared/Button';
@@ -43,7 +43,7 @@ function parseSeconds(raw: string): number | null {
   return Number.isInteger(seconds) && seconds >= 1 && seconds <= MAX_SECONDS ? seconds : null;
 }
 
-function cardStatus(state: CaptureState): LabelledStatus {
+function cardStatus(state: CaptureState): CardStatus {
   switch (state.phase) {
     case 'starting':
     case 'running':
@@ -78,7 +78,7 @@ export function PacketCaptureCard({
   const { t } = useTranslation('cards');
   const { canWrite } = useRole();
   const { state, start, stop } = usePacketCapture();
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
   const status = cardStatus(state);
 
   // null until the operator edits the field, so a current interface that

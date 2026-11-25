@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useWifiAnomalies } from '../../hooks/useWifiVisibility';
 import { Card } from '../../shared/Card';
 import type { WiFiAnomaliesResponse } from '../../types/generated/wifi-anomalies-response';
@@ -11,7 +11,7 @@ import { WiFiNeedsCapture } from './WiFiNeedsCapture';
 // map to it (the per-row badge in severity.ts keeps them visually distinct).
 // With nothing detected, rules that need a capture source did not run, so the
 // result is not a clean bill of health.
-function cardStatus({ anomalies, status }: WiFiAnomaliesResponse): LabelledStatus {
+function cardStatus({ anomalies, status }: WiFiAnomaliesResponse): CardStatus {
   if (anomalies.some((a) => a.severity === 'critical' || a.severity === 'error')) {
     return 'error';
   }
@@ -27,7 +27,7 @@ function cardStatus({ anomalies, status }: WiFiAnomaliesResponse): LabelledStatu
  */
 export function WiFiAnomaliesCard() {
   const { t } = useTranslation('pages');
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
   const { data, isLoading, isError } = useWifiAnomalies();
 
   const status = data ? cardStatus(data) : 'unknown';

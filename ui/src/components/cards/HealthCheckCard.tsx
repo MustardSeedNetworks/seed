@@ -32,6 +32,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { useSettings } from '../../contexts/useSettings';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { Alert } from '../../shared/Alert';
 import { Button } from '../../shared/Button';
 import { Card, type CardStatus } from '../../shared/Card';
@@ -53,7 +54,6 @@ import type {
   TestResult,
 } from '../../types/generated/health-check-run-response';
 import { HeartPulse } from '../ui/Icons';
-import { useCardStatusLabel } from './CardStatusLabel';
 import { HealthCheckCardProtocolSections } from './HealthCheckCardProtocolSections';
 import { failuresFirst, testResultRank } from './healthCheckResultOrder';
 

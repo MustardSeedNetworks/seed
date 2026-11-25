@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useStatusLabel } from '../../hooks/useStatusLabel';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useWifiAirspace } from '../../hooks/useWifiVisibility';
 import { Card } from '../../shared/Card';
 import { WiFiAirspaceTree } from './WiFiAirspaceTree';
@@ -14,7 +14,7 @@ import { WiFiNeedsCapture } from './WiFiNeedsCapture';
  */
 export function WiFiAirspaceCard() {
   const { t } = useTranslation('pages');
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
   const { data, isLoading, isError } = useWifiAirspace();
 
   const status = data?.status.captureActive ? 'success' : 'unknown';

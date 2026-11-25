@@ -21,12 +21,9 @@ import i18n from '../../i18n';
 import { NotFoundPage } from '../../pages/NotFoundPage';
 import { useTestRunStore } from '../../stores/testRunStore';
 import { SidebarLayout } from '../../ui/Sidebar';
-import { Alert } from './Alert';
 import { CommandPalette } from './CommandPalette';
 import { DeviceSelector } from './DeviceSelector';
 import { Fab } from './Fab';
-import { Modal } from './Modal';
-import { StatusBadge } from './StatusBadge';
 import { ToastProvider } from './Toast';
 import { useToast } from './useToast';
 
@@ -46,17 +43,6 @@ function withQuery(node: ReactNode): ReactNode {
 }
 
 describe('shared chrome — Spanish, with no English left behind', () => {
-  it('names the Alert dismiss button', () => {
-    render(
-      <Alert status="info" onDismiss={() => {}}>
-        x
-      </Alert>,
-    );
-
-    expect(screen.getByRole('button', { name: 'Descartar alerta' })).toBeInTheDocument();
-    expect(screen.queryByLabelText('Dismiss alert')).not.toBeInTheDocument();
-  });
-
   it('labels the command palette, its search, its actions and the theme toggle', () => {
     // cmdk scrolls the active item into view, which jsdom does not implement.
     Element.prototype.scrollIntoView = (): void => {};
@@ -112,17 +98,6 @@ describe('shared chrome — Spanish, with no English left behind', () => {
     useTestRunStore.getState().reset();
   });
 
-  it('names both Modal close controls', () => {
-    render(
-      <Modal isOpen={true} onClose={() => {}} title="t" showCloseButton={true}>
-        body
-      </Modal>,
-    );
-
-    expect(screen.getAllByRole('button', { name: 'Cerrar ventana' })).toHaveLength(2);
-    expect(screen.queryByLabelText('Close modal')).not.toBeInTheDocument();
-  });
-
   it('labels the toast region, each toast and its dismiss button', async () => {
     function Trigger(): React.JSX.Element {
       const { addToast } = useToast();
@@ -145,19 +120,6 @@ describe('shared chrome — Spanish, with no English left behind', () => {
     expect(screen.getByRole('alert', { name: 'Notificación: éxito' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Descartar notificación' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Notification: success')).not.toBeInTheDocument();
-  });
-
-  it.each([
-    ['success', 'Estado: correcto'],
-    ['warning', 'Estado: advertencia'],
-    ['error', 'Estado: error'],
-    ['unknown', 'Estado: desconocido'],
-    ['loading', 'Estado: cargando'],
-  ] as const)('names the %s StatusBadge', (status, spanish) => {
-    render(<StatusBadge status={status} />);
-
-    expect(screen.getByRole('img', { name: spanish })).toBeInTheDocument();
-    expect(screen.queryByLabelText(`Status: ${status}`)).not.toBeInTheDocument();
   });
 
   it('labels the breadcrumb trail and its home link on the not-found page', () => {

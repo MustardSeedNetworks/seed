@@ -3,6 +3,7 @@ import { SearchX } from 'lucide-react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'wouter';
+import { documentTitle } from '../shared/documentTitle';
 import { EmptyState } from '../shared/EmptyState';
 import { PageHeader } from '../shared/PageHeader';
 import { renderBreadcrumbLink } from '../ui/renderBreadcrumbLink';
@@ -11,7 +12,7 @@ export function NotFoundPage() {
   const { t } = useTranslation(['pages', 'common']);
 
   useEffect(() => {
-    document.title = [t('pages:notFound.title'), t('common:app.title')].join(' · ');
+    document.title = documentTitle(t('pages:notFound.label'), t('common:app.title'));
   }, [t]);
 
   return (

@@ -13,13 +13,13 @@
 
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useGuestNetworkAudit } from '../../hooks/useGuestNetworkAudit';
 import { Alert } from '../../shared/Alert';
 import { Button } from '../../shared/Button';
 import { Card, type CardStatus } from '../../shared/Card';
 import { icon as iconTokens } from '../../styles/theme';
 import { Shield } from '../ui/Icons';
-import { useCardStatusLabel } from './CardStatusLabel';
 
 export function GuestNetworkAuditCard(): JSX.Element | null {
   const { t } = useTranslation('cards');

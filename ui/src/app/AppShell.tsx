@@ -27,6 +27,7 @@ import { useIsPhone } from '../hooks/useIsPhone';
 import { useNavGroups } from '../navGroups';
 import { type PageConfig, usePages } from '../pageRegistry';
 import { NotFoundPage } from '../pages/NotFoundPage';
+import { documentTitle } from '../shared/documentTitle';
 import { PageHeader } from '../shared/PageHeader';
 import { cn, section } from '../styles/theme';
 import { PageLoader } from '../ui/PageLoader';
@@ -287,9 +288,8 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
  * page, bookmark and browser-history entry read the bare product name from
  * index.html and a user with several tabs open could not tell them apart
  * (#2645). The title is the registry's label, so it is the same string as the
- * rail item, the breadcrumb and the H1. The device's own name sits between
- * the two when one is set (#195): a tab title names the page first, then
- * which Seed it is on.
+ * rail item, the breadcrumb and the H1, in the fleet's one format
+ * ("Label · Seed"), which the shared documentTitle() builds.
  */
 function PageWithHeader({
   page,
@@ -304,11 +304,10 @@ function PageWithHeader({
   const helpSection = page.help;
   const { t } = useTranslation('common');
   const productName = t('app.title');
-  const { name: deviceName } = useDeviceIdentity();
 
   useEffect(() => {
-    document.title = [page.label, deviceName, productName].filter(Boolean).join(' · ');
-  }, [page.label, deviceName, productName]);
+    document.title = documentTitle(page.label, productName);
+  }, [page.label, productName]);
 
   return (
     <section className="stack-xl">

@@ -13,10 +13,10 @@ import { type ReactNode, useState } from 'react';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { Modal } from '../shared/Modal';
 import { DiscoveryModal } from './cards/DiscoveryModal';
 import { LogViewerModal } from './cards/LogViewerModal';
 import { ProfileManagement } from './profiles/ProfileManagement';
-import { Modal } from './ui/Modal';
 
 vi.mock('../hooks/useLogs', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../hooks/useLogs')>()),
@@ -181,7 +181,7 @@ describe('dialog focus traps', () => {
   it('Modal closes on Escape pressed inside it', () => {
     const onClose = vi.fn();
     render(
-      <Modal isOpen={true} onClose={onClose} title="Devices">
+      <Modal open={true} onClose={onClose} title="Devices" closeLabel="Close">
         <button type="button">inside</button>
       </Modal>,
     );

@@ -21,7 +21,7 @@ import type { FormEvent, JSX } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '../../api';
-import { useStatusLabel } from '../../hooks/useStatusLabel';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { isPasskeySupported, registerPasskey } from '../../lib/webauthn';
 import { Button } from '../../shared/Button';
 import { Card } from '../../shared/Card';
@@ -46,7 +46,7 @@ interface TotpSetup {
 
 export function MfaCard(): JSX.Element {
   const { t } = useTranslation(['cards', 'common']);
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
   const [status, setStatus] = useState<MfaStatus | null>(null);
   const [setup, setSetup] = useState<TotpSetup | null>(null);
   const [code, setCode] = useState<string>('');

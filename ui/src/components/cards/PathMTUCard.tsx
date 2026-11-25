@@ -12,8 +12,8 @@ import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { BoundedJobState } from '../../hooks/useBoundedJob';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { type PMTUDResult, usePathMTU } from '../../hooks/usePathChecks';
-import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { Card } from '../../shared/Card';
 import { cn, status as statusColor } from '../../styles/theme';
 import { Maximize2 } from '../ui/Icons';
@@ -33,7 +33,7 @@ function readingOf(result: PMTUDResult): Reading {
   return result.pathMtu >= JUMBO_CEILING ? 'ceiling' : 'smaller';
 }
 
-function resultStatus(result: PMTUDResult): LabelledStatus {
+function resultStatus(result: PMTUDResult): CardStatus {
   switch (result.status) {
     case 'ok':
       return readingOf(result) === 'smaller' ? 'warning' : 'success';
@@ -44,7 +44,7 @@ function resultStatus(result: PMTUDResult): LabelledStatus {
   }
 }
 
-function cardStatus(state: BoundedJobState<PMTUDResult>): LabelledStatus {
+function cardStatus(state: BoundedJobState<PMTUDResult>): CardStatus {
   if (isBusy(state)) {
     return 'loading';
   }
@@ -62,7 +62,7 @@ export function PathMTUCard(): JSX.Element {
   const { t } = useTranslation('cards');
   const check = usePathMTU();
   const { state } = check;
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
   const status = cardStatus(state);
 
   return (

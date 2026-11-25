@@ -13,18 +13,18 @@ import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { BoundedJobState } from '../../hooks/useBoundedJob';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { type MultiPathResult, type PathVariant, useMultiPath } from '../../hooks/usePathChecks';
-import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { Card } from '../../shared/Card';
 import { cn, radius } from '../../styles/theme';
 import { Network } from '../ui/Icons';
 import { isBusy, PathCheckForm } from './PathCheckForm';
 
-function resultStatus(result: MultiPathResult): LabelledStatus {
+function resultStatus(result: MultiPathResult): CardStatus {
   return result.paths.some((path) => path.completed) ? 'success' : 'warning';
 }
 
-function cardStatus(state: BoundedJobState<MultiPathResult>): LabelledStatus {
+function cardStatus(state: BoundedJobState<MultiPathResult>): CardStatus {
   if (isBusy(state)) {
     return 'loading';
   }
@@ -42,7 +42,7 @@ export function MultiPathCard(): JSX.Element {
   const { t } = useTranslation('cards');
   const check = useMultiPath();
   const { state } = check;
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
   const status = cardStatus(state);
 
   return (

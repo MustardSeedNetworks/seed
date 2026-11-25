@@ -15,12 +15,12 @@ import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useRole } from '../../contexts/RoleContext';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import {
   type ListenResult,
   type ListenState,
   useMulticastListen,
 } from '../../hooks/useMulticastListen';
-import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { formatBytes } from '../../lib/format';
 import { Alert } from '../../shared/Alert';
 import { Button } from '../../shared/Button';
@@ -43,7 +43,7 @@ function parseWhole(raw: string, max: number): number | null {
   return raw.trim() !== '' && Number.isInteger(value) && value >= 1 && value <= max ? value : null;
 }
 
-function cardStatus(state: ListenState): LabelledStatus {
+function cardStatus(state: ListenState): CardStatus {
   switch (state.phase) {
     case 'starting':
     case 'running':
@@ -68,7 +68,7 @@ export function MulticastListenCard({
   const { t } = useTranslation('cards');
   const { canWrite } = useRole();
   const { state, start, stop } = useMulticastListen();
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
   const status = cardStatus(state);
 
   // null until the operator edits the field, so a current interface that

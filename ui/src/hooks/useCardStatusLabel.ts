@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import type { CardStatus } from '../../shared/Card';
+import type { CardStatus } from '../shared/Card';
+
+export type { CardStatus };
 
 /**
  * The accessible name the shared Card, StatusIndicator and CollapsibleSection

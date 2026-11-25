@@ -697,10 +697,3 @@ body {
   --color-rail-from: var(--color-rail-from);
   --color-rail-to: var(--color-rail-to);
 }
-
-/* The shared DataTable's sort buttons are 16px tall; the minimum-width ratchet
-   holds every control to the 24px minimum target (WCAG 2.5.8). The fix belongs
-   in the shared component; until it lands there, the product raises the floor. */
-thead th > button[type="button"] {
-  min-height: 1.5rem;
-}

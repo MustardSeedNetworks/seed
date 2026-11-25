@@ -1,9 +1,9 @@
 import type { JSX, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { Card, type CardStatus, CardValue } from '../../shared/Card';
 import { Skeleton } from '../../shared/Skeleton';
 import { cn, layout, spacing } from '../../styles/theme';
-import { useCardStatusLabel } from './CardStatusLabel';
 
 interface BaseCardProps<T> {
   title: string;

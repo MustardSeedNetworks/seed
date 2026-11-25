@@ -9,12 +9,12 @@
 
 import type { TFunction } from 'i18next';
 import type { JSX } from 'react';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { CollapsibleSection } from '../../shared/CollapsibleSection';
 import { StatusIndicator } from '../../shared/StatusPill';
 import { Tooltip } from '../../shared/Tooltip';
 import { cn, layout, radius, spacing, status as statusColor } from '../../styles/theme';
 import type { HealthCheckRunResponse } from '../../types/generated/health-check-run-response';
-import { useCardStatusLabel } from './CardStatusLabel';
 import { failuresFirst } from './healthCheckResultOrder';
 
 /** One protocol result, reduced to what its row shows. */

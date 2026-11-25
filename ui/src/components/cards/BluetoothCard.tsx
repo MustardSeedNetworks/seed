@@ -14,13 +14,13 @@ import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBluetoothScan } from '../../hooks/useBluetoothScan';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { Alert } from '../../shared/Alert';
 import { Button } from '../../shared/Button';
 import { Card, type CardStatus } from '../../shared/Card';
 import { cn, icon as iconTokens } from '../../styles/theme';
 import { Bluetooth, Loader, Maximize2, X } from '../ui/Icons';
 import { BluetoothDeviceModal } from './BluetoothDeviceModal';
-import { useCardStatusLabel } from './CardStatusLabel';
 
 export function BluetoothCard(): React.ReactElement {
   const { t } = useTranslation('cards');

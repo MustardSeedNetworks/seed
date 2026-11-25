@@ -9,13 +9,13 @@
 import type { TFunction } from 'i18next';
 import { type FormEvent, type JSX, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, ModalFooter } from '../../components/ui/Modal';
 import { useDeviceCredentials } from '../../hooks/useDeviceCredentials';
 import { Alert } from '../../shared/Alert';
 import { Button } from '../../shared/Button';
 import { Checkbox } from '../../shared/Checkbox';
 import { FormField } from '../../shared/FormField';
 import { Input } from '../../shared/Input';
+import { Modal } from '../../shared/Modal';
 import { Select } from '../../shared/Select';
 import type { Credentials } from '../../types/generated/device-credential-list-response';
 import type { PollingTargetRequest } from '../../types/generated/polling-target-request';
@@ -98,16 +98,37 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
 
   return (
     <Modal
-      isOpen
+      open
       onClose={onCancel}
+      closeLabel={t('common:buttons.close')}
+      size="md"
+      footer={
+        <>
+          <Button onClick={onCancel}>{t('common:buttons.cancel')}</Button>
+          <Button
+            type="submit"
+            form="polling-target-form"
+            variant="primary"
+            loading={submitting}
+            data-testid="target-save"
+          >
+            {submitting
+              ? t('common:common.saving')
+              : mode === 'create'
+                ? t('pollingTargets.addTarget')
+                : t('pollingTargets.saveChanges')}
+          </Button>
+        </>
+      }
       title={
         mode === 'create' ? t('pollingTargets.formCreateTitle') : t('pollingTargets.formEditTitle')
       }
       // A stray click outside would throw away a half-typed target; Escape
       // and the close button are deliberate.
-      closeOnBackdropClick={false}
+      closeOnBackdrop={false}
     >
       <form
+        id="polling-target-form"
         onSubmit={(e): void => {
           void handleSubmit(e);
         }}
@@ -209,17 +230,6 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
             </div>
           </div>
         </div>
-
-        <ModalFooter>
-          <Button onClick={onCancel}>{t('common:buttons.cancel')}</Button>
-          <Button type="submit" variant="primary" loading={submitting} data-testid="target-save">
-            {submitting
-              ? t('common:common.saving')
-              : mode === 'create'
-                ? t('pollingTargets.addTarget')
-                : t('pollingTargets.saveChanges')}
-          </Button>
-        </ModalFooter>
       </form>
     </Modal>
   );

@@ -1,9 +1,9 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { Activity, BookOpen, Home, Sparkles } from 'lucide-react';
 import { useState } from 'react';
+import { Button } from '../../shared/Button';
 import { StoryRouter } from '../../test/StoryRouter';
 import type { SidebarNavGroup } from '../../ui/Sidebar';
-import { Button } from './Button';
 import { CommandPalette } from './CommandPalette';
 
 const navGroups: SidebarNavGroup[] = [

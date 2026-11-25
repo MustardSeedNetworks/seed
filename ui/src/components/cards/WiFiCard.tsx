@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../contexts/useSettings';
-import type { LabelledStatus } from '../../hooks/useStatusLabel';
+import type { CardStatus } from '../../hooks/useCardStatusLabel';
 import { CardDivider, CardRow, CardValue } from '../../shared/Card';
 import { cn, icon as iconTokens, layout, spacing } from '../../styles/theme';
 import { Wifi } from '../ui/Icons';
@@ -44,7 +44,7 @@ interface WiFiCardProps {
 function getSignalStatus(
   signal: number,
   thresholds: { warning: number; critical: number },
-): LabelledStatus {
+): CardStatus {
   if (signal <= thresholds.critical) {
     return 'error';
   }

@@ -8,7 +8,6 @@
 
 import { type FormEvent, type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, ModalFooter } from '../../components/ui/Modal';
 import { useTableLabels } from '../../hooks/useTableLabels';
 import { Alert } from '../../shared/Alert';
 import { Button } from '../../shared/Button';
@@ -16,6 +15,7 @@ import { DataTable, type DataTableColumn } from '../../shared/DataTable';
 import { EmptyState } from '../../shared/EmptyState';
 import { FormField } from '../../shared/FormField';
 import { Input } from '../../shared/Input';
+import { Modal } from '../../shared/Modal';
 import { SearchInput } from '../../shared/SearchInput';
 import type { DeviceGroupRequest } from '../../types/generated/device-group-request';
 import type { DeviceGroupResponse } from '../../types/generated/device-group-response';
@@ -87,15 +87,36 @@ export function GroupForm({
 
   return (
     <Modal
-      isOpen
+      open
       onClose={onCancel}
+      closeLabel={t('common:buttons.close')}
+      size="md"
+      footer={
+        <>
+          <Button onClick={onCancel}>{t('common:buttons.cancel')}</Button>
+          <Button
+            type="submit"
+            form="device-group-form"
+            variant="primary"
+            loading={submitting}
+            data-testid="group-save"
+          >
+            {submitting
+              ? t('common:common.saving')
+              : mode === 'create'
+                ? t('deviceGroups.addGroup')
+                : t('deviceGroups.saveChanges')}
+          </Button>
+        </>
+      }
       title={
         mode === 'create' ? t('deviceGroups.formCreateTitle') : t('deviceGroups.formEditTitle')
       }
       // A stray click outside would throw away a half-picked member list.
-      closeOnBackdropClick={false}
+      closeOnBackdrop={false}
     >
       <form
+        id="device-group-form"
         onSubmit={(e): void => {
           void handleSubmit(e);
         }}
@@ -165,17 +186,6 @@ export function GroupForm({
             )}
           </fieldset>
         </div>
-
-        <ModalFooter>
-          <Button onClick={onCancel}>{t('common:buttons.cancel')}</Button>
-          <Button type="submit" variant="primary" loading={submitting} data-testid="group-save">
-            {submitting
-              ? t('common:common.saving')
-              : mode === 'create'
-                ? t('deviceGroups.addGroup')
-                : t('deviceGroups.saveChanges')}
-          </Button>
-        </ModalFooter>
       </form>
     </Modal>
   );

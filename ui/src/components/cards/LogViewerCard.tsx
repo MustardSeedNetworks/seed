@@ -18,8 +18,8 @@ import { Tooltip } from '../../shared/Tooltip';
 import type { JSX } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useLogs } from '../../hooks/useLogs';
-import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { Card, CardDivider, CardRow, CardValue } from '../../shared/Card';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
 import { AlertCircle, AlertTriangle, FileText, Maximize2 } from '../ui/Icons';
@@ -44,14 +44,14 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
 
   // Calculate error and warning counts
   const errorCount = stats?.byLevel && 'ERROR' in stats.byLevel ? stats.byLevel.ERROR : 0;
   const warnCount = stats?.byLevel && 'WARN' in stats.byLevel ? stats.byLevel.WARN : 0;
 
   // Determine card status based on errors
-  const getCardStatus = (): LabelledStatus => {
+  const getCardStatus = (): CardStatus => {
     if (isLoading) {
       return 'loading';
     }

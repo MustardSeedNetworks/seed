@@ -26,12 +26,12 @@
 
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../contexts/useSettings';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { formatTime, isValidNumber } from '../../lib/format';
 import { Card, CardDivider, CardRow, type CardStatus, CardValue } from '../../shared/Card';
 import { StatusIndicator } from '../../shared/StatusPill';
 import { cn, icon as iconTokens, layout, spacing, status as statusColor } from '../../styles/theme';
 import { Router } from '../ui/Icons';
-import { useCardStatusLabel } from './CardStatusLabel';
 
 export interface GatewayData {
   gateway: string;

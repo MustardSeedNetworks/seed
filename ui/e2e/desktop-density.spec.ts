@@ -61,11 +61,11 @@ const ROUTES = [
 const WIDTHS = [1280, 1440];
 
 /**
- * 80px. Measured on main: 83px on every route with the old `text-2xl
- * sm:text-3xl` title and the 32px icon. stem and niac-go hold the same
- * ceiling after the same step, so a regression in any one repo fails here.
+ * 104px: the shared PageHeader with its breadcrumb row (the three title lines
+ * alone are 76px). stem, niac-go and trellis hold the same ceiling, so a
+ * regression in any one repo fails here.
  */
-const HEADER_CEILING = 80;
+const HEADER_CEILING = 104;
 
 /**
  * 96px. The footer was 192px on every route. One quiet line of legal and
@@ -104,18 +104,10 @@ test.describe('desktop density', () => {
 
           const measured = await page.evaluate(() => {
             const header = document.querySelector('[data-testid="page-header"]');
-            // The shared header carries the breadcrumb trail; the ceiling is for
-            // the title block under it (kicker, title, subtitle).
-            const trail = document.querySelector('[data-testid="breadcrumbs"]');
             const footer = document.querySelector('[data-testid="app-footer"]');
 
             return {
-              header: header
-                ? Math.round(
-                    header.getBoundingClientRect().height -
-                      (trail ? trail.getBoundingClientRect().height : 0),
-                  )
-                : -1,
+              header: header ? Math.round(header.getBoundingClientRect().height) : -1,
               footer: footer ? Math.round(footer.getBoundingClientRect().height) : -1,
             };
           });
@@ -136,10 +128,8 @@ test.describe('desktop density', () => {
               if (el.clientWidth === 0 || el.scrollWidth - el.clientWidth <= 1) {
                 continue;
               }
-              // The shared PageHeader's help button draws a 44px hit area with an
-              // ::after pseudo-element wider than its 28px box (shared/PageHeader.tsx,
-              // fixed in MustardSeedNetworks/.github): invisible, not clipped content.
-              if (el.matches('[data-testid="page-header-help-button"]')) {
+              // A shared control's invisible touch-target pseudo-element, not clipped content.
+              if (el.hasAttribute('data-touch-target-overflow')) {
                 continue;
               }
               if (el.classList.contains('sr-only') || el.closest('[data-phone-width-exempt]')) {

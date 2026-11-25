@@ -29,7 +29,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
-import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { PathDiscoverySchema } from '../../schemas/auth';
 import { Card, CardDivider, CardValue } from '../../shared/Card';
 import { Select } from '../../shared/Select';
@@ -71,7 +71,7 @@ function pathCardStatus(
   loading: boolean,
   error: string | null,
   result: PathResponse | null,
-): LabelledStatus {
+): CardStatus {
   if (loading) {
     return 'loading';
   }
@@ -295,7 +295,7 @@ export function PathDiscoveryCard({
   };
 
   const cardStatus = pathCardStatus(loading, error, result);
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
 
   const maxRtt = result?.l3Path ? getMaxRtt(result.l3Path.hops) : 1;
 

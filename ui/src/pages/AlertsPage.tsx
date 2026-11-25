@@ -19,6 +19,7 @@ import { useAlerts } from '../hooks/useAlerts';
 import { useTableLabels } from '../hooks/useTableLabels';
 import { Alert as InlineAlert } from '../shared/Alert';
 import { CategoryChip } from '../shared/CategoryChip';
+import { Checkbox } from '../shared/Checkbox';
 import { DataTable, type DataTableColumn } from '../shared/DataTable';
 import { EmptyState } from '../shared/EmptyState';
 import { StatusPill, type StatusTone } from '../shared/StatusPill';
@@ -116,26 +117,16 @@ export function AlertsPage(): JSX.Element {
           {loading ? t('common:status.loading') : t('alerts.alertCount', { count: alerts.length })}
         </p>
         <div className="flex flex-wrap items-center gap-4">
-          {/* Native, in a 24px label: the shared Checkbox's 16px input is under the
-              24px minimum target the minimum-width ratchet holds every control to. */}
-          <label className="flex min-h-6 items-center gap-2 text-xs text-text-secondary">
-            <input
-              type="checkbox"
-              className="h-4 w-4 accent-brand-primary"
-              checked={filter.unacknowledgedOnly}
-              onChange={(e): void => setFilter({ ...filter, unacknowledgedOnly: e.target.checked })}
-            />
-            {t('alerts.unacknowledgedOnly')}
-          </label>
-          <label className="flex min-h-6 items-center gap-2 text-xs text-text-secondary">
-            <input
-              type="checkbox"
-              className="h-4 w-4 accent-brand-primary"
-              checked={filter.unresolvedOnly}
-              onChange={(e): void => setFilter({ ...filter, unresolvedOnly: e.target.checked })}
-            />
-            {t('alerts.unresolvedOnly')}
-          </label>
+          <Checkbox
+            checked={filter.unacknowledgedOnly}
+            onChange={(checked): void => setFilter({ ...filter, unacknowledgedOnly: checked })}
+            label={t('alerts.unacknowledgedOnly')}
+          />
+          <Checkbox
+            checked={filter.unresolvedOnly}
+            onChange={(checked): void => setFilter({ ...filter, unresolvedOnly: checked })}
+            label={t('alerts.unresolvedOnly')}
+          />
         </div>
       </div>
 

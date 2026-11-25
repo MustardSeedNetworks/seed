@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
+import { Button } from '../../shared/Button';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
 
 type Defect = 'accessibility' | 'interaction';
 
@@ -15,7 +16,9 @@ function SharedControls({ defect, onSave }: SharedControlsProps) {
 
   return (
     <form className="stack-md" onSubmit={(event) => event.preventDefault()}>
-      <Input label="Target address" defaultValue="192.0.2.1" />
+      <FormField label="Target address">
+        {(control) => <Input {...control} defaultValue="192.0.2.1" />}
+      </FormField>
       <Button disabled={defect === 'interaction'} onClick={onSave}>
         {buttonLabel}
       </Button>

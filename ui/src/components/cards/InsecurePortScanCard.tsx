@@ -22,8 +22,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useRole } from '../../contexts/RoleContext';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useInsecurePortScan } from '../../hooks/useInsecurePortScan';
-import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { Button } from '../../shared/Button';
 import { Card } from '../../shared/Card';
 import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
@@ -112,7 +112,7 @@ export function InsecurePortScanCard(): JSX.Element {
   const { canWrite } = useRole();
   const { result, scanning, error, scan } = useInsecurePortScan();
   const [target, setTarget] = useState('');
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
 
   const run = (): void => {
     const trimmed = target.trim();
@@ -127,7 +127,7 @@ export function InsecurePortScanCard(): JSX.Element {
   const scanned = result !== null;
   const readOnlyReason = canWrite ? undefined : t('insecurePorts.readOnly');
 
-  let cardStatus: LabelledStatus = 'unknown';
+  let cardStatus: CardStatus = 'unknown';
   if (scanned) {
     cardStatus = openPorts.length > 0 ? 'error' : 'success';
   }

@@ -14,12 +14,12 @@ import { type JSX, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useRole } from '../../contexts/RoleContext';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import {
   type PathMonitorState,
   type PathMonitorUpdate,
   usePathMonitor,
 } from '../../hooks/usePathMonitor';
-import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
 import { useTableLabels } from '../../hooks/useTableLabels';
 import { Alert } from '../../shared/Alert';
 import { Button } from '../../shared/Button';
@@ -40,7 +40,7 @@ function lastHop(snapshot: PathMonitorUpdate | undefined): HopStats | undefined 
   return snapshot?.hops.at(-1);
 }
 
-function cardStatus(state: PathMonitorState): LabelledStatus {
+function cardStatus(state: PathMonitorState): CardStatus {
   switch (state.phase) {
     case 'starting':
     case 'running':
@@ -77,7 +77,7 @@ export function PathMonitorCard({
   const { t } = useTranslation('cards');
   const { canWrite } = useRole();
   const { state, start, stop } = usePathMonitor(subscribe);
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
   const status = cardStatus(state);
 
   // null until the operator edits the field, so a gateway that loads after

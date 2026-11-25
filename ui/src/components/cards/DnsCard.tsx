@@ -27,6 +27,7 @@ import { Tooltip } from '../../shared/Tooltip';
 
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { formatTime } from '../../lib/format';
 import { Card, CardDivider, type CardStatus, CardValue } from '../../shared/Card';
 import { CollapsibleSection } from '../../shared/CollapsibleSection';
@@ -34,7 +35,6 @@ import { StatusIndicator } from '../../shared/StatusPill';
 import { cn, icon as iconTokens, layout, spacing, status as statusColor } from '../../styles/theme';
 import type { DNSLookupResult } from '../../types/generated/dns-response';
 import { Globe } from '../ui/Icons';
-import { useCardStatusLabel } from './CardStatusLabel';
 
 interface LookupResult {
   outcome: DNSLookupResult['outcome'];

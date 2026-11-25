@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useRole } from '../../contexts/RoleContext';
 import type { UseBoundedJobReturn } from '../../hooks/useBoundedJob';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import {
   type DscpMode,
   type DscpRequest,
@@ -38,7 +39,6 @@ import { FormField } from '../../shared/FormField';
 import { Input } from '../../shared/Input';
 import { cn, radius, spacing } from '../../styles/theme';
 import { Gauge } from '../ui/Icons';
-import { useCardStatusLabel } from './CardStatusLabel';
 import { DscpCheckResult, verdictOf } from './DscpCheckResult';
 
 const FEATURE = 'dscp_verification';

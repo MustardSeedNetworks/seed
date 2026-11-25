@@ -15,6 +15,7 @@ import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useBonjourBrowse } from '../../hooks/useBonjourBrowse';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useTableLabels } from '../../hooks/useTableLabels';
 import { Alert } from '../../shared/Alert';
 import { Button } from '../../shared/Button';
@@ -28,7 +29,6 @@ import type {
   ReflectorStatus,
 } from '../../types/generated/bonjour-browse-response';
 import { Network } from '../ui/Icons';
-import { useCardStatusLabel } from './CardStatusLabel';
 
 const MS_PER_SECOND = 1000;
 

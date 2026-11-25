@@ -6,7 +6,7 @@
  * The fetching lives in useReports.
  */
 import { useTranslation } from 'react-i18next';
-import { type LabelledStatus, useStatusLabel } from '../../hooks/useStatusLabel';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { Button } from '../../shared/Button';
 import { Card, CardDivider, CardRow } from '../../shared/Card';
 import { cn, spacing } from '../../styles/theme';
@@ -25,7 +25,7 @@ export interface ReportsCardProps {
 /** Report statuses the backend can report. */
 const terminalStatuses = new Set(['complete', 'failed']);
 
-function cardStatus(reports: ReportInfo[], loading: boolean, error: string | null): LabelledStatus {
+function cardStatus(reports: ReportInfo[], loading: boolean, error: string | null): CardStatus {
   if (loading) {
     return 'loading';
   }
@@ -47,7 +47,7 @@ export function ReportsCard({
   generating = false,
 }: ReportsCardProps): React.ReactElement {
   const { t } = useTranslation('cards');
-  const statusLabel = useStatusLabel();
+  const statusLabel = useCardStatusLabel();
   const status = cardStatus(reports, loading, error);
 
   return (
