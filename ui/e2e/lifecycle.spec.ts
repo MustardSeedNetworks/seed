@@ -38,6 +38,7 @@ async function openFeed(page: Page): Promise<void> {
   await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
   await sidebarSettingsButton(page).click();
   await expect(page.getByTestId('settings-drawer')).toBeVisible({ timeout: 5000 });
+  await page.getByRole('tab', { name: 'Access' }).click();
   const section = page.getByTestId('eox-feed-section');
   await section.getByRole('button', { expanded: false }).first().click();
   await expect(page.getByTestId('eox-feed-save')).toBeEnabled();

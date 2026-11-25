@@ -1,6 +1,6 @@
 /** Contextual, translated help for the current Seed page. */
 
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FormField } from '../../shared/FormField';
 import { RightDrawer } from '../../shared/RightDrawer';
@@ -34,6 +34,7 @@ export function HelpDrawer({
   const [requestedSection, setRequestedSection] = useState(section);
   const [wasOpen, setWasOpen] = useState(isOpen);
   const [searchQuery, setSearchQuery] = useState('');
+  const sectionSelectRef = useRef<HTMLSelectElement>(null);
 
   if (section !== requestedSection || isOpen !== wasOpen) {
     setRequestedSection(section);
@@ -98,6 +99,7 @@ export function HelpDrawer({
           {(control) => (
             <Select
               {...control}
+              ref={sectionSelectRef}
               data-testid="help-section-select"
               value={currentSection.id}
               onValueChange={setActiveSection}
@@ -117,13 +119,14 @@ export function HelpDrawer({
           <h3 className="mb-2 text-base font-semibold text-text-primary">
             {t(currentSection.titleKey)}
           </h3>
-          <a
-            href="#help-section-select"
+          <button
+            type="button"
+            onClick={() => sectionSelectRef.current?.focus()}
             data-testid="help-return-to-select"
             className="mb-3 inline-block text-sm text-brand-primary-strong underline"
           >
             {t('modal.backToSections')}
-          </a>
+          </button>
           <HelpSectionBody blocks={currentSection.blocks} />
         </div>
       </div>

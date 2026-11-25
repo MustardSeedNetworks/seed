@@ -293,6 +293,7 @@ test('viewer settings retain disabled controls and a reachable reason', async ({
   );
   await page.goto('/network');
   await sidebarSettingsButton(page).click();
+  await page.getByRole('tab', { name: 'Discovery' }).click();
   await page.getByTestId('discovery-settings-section').click();
   const fieldset = page
     .getByTestId('discovery-settings-section')
@@ -310,19 +311,21 @@ test('viewer settings retain disabled controls and a reachable reason', async ({
 for (const width of [1440, 390]) {
   test(`${width}px help content scrolls by keyboard and returns focus to the section navigation`, async ({
     page,
-    browserName,
   }) => {
     await page.setViewportSize({ width, height: 700 });
     await page.goto('/network');
     await page.getByTestId('page-header-help-button').click();
     const back = page.getByTestId('help-return-to-select');
-    // macOS WebKit uses Option+Tab to include native links in keyboard navigation.
-    const linkTab = browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
-    await tabTo(page, back, linkTab);
+    await tabTo(page, back);
     await expectFocused(back);
+    // The drawer body scrolls, not the content block inside it.
     const content = page.getByTestId('help-drawer-content');
     await page.keyboard.press('PageDown');
-    await expect.poll(() => content.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    await expect
+      .poll(() =>
+        content.evaluate((element) => element.closest('.overflow-y-auto')?.scrollTop ?? 0),
+      )
+      .toBeGreaterThan(0);
     await page.keyboard.press('Enter');
     await expectFocused(page.getByTestId('help-section-select'));
   });

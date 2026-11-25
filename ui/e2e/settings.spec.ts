@@ -34,26 +34,32 @@ test.describe('Settings', () => {
   });
 
   test('should display Appearance settings section', async ({ page }) => {
+    await page.getByRole('tab', { name: 'General' }).click();
     await expect(page.getByTestId('appearance-settings-section')).toBeVisible();
   });
 
   test('should display Thresholds settings section', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Tests' }).click();
     await expect(page.getByTestId('thresholds-settings-section')).toBeVisible();
   });
 
   test('should display Discovery settings section', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Discovery' }).click();
     await expect(page.getByTestId('discovery-settings-section')).toBeVisible();
   });
 
   test('should display DNS settings section', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Tests' }).click();
     await expect(page.getByTestId('dns-settings-section')).toBeVisible();
   });
 
   test('should display Performance settings section', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Tests' }).click();
     await expect(page.getByTestId('performance-settings-section')).toBeVisible();
   });
 
   test('should toggle theme between light and dark', async ({ page }) => {
+    await page.getByRole('tab', { name: 'General' }).click();
     // theme-toggle testid is on AppearanceSettings.tsx:169 (the quick-
     // toggle button). The Appearance section is collapsed by default;
     // expand it first. Previously a .or() chain with /dark|light|theme/i
@@ -94,6 +100,7 @@ test.describe('Settings', () => {
   });
 
   test('should persist settings after drawer close and reopen', async ({ page }) => {
+    await page.getByRole('tab', { name: 'General' }).click();
     // Expand Appearance section first; theme-toggle lives inside it.
     await page.getByTestId('appearance-settings-section').click();
     const themeToggle = page.getByTestId('theme-toggle');

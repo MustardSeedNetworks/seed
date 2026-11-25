@@ -50,6 +50,7 @@ test.describe('Settings — interfaces', () => {
     await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
     await sidebarSettingsButton(page).click();
     await expect(page.getByTestId('settings-drawer')).toBeVisible({ timeout: 5000 });
+    await page.getByRole('tab', { name: 'Network' }).click();
   });
 
   test('an added interface appears in the list without reopening Settings', async ({ page }) => {

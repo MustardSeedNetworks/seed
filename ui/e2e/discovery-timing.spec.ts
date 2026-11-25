@@ -15,6 +15,7 @@ async function openDiscoverySettings(page: Page): Promise<void> {
   await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
   await sidebarSettingsButton(page).click();
   await expect(page.getByTestId('settings-drawer')).toBeVisible();
+  await page.getByRole('tab', { name: 'Discovery' }).click();
   await page.getByTestId('discovery-settings-section').getByRole('button').first().click();
   await expect(page.getByTestId('discovery-rescan-interval')).toBeVisible();
 }
