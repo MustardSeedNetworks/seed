@@ -300,7 +300,7 @@ test('viewer settings retain disabled controls and a reachable reason', async ({
   const reason = fieldset.locator('legend button');
   await tabTo(page, reason);
   await expect(reason).toHaveAccessibleDescription(/read.only|viewer/i);
-  await expect(fieldset.locator('input').first()).toBeDisabled();
+  await expect(fieldset.locator('input, [role="switch"]').first()).toBeDisabled();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('tooltip')).toHaveCount(0);
   await expect(page.getByTestId('settings-drawer')).toBeVisible();

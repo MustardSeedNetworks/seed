@@ -2,8 +2,7 @@
  * HealthCheckCard Component
  *
  * Purpose: Comprehensive health check monitoring for remote services via ping, TCP, UDP, and HTTP(S).
- * Tests end-to-end connectivity and provides detailed per-phase metrics (DNS, TCP, TLS, TTFB).
- *
+ * Tests end-to-end connectivity with per-phase metrics (DNS, TCP, TLS, TTFB).
  * Key Features:
  * - Multi-protocol testing: ICMP ping, TCP connect, UDP, HTTP/HTTPS requests
  * - Extended ping metrics: packet loss, jitter, min/max/avg latency

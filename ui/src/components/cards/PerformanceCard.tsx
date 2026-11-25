@@ -3,7 +3,6 @@
  *
  * Purpose: Internet speed and network performance testing with speedtest.net integration and
  * iperf3 support. Displays download/upload speeds, latency, jitter, and packet loss metrics.
- * (~670 lines - complex testing orchestration)
  *
  * Key Features:
  * - Speedtest.net integration: download/upload speeds, latency, server info, distance
@@ -12,7 +11,6 @@
  * - Multiple test result history: displays last completed test results
  * - Visual gauges: SpeedGauge components for visual speed representation
  * - Protocol metrics: separate IPv4/IPv6 results (when available)
- * - Test controls: start/stop test, clear results
  * - Latency thresholds: warning/critical levels from settings
  * - System info: iperf3 installation status and version
  *
@@ -420,16 +418,13 @@ export function PerformanceCard({
     }
     return 'unknown';
   };
-
-  const status = getStatus();
-
   return (
     <Card
       title={t('performance.title')}
       subtitle={t('performance.subtitle')}
       icon={<Gauge className={iconTokens.size.md} />}
-      status={status}
-      statusLabel={statusLabel(status)}
+      status={getStatus()}
+      statusLabel={statusLabel(getStatus())}
     >
       <div>
         {/* Internet Speed Section */}
