@@ -66,7 +66,6 @@
     "reset": "Restore default",
     "saveFailed": "Not saved: {{reason}}",
     "loadFailed": "Could not load your dashboard: {{reason}}",
-    "empty": "Your dashboard has no cards. Choose Customize to add some.",
     "widget": {
       "link": "Link",
       "network": "Network",
@@ -76,7 +75,9 @@
       "switch": "Nearest switch",
       "neighbours": "Neighbour cache",
       "driverStats": "Driver error counters"
-    }
+    },
+    "emptyTitle": "Your dashboard has no cards",
+    "emptyHint": "Choose Customize to add some."
   },
   "flows": {
     "label": "Flows",
@@ -96,7 +97,6 @@
     },
     "clamped_one": "Showing the 1 day your license keeps.",
     "clamped_other": "Showing the {{count}} days your license keeps.",
-    "empty": "No flows in this window. Flows appear once a router or switch exports NetFlow, IPFIX or sFlow to Seed.",
     "none": "None in this window.",
     "talkers": "Top talkers",
     "conversations": "Top conversations",
@@ -108,7 +108,10 @@
     "colBytes": "Bytes",
     "colPackets": "Packets",
     "protocolNumber": "IP {{number}}",
-    "unknownApplication": "Unidentified"
+    "unknownApplication": "Unidentified",
+    "emptyTitle": "No flows in this window",
+    "emptyHint": "Flows appear once a router or switch exports NetFlow, IPFIX or sFlow to Seed.",
+    "loading": "Loading {{name}}"
   },
   "groups": {
     "diagnostics": "Diagnostics",
@@ -122,7 +125,6 @@
     "title": "Interfaces",
     "count_one": "{{count}} interface",
     "count_other": "{{count}} interfaces",
-    "empty": "No interfaces yet. Add a polling target; its interfaces appear after the first poll.",
     "addTarget": "Add a polling target",
     "noData": "No rates yet. A rate needs two polls, so rates appear one poll interval after the first.",
     "noRateYet": "No rate yet",
@@ -143,12 +145,15 @@
     "history": {
       "openHint": "Select an interface to see its history.",
       "close": "Close history",
-      "empty": "No rated polls in this window. A target that was just added, or stopped answering, has none yet.",
       "traffic": "Traffic",
       "errors": "Errors and discards",
       "in": "In",
-      "out": "Out"
-    }
+      "out": "Out",
+      "emptyTitle": "No rated polls in this window",
+      "emptyHint": "A target that was just added, or stopped answering, has none yet."
+    },
+    "emptyTitle": "No interfaces yet",
+    "emptyHint": "Add a polling target; its interfaces appear after the first poll."
   },
   "deviceConfigs": {
     "description": "Saved device configurations and what changed between backups.",
@@ -509,7 +514,6 @@
     "recordCount_one": "EoX data for {{count}} product",
     "recordCount_other": "EoX data for {{count}} products",
     "noRecords": "No EoX data imported",
-    "noParts": "No inventoried part yet. Discovery lists a device's parts once it answers SNMP with its ENTITY-MIB inventory.",
     "status": {
       "not_listed": "Not listed",
       "announced": "End of life announced",
@@ -535,7 +539,12 @@
     "notListed": "The imported EoX data has no record for this product.",
     "importFirst": "No EoX data yet. Import a Cisco EoX API response, or have an admin turn on the EoX feed in Settings.",
     "bulletin": "Read the end-of-life bulletin",
-    "emptyPrompt": "Select a part to see its end-of-life dates."
+    "emptyPrompt": "Select a part to see its end-of-life dates.",
+    "colPart": "Part",
+    "colStatus": "Lifecycle",
+    "tableCaption": "Inventoried parts",
+    "noPartsTitle": "No inventoried part yet",
+    "noPartsHint": "Discovery lists a device's parts once it answers SNMP with its ENTITY-MIB inventory."
   },
   "ipSla": {
     "label": "IP SLA",
@@ -546,7 +555,6 @@
     "operationCount_other": "{{count}} operations",
     "failingCount_one": "{{count}} failing",
     "failingCount_other": "{{count}} failing",
-    "noOperations": "No IP SLA operation yet. Polling lists the operations a Cisco target runs once it answers SNMP with CISCO-RTTMON-MIB.",
     "emptyPrompt": "Select an operation to see its trend.",
     "operation": "Operation {{index}}",
     "type": {
@@ -592,7 +600,12 @@
     "seriesRtt": "RTT",
     "seriesJitter": "Jitter",
     "seriesCompleted": "Completed",
-    "seriesLoss": "Loss"
+    "seriesLoss": "Loss",
+    "colOperation": "Operation",
+    "colResult": "Latest run",
+    "tableCaption": "IP SLA operations",
+    "noOperationsTitle": "No IP SLA operation yet",
+    "noOperationsHint": "Polling lists the operations a Cisco target runs once it answers SNMP with CISCO-RTTMON-MIB."
   },
   "reports": {
     "description": "Aggregated SLA dashboard, compliance tracking, and historical reporting.",
@@ -611,13 +624,9 @@
     "selectNode": "Select a node to see interfaces and links.",
     "loadingNode": "Loading node…",
     "nodeNotFound": "Node not found.",
-    "noInterfaceData": "No interface data yet. The if_table reconciler folds these in on the next poll.",
     "adminOper": "Admin / Oper",
-    "noEdges": "No edges yet. LLDP/CDP/FDP needs both endpoints to be known nodes.",
     "nodeCount_one": "{{count}} node",
     "nodeCount_other": "{{count}} nodes",
-    "noNodes": "No nodes yet. Add a polling target and wait a poll cycle.",
-    "missedPolls": "Missed polls",
     "selectedNode": "Selected node",
     "deviceType": "Device type",
     "vendor": "Vendor",
@@ -638,7 +647,35 @@
     "graphLegendLearned": "Learned (FDB)",
     "graphNodeAria": "{{name}}, {{type}}",
     "linkCount_one": "{{count}} link",
-    "linkCount_other": "{{count}} links"
+    "linkCount_other": "{{count}} links",
+    "freshness": {
+      "current": "On schedule",
+      "stale": "Missed polls",
+      "unknown": "Not measured"
+    },
+    "colNode": "Node",
+    "colAddress": "Address",
+    "colType": "Type",
+    "colStatus": "Status",
+    "nodesCaption": "Discovered nodes",
+    "noNodesTitle": "No nodes yet",
+    "noNodesHint": "Add a polling target and wait a poll cycle.",
+    "ifState": {
+      "up": "up",
+      "down": "down",
+      "other": "unknown"
+    },
+    "adminState": "Admin {{state}}",
+    "operState": "Oper {{state}}",
+    "noInterfaceDataTitle": "No interface data yet",
+    "noInterfaceDataHint": "The if_table reconciler folds these in on the next poll.",
+    "colNeighbor": "Neighbor",
+    "colLinkType": "Link type",
+    "noEdgesTitle": "No edges yet",
+    "noEdgesHint": "LLDP/CDP/FDP needs both endpoints to be known nodes.",
+    "interfacesCaption": "Interfaces of the selected node",
+    "linksCaption": "Neighbor links of the selected node",
+    "colSeen": "Seen"
   },
   "wifi": {
     "description": "Wireless link, channel utilization, and channel-overlap visualisation.",

@@ -10,6 +10,7 @@
 
 import { type JSX, type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ArrowLeftRight } from '../components/ui/Icons';
 import {
   FLOW_RANGES,
   FLOW_RANKS,
@@ -19,8 +20,13 @@ import {
   useFlowTops,
 } from '../hooks/useFlowTops';
 import { useLocale } from '../hooks/useLocale';
+import { useTableLabels } from '../hooks/useTableLabels';
 import { formatBytes } from '../lib/format';
-import { cn, input } from '../styles/theme';
+import { Alert } from '../shared/Alert';
+import { DataTable, type DataTableColumn } from '../shared/DataTable';
+import { EmptyState } from '../shared/EmptyState';
+import { FormField } from '../shared/FormField';
+import { Select } from '../shared/Select';
 
 /** IANA protocol numbers worth a name; anything else shows as "IP n". */
 const PROTOCOL_NAMES: Record<number, string> = {
@@ -41,122 +47,127 @@ function pick<T extends string>(options: readonly T[], value: string, current: T
   return options.find((o) => o === value) ?? current;
 }
 
-const selectClass = cn(input.base, input.state.default, input.size.sm, 'body-small');
-
-interface ColumnTable {
+interface TopTableProps<T extends { bytes: number; packets: number }> {
   testId: string;
   title: string;
-  head: string[];
-  rows: { key: string; cells: ReactNode[] }[];
+  /** Null while the first read is in flight. */
+  rows: readonly T[] | null;
+  getRowKey: (row: T) => string;
+  /** The leading column(s): who or what the counters belong to. */
+  lead: readonly DataTableColumn<T>[];
 }
 
-function TopTable({ testId, title, head, rows }: ColumnTable): JSX.Element {
+function TopTable<T extends { bytes: number; packets: number }>({
+  testId,
+  title,
+  rows,
+  getRowKey,
+  lead,
+}: TopTableProps<T>): JSX.Element {
   const { t } = useTranslation('pages');
+  const locale = useLocale();
+  const labels = useTableLabels<T>({ loading: t('flows.loading', { name: title }) });
+  const packets = new Intl.NumberFormat(locale);
+  const columns: DataTableColumn<T>[] = [
+    ...lead,
+    {
+      key: 'bytes',
+      header: t('flows.colBytes'),
+      cell: (row) => formatBytes(row.bytes),
+      sortValue: (row) => row.bytes,
+      align: 'right',
+    },
+    {
+      key: 'packets',
+      header: t('flows.colPackets'),
+      cell: (row) => packets.format(row.packets),
+      sortValue: (row) => row.packets,
+      align: 'right',
+    },
+  ];
   return (
-    <section
-      className="rounded-lg border border-surface-border bg-surface-raised"
-      data-testid={testId}
-    >
-      <h2 className="border-b border-surface-border px-3 py-2 text-sm font-semibold text-text-primary">
-        {title}
-      </h2>
-      {rows.length === 0 ? (
-        <p className="px-3 py-2 text-sm text-text-muted" data-testid={`${testId}-none`}>
-          {t('flows.none')}
-        </p>
-      ) : (
-        <table className="w-full text-sm">
-          <caption className="sr-only">{title}</caption>
-          <thead className="text-left text-xs uppercase tracking-wide text-text-muted">
-            <tr>
-              {head.map((label, i) => (
-                <th
-                  key={label}
-                  scope="col"
-                  className={cn('px-3 py-2', i >= head.length - 2 && 'text-right')}
-                >
-                  {label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-surface-border">
-            {rows.map((row) => (
-              <tr key={row.key} data-testid={`${testId}-row`}>
-                {row.cells.map((cell, i) => (
-                  <td
-                    key={head[i]}
-                    className={cn(
-                      'px-3 py-2',
-                      i >= row.cells.length - 2
-                        ? 'text-right tabular-nums text-text-secondary'
-                        : 'break-all text-text-primary',
-                    )}
-                  >
-                    {cell}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+    <section className="min-w-0" data-testid={testId}>
+      <h2 className="mb-2 text-sm font-semibold text-text-primary">{title}</h2>
+      <DataTable
+        rows={rows ?? []}
+        columns={columns}
+        getRowKey={getRowKey}
+        caption={title}
+        loading={rows === null}
+        labels={labels}
+        pageSize={10}
+        empty={
+          <div data-testid={`${testId}-none`}>
+            <EmptyState
+              icon={<ArrowLeftRight className="h-6 w-6" aria-hidden="true" />}
+              title={t('flows.none')}
+            />
+          </div>
+        }
+      />
     </section>
   );
 }
 
-function FlowTables({ tops }: { tops: FlowTops }): JSX.Element {
+function FlowTables({ tops }: { tops: FlowTops | null }): JSX.Element {
   const { t } = useTranslation('pages');
-  const locale = useLocale();
-  const packets = new Intl.NumberFormat(locale);
-  const counters = (bytes: number, count: number): ReactNode[] => [
-    formatBytes(bytes),
-    packets.format(count),
-  ];
   const protocol = (n: number): string =>
     PROTOCOL_NAMES[n] ?? t('flows.protocolNumber', { number: n });
+  type Talker = FlowTops['talkers']['talkers'][number];
+  type Application = FlowTops['applications']['applications'][number];
+  type Conversation = FlowTops['conversations']['conversations'][number];
 
   return (
     <div className="grid gap-4 xl:grid-cols-2">
-      <TopTable
+      <TopTable<Talker>
         testId="flows-talkers"
         title={t('flows.talkers')}
-        head={[t('flows.colHost'), t('flows.colBytes'), t('flows.colPackets')]}
-        rows={tops.talkers.talkers.map((h) => ({
-          key: h.addr,
-          cells: [h.addr, ...counters(h.bytes, h.packets)],
-        }))}
+        rows={tops?.talkers.talkers ?? null}
+        getRowKey={(h) => h.addr}
+        lead={[
+          {
+            key: 'host',
+            header: t('flows.colHost'),
+            cell: (h) => <span className="break-all">{h.addr}</span>,
+            sortValue: (h) => h.addr,
+          },
+        ]}
       />
-      <TopTable
+      <TopTable<Application>
         testId="flows-applications"
         title={t('flows.applications')}
-        head={[t('flows.colApplication'), t('flows.colBytes'), t('flows.colPackets')]}
-        rows={tops.applications.applications.map((a) => ({
-          key: a.name,
-          cells: [
-            a.name === UNKNOWN_APPLICATION ? t('flows.unknownApplication') : a.name,
-            ...counters(a.bytes, a.packets),
-          ],
-        }))}
+        rows={tops?.applications.applications ?? null}
+        getRowKey={(a) => a.name}
+        lead={[
+          {
+            key: 'application',
+            header: t('flows.colApplication'),
+            cell: (a) => (a.name === UNKNOWN_APPLICATION ? t('flows.unknownApplication') : a.name),
+            sortValue: (a) =>
+              a.name === UNKNOWN_APPLICATION ? t('flows.unknownApplication') : a.name,
+          },
+        ]}
       />
       <div className="xl:col-span-2">
-        <TopTable
+        <TopTable<Conversation>
           testId="flows-conversations"
           title={t('flows.conversations')}
-          head={[
-            t('flows.colHosts'),
-            t('flows.colProtocol'),
-            t('flows.colBytes'),
-            t('flows.colPackets'),
+          rows={tops?.conversations.conversations ?? null}
+          getRowKey={(c) => `${c.addrA}|${c.addrB}|${c.protocol}`}
+          lead={[
+            {
+              key: 'hosts',
+              header: t('flows.colHosts'),
+              cell: (c) => <span className="break-all">{`${c.addrA} ↔ ${c.addrB}`}</span>,
+              sortValue: (c) => `${c.addrA} ${c.addrB}`,
+            },
+            {
+              key: 'protocol',
+              header: t('flows.colProtocol'),
+              cell: (c) => protocol(c.protocol),
+              sortValue: (c) => protocol(c.protocol),
+            },
           ]}
-          rows={tops.conversations.conversations.map((c) => ({
-            key: `${c.addrA}|${c.addrB}|${c.protocol}`,
-            cells: [
-              `${c.addrA} ↔ ${c.addrB}`,
-              protocol(c.protocol),
-              ...counters(c.bytes, c.packets),
-            ],
-          }))}
         />
       </div>
     </div>
@@ -176,31 +187,22 @@ export function FlowsPage(): JSX.Element {
     tops.applications.applications.length === 0;
   const served = tops?.talkers.window;
 
-  let body: JSX.Element;
+  let body: ReactNode;
   if (error) {
     body = (
-      <div
-        role="alert"
-        data-testid="flows-error"
-        className="rounded-md border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error-strong"
-      >
-        {error}
+      <div data-testid="flows-error">
+        <Alert tone="error">{error}</Alert>
       </div>
-    );
-  } else if (tops === null) {
-    body = (
-      <p className="body-small" data-testid="flows-loading">
-        {t('common:status.loading')}
-      </p>
     );
   } else if (empty) {
     body = (
-      <p
-        data-testid="flows-empty"
-        className="rounded-lg border border-surface-border bg-surface-raised pad text-sm text-text-secondary"
-      >
-        {t('flows.empty')}
-      </p>
+      <div data-testid="flows-empty">
+        <EmptyState
+          icon={<ArrowLeftRight className="h-6 w-6" aria-hidden="true" />}
+          title={t('flows.emptyTitle')}
+          hint={t('flows.emptyHint')}
+        />
+      </div>
     );
   } else {
     body = <FlowTables tops={tops} />;
@@ -209,49 +211,38 @@ export function FlowsPage(): JSX.Element {
   return (
     <>
       <div className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-xs text-text-muted">
-          {t('flows.windowLabel')}
-          <select
-            value={range}
-            onChange={(e): void => setRange(pick(FLOW_RANGES, e.target.value, range))}
-            data-testid="flows-range"
-            className={selectClass}
-          >
-            {FLOW_RANGES.map((r) => (
-              <option key={r} value={r}>
-                {t(`flows.window.${r}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-text-muted">
-          {t('flows.rankLabel')}
-          <select
-            value={by}
-            onChange={(e): void => setBy(pick(FLOW_RANKS, e.target.value, by))}
-            data-testid="flows-rank"
-            className={selectClass}
-          >
-            {FLOW_RANKS.map((r) => (
-              <option key={r} value={r}>
-                {t(`flows.rank.${r}`)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <FormField label={t('flows.windowLabel')} className="w-48">
+          {(control) => (
+            <Select
+              {...control}
+              value={range}
+              onValueChange={(value): void => setRange(pick(FLOW_RANGES, value, range))}
+              options={FLOW_RANGES.map((r) => ({ value: r, label: t(`flows.window.${r}`) }))}
+              data-testid="flows-range"
+            />
+          )}
+        </FormField>
+        <FormField label={t('flows.rankLabel')} className="w-48">
+          {(control) => (
+            <Select
+              {...control}
+              value={by}
+              onValueChange={(value): void => setBy(pick(FLOW_RANKS, value, by))}
+              options={FLOW_RANKS.map((r) => ({ value: r, label: t(`flows.rank.${r}`) }))}
+              data-testid="flows-rank"
+            />
+          )}
+        </FormField>
         {loading && tops !== null ? (
-          <span className="body-small" data-testid="flows-refreshing">
+          <span className="text-sm text-text-muted" data-testid="flows-refreshing">
             {t('common:status.loading')}
           </span>
         ) : null}
       </div>
       {served?.clamped ? (
-        <p
-          data-testid="flows-clamped"
-          className="rounded-md border border-surface-border bg-surface-sunken pad-sm text-sm text-text-secondary"
-        >
-          {t('flows.clamped', { count: served.days })}
-        </p>
+        <div data-testid="flows-clamped">
+          <Alert tone="info">{t('flows.clamped', { count: served.days })}</Alert>
+        </div>
       ) : null}
       {body}
     </>

@@ -10,6 +10,7 @@
 
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Timer } from '../components/ui/Icons';
 import {
   type HistoryRange,
   TrendChart,
@@ -18,17 +19,15 @@ import {
 } from '../components/ui/TrendChart';
 import { useIpSla, useIpSlaHistory } from '../hooks/useIpSla';
 import { useLocale } from '../hooks/useLocale';
+import { useTableLabels } from '../hooks/useTableLabels';
+import { Alert } from '../shared/Alert';
+import { DataTable, type DataTableColumn } from '../shared/DataTable';
+import { EmptyState } from '../shared/EmptyState';
+import { Skeleton } from '../shared/Skeleton';
+import { StatusPill, type StatusTone } from '../shared/StatusPill';
 import type { IPSLARunResponse } from '../types/generated/ip-sla-history-response';
 import type { IPSLAOperationResponse } from '../types/generated/ip-sla-operations-response';
-import {
-  DetailEmpty,
-  DetailFacts,
-  DetailPane,
-  ListDetail,
-  RecordPane,
-  RecordRow,
-  type RecordState,
-} from '../ui/ListDetail';
+import { DetailEmpty, DetailFacts, DetailPane } from '../ui/ListDetail';
 
 /** rttMonLatestRttOperSense values the page words; any other is a failure. */
 const SENSE_OK = 1;
@@ -50,14 +49,15 @@ function keyOf(op: IPSLAOperationResponse): string {
   return `${op.targetId}#${op.index}`;
 }
 
-function stateOf(op: IPSLAOperationResponse): RecordState | undefined {
+/** An operation with no run yet claims no state: it is not evidence of health. */
+function toneOf(op: IPSLAOperationResponse): StatusTone {
   if (!op.latest) {
-    return undefined;
+    return 'unknown';
   }
   if (!op.latest.completed) {
-    return 'crit';
+    return 'error';
   }
-  return op.latest.sense === SENSE_OVER_THRESHOLD ? 'warn' : 'ok';
+  return op.latest.sense === SENSE_OVER_THRESHOLD ? 'warning' : 'success';
 }
 
 const ms = (v: number): string => `${Math.round(v * 10) / 10} ms`;
@@ -71,25 +71,26 @@ function HistoryCharts({ op }: { op: IPSLAOperationResponse }): JSX.Element {
   let body: JSX.Element;
   if (error) {
     body = (
-      <p
-        role="alert"
-        data-testid="ipsla-history-error"
-        className="text-sm text-status-error-strong"
-      >
-        {t('ipSla.historyFailed', { reason: error })}
-      </p>
+      <div data-testid="ipsla-history-error">
+        <Alert tone="error">{t('ipSla.historyFailed', { reason: error })}</Alert>
+      </div>
     );
   } else if (loading || !history) {
     body = (
-      <p className="body-small" data-testid="ipsla-history-loading">
-        {t('common:status.loading')}
-      </p>
+      <div data-testid="ipsla-history-loading" role="status" className="flex flex-col gap-2">
+        <span className="sr-only">{t('common:status.loading')}</span>
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
     );
   } else if (history.points.length === 0) {
     body = (
-      <p className="body-small" data-testid="ipsla-history-empty">
-        {t('ipSla.historyEmpty')}
-      </p>
+      <div data-testid="ipsla-history-empty">
+        <EmptyState
+          icon={<Timer className="h-6 w-6" aria-hidden="true" />}
+          title={t('ipSla.historyEmpty')}
+        />
+      </div>
     );
   } else {
     // Jitter, loss and MOS exist only for a jitter-type operation.
@@ -198,18 +199,33 @@ export function IpSlaPage(): JSX.Element {
     }
   };
 
+  const labels = useTableLabels<IPSLAOperationResponse>({ loading: t('common:status.loading') });
+  const columns: DataTableColumn<IPSLAOperationResponse>[] = [
+    {
+      key: 'operation',
+      header: t('ipSla.colOperation'),
+      sortValue: (op) => nameOf(op),
+      cell: (op) => (
+        <div className="flex min-w-0 flex-col gap-0.5 py-1">
+          <span className="figure text-text-primary">{nameOf(op)}</span>
+          <span className="text-xs text-text-muted">
+            {[op.targetName, op.target].filter(Boolean).join(' → ')}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: 'result',
+      header: t('ipSla.colResult'),
+      cell: (op) => <StatusPill tone={toneOf(op)} label={resultOf(op)} />,
+    },
+  ];
+
   return (
     <>
-      {error ? (
-        <div
-          role="alert"
-          className="rounded-md border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error-strong"
-        >
-          {t('ipSla.loadFailed', { reason: error })}
-        </div>
-      ) : null}
+      {error ? <Alert tone="error">{t('ipSla.loadFailed', { reason: error })}</Alert> : null}
 
-      <p className="body-small" data-testid="ipsla-counts">
+      <p className="text-sm text-text-muted" data-testid="ipsla-counts">
         {data
           ? [
               t('ipSla.operationCount', { count: operations.length }),
@@ -220,21 +236,25 @@ export function IpSlaPage(): JSX.Element {
           : t('common:status.loading')}
       </p>
 
-      <ListDetail>
-        <RecordPane empty={data ? t('ipSla.noOperations') : t('common:status.loading')}>
-          {operations.map((op) => (
-            <RecordRow
-              key={keyOf(op)}
-              data-testid={`ipsla-op-${keyOf(op)}`}
-              name={nameOf(op)}
-              meta={[op.targetName, op.target].filter(Boolean).join(' → ')}
-              value={resultOf(op)}
-              state={stateOf(op)}
-              selected={selected !== null && keyOf(selected) === keyOf(op)}
-              onSelect={(): void => setSelectedKey(keyOf(op))}
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <DataTable
+          rows={operations}
+          columns={columns}
+          getRowKey={keyOf}
+          caption={t('ipSla.tableCaption')}
+          labels={labels}
+          loading={data === null && !error}
+          pageSize={25}
+          onRowClick={(op): void => setSelectedKey(keyOf(op))}
+          selectedRowKey={selected ? keyOf(selected) : undefined}
+          empty={
+            <EmptyState
+              icon={<Timer className="h-6 w-6" aria-hidden="true" />}
+              title={t('ipSla.noOperationsTitle')}
+              hint={t('ipSla.noOperationsHint')}
             />
-          ))}
-        </RecordPane>
+          }
+        />
 
         {selected ? (
           <DetailPane
@@ -297,7 +317,7 @@ export function IpSlaPage(): JSX.Element {
         ) : (
           <DetailEmpty>{t('ipSla.emptyPrompt')}</DetailEmpty>
         )}
-      </ListDetail>
+      </div>
     </>
   );
 }

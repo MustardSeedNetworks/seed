@@ -93,6 +93,11 @@ vi.mock('../api/client', async (importOriginal) => {
 
 const { IpSlaPage } = await import('./IpSlaPage');
 
+/** The tone of the status pill in a list row. */
+function tone(row: HTMLElement): string | null {
+  return row.querySelector('[data-tone]')?.getAttribute('data-tone') ?? null;
+}
+
 describe('IpSlaPage', () => {
   beforeEach(() => {
     operations = [timedOut, voice, idle];
@@ -104,21 +109,20 @@ describe('IpSlaPage', () => {
   it('words each latest run and keeps the failing operation first', async () => {
     render(<IpSlaPage />);
 
-    const failed = await screen.findByTestId('ipsla-op-t1#20');
-    expect(failed).toHaveTextContent('to-dc2');
+    const failed = await screen.findByRole('row', { name: /to-dc2/ });
     expect(failed).toHaveTextContent('edge-rtr → 10.9.0.1');
     expect(failed).toHaveTextContent('Timed out');
-    expect(failed).toHaveAttribute('data-state', 'crit');
+    expect(tone(failed)).toBe('error');
+    expect(screen.getAllByRole('row')[1]).toBe(failed);
 
-    const slow = screen.getByTestId('ipsla-op-t1#10');
+    const slow = screen.getByRole('row', { name: /Operation 10/ });
     // An operation without a tag is named by its index.
-    expect(slow).toHaveTextContent('Operation 10');
     expect(slow).toHaveTextContent('72 ms, over threshold');
-    expect(slow).toHaveAttribute('data-state', 'warn');
+    expect(tone(slow)).toBe('warning');
 
-    const never = screen.getByTestId('ipsla-op-t2#5');
+    const never = screen.getByRole('row', { name: /Operation 5/ });
     expect(never).toHaveTextContent('No run yet');
-    expect(never).toHaveAttribute('data-state', 'unknown');
+    expect(tone(never)).toBe('unknown');
 
     expect(screen.getByTestId('ipsla-counts')).toHaveTextContent('3 operations · 1 failing');
   });
@@ -158,7 +162,7 @@ describe('IpSlaPage', () => {
     const user = userEvent.setup();
     render(<IpSlaPage />);
 
-    await user.click(await screen.findByTestId('ipsla-op-t1#10'));
+    await user.click(await screen.findByRole('row', { name: /Operation 10/ }));
     expect(screen.getByTestId('ipsla-type')).toHaveTextContent('UDP jitter');
     expect(screen.getByTestId('ipsla-jitter')).toHaveTextContent('4 ms');
     expect(screen.getByText('2 of 100')).toBeInTheDocument();
@@ -182,7 +186,7 @@ describe('IpSlaPage', () => {
     const user = userEvent.setup();
     render(<IpSlaPage />);
 
-    await user.click(await screen.findByTestId('ipsla-op-t2#5'));
+    await user.click(await screen.findByRole('row', { name: /Operation 5/ }));
     expect(screen.getByTestId('ipsla-type')).toHaveTextContent('Type 99');
     expect(screen.getByText('Not running')).toBeInTheDocument();
     expect(screen.getByText('Every second')).toBeInTheDocument();
@@ -192,9 +196,19 @@ describe('IpSlaPage', () => {
     operations = [];
     render(<IpSlaPage />);
 
-    expect(await screen.findByText(/No IP SLA operation yet/)).toBeInTheDocument();
+    expect(await screen.findByText('No IP SLA operation yet')).toBeInTheDocument();
     expect(screen.getByTestId('ipsla-counts')).toHaveTextContent('0 operations');
     expect(reads.some((path) => path.includes('/history'))).toBe(false);
+  });
+
+  it('marks the open operation in the list', async () => {
+    render(<IpSlaPage />);
+    const first = await screen.findByRole('row', { name: /to-dc2/ });
+    expect(first).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('row', { name: /Operation 10/ })).toHaveAttribute(
+      'aria-selected',
+      'false',
+    );
   });
 
   it('shows a failed read as an alert', async () => {

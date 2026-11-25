@@ -61,7 +61,8 @@ const initial = structuredClone(state);
 
 function rowText(testId: string): string[] {
   return within(screen.getByTestId(testId))
-    .getAllByTestId(`${testId}-row`)
+    .getAllByRole('row')
+    .filter((row) => row.querySelector('td') !== null)
     .map((row) =>
       Array.from(row.querySelectorAll('td'))
         .map((td) => td.textContent)
@@ -81,7 +82,7 @@ afterEach(() => {
 describe('FlowsPage', () => {
   it('lists the top talkers, conversations and applications for the last day by bytes', async () => {
     render(<FlowsPage />);
-    await screen.findByTestId('flows-talkers');
+    await screen.findByText('10.0.0.9');
 
     expect(get.mock.calls.map(([path]) => path).sort((a, b) => a.localeCompare(b))).toEqual([
       '/api/v1/flows/top-applications?range=1d&by=bytes',
@@ -103,7 +104,7 @@ describe('FlowsPage', () => {
   it('re-reads all three lists when the window or the ranking changes', async () => {
     const user = userEvent.setup();
     render(<FlowsPage />);
-    await screen.findByTestId('flows-talkers');
+    await screen.findByText('10.0.0.9');
     get.mockClear();
 
     await user.selectOptions(screen.getByTestId('flows-range'), '30d');
@@ -129,8 +130,9 @@ describe('FlowsPage', () => {
     state.conversations = [];
     state.applications = [];
     render(<FlowsPage />);
-    expect(await screen.findByTestId('flows-empty')).toHaveTextContent('No flows in this window.');
+    expect(await screen.findByTestId('flows-empty')).toHaveTextContent('No flows in this window');
     expect(screen.queryByTestId('flows-talkers')).not.toBeInTheDocument();
+    expect(screen.getByTestId('flows-empty')).toHaveTextContent('Flows appear once');
   });
 
   it('marks a list that is empty while the others are not', async () => {
@@ -138,6 +140,11 @@ describe('FlowsPage', () => {
     render(<FlowsPage />);
     expect(await screen.findByTestId('flows-applications-none')).toBeInTheDocument();
     expect(rowText('flows-talkers')).toHaveLength(2);
+  });
+
+  it('shows skeleton rows while the first read is in flight', () => {
+    render(<FlowsPage />);
+    expect(screen.getByTestId('flows-talkers')).toHaveTextContent('Loading Top talkers');
   });
 
   it('reports a failed read', async () => {

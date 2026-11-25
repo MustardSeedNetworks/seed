@@ -123,7 +123,7 @@ describe('TopologyPage — real locale copy', () => {
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeVisible();
     expect(screen.getByText('Select a node to see interfaces and links.')).toBeVisible();
 
-    await userEvent.click(screen.getByTestId('node-row-core'));
+    await userEvent.click(screen.getByRole('row', { name: /core-01/ }));
 
     expect(screen.getByText('Selected node')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Clear' })).toBeVisible();
@@ -137,7 +137,8 @@ describe('TopologyPage — real locale copy', () => {
     ]) {
       expect(screen.getByText(label)).toBeVisible();
     }
-    expect(screen.getByText('Never')).toBeVisible();
+    // The node's last-seen fact and the neighbor link's seen cell.
+    expect(screen.getAllByText('Never')).toHaveLength(2);
     expect(screen.getByText('Interfaces (1)')).toBeVisible();
     expect(screen.getByText('Neighbor link (1)')).toBeVisible();
     expect(screen.getByRole('columnheader', { name: 'Index' })).toBeVisible();
@@ -151,9 +152,8 @@ describe('TopologyPage — real locale copy', () => {
     await renderIn('en');
 
     expect(screen.getByText('0 nodes')).toBeVisible();
-    expect(
-      screen.getByText('No nodes yet. Add a polling target and wait a poll cycle.'),
-    ).toBeVisible();
+    expect(screen.getByText('No nodes yet')).toBeVisible();
+    expect(screen.getByText('Add a polling target and wait a poll cycle.')).toBeVisible();
   });
 
   it('renders Spanish under es, with no English left behind', async () => {
@@ -165,7 +165,7 @@ describe('TopologyPage — real locale copy', () => {
       screen.getByText('Seleccione un nodo para ver las interfaces y los enlaces.'),
     ).toBeVisible();
 
-    await userEvent.click(screen.getByTestId('node-row-core'));
+    await userEvent.click(screen.getByRole('row', { name: /core-01/ }));
 
     // Every English string the page can render in this state. A hardcoded
     // label survives changeLanguage and shows up here.
@@ -194,17 +194,17 @@ describe('TopologyPage — real locale copy', () => {
     expect(screen.getByText('Tipo de dispositivo')).toBeVisible();
     expect(screen.getByText('Interfaces (1)')).toBeVisible();
     expect(screen.getByText('Enlace vecino (1)')).toBeVisible();
-    expect(screen.getByText('Nunca')).toBeVisible();
+    expect(screen.getAllByText('Nunca')).toHaveLength(2);
   });
 
   it('keeps standard protocol terms untranslated under es', async () => {
     await renderIn('es');
-    await userEvent.click(screen.getByTestId('node-row-core'));
+    await userEvent.click(screen.getByRole('row', { name: /core-01/ }));
 
-    const table = screen.getByRole('table');
-    // ifAdminStatus / ifOperStatus, not prose.
-    expect(within(table).getByText('admin')).toBeVisible();
-    expect(within(table).getByText('oper')).toBeVisible();
+    const table = screen.getByRole('table', { name: 'Interfaces del nodo seleccionado' });
+    // ifAdminStatus / ifOperStatus keep their RFC names; only the state is translated.
+    expect(within(table).getByText('Admin activo')).toBeVisible();
+    expect(within(table).getByText('Oper activo')).toBeVisible();
     expect(within(table).getByText('1.0 Gbps')).toBeVisible();
     expect(screen.getByRole('columnheader', { name: 'MAC' })).toBeVisible();
   });
@@ -215,8 +215,7 @@ describe('TopologyPage — real locale copy', () => {
     await renderIn('es');
 
     expect(screen.getByText('0 nodos')).toBeVisible();
-    expect(
-      screen.queryByText('No nodes yet. Add a polling target and wait a poll cycle.'),
-    ).toBeNull();
+    expect(screen.queryByText('No nodes yet')).toBeNull();
+    expect(screen.getByText('Aún no hay nodos')).toBeVisible();
   });
 });

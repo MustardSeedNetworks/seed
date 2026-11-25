@@ -9,11 +9,15 @@
  */
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, IconButton } from '../components/ui/Button';
 import { ChevronDown, ChevronUp, LayoutDashboard, Plus, X } from '../components/ui/Icons';
-import { iconSizes } from '../constants/sizes';
 import { useDashboardLayout } from '../hooks/useDashboardLayout';
-import { cn, input } from '../styles/theme';
+import { Alert } from '../shared/Alert';
+import { Button } from '../shared/Button';
+import { Card } from '../shared/Card';
+import { EmptyState } from '../shared/EmptyState';
+import { FormField } from '../shared/FormField';
+import { Select } from '../shared/Select';
+import { Skeleton } from '../shared/Skeleton';
 import { CardGrid } from '../ui/CardGrid';
 import { DashboardWidget, widgetLabel } from './dashboard/DashboardWidget';
 import {
@@ -24,8 +28,6 @@ import {
   moveWidget,
   resolveLayout,
 } from './dashboard/layout';
-
-const selectClass = cn(input.base, input.state.default, input.size.sm, 'body-small');
 
 interface EditorProps {
   draft: DashboardWidgetId[];
@@ -51,40 +53,46 @@ function DashboardEditor({
   const toAdd = adding !== null && available.includes(adding) ? adding : available[0];
 
   return (
-    <section
+    <Card
       data-testid="dashboard-editor"
-      className="flex flex-col gap-default rounded-lg border border-surface-border bg-surface-raised pad"
+      title={t('dashboard.editorTitle')}
+      className="flex flex-col gap-4"
     >
-      <h2 className="text-sm font-semibold text-text-primary">{t('dashboard.editorTitle')}</h2>
       {draft.length === 0 ? (
         <p className="text-sm text-text-muted">{t('dashboard.editorEmpty')}</p>
       ) : (
-        <ol className="flex flex-col divide-y divide-surface-border">
+        <ol className="flex flex-col divide-y divide-hairline">
           {draft.map((id, index) => {
             const label = widgetLabel(t, id);
             return (
               <li
                 key={id}
                 data-testid={`dashboard-row-${id}`}
-                className="flex items-center gap-compact py-compact"
+                className="flex items-center gap-2 py-2"
               >
                 <span className="min-w-0 flex-1 text-sm text-text-primary">{label}</span>
-                <IconButton
-                  icon={<ChevronUp className={iconSizes.md} />}
+                <Button
+                  variant="ghost"
+                  iconOnly
+                  icon={<ChevronUp className="h-4 w-4" />}
                   aria-label={t('dashboard.moveUp', { widget: label })}
                   disabled={index === 0}
                   onClick={(): void => onChange(moveWidget(draft, index, -1))}
                   data-testid={`dashboard-up-${id}`}
                 />
-                <IconButton
-                  icon={<ChevronDown className={iconSizes.md} />}
+                <Button
+                  variant="ghost"
+                  iconOnly
+                  icon={<ChevronDown className="h-4 w-4" />}
                   aria-label={t('dashboard.moveDown', { widget: label })}
                   disabled={index === draft.length - 1}
                   onClick={(): void => onChange(moveWidget(draft, index, 1))}
                   data-testid={`dashboard-down-${id}`}
                 />
-                <IconButton
-                  icon={<X className={iconSizes.md} />}
+                <Button
+                  variant="ghost"
+                  iconOnly
+                  icon={<X className="h-4 w-4" />}
                   aria-label={t('dashboard.remove', { widget: label })}
                   onClick={(): void => onChange(draft.filter((w) => w !== id))}
                   data-testid={`dashboard-remove-${id}`}
@@ -95,28 +103,21 @@ function DashboardEditor({
         </ol>
       )}
       {toAdd === undefined ? null : (
-        <div className="flex flex-wrap items-end gap-compact">
-          <label className="flex flex-col gap-tight text-xs text-text-muted">
-            {t('dashboard.addLabel')}
-            <select
-              value={toAdd}
-              onChange={({ target: { value } }): void =>
-                setAdding(isDashboardWidget(value) ? value : null)
-              }
-              data-testid="dashboard-add-choice"
-              className={selectClass}
-            >
-              {available.map((id) => (
-                <option key={id} value={id}>
-                  {widgetLabel(t, id)}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className="flex flex-wrap items-end gap-2">
+          <FormField label={t('dashboard.addLabel')} className="w-56">
+            {(control) => (
+              <Select
+                {...control}
+                value={toAdd}
+                onValueChange={(value): void => setAdding(isDashboardWidget(value) ? value : null)}
+                options={available.map((id) => ({ value: id, label: widgetLabel(t, id) }))}
+                data-testid="dashboard-add-choice"
+              />
+            )}
+          </FormField>
           <Button
-            size="sm"
-            variant="outline"
-            leftIcon={<Plus className={iconSizes.md} />}
+            variant="secondary"
+            icon={<Plus className="h-4 w-4" />}
             onClick={(): void => onChange([...draft, toAdd])}
             data-testid="dashboard-add"
           >
@@ -125,23 +126,18 @@ function DashboardEditor({
         </div>
       )}
       {saveError === null ? null : (
-        <p
-          role="alert"
-          data-testid="dashboard-save-error"
-          className="text-sm text-status-error-strong"
-        >
-          {t('dashboard.saveFailed', { reason: saveError })}
-        </p>
+        <div data-testid="dashboard-save-error">
+          <Alert tone="error">{t('dashboard.saveFailed', { reason: saveError })}</Alert>
+        </div>
       )}
-      <div className="flex flex-wrap gap-compact">
-        <Button size="sm" loading={saving} onClick={onSave} data-testid="dashboard-save">
+      <div className="flex flex-wrap gap-2">
+        <Button variant="primary" loading={saving} onClick={onSave} data-testid="dashboard-save">
           {t('dashboard.save')}
         </Button>
-        <Button size="sm" variant="ghost" onClick={onCancel} data-testid="dashboard-cancel">
+        <Button variant="secondary" onClick={onCancel} data-testid="dashboard-cancel">
           {t('dashboard.cancel')}
         </Button>
         <Button
-          size="sm"
           variant="ghost"
           onClick={(): void => onChange([...DEFAULT_DASHBOARD])}
           data-testid="dashboard-reset"
@@ -149,7 +145,7 @@ function DashboardEditor({
           {t('dashboard.reset')}
         </Button>
       </div>
-    </section>
+    </Card>
   );
 }
 
@@ -163,13 +159,14 @@ export function DashboardPage(): JSX.Element {
 
   if (layout === null) {
     return error === null ? (
-      <p className="body-small" data-testid="dashboard-loading">
-        {t('common:status.loading')}
-      </p>
+      <div data-testid="dashboard-loading" role="status" className="flex flex-col gap-2">
+        <span className="sr-only">{t('common:status.loading')}</span>
+        <Skeleton className="h-32 w-full" />
+      </div>
     ) : (
-      <p role="alert" data-testid="dashboard-error" className="text-sm text-status-error-strong">
-        {t('dashboard.loadFailed', { reason: error })}
-      </p>
+      <div data-testid="dashboard-error">
+        <Alert tone="error">{t('dashboard.loadFailed', { reason: error })}</Alert>
+      </div>
     );
   }
 
@@ -190,9 +187,8 @@ export function DashboardPage(): JSX.Element {
       {draft === null ? (
         <div className="flex justify-end">
           <Button
-            size="sm"
-            variant="outline"
-            leftIcon={<LayoutDashboard className={iconSizes.md} />}
+            variant="secondary"
+            icon={<LayoutDashboard className="h-4 w-4" />}
             onClick={(): void => setDraft(shown)}
             data-testid="dashboard-customize"
           >
@@ -215,12 +211,13 @@ export function DashboardPage(): JSX.Element {
         />
       )}
       {shown.length === 0 ? (
-        <p
-          data-testid="dashboard-empty"
-          className="rounded-lg border border-surface-border bg-surface-raised pad text-sm text-text-secondary"
-        >
-          {t('dashboard.empty')}
-        </p>
+        <div data-testid="dashboard-empty">
+          <EmptyState
+            icon={<LayoutDashboard className="h-6 w-6" aria-hidden="true" />}
+            title={t('dashboard.emptyTitle')}
+            hint={t('dashboard.emptyHint')}
+          />
+        </div>
       ) : (
         <CardGrid>
           {shown.map((id) => (

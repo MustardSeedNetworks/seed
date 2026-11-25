@@ -43,6 +43,8 @@
  *   </CardGrid>
  */
 import type { ReactNode } from 'react';
+import { Card } from '../shared/Card';
+import { EmptyState } from '../shared/EmptyState';
 import { cn, layout } from '../styles/theme';
 
 /**
@@ -116,17 +118,15 @@ interface CardAbsentProps {
  * reads as a card that failed to load, where a full-width note reads as the
  * page saying why it is empty.
  *
- * Dashed rather than solid: it occupies the grid without claiming to be a
- * reading.
+ * It is a flat Card around a neutral EmptyState: it occupies the grid without
+ * claiming to be a reading.
  */
 export function CardAbsent({ id, label, reason }: CardAbsentProps) {
   return (
-    <section
-      data-testid={`card-absent-${id}`}
-      className="rounded-lg border border-dashed border-border-subtle pad"
-    >
-      <h3 className="text-sm font-semibold text-text-secondary">{label}</h3>
-      <p className="mt-tight text-sm text-text-muted">{reason}</p>
-    </section>
+    <div data-testid={`card-absent-${id}`}>
+      <Card>
+        <EmptyState className="py-4" title={label} hint={reason} />
+      </Card>
+    </div>
   );
 }

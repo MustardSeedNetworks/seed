@@ -73,7 +73,9 @@ describe('DashboardPage', () => {
   it('says so when a saved dashboard is empty', async () => {
     store.layout = { widgets: [], saved: true };
     render(<DashboardPage />);
-    expect(await screen.findByTestId('dashboard-empty')).toBeInTheDocument();
+    expect(await screen.findByTestId('dashboard-empty')).toHaveTextContent(
+      'Your dashboard has no cards',
+    );
   });
 
   it('adds, removes and reorders a draft, and stores it only on Save', async () => {
@@ -116,6 +118,14 @@ describe('DashboardPage', () => {
     await user.click(screen.getByTestId('dashboard-cancel'));
     expect(shown()).toEqual(['link', 'gateway', 'dns', 'network']);
     expect(put).not.toHaveBeenCalled();
+  });
+
+  it('offers one primary action while customizing', async () => {
+    const user = userEvent.setup();
+    render(<DashboardPage />);
+    await user.click(await screen.findByTestId('dashboard-customize'));
+    expect(document.querySelectorAll('[data-variant="primary"]')).toHaveLength(1);
+    expect(screen.getByTestId('dashboard-save')).toHaveAttribute('data-variant', 'primary');
   });
 
   it('keeps the draft and says why when the server refuses it', async () => {

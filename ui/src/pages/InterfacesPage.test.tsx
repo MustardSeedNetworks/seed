@@ -68,9 +68,11 @@ vi.mock('./interfaces/InterfaceHistory', () => ({
 const { InterfacesPage } = await import('./InterfacesPage');
 
 function names(): string[] {
-  return screen
-    .getAllByTestId('interface-row')
-    .map((row) => within(row).getByTestId('interface-name').textContent ?? '');
+  return screen.getAllByTestId('interface-name').map((name) => name.textContent ?? '');
+}
+
+function sortHeader(name: string): HTMLElement {
+  return screen.getByRole('button', { name }).closest('th') as HTMLElement;
 }
 
 beforeEach(async () => {
@@ -82,10 +84,11 @@ afterEach(() => {
 });
 
 describe('InterfacesPage states', () => {
-  it('shows loading until the list arrives', () => {
+  it('shows skeleton rows until the list arrives', () => {
     state.current = { interfaces: [], loading: true, error: null };
     render(<InterfacesPage />);
     expect(screen.getByTestId('interfaces-loading')).toBeInTheDocument();
+    expect(screen.getAllByTestId('data-table-skeleton-row').length).toBeGreaterThan(0);
     expect(screen.queryByTestId('interfaces-empty')).not.toBeInTheDocument();
   });
 
@@ -130,6 +133,16 @@ describe('InterfacesPage states', () => {
     );
   });
 
+  it('shows an up interface as a status pill', () => {
+    state.current = {
+      interfaces: [iface('Gi0/1', 0)],
+      loading: false,
+      error: null,
+    };
+    render(<InterfacesPage />);
+    expect(screen.getByText('Up')).toBeVisible();
+  });
+
   it('spells out a status other than up', () => {
     state.current = {
       interfaces: [iface('Gi0/9', 0, { operStatus: 'lowerLayerDown' })],
@@ -158,20 +171,17 @@ describe('InterfacesPage sorting', () => {
   it('starts on errors, highest first, with unrated interfaces last', () => {
     render(<InterfacesPage />);
     expect(names()).toEqual(['ge-333', 'ge-1', 'ge-4444', 'ge-22']);
-    expect(screen.getByTestId('interfaces-sort-errors').closest('th')).toHaveAttribute(
-      'aria-sort',
-      'descending',
-    );
+    expect(sortHeader('Errors')).toHaveAttribute('aria-sort', 'descending');
   });
 
-  it('reverses on a second click and keeps unrated interfaces last', async () => {
+  it('cycles off then ascending; an unrated interface ranks below every rate', async () => {
     render(<InterfacesPage />);
-    await userEvent.click(screen.getByTestId('interfaces-sort-errors'));
-    expect(names()).toEqual(['ge-4444', 'ge-1', 'ge-333', 'ge-22']);
-    expect(screen.getByTestId('interfaces-sort-errors').closest('th')).toHaveAttribute(
-      'aria-sort',
-      'ascending',
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Errors' }));
+    expect(names()).toEqual(['ge-1', 'ge-22', 'ge-333', 'ge-4444']);
+    expect(sortHeader('Errors')).toHaveAttribute('aria-sort', 'none');
+    await userEvent.click(screen.getByRole('button', { name: 'Errors' }));
+    expect(names()).toEqual(['ge-22', 'ge-4444', 'ge-1', 'ge-333']);
+    expect(sortHeader('Errors')).toHaveAttribute('aria-sort', 'ascending');
   });
 
   it('sorts by interface name ascending, numbers in order', async () => {
@@ -181,12 +191,9 @@ describe('InterfacesPage sorting', () => {
       error: null,
     };
     render(<InterfacesPage />);
-    await userEvent.click(screen.getByTestId('interfaces-sort-interface'));
+    await userEvent.click(screen.getByRole('button', { name: 'Interface' }));
     expect(names()).toEqual(['Gi0/1', 'Gi0/2', 'Gi0/10']);
-    expect(screen.getByTestId('interfaces-sort-errors').closest('th')).toHaveAttribute(
-      'aria-sort',
-      'none',
-    );
+    expect(sortHeader('Errors')).toHaveAttribute('aria-sort', 'none');
   });
 });
 

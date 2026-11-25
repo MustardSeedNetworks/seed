@@ -10,7 +10,8 @@
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocale } from '../../hooks/useLocale';
-import { cn, input } from '../../styles/theme';
+import { FormField } from '../../shared/FormField';
+import { Select } from '../../shared/Select';
 
 export const HISTORY_RANGES = ['1h', '24h', '7d'] as const;
 export type HistoryRange = (typeof HISTORY_RANGES)[number];
@@ -19,8 +20,6 @@ const WIDTH = 600;
 const HEIGHT = 120;
 /** A gap this many poll intervals wide is a gap in the data, not a slow poll. */
 const GAP_INTERVALS = 3;
-
-const selectClass = cn(input.base, input.state.default, input.size.sm, 'body-small');
 
 export interface TrendPoint {
   sampledAt: string;
@@ -168,20 +167,16 @@ export function TrendWindowSelect({
 }: TrendWindowSelectProps): JSX.Element {
   const { t } = useTranslation('common');
   return (
-    <label className="flex flex-col gap-1 text-xs text-text-muted">
-      {t('trend.windowLabel')}
-      <select
-        value={value}
-        onChange={(e): void => onChange(HISTORY_RANGES.find((r) => r === e.target.value) ?? value)}
-        data-testid={testId}
-        className={selectClass}
-      >
-        {HISTORY_RANGES.map((r) => (
-          <option key={r} value={r}>
-            {t(`trend.window.${r}`)}
-          </option>
-        ))}
-      </select>
-    </label>
+    <FormField label={t('trend.windowLabel')} className="w-40">
+      {(control) => (
+        <Select
+          {...control}
+          value={value}
+          onValueChange={(next): void => onChange(HISTORY_RANGES.find((r) => r === next) ?? value)}
+          options={HISTORY_RANGES.map((r) => ({ value: r, label: t(`trend.window.${r}`) }))}
+          data-testid={testId}
+        />
+      )}
+    </FormField>
   );
 }
