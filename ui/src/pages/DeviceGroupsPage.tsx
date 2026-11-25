@@ -11,15 +11,22 @@ import type { TFunction } from 'i18next';
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from '../components/ui/Icons';
-import { Tooltip } from '../components/ui/Tooltip';
 import { useRole } from '../contexts/RoleContext';
 import { useDeviceGroupSummary, useDeviceGroups } from '../hooks/useDeviceGroups';
 import { usePollingTargets } from '../hooks/usePollingTargets';
+import { useTableLabels } from '../hooks/useTableLabels';
+import { Alert } from '../shared/Alert';
+import { ConfirmDialog } from '../shared/ConfirmDialog';
+import { DataTable, type DataTableColumn } from '../shared/DataTable';
+import { EmptyState } from '../shared/EmptyState';
+import { SearchInput } from '../shared/SearchInput';
+import { StatusPill, type StatusTone } from '../shared/StatusPill';
 import type { DeviceGroupResponse } from '../types/generated/device-group-response';
 import type {
   DeviceGroupAlertCounts,
   DeviceGroupMemberResponse,
 } from '../types/generated/device-group-summary-response';
+import { GatedButton } from '../ui/GatedButton';
 import {
   DetailEmpty,
   DetailFacts,
@@ -38,6 +45,7 @@ export function DeviceGroupsPage(): JSX.Element {
   const { targets } = usePollingTargets();
   const [editing, setEditing] = useState<DeviceGroupResponse | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [deleting, setDeleting] = useState<DeviceGroupResponse | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -63,45 +71,35 @@ export function DeviceGroupsPage(): JSX.Element {
 
   return (
     <>
-      {error ? (
-        <div
-          role="alert"
-          className="rounded-md border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error-strong"
-        >
-          {error}
-        </div>
-      ) : null}
+      {error ? <Alert tone="error">{error}</Alert> : null}
 
-      <div className="flex-between">
-        <p className="body-small">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-text-secondary">
           {loading
             ? t('common:status.loading')
             : t('deviceGroups.groupCount', { count: groups.length })}
         </p>
-        <Tooltip text={readOnlyReason}>
-          <button
-            type="button"
-            onClick={(): void => setShowCreate(true)}
-            disabled={!canWrite}
-            data-testid="group-add"
-            className="inline-flex items-center gap-compact rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:cursor-not-allowed disabled:control-disabled"
-          >
-            <Plus className="h-4 w-4" />
-            {t('deviceGroups.addGroup')}
-          </button>
-        </Tooltip>
+        <GatedButton
+          variant="primary"
+          icon={<Plus className="h-4 w-4" />}
+          reason={readOnlyReason}
+          onClick={(): void => setShowCreate(true)}
+          data-testid="group-add"
+        >
+          {t('deviceGroups.addGroup')}
+        </GatedButton>
       </div>
 
       <ListDetail>
         <RecordPane
           filter={
-            <input
-              type="search"
+            <SearchInput
               value={query}
-              onChange={(e): void => setQuery(e.target.value)}
+              onValueChange={setQuery}
               placeholder={t('deviceGroups.filterPlaceholder', { count: groups.length })}
-              aria-label={t('deviceGroups.filterLabel')}
-              className="w-full rounded-lg border border-surface-border bg-surface-sunken px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-brand-primary focus:outline-none"
+              label={t('deviceGroups.filterLabel')}
+              clearLabel={t('common:buttons.clear')}
+              className="max-w-none"
             />
           }
           empty={groups.length === 0 ? t('deviceGroups.noGroups') : t('deviceGroups.noMatch')}
@@ -130,50 +128,35 @@ export function DeviceGroupsPage(): JSX.Element {
             meta={selected.description || undefined}
             actions={
               <>
-                <Tooltip text={readOnlyReason}>
-                  <button
-                    type="button"
-                    onClick={(): void => setEditing(selected)}
-                    disabled={!canWrite}
-                    data-testid="group-edit"
-                    className="rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:control-disabled"
-                  >
-                    {t('common:buttons.edit')}
-                  </button>
-                </Tooltip>
-                <Tooltip text={readOnlyReason}>
-                  <button
-                    type="button"
-                    onClick={(): void => {
-                      if (
-                        window.confirm(t('deviceGroups.confirmDelete', { name: selected.name }))
-                      ) {
-                        void deleteGroup(selected);
-                      }
-                    }}
-                    disabled={!canWrite}
-                    data-testid="group-delete"
-                    className="rounded-md px-3 py-2 text-sm text-status-error-strong hover:bg-status-error/10 disabled:cursor-not-allowed disabled:control-disabled"
-                  >
-                    {t('common:buttons.delete')}
-                  </button>
-                </Tooltip>
+                <GatedButton
+                  reason={readOnlyReason}
+                  onClick={(): void => setEditing(selected)}
+                  data-testid="group-edit"
+                >
+                  {t('common:buttons.edit')}
+                </GatedButton>
+                <GatedButton
+                  variant="destructive"
+                  reason={readOnlyReason}
+                  onClick={(): void => setDeleting(selected)}
+                  data-testid="group-delete"
+                >
+                  {t('common:buttons.delete')}
+                </GatedButton>
               </>
             }
           >
             {deleteError ? (
-              <p
-                role="alert"
-                data-testid="group-delete-error"
-                className="body-small text-status-error-strong"
-              >
-                {t('deviceGroups.deleteFailed', { reason: deleteError })}
-              </p>
+              <div data-testid="group-delete-error">
+                <Alert tone="error">
+                  {t('deviceGroups.deleteFailed', { reason: deleteError })}
+                </Alert>
+              </div>
             ) : null}
             {summaryError ? (
-              <p role="alert" className="body-small text-status-error-strong">
+              <Alert tone="error">
                 {t('deviceGroups.summaryFailed', { reason: summaryError })}
-              </p>
+              </Alert>
             ) : null}
             <DetailFacts
               items={[
@@ -231,6 +214,22 @@ export function DeviceGroupsPage(): JSX.Element {
           }}
         />
       ) : null}
+
+      <ConfirmDialog
+        open={deleting !== null}
+        title={t('deviceGroups.confirmDelete', { name: deleting?.name ?? '' })}
+        message={t('deviceGroups.deleteMessage')}
+        confirmLabel={t('common:buttons.delete')}
+        cancelLabel={t('common:buttons.cancel')}
+        closeLabel={t('common:buttons.close')}
+        onConfirm={(): void => {
+          if (deleting) {
+            void deleteGroup(deleting);
+          }
+          setDeleting(null);
+        }}
+        onCancel={(): void => setDeleting(null)}
+      />
     </>
   );
 }
@@ -245,10 +244,10 @@ function AlertCounts({ counts }: { counts: DeviceGroupAlertCounts }): JSX.Elemen
     .filter((severity) => counts[severity] > 0)
     .map((severity) => t(`deviceGroups.severity.${severity}`, { count: counts[severity] }));
   return (
-    <span className="text-status-error-strong">
-      {t('deviceGroups.openAlertTotal', { count: counts.total })}
-      {parts.length > 0 ? ` · ${parts.join(', ')}` : ''}
-    </span>
+    <StatusPill
+      tone="error"
+      label={`${t('deviceGroups.openAlertTotal', { count: counts.total })}${parts.length > 0 ? ` · ${parts.join(', ')}` : ''}`}
+    />
   );
 }
 
@@ -263,49 +262,89 @@ function memberState(member: DeviceGroupMemberResponse): RecordState {
   return member.openAlerts > 0 ? 'warn' : 'ok';
 }
 
-const MEMBER_DOT: Record<RecordState, string> = {
-  ok: 'bg-status-success',
-  warn: 'bg-status-warning',
-  crit: 'bg-status-error',
-  unknown: 'bg-text-disabled',
+const MEMBER_TONE: Record<RecordState, StatusTone> = {
+  ok: 'success',
+  warn: 'warning',
+  crit: 'error',
+  unknown: 'unknown',
 };
+
+const MEMBER_STATE_LABEL = {
+  ok: 'deviceGroups.memberState.ok',
+  warn: 'deviceGroups.memberState.warn',
+  crit: 'deviceGroups.memberState.crit',
+  unknown: 'deviceGroups.memberState.unknown',
+} as const satisfies Record<RecordState, string>;
 
 function MemberList({ members }: { members: DeviceGroupMemberResponse[] | null }): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
+  const labels = useTableLabels<DeviceGroupMemberResponse>({
+    loading: t('deviceGroups.loadingMembers'),
+  });
+  const columns: DataTableColumn<DeviceGroupMemberResponse>[] = [
+    {
+      key: 'name',
+      header: t('deviceGroups.columnName'),
+      cell: (member) => (
+        <span
+          data-testid={`group-summary-member-${member.target.id}`}
+          className="text-text-primary"
+        >
+          {member.target.name}
+        </span>
+      ),
+      sortValue: (member) => member.target.name,
+    },
+    {
+      key: 'address',
+      header: t('deviceGroups.columnAddress'),
+      cell: (member) => <span className="figure">{member.target.ipAddress}</span>,
+      sortValue: (member) => member.target.ipAddress,
+    },
+    {
+      key: 'state',
+      header: t('deviceGroups.columnState'),
+      cell: (member) => {
+        const state = memberState(member);
+        return <StatusPill tone={MEMBER_TONE[state]} label={t(MEMBER_STATE_LABEL[state])} />;
+      },
+      sortValue: (member) => memberState(member),
+    },
+    {
+      key: 'lastPoll',
+      header: t('deviceGroups.columnLastPoll'),
+      cell: (member) => memberPoll(member, t),
+      sortValue: (member) => member.target.lastPolledAt ?? '',
+    },
+    {
+      key: 'alerts',
+      header: t('deviceGroups.columnAlerts'),
+      align: 'right',
+      cell: (member) => (
+        <span className="figure">
+          {t('deviceGroups.memberAlerts', { count: member.openAlerts })}
+        </span>
+      ),
+      sortValue: (member) => member.openAlerts,
+    },
+  ];
   return (
-    <div className="stack-xs">
-      <p className="caption">{t('deviceGroups.membersHeading')}</p>
-      {members === null ? (
-        <p className="body-small">{t('common:status.loading')}</p>
-      ) : members.length === 0 ? (
-        <p data-testid="group-members-empty" className="body-small">
-          {t('deviceGroups.noMembers')}
-        </p>
-      ) : (
-        <ul className="divide-y divide-surface-border overflow-hidden rounded-lg border border-surface-border">
-          {members.map((member) => (
-            <li
-              key={member.target.id}
-              data-testid={`group-summary-member-${member.target.id}`}
-              data-state={memberState(member)}
-              className="flex flex-wrap items-center gap-x-default gap-y-1 px-cell py-2"
-            >
-              <span
-                aria-hidden="true"
-                className={`h-2 w-2 shrink-0 rounded-full ${MEMBER_DOT[memberState(member)]}`}
-              />
-              <span className="min-w-0 flex-1 truncate text-sm text-text-primary">
-                {member.target.name}
-              </span>
-              <span className="figure text-xs text-text-muted">{member.target.ipAddress}</span>
-              <span className="text-xs text-text-secondary">{memberPoll(member, t)}</span>
-              <span className="figure text-xs text-text-secondary">
-                {t('deviceGroups.memberAlerts', { count: member.openAlerts })}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="space-y-1">
+      <p className="kicker">{t('deviceGroups.membersHeading')}</p>
+      <DataTable
+        rows={members ?? []}
+        columns={columns}
+        getRowKey={(member) => member.target.id}
+        caption={t('deviceGroups.membersHeading')}
+        labels={labels}
+        loading={members === null}
+        pageSize={10}
+        empty={
+          <div data-testid="group-members-empty">
+            <EmptyState title={t('deviceGroups.noMembers')} />
+          </div>
+        }
+      />
     </div>
   );
 }

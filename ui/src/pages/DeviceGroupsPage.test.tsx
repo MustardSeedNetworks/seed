@@ -112,6 +112,17 @@ vi.mock('../api/client', () => ({
 
 const { DeviceGroupsPage } = await import('./DeviceGroupsPage');
 
+/** A member's select box in the form, named the way a screen reader hears it. */
+function memberBox(name: string): HTMLElement {
+  return screen.getByRole('checkbox', { name: `Add ${name} to the group` });
+}
+
+/** Delete goes through the confirm dialog, so it is confirmed there. */
+async function confirmDelete(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+  const dialog = await screen.findByTestId('confirm-dialog');
+  await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
+}
+
 function renderPage(): void {
   render(
     <RoleProvider isAuthenticated={true}>
@@ -126,7 +137,6 @@ describe('DeviceGroupsPage', () => {
     writes.length = 0;
     deleteRefusal = null;
     role = 'operator';
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
   it('creates a group with the ticked members and shows what the server stored', async () => {
@@ -137,8 +147,8 @@ describe('DeviceGroupsPage', () => {
     );
     await user.click(screen.getByTestId('group-add'));
     await user.type(screen.getByTestId('group-name'), '  Core switches ');
-    await user.click(screen.getByTestId('group-member-t-edge'));
-    await user.click(screen.getByTestId('group-member-t-core'));
+    await user.click(memberBox('edge-02'));
+    await user.click(memberBox('core-01'));
     await user.click(screen.getByTestId('group-save'));
 
     await waitFor(() => expect(screen.queryByTestId('group-save')).toBeNull());
@@ -161,12 +171,12 @@ describe('DeviceGroupsPage', () => {
     renderPage();
     await user.click(await screen.findByTestId('group-edit'));
 
-    expect(screen.getByTestId('group-member-t-core')).toBeChecked();
-    expect(screen.getByTestId('group-member-t-edge')).toBeChecked();
-    expect(screen.getByTestId('group-member-t-new')).not.toBeChecked();
+    expect(memberBox('core-01')).toBeChecked();
+    expect(memberBox('edge-02')).toBeChecked();
+    expect(memberBox('acc-03')).not.toBeChecked();
 
-    await user.click(screen.getByTestId('group-member-t-core'));
-    await user.click(screen.getByTestId('group-member-t-new'));
+    await user.click(memberBox('core-01'));
+    await user.click(memberBox('acc-03'));
     await user.click(screen.getByTestId('group-save'));
 
     await waitFor(() => expect(screen.queryByTestId('group-save')).toBeNull());
@@ -198,15 +208,14 @@ describe('DeviceGroupsPage', () => {
     stored = [save('g-a', { name: 'All', members: ['t-core', 't-edge', 't-new'] })];
     renderPage();
 
-    const core = await screen.findByTestId('group-summary-member-t-core');
-    expect(core).toHaveAttribute('data-state', 'warn');
-    expect(core).toHaveTextContent('2 alerts');
-    const edge = screen.getByTestId('group-summary-member-t-edge');
-    expect(edge).toHaveAttribute('data-state', 'crit');
-    expect(edge).toHaveTextContent('SNMP timeout');
-    const fresh = screen.getByTestId('group-summary-member-t-new');
-    expect(fresh).toHaveAttribute('data-state', 'unknown');
-    expect(fresh).toHaveTextContent('No poll completed yet');
+    const row = (name: string): HTMLElement => screen.getByRole('row', { name: new RegExp(name) });
+    await screen.findByTestId('group-summary-member-t-core');
+    expect(within(row('core-01')).getByText('Open alerts')).toBeVisible();
+    expect(row('core-01')).toHaveTextContent('2 alerts');
+    expect(within(row('edge-02')).getByText('Poll failing')).toBeVisible();
+    expect(row('edge-02')).toHaveTextContent('SNMP timeout');
+    expect(within(row('acc-03')).getByText('Not polled')).toBeVisible();
+    expect(row('acc-03')).toHaveTextContent('No poll completed yet');
     expect(screen.getByTestId('group-open-alerts')).toHaveTextContent(
       '2 open · 1 critical, 1 warning',
     );
@@ -219,6 +228,7 @@ describe('DeviceGroupsPage', () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(await screen.findByTestId('group-delete'));
+    await confirmDelete(user);
 
     expect(await screen.findByTestId('group-delete-error')).toHaveTextContent(
       'scoped to this device group',
@@ -232,9 +242,36 @@ describe('DeviceGroupsPage', () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(await screen.findByTestId('group-delete'));
+    await confirmDelete(user);
 
     await waitFor(() => expect(screen.queryByTestId('group-row-g-a')).toBeNull());
     expect(writes.at(-1)).toEqual({ method: 'DELETE', path: '/api/v1/device-groups/g-a' });
+  });
+
+  it('asks before deleting and sends nothing when cancelled', async () => {
+    stored = [save('g-a', { name: 'Keep', members: [] })];
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByTestId('group-delete'));
+
+    const dialog = await screen.findByTestId('confirm-dialog');
+    expect(dialog).toHaveTextContent('Delete device group "Keep"?');
+    expect(writes).toEqual([]);
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => expect(screen.queryByTestId('confirm-dialog')).toBeNull());
+    expect(writes).toEqual([]);
+    expect(screen.getByTestId('group-row-g-a')).toBeVisible();
+  });
+
+  it('lists the members as a table with a column per fact', async () => {
+    stored = [save('g-a', { name: 'All', members: ['t-core'] })];
+    renderPage();
+
+    await screen.findByTestId('group-summary-member-t-core');
+    for (const header of ['Name', 'Address', 'State', 'Last poll', 'Alerts']) {
+      expect(screen.getByRole('columnheader', { name: new RegExp(header) })).toBeVisible();
+    }
   });
 
   it('leaves a viewer able to read groups but not change them', async () => {

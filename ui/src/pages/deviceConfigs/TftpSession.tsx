@@ -10,10 +10,15 @@
 
 import { type FormEvent, type JSX, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../../components/ui/Button';
 import { useRole } from '../../contexts/RoleContext';
 import { useProfileInterfaces } from '../../contexts/useProfileInterfaces';
 import { useTftpSession } from '../../hooks/useTftpSession';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { Card } from '../../shared/Card';
+import { Checkbox } from '../../shared/Checkbox';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
 import type { TftpSessionRunning, TftpStartRequest } from '../../types/tftp';
 import { DetailFacts } from '../../ui/ListDetail';
 
@@ -21,34 +26,26 @@ export function TftpSession(): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
   const { isAdmin } = useRole();
   const { session, error, busy, start, stop } = useTftpSession(isAdmin);
-  const headingId = useId();
 
   return (
-    <section
-      data-testid="tftp-session"
-      aria-labelledby={headingId}
-      className="stack-sm rounded-2xl border border-surface-border pad-lg"
-    >
-      <h2 id={headingId} className="text-base font-semibold text-text-primary">
-        {t('deviceConfigs.tftp.title')}
-      </h2>
-      {error ? (
-        <p role="alert" className="body-small text-status-error-strong">
-          {error}
-        </p>
-      ) : null}
-      {!isAdmin ? (
-        <p data-testid="tftp-admin-only" className="body-small">
-          {t('deviceConfigs.tftp.adminOnly')}
-        </p>
-      ) : session === null ? (
-        <p className="body-small">{t('common:status.loading')}</p>
-      ) : session.running ? (
-        <RunningSession session={session} busy={busy} onStop={stop} />
-      ) : (
-        <StartForm busy={busy} onStart={start} />
-      )}
-    </section>
+    <div data-testid="tftp-session">
+      <Card title={t('deviceConfigs.tftp.title')}>
+        <div className="space-y-3">
+          {error ? <Alert tone="error">{error}</Alert> : null}
+          {!isAdmin ? (
+            <p data-testid="tftp-admin-only" className="text-sm text-text-secondary">
+              {t('deviceConfigs.tftp.adminOnly')}
+            </p>
+          ) : session === null ? (
+            <p className="text-sm text-text-secondary">{t('common:status.loading')}</p>
+          ) : session.running ? (
+            <RunningSession session={session} busy={busy} onStop={stop} />
+          ) : (
+            <StartForm busy={busy} onStart={start} />
+          )}
+        </div>
+      </Card>
+    </div>
   );
 }
 
@@ -63,8 +60,8 @@ function RunningSession({
 }): JSX.Element {
   const { t } = useTranslation(['pages']);
   return (
-    <div className="stack-sm">
-      <p data-testid="tftp-running" className="body-small">
+    <div className="space-y-3">
+      <p data-testid="tftp-running" className="text-sm text-text-secondary">
         {t('deviceConfigs.tftp.running', {
           minutes: Math.round(session.idleTimeoutSeconds / 60),
           until: new Date(session.expiresAt).toLocaleTimeString(),
@@ -108,13 +105,7 @@ function RunningSession({
         ]}
       />
       <div>
-        <Button
-          data-testid="tftp-stop"
-          variant="outline"
-          tone="red"
-          loading={busy}
-          onClick={(): void => void onStop()}
-        >
+        <Button data-testid="tftp-stop" loading={busy} onClick={(): void => void onStop()}>
           {t('deviceConfigs.tftp.stop')}
         </Button>
       </div>
@@ -143,42 +134,33 @@ function StartForm({
   };
 
   return (
-    <form onSubmit={submit} className="stack-sm">
-      <p className="body-small">{t('deviceConfigs.tftp.stopped')}</p>
-      <div className="stack-xs">
-        <label htmlFor={`${id}-iface`} className="caption">
-          {t('deviceConfigs.tftp.labelInterface')}
-        </label>
-        <input
-          id={`${id}-iface`}
-          list={`${id}-ifaces`}
-          value={iface}
-          onChange={(e): void => setIface(e.target.value)}
-          required
-          data-testid="tftp-interface"
-          className="w-full max-w-xs rounded-md border border-surface-border bg-surface-sunken px-3 py-2 text-sm text-text-primary focus:border-brand-primary focus:outline-none"
-        />
-        <datalist id={`${id}-ifaces`}>
-          {known.map((name) => (
-            <option key={name} value={name} />
-          ))}
-        </datalist>
-      </div>
-      <label className="flex items-start gap-compact text-sm text-text-secondary">
-        <input
-          type="checkbox"
-          checked={allowUpload}
-          onChange={(e): void => setAllowUpload(e.target.checked)}
-          data-testid="tftp-allow-upload"
-          className="mt-tight"
-        />
-        <span>
-          {t('deviceConfigs.tftp.allowUpload')}
-          <span className="block text-xs text-text-muted">
-            {t('deviceConfigs.tftp.allowUploadWarning')}
-          </span>
-        </span>
-      </label>
+    <form onSubmit={submit} className="space-y-3">
+      <p className="text-sm text-text-secondary">{t('deviceConfigs.tftp.stopped')}</p>
+      <FormField label={t('deviceConfigs.tftp.labelInterface')} required>
+        {(control) => (
+          <>
+            <Input
+              {...control}
+              list={`${id}-ifaces`}
+              value={iface}
+              onChange={(e): void => setIface(e.target.value)}
+              required
+              data-testid="tftp-interface"
+            />
+            <datalist id={`${id}-ifaces`}>
+              {known.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
+          </>
+        )}
+      </FormField>
+      <Checkbox
+        checked={allowUpload}
+        onChange={setAllowUpload}
+        label={t('deviceConfigs.tftp.allowUpload')}
+        description={t('deviceConfigs.tftp.allowUploadWarning')}
+      />
       <div>
         <Button type="submit" data-testid="tftp-start" loading={busy} disabled={!iface.trim()}>
           {t('deviceConfigs.tftp.start')}

@@ -45,6 +45,7 @@ const targets: PollingTargetResponse[] = [
 ];
 
 const mockPoll = vi.fn<(id: string) => Promise<PollingTargetResponse>>();
+const mockRemove = vi.fn<(id: string) => Promise<void>>();
 vi.mock('../hooks/usePollingTargets', () => ({
   usePollingTargets: () => ({
     targets,
@@ -52,7 +53,7 @@ vi.mock('../hooks/usePollingTargets', () => ({
     error: null,
     create: vi.fn(),
     update: vi.fn(),
-    remove: vi.fn(),
+    remove: mockRemove,
     poll: mockPoll,
   }),
 }));
@@ -82,6 +83,7 @@ describe('PollingTargetsPage — list + detail', () => {
   beforeEach(() => {
     mockGet.mockReset();
     mockPoll.mockReset();
+    mockRemove.mockReset();
     renderAs('operator');
   });
 
@@ -128,6 +130,33 @@ describe('PollingTargetsPage — list + detail', () => {
     // The failure belongs to that target, not to whichever is selected next.
     await userEvent.click(screen.getByTestId('target-row-healthy'));
     expect(screen.queryByTestId('target-test-error')).toBeNull();
+  });
+
+  it('deletes only after the confirm dialog is accepted', async () => {
+    await userEvent.click(screen.getByTestId('target-row-paused'));
+    await userEvent.click(screen.getByTestId('target-delete'));
+
+    const dialog = await screen.findByTestId('confirm-dialog');
+    expect(dialog).toHaveTextContent('Delete polling target "acc-sw-12"?');
+    expect(mockRemove).not.toHaveBeenCalled();
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(mockRemove).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByTestId('target-delete'));
+    await userEvent.click(
+      within(await screen.findByTestId('confirm-dialog')).getByRole('button', { name: 'Delete' }),
+    );
+    expect(mockRemove).toHaveBeenCalledWith('paused');
+  });
+
+  it('lists the collector chain as a table in run order', async () => {
+    await userEvent.click(screen.getByTestId('target-row-healthy'));
+
+    const rows = screen.getAllByRole('row');
+    const names = rows.map((row) => row.textContent);
+    expect(names.some((text) => text === '1sys_info')).toBe(true);
+    expect(names.some((text) => text === '2if_table')).toBe(true);
   });
 
   it('filters the list down to failing targets without losing the counts', async () => {

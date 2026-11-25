@@ -1,4 +1,3 @@
-import { Tooltip } from '../components/ui/Tooltip';
 /**
  * PollingTargetsPage — List + detail.
  *
@@ -20,7 +19,15 @@ import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../contexts/RoleContext';
 import { usePollingTargets } from '../hooks/usePollingTargets';
+import { useTableLabels } from '../hooks/useTableLabels';
+import { Alert } from '../shared/Alert';
+import { ConfirmDialog } from '../shared/ConfirmDialog';
+import { DataTable, type DataTableColumn } from '../shared/DataTable';
+import { EmptyState } from '../shared/EmptyState';
+import { SearchInput } from '../shared/SearchInput';
+import { StatusPill } from '../shared/StatusPill';
 import type { PollingTargetResponse } from '../types/generated/polling-target-response';
+import { GatedButton } from '../ui/GatedButton';
 import {
   DetailEmpty,
   DetailFacts,
@@ -74,6 +81,7 @@ export function PollingTargetsPage(): JSX.Element {
   const { targets, loading, error, create, update, remove, poll } = usePollingTargets();
   const [editing, setEditing] = useState<PollingTargetResponse | null>(null);
   const [showCreate, setShowCreate] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState<PollingTargetResponse | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [facet, setFacet] = useState<Facet>('all');
   const [query, setQuery] = useState('');
@@ -108,42 +116,35 @@ export function PollingTargetsPage(): JSX.Element {
 
   return (
     <>
-      {error ? (
-        <div className="rounded-md border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error-strong">
-          {error}
-        </div>
-      ) : null}
+      {error ? <Alert tone="error">{error}</Alert> : null}
 
-      <div className="flex-between">
-        <p className="body-small">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-text-secondary">
           {loading
             ? t('common:status.loading')
             : t('pollingTargets.targetCount', { count: targets.length })}
         </p>
-        <Tooltip text={readOnlyReason}>
-          <button
-            type="button"
-            onClick={(): void => setShowCreate(true)}
-            disabled={!canWrite}
-            data-testid="target-add"
-            className="inline-flex items-center gap-compact rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:cursor-not-allowed disabled:control-disabled"
-          >
-            <Plus className="h-4 w-4" />
-            {t('pollingTargets.addTarget')}
-          </button>
-        </Tooltip>
+        <GatedButton
+          variant="primary"
+          icon={<Plus className="h-4 w-4" />}
+          reason={readOnlyReason}
+          onClick={(): void => setShowCreate(true)}
+          data-testid="target-add"
+        >
+          {t('pollingTargets.addTarget')}
+        </GatedButton>
       </div>
 
       <ListDetail>
         <RecordPane
           filter={
-            <input
-              type="search"
+            <SearchInput
               value={query}
-              onChange={(e): void => setQuery(e.target.value)}
+              onValueChange={setQuery}
               placeholder={t('pollingTargets.filterPlaceholder', { count: targets.length })}
-              aria-label={t('pollingTargets.filterLabel')}
-              className="w-full rounded-lg border border-surface-border bg-surface-sunken px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-brand-primary focus:outline-none"
+              label={t('pollingTargets.filterLabel')}
+              clearLabel={t('common:buttons.clear')}
+              className="max-w-none"
             />
           }
           chips={
@@ -192,50 +193,32 @@ export function PollingTargetsPage(): JSX.Element {
             status={<TargetStatus target={selected} />}
             actions={
               <>
-                <Tooltip text={readOnlyReason ?? t('pollingTargets.testTargetHint')}>
-                  <button
-                    type="button"
-                    onClick={(): void => {
-                      void testTarget(selected.id);
-                    }}
-                    disabled={!canWrite || testing}
-                    data-testid="target-test"
-                    className="rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:control-disabled"
-                  >
-                    {testing
-                      ? t('pollingTargets.testTargetRunning')
-                      : t('pollingTargets.testTarget')}
-                  </button>
-                </Tooltip>
-                <Tooltip text={readOnlyReason}>
-                  <button
-                    type="button"
-                    onClick={(): void => setEditing(selected)}
-                    disabled={!canWrite}
-                    data-testid="target-edit"
-                    className="rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:control-disabled"
-                  >
-                    {t('common:buttons.edit')}
-                  </button>
-                </Tooltip>
-                <Tooltip text={readOnlyReason}>
-                  <button
-                    type="button"
-                    onClick={(): void => {
-                      if (
-                        window.confirm(t('pollingTargets.confirmDelete', { name: selected.name }))
-                      ) {
-                        void remove(selected.id);
-                        setSelectedId(null);
-                      }
-                    }}
-                    disabled={!canWrite}
-                    data-testid="target-delete"
-                    className="rounded-md px-3 py-2 text-sm text-status-error-strong hover:bg-status-error/10 disabled:cursor-not-allowed disabled:control-disabled"
-                  >
-                    {t('common:buttons.delete')}
-                  </button>
-                </Tooltip>
+                <GatedButton
+                  reason={readOnlyReason}
+                  hint={t('pollingTargets.testTargetHint')}
+                  onClick={(): void => {
+                    void testTarget(selected.id);
+                  }}
+                  disabled={testing}
+                  data-testid="target-test"
+                >
+                  {testing ? t('pollingTargets.testTargetRunning') : t('pollingTargets.testTarget')}
+                </GatedButton>
+                <GatedButton
+                  reason={readOnlyReason}
+                  onClick={(): void => setEditing(selected)}
+                  data-testid="target-edit"
+                >
+                  {t('common:buttons.edit')}
+                </GatedButton>
+                <GatedButton
+                  variant="destructive"
+                  reason={readOnlyReason}
+                  onClick={(): void => setDeleting(selected)}
+                  data-testid="target-delete"
+                >
+                  {t('common:buttons.delete')}
+                </GatedButton>
               </>
             }
           >
@@ -271,13 +254,11 @@ export function PollingTargetsPage(): JSX.Element {
               ]}
             />
             {testError?.id === selected.id ? (
-              <p
-                role="alert"
-                data-testid="target-test-error"
-                className="body-small text-status-error-strong"
-              >
-                {t('pollingTargets.testTargetFailed', { reason: testError.reason })}
-              </p>
+              <div data-testid="target-test-error">
+                <Alert tone="error">
+                  {t('pollingTargets.testTargetFailed', { reason: testError.reason })}
+                </Alert>
+              </div>
             ) : null}
             <CollectorChain chain={selected.collectorChain} />
           </DetailPane>
@@ -313,6 +294,23 @@ export function PollingTargetsPage(): JSX.Element {
           }}
         />
       ) : null}
+
+      <ConfirmDialog
+        open={deleting !== null}
+        title={t('pollingTargets.confirmDelete', { name: deleting?.name ?? '' })}
+        message={t('pollingTargets.deleteMessage')}
+        confirmLabel={t('common:buttons.delete')}
+        cancelLabel={t('common:buttons.cancel')}
+        closeLabel={t('common:buttons.close')}
+        onConfirm={(): void => {
+          if (deleting) {
+            void remove(deleting.id);
+            setSelectedId(null);
+          }
+          setDeleting(null);
+        }}
+        onCancel={(): void => setDeleting(null)}
+      />
     </>
   );
 }
@@ -323,47 +321,55 @@ function TargetStatus({ target }: { target: PollingTargetResponse }): JSX.Elemen
   const state = targetState(target);
   if (state === 'crit') {
     return (
-      <span className="rounded-lg border border-status-error/40 bg-status-error/10 px-3 py-1.5 text-xs font-semibold text-status-error-strong">
-        {target.lastError || t('pollingTargets.lastPollFailed')}
-      </span>
+      <StatusPill tone="error" label={target.lastError || t('pollingTargets.lastPollFailed')} />
     );
   }
   if (state === 'unknown') {
     return (
-      <span className="rounded-lg border border-surface-border bg-surface-sunken px-3 py-1.5 text-xs font-semibold text-text-muted">
-        {target.enabled ? t('pollingTargets.noPollYet') : t('pollingTargets.pollingPaused')}
-      </span>
+      <StatusPill
+        tone="unknown"
+        label={target.enabled ? t('pollingTargets.noPollYet') : t('pollingTargets.pollingPaused')}
+      />
     );
   }
-  return (
-    <span className="rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold text-text-secondary">
-      {t('pollingTargets.pollingNormally')}
-    </span>
-  );
+  return <StatusPill tone="success" label={t('pollingTargets.pollingNormally')} />;
+}
+
+interface ChainStep {
+  position: number;
+  collector: string;
 }
 
 /** The collector chain is the sub-table the archetype calls for. */
 function CollectorChain({ chain }: { chain: string[] }): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
-  if (chain.length === 0) {
-    return (
-      <div className="stack-xs">
-        <p className="caption">{t('pollingTargets.collectorChain')}</p>
-        <p className="body-small">{t('pollingTargets.defaultChain')}</p>
-      </div>
-    );
-  }
+  const labels = useTableLabels<ChainStep>({ loading: t('common:status.loading') });
+  const steps = chain.map((collector, index) => ({ position: index + 1, collector }));
+  const columns: DataTableColumn<ChainStep>[] = [
+    {
+      key: 'position',
+      header: t('pollingTargets.columnOrder'),
+      cell: (step) => <span className="figure text-text-muted">{step.position}</span>,
+      sortValue: (step) => step.position,
+    },
+    {
+      key: 'collector',
+      header: t('pollingTargets.columnCollector'),
+      cell: (step) => <span className="figure text-text-primary">{step.collector}</span>,
+      sortValue: (step) => step.collector,
+    },
+  ];
   return (
-    <div className="stack-xs">
-      <p className="caption">{t('pollingTargets.collectorChain')}</p>
-      <ol className="divide-y divide-surface-border overflow-hidden rounded-lg border border-surface-border">
-        {chain.map((collector, index) => (
-          <li key={collector} className="flex items-center gap-default px-cell py-2">
-            <span className="figure text-xs text-text-muted">{index + 1}</span>
-            <span className="figure text-sm text-text-primary">{collector}</span>
-          </li>
-        ))}
-      </ol>
+    <div className="space-y-1">
+      <p className="kicker">{t('pollingTargets.collectorChain')}</p>
+      <DataTable
+        rows={steps}
+        columns={columns}
+        getRowKey={(step) => step.collector}
+        caption={t('pollingTargets.collectorChain')}
+        labels={labels}
+        empty={<EmptyState title={t('pollingTargets.defaultChain')} />}
+      />
     </div>
   );
 }

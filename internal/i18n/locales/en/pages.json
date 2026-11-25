@@ -17,7 +17,7 @@
       "warning": "Warning",
       "info": "Info"
     },
-    "noAlerts": "No alerts match the current filter. Either nothing's misbehaving or your filter is too strict.",
+    "noAlerts": "No alerts match this filter.",
     "unknownSource": "unknown source",
     "selectedAlert": "Selected alert",
     "acknowledge": "Acknowledge",
@@ -43,7 +43,11 @@
     "valueNo": "no",
     "stateResolved": "Resolved",
     "stateAcknowledged": "Acknowledged",
-    "stateOpen": "Open"
+    "stateOpen": "Open",
+    "noAlertsHint": "Widen the severity or the lifecycle filters to see more.",
+    "columnField": "Field",
+    "columnValue": "Value",
+    "payloadCaption": "Alert payload fields"
   },
   "dashboard": {
     "label": "Dashboard",
@@ -180,7 +184,9 @@
       "forget": "Forget key",
       "pending": "The device presented this key, so the backup saved nothing. Check it on the device, then trust it.",
       "confirm": "Trust key",
-      "none": "No key yet. The next backup records the device's key for you to confirm."
+      "none": "No key yet. The next backup records the device's key for you to confirm.",
+      "forgetTitle": "Forget the host key of {{name}}?",
+      "forgetMessage": "The next backup records the key the device presents, and you confirm it again before any backup is saved."
     },
     "form": {
       "addTitle": "Add device",
@@ -248,7 +254,10 @@
       "anyHost": "Any host on the segment",
       "labelStarted": "Started",
       "labelTransfers": "Active transfers"
-    }
+    },
+    "loadingBackups": "Loading backups",
+    "columnTaken": "Taken",
+    "columnResult": "Result"
   },
   "link": {
     "description": "Physical link state, cable diagnostics, and Wi-Fi association for the active interface.",
@@ -371,7 +380,10 @@
     "fieldPollInterval": "Poll interval (seconds)",
     "nameAndIpRequired": "Name and IP address are required.",
     "saveFailed": "Failed to save",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "deleteMessage": "The target stops being polled.",
+    "columnOrder": "Order",
+    "columnCollector": "Collector"
   },
   "deviceGroups": {
     "description": "Named sets of polling targets, to scope alert rules and reports.",
@@ -425,7 +437,22 @@
     "memberFilterLabel": "Filter polling targets",
     "noTargets": "No polling targets yet. Add targets on Polling targets, then pick them here.",
     "nameRequired": "Name is required.",
-    "saveFailed": "Failed to save"
+    "saveFailed": "Failed to save",
+    "deleteMessage": "Its members stay as polling targets; only the group is removed.",
+    "loadingMembers": "Loading members",
+    "columnName": "Name",
+    "columnAddress": "Address",
+    "columnState": "State",
+    "columnLastPoll": "Last poll",
+    "columnAlerts": "Alerts",
+    "memberState": {
+      "ok": "Healthy",
+      "warn": "Open alerts",
+      "crit": "Poll failing",
+      "unknown": "Not polled"
+    },
+    "selectMember": "Add {{name}} to the group",
+    "memberNoMatch": "No polling target matches this filter."
   },
   "ipam": {
     "label": "IP addresses",
@@ -467,7 +494,8 @@
     "formHint": "The range a DHCP server leases from, both ends included. Seed counts an address as used when discovery or a router's ARP table saw it in the last day.",
     "rangeRequired": "Enter the first and last address.",
     "invalidRange": "A DHCP scope is two IPv4 addresses, the first one lower.",
-    "overlaps": "This range overlaps another DHCP scope."
+    "overlaps": "This range overlaps another DHCP scope.",
+    "deleteMessage": "Only Seed's record of the range is removed; your DHCP server is not changed."
   },
   "lifecycle": {
     "label": "Hardware lifecycle",

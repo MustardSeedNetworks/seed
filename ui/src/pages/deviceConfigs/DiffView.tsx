@@ -56,7 +56,7 @@ export function DiffView({ unified }: { unified: string }): JSX.Element {
           <span
             key={line.n}
             data-kind={line.kind}
-            className={`block px-cell ${LINE_CLASS[line.kind]}`}
+            className={`block px-3 ${LINE_CLASS[line.kind]}`}
           >
             {line.text || ' '}
           </span>

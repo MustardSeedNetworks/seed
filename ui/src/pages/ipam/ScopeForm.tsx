@@ -10,7 +10,11 @@
 import { type FormEvent, type JSX, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '../../api/client';
-import { Modal, ModalFooter } from '../../components/ui/Modal';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
+import { Modal } from '../../shared/Modal';
 import type { IPAMScopeRequest } from '../../types/generated/ipam-scope-request';
 
 export interface ScopeFormProps {
@@ -23,7 +27,7 @@ export function ScopeForm({ onSubmit, onCancel }: ScopeFormProps): JSX.Element {
   const [form, setForm] = useState<IPAMScopeRequest>({ name: '', start: '', end: '' });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const id = useId();
+  const formId = useId();
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
@@ -44,65 +48,63 @@ export function ScopeForm({ onSubmit, onCancel }: ScopeFormProps): JSX.Element {
   }
 
   const field = (key: keyof IPAMScopeRequest, label: string, placeholder?: string) => (
-    <div>
-      <label htmlFor={`${id}-${key}`} className={labelClass}>
-        {label}
-      </label>
-      <input
-        id={`${id}-${key}`}
-        type="text"
-        value={form[key] ?? ''}
-        onChange={(e): void => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
-        placeholder={placeholder}
-        autoComplete="off"
-        spellCheck={false}
-        data-testid={`scope-${key}`}
-        className={`mt-tight ${inputClass}`}
-      />
-    </div>
+    <FormField label={label}>
+      {(control) => (
+        <Input
+          {...control}
+          value={form[key] ?? ''}
+          onChange={(e): void => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
+          placeholder={placeholder}
+          autoComplete="off"
+          spellCheck={false}
+          data-testid={`scope-${key}`}
+        />
+      )}
+    </FormField>
   );
 
   return (
-    <Modal isOpen onClose={onCancel} title={t('ipam.formTitle')}>
+    <Modal
+      open
+      onClose={onCancel}
+      title={t('ipam.formTitle')}
+      closeLabel={t('common:buttons.close')}
+      busy={submitting}
+      footer={
+        <>
+          <Button onClick={onCancel} disabled={submitting}>
+            {t('common:buttons.cancel')}
+          </Button>
+          <Button
+            type="submit"
+            form={formId}
+            variant="primary"
+            loading={submitting}
+            data-testid="scope-save"
+          >
+            {submitting ? t('common:common.saving') : t('ipam.addScope')}
+          </Button>
+        </>
+      }
+    >
       <form
+        id={formId}
         onSubmit={(e): void => {
           void handleSubmit(e);
         }}
       >
         {formError ? (
-          <div
-            role="alert"
-            data-testid="scope-form-error"
-            className="mb-content rounded-md border border-status-error/40 bg-status-error/10 pad-xs text-sm text-status-error-strong"
-          >
-            {formError}
+          <div data-testid="scope-form-error" className="mb-4">
+            <Alert tone="error">{formError}</Alert>
           </div>
         ) : null}
 
-        <div className="stack">
+        <div className="space-y-4">
           {field('name', t('ipam.fieldName'))}
           {field('start', t('ipam.fieldStart'), '192.168.1.100')}
           {field('end', t('ipam.fieldEnd'), '192.168.1.199')}
-          <p className="body-small">{t('ipam.formHint')}</p>
+          <p className="text-sm text-text-secondary">{t('ipam.formHint')}</p>
         </div>
-
-        <ModalFooter>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md px-3 py-2 text-sm text-text-muted hover:text-text-primary"
-          >
-            {t('common:buttons.cancel')}
-          </button>
-          <button
-            type="submit"
-            disabled={submitting}
-            data-testid="scope-save"
-            className="rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:control-disabled"
-          >
-            {submitting ? t('common:common.saving') : t('ipam.addScope')}
-          </button>
-        </ModalFooter>
       </form>
     </Modal>
   );
@@ -117,8 +119,3 @@ function refusal(err: unknown, invalid: string, overlaps: string): string {
   }
   return err instanceof Error ? err.message : String(err);
 }
-
-const labelClass: string = 'block text-xs font-medium uppercase tracking-wide text-text-muted';
-
-const inputClass: string =
-  'w-full rounded-md border border-surface-border bg-surface-sunken px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-brand-primary focus:outline-none';

@@ -9,11 +9,13 @@
 
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../../components/ui/Button';
 import {
   confirmDeviceConfigHostKey,
   forgetDeviceConfigHostKey,
 } from '../../hooks/useDeviceConfigs';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { ConfirmDialog } from '../../shared/ConfirmDialog';
 import type { DeviceConfigTarget } from '../../types/deviceConfigs';
 
 export function HostKey({
@@ -23,9 +25,10 @@ export function HostKey({
   target: DeviceConfigTarget;
   onChanged: () => void;
 }): JSX.Element {
-  const { t } = useTranslation(['pages']);
+  const { t } = useTranslation(['pages', 'common']);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [forgetting, setForgetting] = useState(false);
 
   const act = async (request: () => Promise<void>): Promise<void> => {
     setBusy(true);
@@ -44,22 +47,21 @@ export function HostKey({
   const pending = target.pendingHostKeySha256;
 
   return (
-    <div data-testid="config-host-key" className="stack-xs">
-      <p className="caption">{t('deviceConfigs.hostKey.heading')}</p>
+    <div data-testid="config-host-key" className="space-y-1.5">
+      <p className="kicker">{t('deviceConfigs.hostKey.heading')}</p>
       {pinned ? (
         <>
-          <p className="body-small">{t('deviceConfigs.hostKey.pinned')}</p>
+          <p className="text-sm text-text-secondary">{t('deviceConfigs.hostKey.pinned')}</p>
           <code data-testid="config-host-key-pinned" className="figure break-all text-sm">
             {pinned}
           </code>
           <div>
             <Button
               data-testid="config-host-key-forget"
-              variant="outline"
-              tone="red"
+              variant="destructive"
               size="sm"
               loading={busy}
-              onClick={(): void => void act(() => forgetDeviceConfigHostKey(target.id))}
+              onClick={(): void => setForgetting(true)}
             >
               {t('deviceConfigs.hostKey.forget')}
             </Button>
@@ -67,9 +69,7 @@ export function HostKey({
         </>
       ) : pending ? (
         <>
-          <p className="body-small text-status-warning-strong">
-            {t('deviceConfigs.hostKey.pending')}
-          </p>
+          <Alert tone="warning">{t('deviceConfigs.hostKey.pending')}</Alert>
           <code data-testid="config-host-key-pending" className="figure break-all text-sm">
             {pending}
           </code>
@@ -85,15 +85,24 @@ export function HostKey({
           </div>
         </>
       ) : (
-        <p data-testid="config-host-key-none" className="body-small">
+        <p data-testid="config-host-key-none" className="text-sm text-text-secondary">
           {t('deviceConfigs.hostKey.none')}
         </p>
       )}
-      {error ? (
-        <p role="alert" className="body-small text-status-error-strong">
-          {error}
-        </p>
-      ) : null}
+      {error ? <Alert tone="error">{error}</Alert> : null}
+      <ConfirmDialog
+        open={forgetting}
+        title={t('deviceConfigs.hostKey.forgetTitle', { name: target.name })}
+        message={t('deviceConfigs.hostKey.forgetMessage')}
+        confirmLabel={t('deviceConfigs.hostKey.forget')}
+        cancelLabel={t('common:buttons.cancel')}
+        closeLabel={t('common:buttons.close')}
+        onConfirm={(): void => {
+          setForgetting(false);
+          void act(() => forgetDeviceConfigHostKey(target.id));
+        }}
+        onCancel={(): void => setForgetting(false)}
+      />
     </div>
   );
 }

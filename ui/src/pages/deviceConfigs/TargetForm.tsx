@@ -6,11 +6,16 @@
  * one in place rather than sending them to the API.
  */
 
-import { type FormEvent, type JSX, type ReactNode, useId, useState } from 'react';
+import { type FormEvent, type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { Modal, ModalFooter } from '../../components/ui/Modal';
 import { useDeviceCredentials } from '../../hooks/useDeviceCredentials';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
+import { Select } from '../../shared/Select';
 import type {
   DeviceConfigPlatform,
   DeviceConfigTarget,
@@ -39,7 +44,6 @@ export interface TargetFormProps {
 
 export function TargetForm({ target, onSubmit, onCancel }: TargetFormProps): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
-  const id = useId();
   const vault = useDeviceCredentials();
   const [name, setName] = useState(target?.name ?? '');
   const [host, setHost] = useState(target?.host ?? '');
@@ -113,180 +117,153 @@ export function TargetForm({ target, onSubmit, onCancel }: TargetFormProps): JSX
         }}
       >
         {formError ? (
-          <div
-            role="alert"
-            data-testid="config-target-form-error"
-            className="mb-content rounded-md border border-status-error/40 bg-status-error/10 pad-xs text-sm text-status-error-strong"
-          >
-            {formError}
+          <div data-testid="config-target-form-error" className="mb-4">
+            <Alert tone="error">{formError}</Alert>
           </div>
         ) : null}
 
-        <div className="stack">
-          <Field id={`${id}-name`} label={t('deviceConfigs.form.name')}>
-            <input
-              id={`${id}-name`}
-              value={name}
-              onChange={(e): void => setName(e.target.value)}
-              required
-              data-testid="config-target-name"
-              className={inputClass}
-            />
-          </Field>
-          <Field id={`${id}-host`} label={t('deviceConfigs.form.host')}>
-            <input
-              id={`${id}-host`}
-              value={host}
-              onChange={(e): void => setHost(e.target.value)}
-              required
-              placeholder="10.0.0.1"
-              data-testid="config-target-host"
-              className={inputClass}
-            />
-          </Field>
-          <Field id={`${id}-platform`} label={t('deviceConfigs.form.platform')}>
-            <select
-              id={`${id}-platform`}
-              value={platform}
-              onChange={(e): void => setPlatform(e.target.value as DeviceConfigPlatform)}
-              data-testid="config-target-platform"
-              className={inputClass}
-            >
-              {PLATFORMS.map((p) => (
-                <option key={p} value={p}>
-                  {t(`deviceConfigs.platform.${p}`)}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field id={`${id}-port`} label={t('deviceConfigs.form.port')}>
-            <input
-              id={`${id}-port`}
-              type="number"
-              min={1}
-              max={65535}
-              value={port}
-              onChange={(e): void => setPort(e.target.value)}
-              placeholder={platform === 'netconf' ? '830' : '22'}
-              data-testid="config-target-port"
-              className={inputClass}
-            />
-          </Field>
-          <Field id={`${id}-credential`} label={t('deviceConfigs.form.credential')}>
-            <select
-              id={`${id}-credential`}
-              value={credential}
-              onChange={(e): void => setPicked(e.target.value)}
-              disabled={vault.loading}
-              data-testid="config-target-credential"
-              className={inputClass}
-            >
-              <option value="" disabled>
-                {vault.loading
-                  ? t('common:status.loading')
-                  : t('deviceConfigs.form.credentialPick')}
-              </option>
-              {sshLogins.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.sshUser ? `${c.name} (${c.sshUser})` : c.name}
-                </option>
-              ))}
-              <option value={NEW_LOGIN}>{t('deviceConfigs.form.credentialNew')}</option>
-            </select>
-            {vault.error ? (
-              <p className="mt-tight text-xs text-status-error-strong">
-                {t('deviceConfigs.form.credentialsLoadFailed', { reason: vault.error })}
-              </p>
-            ) : null}
-          </Field>
+        <div className="space-y-4">
+          <FormField label={t('deviceConfigs.form.name')} required>
+            {(control) => (
+              <Input
+                {...control}
+                value={name}
+                onChange={(e): void => setName(e.target.value)}
+                required
+                data-testid="config-target-name"
+              />
+            )}
+          </FormField>
+          <FormField label={t('deviceConfigs.form.host')} required>
+            {(control) => (
+              <Input
+                {...control}
+                value={host}
+                onChange={(e): void => setHost(e.target.value)}
+                required
+                placeholder="10.0.0.1"
+                data-testid="config-target-host"
+              />
+            )}
+          </FormField>
+          <FormField label={t('deviceConfigs.form.platform')}>
+            {(control) => (
+              <Select
+                {...control}
+                value={platform}
+                onValueChange={(value): void => setPlatform(value as DeviceConfigPlatform)}
+                options={PLATFORMS.map((p) => ({
+                  value: p,
+                  label: t(`deviceConfigs.platform.${p}`),
+                }))}
+                data-testid="config-target-platform"
+              />
+            )}
+          </FormField>
+          <FormField label={t('deviceConfigs.form.port')}>
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                min={1}
+                max={65535}
+                value={port}
+                onChange={(e): void => setPort(e.target.value)}
+                placeholder={platform === 'netconf' ? '830' : '22'}
+                data-testid="config-target-port"
+              />
+            )}
+          </FormField>
+          <FormField
+            label={t('deviceConfigs.form.credential')}
+            {...(vault.error
+              ? { error: t('deviceConfigs.form.credentialsLoadFailed', { reason: vault.error }) }
+              : {})}
+          >
+            {(control) => (
+              <Select
+                {...control}
+                value={credential}
+                onValueChange={setPicked}
+                disabled={vault.loading}
+                placeholder={
+                  vault.loading
+                    ? t('common:status.loading')
+                    : t('deviceConfigs.form.credentialPick')
+                }
+                options={[
+                  ...sshLogins.map((c) => ({
+                    value: c.id,
+                    label: c.sshUser ? `${c.name} (${c.sshUser})` : c.name,
+                  })),
+                  { value: NEW_LOGIN, label: t('deviceConfigs.form.credentialNew') },
+                ]}
+                data-testid="config-target-credential"
+              />
+            )}
+          </FormField>
           {credential === NEW_LOGIN ? (
-            <fieldset data-testid="config-target-new-login" className="stack-sm">
-              <legend className="text-xs text-text-muted">
+            <fieldset data-testid="config-target-new-login" className="space-y-3">
+              <legend className="mb-1.5 text-xs text-text-muted">
                 {t('deviceConfigs.form.newLoginHint')}
               </legend>
-              <Field id={`${id}-login-name`} label={t('deviceConfigs.form.loginName')}>
-                <input
-                  id={`${id}-login-name`}
-                  value={login.name}
-                  onChange={(e): void => setLogin({ ...login, name: e.target.value })}
-                  required
-                  data-testid="config-target-login-name"
-                  className={inputClass}
-                />
-              </Field>
-              <Field id={`${id}-login-user`} label={t('deviceConfigs.form.loginUser')}>
-                <input
-                  id={`${id}-login-user`}
-                  value={login.user}
-                  onChange={(e): void => setLogin({ ...login, user: e.target.value })}
-                  required
-                  autoComplete="off"
-                  data-testid="config-target-login-user"
-                  className={inputClass}
-                />
-              </Field>
-              <Field id={`${id}-login-password`} label={t('deviceConfigs.form.loginPassword')}>
-                <input
-                  id={`${id}-login-password`}
-                  type="password"
-                  value={login.password}
-                  onChange={(e): void => setLogin({ ...login, password: e.target.value })}
-                  required
-                  autoComplete="new-password"
-                  data-testid="config-target-login-password"
-                  className={inputClass}
-                />
-              </Field>
+              <FormField label={t('deviceConfigs.form.loginName')} required>
+                {(control) => (
+                  <Input
+                    {...control}
+                    value={login.name}
+                    onChange={(e): void => setLogin({ ...login, name: e.target.value })}
+                    required
+                    data-testid="config-target-login-name"
+                  />
+                )}
+              </FormField>
+              <FormField label={t('deviceConfigs.form.loginUser')} required>
+                {(control) => (
+                  <Input
+                    {...control}
+                    value={login.user}
+                    onChange={(e): void => setLogin({ ...login, user: e.target.value })}
+                    required
+                    autoComplete="off"
+                    data-testid="config-target-login-user"
+                  />
+                )}
+              </FormField>
+              <FormField label={t('deviceConfigs.form.loginPassword')} required>
+                {(control) => (
+                  <Input
+                    {...control}
+                    type="password"
+                    value={login.password}
+                    onChange={(e): void => setLogin({ ...login, password: e.target.value })}
+                    required
+                    autoComplete="new-password"
+                    data-testid="config-target-login-password"
+                  />
+                )}
+              </FormField>
             </fieldset>
           ) : null}
         </div>
 
         <ModalFooter>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md px-3 py-2 text-sm text-text-muted hover:text-text-primary"
-          >
-            {t('common:buttons.cancel')}
-          </button>
-          <button
+          <Button onClick={onCancel}>{t('common:buttons.cancel')}</Button>
+          <Button
             type="submit"
-            disabled={submitting || vault.loading}
+            variant="primary"
+            loading={submitting}
+            disabled={vault.loading}
             data-testid="config-target-save"
-            className="rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:control-disabled"
           >
             {submitting
               ? t('common:common.saving')
               : target
                 ? t('deviceConfigs.form.save')
                 : t('deviceConfigs.form.add')}
-          </button>
+          </Button>
         </ModalFooter>
       </form>
     </Modal>
   );
 }
-
-function Field({
-  id,
-  label,
-  children,
-}: {
-  id: string;
-  label: string;
-  children: ReactNode;
-}): JSX.Element {
-  return (
-    <div>
-      <label htmlFor={id} className={labelClass}>
-        {label}
-      </label>
-      <div className="mt-tight">{children}</div>
-    </div>
-  );
-}
-
-const labelClass: string = 'block text-xs font-medium uppercase tracking-wide text-text-muted';
-
-const inputClass: string =
-  'w-full rounded-md border border-surface-border bg-surface-sunken px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-brand-primary focus:outline-none';

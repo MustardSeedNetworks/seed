@@ -11,7 +11,7 @@
  * are identifiers a rule author chose, and translating them would stop them
  * matching the rule.
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type CurrentUser, RoleProvider } from '../contexts/RoleContext';
@@ -99,6 +99,15 @@ describe('AlertsPage — real locale copy', () => {
     expect(screen.getByText('Alert payload')).toBeVisible();
   });
 
+  it('shows the payload as a table and the lifecycle as a status pill', async () => {
+    await renderIn('en');
+
+    const payload = screen.getByRole('table', { name: 'Alert payload fields' });
+    expect(within(payload).getByRole('columnheader', { name: /Field/ })).toBeVisible();
+    expect(within(payload).getByText('pollsMissed')).toBeVisible();
+    expect(screen.getByText('Open').closest('span')).toHaveClass('text-status-warning-strong');
+  });
+
   it('names the empty state rather than showing a blank pane', async () => {
     state.alerts = [];
     await i18n.changeLanguage('en');
@@ -110,10 +119,9 @@ describe('AlertsPage — real locale copy', () => {
     );
 
     expect(screen.getByText('0 alerts')).toBeVisible();
+    expect(screen.getByText('No alerts match this filter.')).toBeVisible();
     expect(
-      screen.getByText(
-        "No alerts match the current filter. Either nothing's misbehaving or your filter is too strict.",
-      ),
+      screen.getByText('Widen the severity or the lifecycle filters to see more.'),
     ).toBeVisible();
     expect(screen.getByText('Select an alert to see its detail and act on it.')).toBeVisible();
   });

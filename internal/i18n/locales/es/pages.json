@@ -17,7 +17,7 @@
       "warning": "Advertencia",
       "info": "Información"
     },
-    "noAlerts": "Ninguna alerta coincide con el filtro actual. O nada va mal o el filtro es demasiado estricto.",
+    "noAlerts": "Ninguna alerta coincide con este filtro.",
     "unknownSource": "origen desconocido",
     "selectedAlert": "Alerta seleccionada",
     "acknowledge": "Reconocer",
@@ -43,7 +43,11 @@
     "valueNo": "no",
     "stateResolved": "Resuelta",
     "stateAcknowledged": "Reconocida",
-    "stateOpen": "Abierta"
+    "stateOpen": "Abierta",
+    "noAlertsHint": "Amplíe los filtros de gravedad o de ciclo de vida para ver más.",
+    "columnField": "Campo",
+    "columnValue": "Valor",
+    "payloadCaption": "Campos de la carga de la alerta"
   },
   "dashboard": {
     "label": "Panel",
@@ -180,7 +184,9 @@
       "forget": "Olvidar clave",
       "pending": "El dispositivo presentó esta clave, así que la copia no guardó nada. Compruébela en el dispositivo y luego confíe en ella.",
       "confirm": "Confiar en la clave",
-      "none": "Aún no hay clave. La próxima copia registra la clave del dispositivo para que la confirme."
+      "none": "Aún no hay clave. La próxima copia registra la clave del dispositivo para que la confirme.",
+      "forgetTitle": "¿Olvidar la clave de host de {{name}}?",
+      "forgetMessage": "La próxima copia registra la clave que presente el dispositivo y usted debe confirmarla de nuevo antes de que se guarde ninguna copia."
     },
     "form": {
       "addTitle": "Añadir dispositivo",
@@ -248,7 +254,10 @@
       "anyHost": "Cualquier equipo del segmento",
       "labelStarted": "Iniciada",
       "labelTransfers": "Transferencias activas"
-    }
+    },
+    "loadingBackups": "Cargando copias de seguridad",
+    "columnTaken": "Realizada",
+    "columnResult": "Resultado"
   },
   "link": {
     "description": "Estado del enlace físico, diagnóstico de cableado y asociación Wi-Fi de la interfaz activa.",
@@ -371,7 +380,10 @@
     "fieldPollInterval": "Intervalo de sondeo (segundos)",
     "nameAndIpRequired": "El nombre y la dirección IP son obligatorios.",
     "saveFailed": "No se pudo guardar",
-    "saveChanges": "Guardar cambios"
+    "saveChanges": "Guardar cambios",
+    "deleteMessage": "El destino deja de sondearse.",
+    "columnOrder": "Orden",
+    "columnCollector": "Recolector"
   },
   "deviceGroups": {
     "description": "Conjuntos de destinos de sondeo para limitar alertas e informes.",
@@ -425,7 +437,22 @@
     "memberFilterLabel": "Filtrar destinos de sondeo",
     "noTargets": "Aún no hay destinos de sondeo. Añádalos en Destinos de sondeo y luego selecciónelos aquí.",
     "nameRequired": "El nombre es obligatorio.",
-    "saveFailed": "No se pudo guardar"
+    "saveFailed": "No se pudo guardar",
+    "deleteMessage": "Sus miembros siguen siendo destinos de sondeo; solo se elimina el grupo.",
+    "loadingMembers": "Cargando miembros",
+    "columnName": "Nombre",
+    "columnAddress": "Dirección",
+    "columnState": "Estado",
+    "columnLastPoll": "Último sondeo",
+    "columnAlerts": "Alertas",
+    "memberState": {
+      "ok": "Correcto",
+      "warn": "Con alertas",
+      "crit": "Sondeo fallido",
+      "unknown": "Sin sondear"
+    },
+    "selectMember": "Añadir {{name}} al grupo",
+    "memberNoMatch": "Ningún destino de sondeo coincide con este filtro."
   },
   "ipam": {
     "label": "Direcciones IP",
@@ -467,7 +494,8 @@
     "formHint": "El rango que concede un servidor DHCP, con ambos extremos incluidos. Seed cuenta una dirección como usada cuando el descubrimiento o la tabla ARP de un router la vio en el último día.",
     "rangeRequired": "Introduzca la primera y la última dirección.",
     "invalidRange": "Un ámbito DHCP son dos direcciones IPv4, la primera menor.",
-    "overlaps": "Este rango se solapa con otro ámbito DHCP."
+    "overlaps": "Este rango se solapa con otro ámbito DHCP.",
+    "deleteMessage": "Solo se elimina el registro del rango en Seed; su servidor DHCP no cambia."
   },
   "lifecycle": {
     "label": "Ciclo de vida del hardware",

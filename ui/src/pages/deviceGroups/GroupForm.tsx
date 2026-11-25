@@ -6,9 +6,17 @@
  * member it shows ticked.
  */
 
-import { type FormEvent, type JSX, useId, useState } from 'react';
+import { type FormEvent, type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, ModalFooter } from '../../components/ui/Modal';
+import { useTableLabels } from '../../hooks/useTableLabels';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { DataTable, type DataTableColumn } from '../../shared/DataTable';
+import { EmptyState } from '../../shared/EmptyState';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
+import { SearchInput } from '../../shared/SearchInput';
 import type { DeviceGroupRequest } from '../../types/generated/device-group-request';
 import type { DeviceGroupResponse } from '../../types/generated/device-group-response';
 import type { PollingTargetResponse } from '../../types/generated/polling-target-response';
@@ -33,9 +41,11 @@ export function GroupForm({
   const [query, setQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const id = useId();
+  const labels = useTableLabels<PollingTargetResponse>({
+    loading: t('common:status.loading'),
+    selectRow: (target) => t('deviceGroups.selectMember', { name: target.name }),
+  });
 
-  const members = new Set(form.members);
   const needle = query.trim().toLowerCase();
   const shown = targets.filter(
     (target) =>
@@ -43,15 +53,20 @@ export function GroupForm({
       target.name.toLowerCase().includes(needle) ||
       target.ipAddress.toLowerCase().includes(needle),
   );
-
-  function toggle(targetId: string, on: boolean): void {
-    setForm((prev) => ({
-      ...prev,
-      members: on
-        ? [...prev.members, targetId]
-        : prev.members.filter((member) => member !== targetId),
-    }));
-  }
+  const columns: DataTableColumn<PollingTargetResponse>[] = [
+    {
+      key: 'name',
+      header: t('deviceGroups.columnName'),
+      cell: (target) => <span className="text-text-primary">{target.name}</span>,
+      sortValue: (target) => target.name,
+    },
+    {
+      key: 'address',
+      header: t('deviceGroups.columnAddress'),
+      cell: (target) => <span className="figure">{target.ipAddress}</span>,
+      sortValue: (target) => target.ipAddress,
+    },
+  ];
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
@@ -86,112 +101,85 @@ export function GroupForm({
         }}
       >
         {formError ? (
-          <div
-            role="alert"
-            data-testid="group-form-error"
-            className="mb-content rounded-md border border-status-error/40 bg-status-error/10 pad-xs text-sm text-status-error-strong"
-          >
-            {formError}
+          <div data-testid="group-form-error" className="mb-4">
+            <Alert tone="error">{formError}</Alert>
           </div>
         ) : null}
 
-        <div className="stack">
-          <div>
-            <label htmlFor={`${id}-name`} className={labelClass}>
-              {t('deviceGroups.fieldName')}
-            </label>
-            <input
-              id={`${id}-name`}
-              type="text"
-              value={form.name}
-              onChange={(e): void => setForm((prev) => ({ ...prev, name: e.target.value }))}
-              required
-              data-testid="group-name"
-              className={`mt-tight ${inputClass}`}
-            />
-          </div>
-          <div>
-            <label htmlFor={`${id}-description`} className={labelClass}>
-              {t('deviceGroups.fieldDescription')}
-            </label>
-            <input
-              id={`${id}-description`}
-              type="text"
-              value={form.description ?? ''}
-              onChange={(e): void => setForm((prev) => ({ ...prev, description: e.target.value }))}
-              data-testid="group-description"
-              className={`mt-tight ${inputClass}`}
-            />
-          </div>
-          <fieldset className="stack-xs">
-            <legend className={labelClass}>
+        <div className="space-y-4">
+          <FormField label={t('deviceGroups.fieldName')} required>
+            {(control) => (
+              <Input
+                {...control}
+                value={form.name}
+                onChange={(e): void => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                required
+                data-testid="group-name"
+              />
+            )}
+          </FormField>
+          <FormField label={t('deviceGroups.fieldDescription')}>
+            {(control) => (
+              <Input
+                {...control}
+                value={form.description ?? ''}
+                onChange={(e): void =>
+                  setForm((prev) => ({ ...prev, description: e.target.value }))
+                }
+                data-testid="group-description"
+              />
+            )}
+          </FormField>
+          <fieldset className="space-y-2">
+            <legend className="mb-1.5 text-sm font-medium text-text-secondary">
               {t('deviceGroups.fieldMembers', { count: form.members.length })}
             </legend>
             {targets.length === 0 ? (
-              <p data-testid="group-no-targets" className="body-small">
-                {t('deviceGroups.noTargets')}
-              </p>
+              <div data-testid="group-no-targets">
+                <EmptyState title={t('deviceGroups.noTargets')} />
+              </div>
             ) : (
               <>
-                <input
-                  type="search"
+                <SearchInput
                   value={query}
-                  onChange={(e): void => setQuery(e.target.value)}
+                  onValueChange={setQuery}
                   placeholder={t('deviceGroups.memberFilterPlaceholder', { count: targets.length })}
-                  aria-label={t('deviceGroups.memberFilterLabel')}
-                  className={inputClass}
+                  label={t('deviceGroups.memberFilterLabel')}
+                  clearLabel={t('common:buttons.clear')}
+                  className="max-w-none"
                 />
-                <ul className="max-h-64 divide-y divide-surface-border overflow-y-auto rounded-md border border-surface-border">
-                  {shown.map((target) => (
-                    <li key={target.id}>
-                      <label className="flex min-h-[44px] cursor-pointer items-center gap-compact px-cell py-2 text-sm text-text-primary hover:bg-surface-hover">
-                        <input
-                          type="checkbox"
-                          checked={members.has(target.id)}
-                          onChange={(e): void => toggle(target.id, e.target.checked)}
-                          data-testid={`group-member-${target.id}`}
-                        />
-                        <span className="min-w-0 flex-1 truncate">{target.name}</span>
-                        <span className="figure text-xs text-text-muted">{target.ipAddress}</span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
+                <DataTable
+                  rows={shown}
+                  columns={columns}
+                  getRowKey={(target) => target.id}
+                  caption={t('deviceGroups.fieldMembers', { count: form.members.length })}
+                  labels={labels}
+                  pageSize={8}
+                  empty={<EmptyState title={t('deviceGroups.memberNoMatch')} />}
+                  selection={{
+                    selectedKeys: new Set(form.members),
+                    onChange: (keys): void => setForm((prev) => ({ ...prev, members: [...keys] })),
+                  }}
+                />
               </>
             )}
           </fieldset>
         </div>
 
         <ModalFooter>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md px-3 py-2 text-sm text-text-muted hover:text-text-primary"
-          >
-            {t('common:buttons.cancel')}
-          </button>
-          <button
-            type="submit"
-            disabled={submitting}
-            data-testid="group-save"
-            className="rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:control-disabled"
-          >
+          <Button onClick={onCancel}>{t('common:buttons.cancel')}</Button>
+          <Button type="submit" variant="primary" loading={submitting} data-testid="group-save">
             {submitting
               ? t('common:common.saving')
               : mode === 'create'
                 ? t('deviceGroups.addGroup')
                 : t('deviceGroups.saveChanges')}
-          </button>
+          </Button>
         </ModalFooter>
       </form>
     </Modal>
   );
 }
-
-const labelClass: string = 'block text-xs font-medium uppercase tracking-wide text-text-muted';
-
-const inputClass: string =
-  'w-full rounded-md border border-surface-border bg-surface-sunken px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-brand-primary focus:outline-none';
 
 export function emptyGroup(): DeviceGroupRequest {
   return { name: '', description: '', members: [] };

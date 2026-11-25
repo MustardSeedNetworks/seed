@@ -171,8 +171,8 @@ describe('DeviceConfigsPage', () => {
     expect(within(view).queryByText(/^\+\+\+ /)).toBeNull();
     expect(screen.getByTestId('config-diff-counts')).toHaveTextContent('+1 −1 lines');
     // The newest attempt failed; the newest saved one is what opens.
-    expect(screen.getByTestId('config-backup-dcb-000000000002')).toHaveAttribute(
-      'aria-pressed',
+    expect(screen.getByTestId('config-backup-dcb-000000000002').closest('tr')).toHaveAttribute(
+      'aria-selected',
       'true',
     );
   });
@@ -301,11 +301,29 @@ describe('DeviceConfigsPage', () => {
     );
     targets = [{ ...core, hostKeySha256: undefined }];
     await user.click(screen.getByTestId('config-host-key-forget'));
+    // Forgetting restarts trust, so it asks first and sends nothing until then.
+    const dialog = await screen.findByTestId('confirm-dialog');
+    expect(writes).toEqual([]);
+    await user.click(within(dialog).getByRole('button', { name: 'Forget key' }));
 
     expect(writes).toEqual([
       { method: 'DELETE', path: `/api/v1/device-config-targets/${core.id}/host-key` },
     ]);
     expect(await screen.findByTestId('config-host-key-none')).toBeInTheDocument();
+  });
+
+  it('lists the backups as a table, newest first', async () => {
+    render(<DeviceConfigsPage />);
+    await screen.findByTestId('config-diff');
+
+    const table = screen.getByRole('table', { name: 'Backups' });
+    for (const header of ['Taken', 'Result']) {
+      expect(within(table).getByRole('columnheader', { name: new RegExp(header) })).toBeVisible();
+    }
+    const ids = within(table)
+      .getAllByTestId(/^config-backup-dcb-/)
+      .map((cell) => cell.dataset.testid);
+    expect(ids).toEqual([...ids].sort().reverse());
   });
 
   it('removes a device only after the operator confirms', async () => {
@@ -318,7 +336,9 @@ describe('DeviceConfigsPage', () => {
     expect(writes).toEqual([]);
 
     targets = [];
-    await user.click(screen.getByTestId('confirm-modal-confirm'));
+    await user.click(
+      within(screen.getByTestId('confirm-dialog')).getByRole('button', { name: 'Remove' }),
+    );
 
     expect(writes).toEqual([
       { method: 'DELETE', path: `/api/v1/device-config-targets/${core.id}` },
