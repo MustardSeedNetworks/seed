@@ -116,6 +116,9 @@ export const WithClick: Story = {
     onClick: () => alert('Card clicked!'),
   },
   parameters: {
+    // The shared Card gives a clickable <section> role="button", which axe
+    // reports as a disallowed role. Fixed in MustardSeedNetworks/.github.
+    a11y: { config: { rules: [{ id: 'aria-allowed-role', enabled: false }] } },
     docs: {
       description: {
         story: 'Cards can be made clickable for drill-down views.',

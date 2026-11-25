@@ -254,6 +254,11 @@ export const Interactive: Story = {
  * Comparison of different configurations
  */
 export const Comparison: Story = {
+  // The story renders the same section twice, and the shared CollapsibleSection
+  // labels each body as a landmark by its title, so the two share a name.
+  parameters: {
+    a11y: { config: { rules: [{ id: 'landmark-unique', enabled: false }] } },
+  },
   render: () => (
     <div className={cn('stack-lg', spacing.pad.default)}>
       <div>
