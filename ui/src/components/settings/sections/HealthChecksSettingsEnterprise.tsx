@@ -10,6 +10,7 @@ import type React from 'react';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useArrayItem } from '../../../hooks/useArrayItem';
+import { Checkbox } from '../../../shared/Checkbox';
 import { Select } from '../../../shared/Select';
 import { cn, input, layout, radius, spacing } from '../../../styles/theme';
 import type { SqlEndpoint, TestsSettings } from '../../../types/settings';
@@ -346,18 +347,13 @@ export function HealthChecksSettingsEnterprise({
                   'flex-1 bg-surface-raised',
                 )}
               />
-              <label
-                className={cn('flex items-center', spacing.gap.compact, 'caption text-text-muted')}
-              >
-                <input
-                  type="checkbox"
-                  checked={endpoint.useTls}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    updateLdapEndpoint(endpoint.id ?? '', 'useTls', e.target.checked)
-                  }
-                />
-                TLS
-              </label>
+              <Checkbox
+                label="TLS"
+                checked={endpoint.useTls}
+                onChange={(checked: boolean): void =>
+                  updateLdapEndpoint(endpoint.id ?? '', 'useTls', checked)
+                }
+              />
             </div>
           </div>
         ))}

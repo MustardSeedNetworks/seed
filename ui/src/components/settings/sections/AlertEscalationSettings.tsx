@@ -23,6 +23,8 @@ import {
   stageDraft,
   useAlertEscalationSettings,
 } from '../../../hooks/useAlertEscalationSettings';
+import { Checkbox } from '../../../shared/Checkbox';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { Tooltip } from '../../../shared/Tooltip';
 import {
   button as buttonTokens,
@@ -31,7 +33,6 @@ import {
   input as inputTokens,
   layout,
 } from '../../../styles/theme';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Bell } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
@@ -153,35 +154,29 @@ export function AlertEscalationSettings(): JSX.Element {
                     {t('alertEscalation.stageChannels', { stage: si + 1 })}
                   </legend>
                   {ESCALATION_CHANNELS.map((channel) => (
-                    <label
+                    <Checkbox
                       key={channel}
-                      className="flex items-center gap-tight text-sm text-text-secondary"
-                    >
-                      <input
-                        type="checkbox"
-                        data-testid={`escalation-channel-${li}-${si}-${channel}`}
-                        checked={stage.channels.includes(channel)}
-                        onChange={(e): void => {
-                          const on = e.target.checked;
-                          editLadder(ladder.id, (l) => ({
-                            ...l,
-                            stages: l.stages.map((s, i) =>
-                              i === si
-                                ? {
-                                    ...s,
-                                    channels: on
-                                      ? ESCALATION_CHANNELS.filter(
-                                          (c) => c === channel || s.channels.includes(c),
-                                        )
-                                      : s.channels.filter((c) => c !== channel),
-                                  }
-                                : s,
-                            ),
-                          }));
-                        }}
-                      />
-                      {channelLabel[channel]}
-                    </label>
+                      label={channelLabel[channel]}
+                      data-testid={`escalation-channel-${li}-${si}-${channel}`}
+                      checked={stage.channels.includes(channel)}
+                      onChange={(on: boolean): void => {
+                        editLadder(ladder.id, (l) => ({
+                          ...l,
+                          stages: l.stages.map((s, i) =>
+                            i === si
+                              ? {
+                                  ...s,
+                                  channels: on
+                                    ? ESCALATION_CHANNELS.filter(
+                                        (c) => c === channel || s.channels.includes(c),
+                                      )
+                                    : s.channels.filter((c) => c !== channel),
+                                }
+                              : s,
+                          ),
+                        }));
+                      }}
+                    />
                   ))}
                 </fieldset>
                 <button

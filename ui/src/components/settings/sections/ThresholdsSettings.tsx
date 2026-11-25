@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { Tooltip } from '../../../shared/Tooltip';
 import {
   cn,
@@ -12,7 +13,6 @@ import {
 } from '../../../styles/theme';
 import type { ThresholdSettings } from '../../../types/generated/settings-response';
 import type { SaveStatus } from '../../../types/settings';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Info, SlidersHorizontal } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { ThresholdsHttpSection } from './ThresholdsHttpSection';

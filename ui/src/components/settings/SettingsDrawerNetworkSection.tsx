@@ -11,6 +11,8 @@ import type React from 'react';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../contexts/RoleContext';
+import { CollapsibleSection } from '../../shared/CollapsibleSection';
+import { Toggle } from '../../shared/Toggle';
 import {
   button,
   cn,
@@ -20,7 +22,6 @@ import {
   status as statusColor,
 } from '../../styles/theme';
 import type { DisplayOptions, IpSettings, SaveStatus } from '../../types/settings';
-import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { Network } from '../ui/Icons';
 import { AutoSaveIndicator } from './sections/AutoSaveIndicator';
 import { MtuControl } from './sections/MtuControl';
@@ -257,33 +258,18 @@ export function SettingsDrawerNetworkSection({
         </p>
         <div className="stack-sm">
           {/* Show Public IP */}
-          <label
-            className={cn(
-              'flex-between',
-              spacing.pad.xs,
-              'bg-surface-base',
-              radius.md,
-              'border border-surface-border',
-            )}
-          >
-            <div>
-              <span className="body-small text-text-primary font-medium">
-                {t('network.showPublicIp')}
-              </span>
-              <p className="caption text-text-muted">{t('network.displayInNetworkCard')}</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={displayOptions.showPublicIp}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                setDisplayOptions((prev) => ({
-                  ...prev,
-                  showPublicIp: e.target.checked,
-                }))
-              }
-              className={iconTokens.size.sm}
-            />
-          </label>
+          <Toggle
+            label={t('network.showPublicIp')}
+            description={t('network.displayInNetworkCard')}
+            checked={displayOptions.showPublicIp}
+            onChange={(checked: boolean): void =>
+              setDisplayOptions((prev) => ({
+                ...prev,
+                showPublicIp: checked,
+              }))
+            }
+            className="rounded-lg border border-surface-border bg-surface-base p-3"
+          />
         </div>
       </div>
       {/* VLAN Configuration */}

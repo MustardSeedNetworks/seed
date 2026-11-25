@@ -14,12 +14,13 @@ import { Info } from '../../ui/Icons';
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { Toggle } from '../../../shared/Toggle';
 import {
   cn,
   icon as iconTokens,
   input as inputTokens,
   layout,
-  radius,
   spacing,
 } from '../../../styles/theme';
 import type { IperfSuggestion } from '../../../types/generated/iperf-suggestion';
@@ -29,7 +30,6 @@ import type {
   SaveStatus,
   TestsSettings,
 } from '../../../types/settings';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Gauge } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { PerformanceIperfSection } from './PerformanceIperfSection';
@@ -103,60 +103,30 @@ export function PerformanceSettings({
               ) : null}
               {/* Enable/Disable Toggles */}
               <div className="stack-sm">
-                <label
-                  className={cn(
-                    layout.flex.between,
-                    spacing.pad.sm,
-                    'bg-surface-base',
-                    radius.default,
-                    'border border-surface-border',
-                  )}
-                >
-                  <div>
-                    <span className="body-small text-text-primary font-medium">
-                      {t('performance.enableSpeedtest')}
-                    </span>
-                    <p className="caption text-text-muted">{t('performance.speedtestDesc')}</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={testsSettings.runSpeedtest}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setTestsSettings((prev) => ({
-                        ...prev,
-                        runSpeedtest: e.target.checked,
-                      }))
-                    }
-                    className={iconTokens.size.sm}
-                  />
-                </label>
-                <label
-                  className={cn(
-                    layout.flex.between,
-                    spacing.pad.sm,
-                    'bg-surface-base',
-                    radius.default,
-                    'border border-surface-border',
-                  )}
-                >
-                  <div>
-                    <span className="body-small text-text-primary font-medium">
-                      {t('performance.enableIperf')}
-                    </span>
-                    <p className="caption text-text-muted">{t('performance.iperfDesc')}</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={testsSettings.runIperf}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setTestsSettings((prev) => ({
-                        ...prev,
-                        runIperf: e.target.checked,
-                      }))
-                    }
-                    className={iconTokens.size.sm}
-                  />
-                </label>
+                <Toggle
+                  label={t('performance.enableSpeedtest')}
+                  description={t('performance.speedtestDesc')}
+                  checked={testsSettings.runSpeedtest}
+                  onChange={(checked: boolean): void =>
+                    setTestsSettings((prev) => ({
+                      ...prev,
+                      runSpeedtest: checked,
+                    }))
+                  }
+                  className="rounded-lg border border-surface-border bg-surface-base p-3"
+                />
+                <Toggle
+                  label={t('performance.enableIperf')}
+                  description={t('performance.iperfDesc')}
+                  checked={testsSettings.runIperf}
+                  onChange={(checked: boolean): void =>
+                    setTestsSettings((prev) => ({
+                      ...prev,
+                      runIperf: checked,
+                    }))
+                  }
+                  className="rounded-lg border border-surface-border bg-surface-base p-3"
+                />
               </div>
 
               {/* Auto-Run on Link Up (FAB button) */}
@@ -168,62 +138,38 @@ export function PerformanceSettings({
                   {t('performance.autoRunOnLinkDesc')}
                 </p>
                 <div className={cn(spacing.margin.top.inline, 'stack-sm')}>
-                  <label
-                    className={cn(
-                      layout.flex.between,
-                      spacing.pad.sm,
-                      'bg-surface-base',
-                      radius.default,
-                      'border border-surface-border',
-                    )}
-                  >
-                    <span className="body-small text-text-primary">
-                      {t('performance.speedtest')}
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={cardSettings.performance.speedtest.autoRunOnLink}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                        updateCardSettings({
-                          performance: {
-                            ...cardSettings.performance,
-                            speedtest: {
-                              ...cardSettings.performance.speedtest,
-                              autoRunOnLink: e.target.checked,
-                            },
+                  <Toggle
+                    label={t('performance.speedtest')}
+                    checked={cardSettings.performance.speedtest.autoRunOnLink}
+                    onChange={(checked: boolean): void =>
+                      updateCardSettings({
+                        performance: {
+                          ...cardSettings.performance,
+                          speedtest: {
+                            ...cardSettings.performance.speedtest,
+                            autoRunOnLink: checked,
                           },
-                        })
-                      }
-                      className={iconTokens.size.sm}
-                    />
-                  </label>
-                  <label
-                    className={cn(
-                      layout.flex.between,
-                      spacing.pad.sm,
-                      'bg-surface-base',
-                      radius.default,
-                      'border border-surface-border',
-                    )}
-                  >
-                    <span className="body-small text-text-primary">{t('performance.iperf')}</span>
-                    <input
-                      type="checkbox"
-                      checked={cardSettings.performance.iperf.autoRunOnLink}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                        updateCardSettings({
-                          performance: {
-                            ...cardSettings.performance,
-                            iperf: {
-                              ...cardSettings.performance.iperf,
-                              autoRunOnLink: e.target.checked,
-                            },
+                        },
+                      })
+                    }
+                    className="rounded-lg border border-surface-border bg-surface-base p-3"
+                  />
+                  <Toggle
+                    label={t('performance.iperf')}
+                    checked={cardSettings.performance.iperf.autoRunOnLink}
+                    onChange={(checked: boolean): void =>
+                      updateCardSettings({
+                        performance: {
+                          ...cardSettings.performance,
+                          iperf: {
+                            ...cardSettings.performance.iperf,
+                            autoRunOnLink: checked,
                           },
-                        })
-                      }
-                      className={iconTokens.size.sm}
-                    />
-                  </label>
+                        },
+                      })
+                    }
+                    className="rounded-lg border border-surface-border bg-surface-base p-3"
+                  />
                 </div>
               </div>
 

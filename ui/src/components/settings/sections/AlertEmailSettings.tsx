@@ -13,6 +13,7 @@ import type { JSX, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { type AlertEmailTLS, useAlertEmailSettings } from '../../../hooks/useAlertEmailSettings';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { Select } from '../../../shared/Select';
 import { Tooltip } from '../../../shared/Tooltip';
 import {
@@ -22,7 +23,6 @@ import {
   input as inputTokens,
   layout,
 } from '../../../styles/theme';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Mail } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 

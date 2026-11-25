@@ -17,6 +17,7 @@ import {
   useDeviceIdentity,
   useSaveDeviceIdentity,
 } from '../../../hooks/useDeviceIdentity';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import {
   button as buttonTokens,
   cn,
@@ -25,7 +26,6 @@ import {
   layout,
 } from '../../../styles/theme';
 import type { SaveStatus } from '../../../types/settings';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Server } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 

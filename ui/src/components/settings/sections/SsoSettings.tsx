@@ -20,11 +20,13 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../../api/client';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useRole } from '../../../contexts/RoleContext';
+import { Button } from '../../../shared/Button';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
+import { Toggle } from '../../../shared/Toggle';
 import type { SSOSettingsResponse } from '../../../types/generated/sso-settings-response';
-import { Button } from '../../ui/Button';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Key } from '../../ui/Icons';
-import { Input } from '../../ui/Input';
 
 type ProviderName = 'google' | 'microsoft' | 'github';
 
@@ -259,85 +261,79 @@ function ProviderCard({
     >
       <div className="flex-between">
         <h4 className="text-sm font-medium">{t(`settings:sso.providers.${name}`)}</h4>
-        <label className="inline-flex items-center gap-1.5 text-xs">
-          <input
-            type="checkbox"
-            checked={cfg.enabled}
+        <Toggle
+          label={t('settings:sso.fields.enabled')}
+          checked={cfg.enabled}
+          disabled={!canEdit || saving}
+          onChange={(checked) => onChange(name, 'enabled', checked)}
+          data-testid={`sso-enable-${name}`}
+        />
+      </div>
+
+      <FormField label={t('settings:sso.fields.clientId')} id={`sso-${name}-cid`}>
+        {(control) => (
+          <Input
+            {...control}
+            value={cfg.clientId}
+            onChange={(e) => onChange(name, 'clientId', e.target.value)}
             disabled={!canEdit || saving}
-            onChange={(e) => onChange(name, 'enabled', e.target.checked)}
-            data-testid={`sso-enable-${name}`}
+            data-testid={`sso-client-id-${name}`}
           />
-          {t('settings:sso.fields.enabled')}
-        </label>
-      </div>
+        )}
+      </FormField>
 
-      <div>
-        <label className="block text-xs text-text-muted mb-tight" htmlFor={`sso-${name}-cid`}>
-          {t('settings:sso.fields.clientId')}
-        </label>
-        <Input
-          id={`sso-${name}-cid`}
-          value={cfg.clientId}
-          onChange={(e) => onChange(name, 'clientId', e.target.value)}
-          disabled={!canEdit || saving}
-          data-testid={`sso-client-id-${name}`}
-        />
-      </div>
+      <FormField label={t('settings:sso.fields.clientSecret')} id={`sso-${name}-cs`}>
+        {(control) => (
+          <Input
+            {...control}
+            type="password"
+            value={cfg.clientSecret}
+            onChange={(e) => onChange(name, 'clientSecret', e.target.value)}
+            placeholder={cfg.hasClientSecret ? t('settings:sso.fields.clientSecretMask') : ''}
+            disabled={!canEdit || saving}
+            data-testid={`sso-client-secret-${name}`}
+          />
+        )}
+      </FormField>
 
-      <div>
-        <label className="block text-xs text-text-muted mb-tight" htmlFor={`sso-${name}-cs`}>
-          {t('settings:sso.fields.clientSecret')}
-        </label>
-        <Input
-          id={`sso-${name}-cs`}
-          type="password"
-          value={cfg.clientSecret}
-          onChange={(e) => onChange(name, 'clientSecret', e.target.value)}
-          placeholder={cfg.hasClientSecret ? t('settings:sso.fields.clientSecretMask') : ''}
-          disabled={!canEdit || saving}
-          data-testid={`sso-client-secret-${name}`}
-        />
-      </div>
-
-      <div>
-        <label className="block text-xs text-text-muted mb-tight" htmlFor={`sso-${name}-ru`}>
-          {t('settings:sso.fields.redirectUrl')}
-        </label>
-        <Input
-          id={`sso-${name}-ru`}
-          value={cfg.redirectUrl || defaultRedirectUrl()}
-          onChange={(e) => onChange(name, 'redirectUrl', e.target.value)}
-          disabled={!canEdit || saving}
-          data-testid={`sso-redirect-${name}`}
-        />
-        <p className="text-xs text-text-muted mt-tight">
-          {t('settings:sso.fields.redirectUrlHint')}
-        </p>
-      </div>
+      <FormField
+        label={t('settings:sso.fields.redirectUrl')}
+        id={`sso-${name}-ru`}
+        hint={t('settings:sso.fields.redirectUrlHint')}
+      >
+        {(control) => (
+          <Input
+            {...control}
+            value={cfg.redirectUrl || defaultRedirectUrl()}
+            onChange={(e) => onChange(name, 'redirectUrl', e.target.value)}
+            disabled={!canEdit || saving}
+            data-testid={`sso-redirect-${name}`}
+          />
+        )}
+      </FormField>
 
       {isMicrosoft && (
-        <div>
-          <label className="block text-xs text-text-muted mb-tight" htmlFor={`sso-${name}-tid`}>
-            {t('settings:sso.fields.tenantId')}
-          </label>
-          <Input
-            id={`sso-${name}-tid`}
-            value={cfg.tenantId ?? ''}
-            onChange={(e) => onChange(name, 'tenantId', e.target.value)}
-            placeholder="common | organizations | <tenant-guid>"
-            disabled={!canEdit || saving}
-            data-testid={`sso-tenant-${name}`}
-          />
-          <p className="text-xs text-text-muted mt-tight">
-            {t('settings:sso.fields.tenantIdHint')}
-          </p>
-        </div>
+        <FormField
+          label={t('settings:sso.fields.tenantId')}
+          id={`sso-${name}-tid`}
+          hint={t('settings:sso.fields.tenantIdHint')}
+        >
+          {(control) => (
+            <Input
+              {...control}
+              value={cfg.tenantId ?? ''}
+              onChange={(e) => onChange(name, 'tenantId', e.target.value)}
+              placeholder="common | organizations | <tenant-guid>"
+              disabled={!canEdit || saving}
+              data-testid={`sso-tenant-${name}`}
+            />
+          )}
+        </FormField>
       )}
 
       <div className="flex justify-end">
         <Button
-          variant="solid"
-          tone="violet"
+          variant="primary"
           size="sm"
           disabled={!canEdit || saving}
           loading={saving}

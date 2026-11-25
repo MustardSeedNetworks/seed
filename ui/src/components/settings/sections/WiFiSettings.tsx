@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
 import { useRole } from '../../../contexts/RoleContext';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { Select } from '../../../shared/Select';
 import {
   cn,
@@ -22,7 +23,6 @@ import type {
 } from '../../../types/generated/wifi-saved-networks-response';
 import type { ScannedNetwork, WiFiScanResponse } from '../../../types/generated/wifi-scan-response';
 import type { SaveStatus, WiFiSettings as WiFiSettingsType } from '../../../types/settings';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Wifi } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 

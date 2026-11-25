@@ -21,6 +21,7 @@ import { Info } from '../../ui/Icons';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { useAlertWebhookSettings } from '../../../hooks/useAlertWebhookSettings';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import {
   button as buttonTokens,
   cn,
@@ -28,7 +29,6 @@ import {
   input as inputTokens,
   layout,
 } from '../../../styles/theme';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Bell } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 

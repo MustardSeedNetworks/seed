@@ -1,3 +1,4 @@
+import { Toggle } from '../../../shared/Toggle';
 import { Tooltip } from '../../../shared/Tooltip';
 import { Info } from '../../ui/Icons';
 /**
@@ -374,31 +375,17 @@ export function PerformanceIperfSection({
 
               {/* Server Mode */}
               <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-                <label
-                  className={cn(
-                    layout.flex.between,
-                    spacing.pad.sm,
-                    'bg-surface-base',
-                    radius.default,
-                    'border border-surface-border',
-                    spacing.margin.bottom.inline,
-                  )}
-                >
-                  <span className="body-small text-text-primary">
-                    {t('performance.enableServer')}
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={iperfSettings.enableServer}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setIperfSettings((prev) => ({
-                        ...prev,
-                        enableServer: e.target.checked,
-                      }))
-                    }
-                    className={iconTokens.size.sm}
-                  />
-                </label>
+                <Toggle
+                  label={t('performance.enableServer')}
+                  checked={iperfSettings.enableServer}
+                  onChange={(checked: boolean): void =>
+                    setIperfSettings((prev) => ({
+                      ...prev,
+                      enableServer: checked,
+                    }))
+                  }
+                  className="rounded-lg border border-surface-border bg-surface-base p-3"
+                />
                 <div>
                   <label
                     className="caption text-text-muted font-medium"

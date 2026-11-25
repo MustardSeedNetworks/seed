@@ -3,9 +3,9 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDefaults } from '../../../../hooks/useDefaults';
 import { useLocale } from '../../../../hooks/useLocale';
+import { CollapsibleSection } from '../../../../shared/CollapsibleSection';
 import { cn, radius, spacing } from '../../../../styles/theme';
 import type { NetworkDiscoverySettings } from '../../../../types/settings';
-import { CollapsibleSection } from '../../../ui/CollapsibleSection';
 
 const MS_PER_UNIT = { minute: 60_000, second: 1000 } as const;
 type Unit = keyof typeof MS_PER_UNIT;

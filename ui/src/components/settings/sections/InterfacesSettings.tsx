@@ -20,13 +20,13 @@ import { useTranslation } from 'react-i18next';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useProfileContext } from '../../../contexts/profileContext';
 import { useRole } from '../../../contexts/RoleContext';
-import { Button as SharedButton } from '../../../shared/Button';
+import { Button } from '../../../shared/Button';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { ConfirmDialog } from '../../../shared/ConfirmDialog';
+import { Input } from '../../../shared/Input';
 import { StatusPill } from '../../../shared/StatusPill';
-import { Button } from '../../ui/Button';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
+import { Tooltip } from '../../../shared/Tooltip';
 import { Check, Plus, Trash2, Wifi } from '../../ui/Icons';
-import { Input } from '../../ui/Input';
 
 type IfaceKind = 'ethernet' | 'wifi';
 
@@ -226,16 +226,15 @@ function InterfaceGroup({
                 {!isActive && (
                   <Button
                     variant="ghost"
-                    tone="gray"
                     size="xs"
-                    leftIcon={<Check className="w-3 h-3" />}
+                    icon={<Check className="w-3 h-3" />}
                     onClick={() => onSetActive(iface.name)}
                     data-testid={`set-active-${kind}-${iface.name}`}
                   >
                     {t('interfaces.setActive')}
                   </Button>
                 )}
-                <SharedButton
+                <Button
                   variant="destructive"
                   size="sm"
                   icon={<Trash2 className="w-3 h-3" />}
@@ -243,7 +242,7 @@ function InterfaceGroup({
                   data-testid={`remove-${kind}-${iface.name}`}
                 >
                   {t('interfaces.removeInterface')}
-                </SharedButton>
+                </Button>
               </li>
             );
           })}
@@ -254,6 +253,7 @@ function InterfaceGroup({
         <div className="flex-1">
           <Input
             id={`add-${kind}-name`}
+            aria-label={label}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder={placeholder}
@@ -262,18 +262,18 @@ function InterfaceGroup({
             data-testid={`add-${kind}-input`}
           />
         </div>
-        <Button
-          variant="solid"
-          tone="violet"
-          size="sm"
-          leftIcon={<Plus className="w-3 h-3" />}
-          disabled={!canAdd || !newName.trim()}
-          onClick={onAdd}
-          data-testid={`add-${kind}-button`}
-          title={canAdd ? undefined : t('interfaces.limitReachedFreeStarter')}
-        >
-          {kind === 'ethernet' ? t('interfaces.addEthernet') : t('interfaces.addWifi')}
-        </Button>
+        <Tooltip text={canAdd ? undefined : t('interfaces.limitReachedFreeStarter')}>
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<Plus className="w-3 h-3" />}
+            disabled={!canAdd || !newName.trim()}
+            onClick={onAdd}
+            data-testid={`add-${kind}-button`}
+          >
+            {kind === 'ethernet' ? t('interfaces.addEthernet') : t('interfaces.addWifi')}
+          </Button>
+        </Tooltip>
       </div>
     </div>
   );

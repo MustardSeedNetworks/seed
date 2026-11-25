@@ -25,14 +25,15 @@ import { api } from '../../../api/client';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useRole } from '../../../contexts/RoleContext';
 import { useTableLabels } from '../../../hooks/useTableLabels';
-import { Button as SharedButton } from '../../../shared/Button';
+import { Button } from '../../../shared/Button';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { ConfirmDialog } from '../../../shared/ConfirmDialog';
 import { DataTable, type DataTableColumn } from '../../../shared/DataTable';
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
 import { StatusPill } from '../../../shared/StatusPill';
-import { Button } from '../../ui/Button';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
+import { Tooltip } from '../../../shared/Tooltip';
 import { Key, Plus, Trash2 } from '../../ui/Icons';
-import { Input } from '../../ui/Input';
 
 interface ApiToken {
   id: string;
@@ -206,14 +207,13 @@ export function ApiTokensSettings(): React.ReactElement {
             </code>
             <div className="flex gap-compact">
               <Button
-                variant="outline"
-                tone="green"
+                variant="secondary"
                 size="sm"
                 onClick={() => void navigator.clipboard?.writeText(mintedToken.token)}
               >
                 {t('apiTokens.copy')}
               </Button>
-              <Button variant="ghost" tone="gray" size="sm" onClick={() => setMintedToken(null)}>
+              <Button variant="ghost" size="sm" onClick={() => setMintedToken(null)}>
                 {t('apiTokens.saved')}
               </Button>
             </div>
@@ -221,37 +221,37 @@ export function ApiTokensSettings(): React.ReactElement {
         ) : null}
 
         <div className="flex items-end gap-compact">
-          <div className="flex-1">
-            <label className="block text-xs text-text-muted mb-tight" htmlFor="api-token-name">
-              {t('apiTokens.tokenName')}
-            </label>
-            <Input
-              id="api-token-name"
-              value={newTokenName}
-              onChange={(e) => setNewTokenName(e.target.value)}
-              placeholder={t('apiTokens.namePlaceholder')}
-              maxLength={64}
-              disabled={!canMint || !canWrite || minting}
-            />
-          </div>
-          <Button
-            variant="solid"
-            tone="violet"
-            size="md"
-            leftIcon={<Plus className="w-4 h-4" />}
-            disabled={!canMint || !canWrite || minting || newTokenName.trim().length === 0}
-            loading={minting}
-            title={
+          <FormField label={t('apiTokens.tokenName')} id="api-token-name" className="flex-1">
+            {(control) => (
+              <Input
+                {...control}
+                value={newTokenName}
+                onChange={(e) => setNewTokenName(e.target.value)}
+                placeholder={t('apiTokens.namePlaceholder')}
+                maxLength={64}
+                disabled={!canMint || !canWrite || minting}
+              />
+            )}
+          </FormField>
+          <Tooltip
+            text={
               !canWrite
                 ? t('apiTokens.mintNeedsOperator')
                 : !canMint
                   ? t('apiTokens.mintNeedsPro')
                   : undefined
             }
-            onClick={() => void handleMint()}
           >
-            {t('apiTokens.createToken')}
-          </Button>
+            <Button
+              variant="primary"
+              icon={<Plus className="w-4 h-4" />}
+              disabled={!canMint || !canWrite || minting || newTokenName.trim().length === 0}
+              loading={minting}
+              onClick={() => void handleMint()}
+            >
+              {t('apiTokens.createToken')}
+            </Button>
+          </Tooltip>
         </div>
 
         {loading ? (
@@ -270,16 +270,17 @@ export function ApiTokensSettings(): React.ReactElement {
             defaultSort={{ key: 'created', direction: 'desc' }}
             rowActions={(token) =>
               isZeroTime(token.revokedAt) ? (
-                <SharedButton
-                  variant="destructive"
-                  size="sm"
-                  icon={<Trash2 className="w-3 h-3" />}
-                  disabled={!canWrite}
-                  title={canWrite ? undefined : t('apiTokens.revokeNeedsOperator')}
-                  onClick={() => setRevokeTarget(token)}
-                >
-                  {t('apiTokens.revoke')}
-                </SharedButton>
+                <Tooltip text={canWrite ? undefined : t('apiTokens.revokeNeedsOperator')}>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    icon={<Trash2 className="w-3 h-3" />}
+                    disabled={!canWrite}
+                    onClick={() => setRevokeTarget(token)}
+                  >
+                    {t('apiTokens.revoke')}
+                  </Button>
+                </Tooltip>
               ) : null
             }
           />

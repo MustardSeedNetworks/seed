@@ -35,9 +35,10 @@ import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { useArrayItem } from '../../../hooks/useArrayItem';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { Toggle } from '../../../shared/Toggle';
 import { cn, icon as iconTokens, input, layout, radius, spacing } from '../../../styles/theme';
 import type { CardSettings, SaveStatus, TestsSettings } from '../../../types/settings';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { HeartPulse } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { HealthChecksSettingsEnterprise } from './HealthChecksSettingsEnterprise';
@@ -125,93 +126,49 @@ export function HealthChecksSettings({
       <div className={spacing.stack.default}>
         {/* Card Visibility & FAB Controls */}
         <div className="stack-sm">
-          <label
-            className={cn(
-              layout.flex.between,
-              spacing.pad.sm,
-              'bg-surface-base',
-              radius.default,
-              'border border-surface-border',
-            )}
-          >
-            <div>
-              <span className="body-small text-text-primary font-medium">
-                {t('common.showCard')}
-              </span>
-              <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={cardSettings.healthChecks.enabled}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateCardSettings({
-                  healthChecks: {
-                    ...cardSettings.healthChecks,
-                    enabled: e.target.checked,
-                  },
-                })
-              }
-              className={iconTokens.size.sm}
-            />
-          </label>
-          <label
-            className={cn(
-              layout.flex.between,
-              spacing.pad.sm,
-              'bg-surface-base',
-              radius.default,
-              'border border-surface-border',
-            )}
-          >
-            <div>
-              <span className="body-small text-text-primary font-medium">
-                {t('common.runOnFab')}
-              </span>
-              <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={cardSettings.healthChecks.autoRunOnLink}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateCardSettings({
-                  healthChecks: {
-                    ...cardSettings.healthChecks,
-                    autoRunOnLink: e.target.checked,
-                  },
-                })
-              }
-              className={iconTokens.size.sm}
-            />
-          </label>
+          <Toggle
+            label={t('common.showCard')}
+            description={t('common.showCardDesc')}
+            checked={cardSettings.healthChecks.enabled}
+            onChange={(checked: boolean): void =>
+              updateCardSettings({
+                healthChecks: {
+                  ...cardSettings.healthChecks,
+                  enabled: checked,
+                },
+              })
+            }
+            className="rounded-lg border border-surface-border bg-surface-base p-3"
+          />
+          <Toggle
+            label={t('common.runOnFab')}
+            description={t('common.runOnFabDesc')}
+            checked={cardSettings.healthChecks.autoRunOnLink}
+            onChange={(checked: boolean): void =>
+              updateCardSettings({
+                healthChecks: {
+                  ...cardSettings.healthChecks,
+                  autoRunOnLink: checked,
+                },
+              })
+            }
+            className="rounded-lg border border-surface-border bg-surface-base p-3"
+          />
         </div>
 
         {/* Enable Toggle */}
-        <label
-          className={cn(
-            layout.flex.between,
-            spacing.pad.sm,
-            'bg-surface-base border border-surface-border',
-            radius.default,
-          )}
-        >
-          <div>
-            <span className="body-small text-text-primary font-medium">
-              {t('health.enableHealthChecks')}
-            </span>
-            <p className="caption text-text-muted">{t('health.enableDescription')}</p>
-          </div>
-          <input
-            type="checkbox"
-            checked={testsSettings.runPerformance !== false}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-              setTestsSettings((prev) => ({
-                ...prev,
-                runPerformance: e.target.checked,
-              }))
-            }
-            className={iconTokens.size.sm}
-          />
-        </label>
+        <Toggle
+          label={t('health.enableHealthChecks')}
+          description={t('health.enableDescription')}
+          checked={testsSettings.runPerformance !== false}
+          onChange={(checked: boolean): void =>
+            setTestsSettings((prev) => ({
+              ...prev,
+              runPerformance: checked,
+            }))
+          }
+          className="rounded-lg border border-surface-border bg-surface-base p-3"
+        />
 
         {/* Ping Targets */}
         <div>

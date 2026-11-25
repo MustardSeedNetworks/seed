@@ -30,11 +30,11 @@ import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import i18n, { languages } from '../../../i18n';
 import { accessibleNameIncluding } from '../../../lib/accessibleName';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { FormField } from '../../../shared/FormField';
 import { SegmentedControl } from '../../../shared/SegmentedControl';
 import { Select } from '../../../shared/Select';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Palette } from '../../ui/Icons';
 
 interface AppearanceSettingsProps {

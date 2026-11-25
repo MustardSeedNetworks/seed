@@ -20,9 +20,9 @@ import { useTranslation } from 'react-i18next';
 
 import { useRole } from '../../../contexts/RoleContext';
 import { type GuestAuditTarget, useGuestNetworkAudit } from '../../../hooks/useGuestNetworkAudit';
+import { Button } from '../../../shared/Button';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { cn, layout, radius, spacing } from '../../../styles/theme';
-import { Button } from '../../ui/Button';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { ShieldAlert } from '../../ui/Icons';
 
 /**
@@ -196,20 +196,20 @@ export function GuestNetworkAuditSettings(): React.ReactElement {
                   </div>
                   <div className="caption text-text-muted">{target.ip}</div>
                 </div>
-                <Button
-                  variant="ghost"
-                  tone="red"
-                  size="sm"
-                  onClick={(): void => removeTarget(target.ip)}
-                  disabled={!canWrite}
-                  title={readOnlyReason}
-                  // Every row's button would otherwise announce the same words,
-                  // so the name carries the address (axe label-title-only, and
-                  // the same reasoning as the subnet list).
-                  aria-label={t('guestAudit.removeTargetNamed', { ip: target.ip })}
-                >
-                  {t('guestAudit.removeTarget')}
-                </Button>
+                <Tooltip text={readOnlyReason}>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={(): void => removeTarget(target.ip)}
+                    disabled={!canWrite}
+                    // Every row's button would otherwise announce the same words,
+                    // so the name carries the address (axe label-title-only, and
+                    // the same reasoning as the subnet list).
+                    aria-label={t('guestAudit.removeTargetNamed', { ip: target.ip })}
+                  >
+                    {t('guestAudit.removeTarget')}
+                  </Button>
+                </Tooltip>
               </div>
             ))}
           </div>
@@ -296,14 +296,11 @@ export function GuestNetworkAuditSettings(): React.ReactElement {
             )}
           </Tooltip>
           {targetError ? <p className="caption text-status-error">{targetError}</p> : null}
-          <Button
-            onClick={addTarget}
-            disabled={!canWrite}
-            title={readOnlyReason}
-            className="w-full"
-          >
-            {t('guestAudit.addTarget')}
-          </Button>
+          <Tooltip text={readOnlyReason}>
+            <Button variant="secondary" onClick={addTarget} disabled={!canWrite} className="w-full">
+              {t('guestAudit.addTarget')}
+            </Button>
+          </Tooltip>
         </div>
 
         <div className="stack-sm">
@@ -347,33 +344,36 @@ export function GuestNetworkAuditSettings(): React.ReactElement {
             )}
           </Tooltip>
           {portsError ? <p className="caption text-status-error">{portsError}</p> : null}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(): void => {
-              setPortsField(DEFAULT_PORTS.join(', '));
-              setPortsError(null);
-              setSettings({ ...settings, ports: undefined });
-            }}
-            disabled={!canWrite}
-            title={readOnlyReason}
-            className="self-start"
-          >
-            {t('guestAudit.restoreDefaultPorts')}
-          </Button>
+          <Tooltip text={readOnlyReason}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(): void => {
+                setPortsField(DEFAULT_PORTS.join(', '));
+                setPortsError(null);
+                setSettings({ ...settings, ports: undefined });
+              }}
+              disabled={!canWrite}
+              className="self-start"
+            >
+              {t('guestAudit.restoreDefaultPorts')}
+            </Button>
+          </Tooltip>
         </div>
 
         {error ? <p className="caption text-status-error">{error}</p> : null}
 
-        <Button
-          onClick={save}
-          disabled={!canWrite || loading}
-          loading={saving}
-          title={readOnlyReason}
-          className="w-full"
-        >
-          {saving ? t('guestAudit.saving') : t('guestAudit.save')}
-        </Button>
+        <Tooltip text={readOnlyReason}>
+          <Button
+            variant="primary"
+            onClick={save}
+            disabled={!canWrite || loading}
+            loading={saving}
+            className="w-full"
+          >
+            {saving ? t('guestAudit.saving') : t('guestAudit.save')}
+          </Button>
+        </Tooltip>
       </div>
     </CollapsibleSection>
   );

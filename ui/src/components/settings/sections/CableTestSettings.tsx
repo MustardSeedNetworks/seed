@@ -24,6 +24,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
 import { useRole } from '../../../contexts/RoleContext';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import {
   cn,
   icon as iconTokens,
@@ -36,7 +37,6 @@ import type {
   CableTestSettings as CableTestSettingsType,
   SaveStatus,
 } from '../../../types/settings';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Cable } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 

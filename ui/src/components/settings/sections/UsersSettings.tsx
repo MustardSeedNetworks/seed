@@ -21,17 +21,17 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../../api/client';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useTableLabels } from '../../../hooks/useTableLabels';
-import { Button as SharedButton } from '../../../shared/Button';
+import { Button } from '../../../shared/Button';
 import { CategoryChip } from '../../../shared/CategoryChip';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { ConfirmDialog } from '../../../shared/ConfirmDialog';
 import { DataTable, type DataTableColumn } from '../../../shared/DataTable';
 import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
 import { Select } from '../../../shared/Select';
 import { StatusPill, type StatusTone } from '../../../shared/StatusPill';
-import { Button } from '../../ui/Button';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
+import { Tooltip } from '../../../shared/Tooltip';
 import { Plus, Trash2, Users } from '../../ui/Icons';
-import { Input } from '../../ui/Input';
 
 interface UserRow {
   id: number;
@@ -258,34 +258,40 @@ export function UsersSettings(): React.ReactElement {
 
         {isAdmin && (
           <div className="flex flex-wrap items-end gap-compact">
-            <div className="flex-1 min-w-[12rem]">
-              <label className="block text-xs text-text-muted mb-tight" htmlFor="new-username">
-                {t('settings:users.columns.username')}
-              </label>
-              <Input
-                id="new-username"
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-                placeholder="alice"
-                maxLength={64}
-                disabled={!canCreate || creating}
-                data-testid="new-username-input"
-              />
-            </div>
-            <div className="flex-1 min-w-[12rem]">
-              <label className="block text-xs text-text-muted mb-tight" htmlFor="new-password">
-                {t('common:labels.password')}
-              </label>
-              <Input
-                id="new-password"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="≥ 12 chars, mixed case + digit + symbol"
-                disabled={!canCreate || creating}
-                data-testid="new-password-input"
-              />
-            </div>
+            <FormField
+              label={t('settings:users.columns.username')}
+              id="new-username"
+              className="flex-1 min-w-[12rem]"
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  placeholder="alice"
+                  maxLength={64}
+                  disabled={!canCreate || creating}
+                  data-testid="new-username-input"
+                />
+              )}
+            </FormField>
+            <FormField
+              label={t('common:labels.password')}
+              id="new-password"
+              className="flex-1 min-w-[12rem]"
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="≥ 12 chars, mixed case + digit + symbol"
+                  disabled={!canCreate || creating}
+                  data-testid="new-password-input"
+                />
+              )}
+            </FormField>
             <FormField label={t('settings:users.columns.role')} className="min-w-[8rem]">
               {(control) => (
                 <Select
@@ -298,19 +304,18 @@ export function UsersSettings(): React.ReactElement {
                 />
               )}
             </FormField>
-            <Button
-              variant="solid"
-              tone="violet"
-              size="md"
-              leftIcon={<Plus className="w-4 h-4" />}
-              disabled={!canCreate || creating || !newUsername.trim() || !newPassword}
-              loading={creating}
-              title={canCreate ? undefined : t('errors:users.featureRequired')}
-              onClick={() => void handleCreate()}
-              data-testid="create-user-button"
-            >
-              {t('settings:users.addUser')}
-            </Button>
+            <Tooltip text={canCreate ? undefined : t('errors:users.featureRequired')}>
+              <Button
+                variant="primary"
+                icon={<Plus className="w-4 h-4" />}
+                disabled={!canCreate || creating || !newUsername.trim() || !newPassword}
+                loading={creating}
+                onClick={() => void handleCreate()}
+                data-testid="create-user-button"
+              >
+                {t('settings:users.addUser')}
+              </Button>
+            </Tooltip>
           </div>
         )}
 
@@ -331,7 +336,7 @@ export function UsersSettings(): React.ReactElement {
             data-testid="users-table"
             rowActions={(u) =>
               isAdmin && me?.username !== u.username ? (
-                <SharedButton
+                <Button
                   variant="destructive"
                   size="sm"
                   icon={<Trash2 className="w-3 h-3" />}
@@ -339,7 +344,7 @@ export function UsersSettings(): React.ReactElement {
                   data-testid={`delete-user-${u.username}`}
                 >
                   {t('settings:users.deleteUser')}
-                </SharedButton>
+                </Button>
               ) : null
             }
           />
