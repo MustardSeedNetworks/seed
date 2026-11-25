@@ -224,10 +224,15 @@
     "tryAgain": "Reintentar"
   },
   "dataTable": {
+    "actionsColumn": "Acciones",
+    "selectAll": "Seleccionar todas las filas de esta página",
+    "pagination": "Páginas de la tabla",
+    "previousPage": "Página anterior",
+    "nextPage": "Página siguiente",
+    "pageStatus": "Página {{page}} de {{pageCount}} ({{total}} filas)",
     "clearAll": "Limpiar todo",
     "showingResults": "Mostrando {{shown}} de {{total}} resultados",
     "loadingData": "Cargando datos...",
-    "actionsColumn": "Acciones",
     "scrollRegion": "Contenido de la tabla",
     "noData": "No se encontraron datos"
   },

@@ -84,7 +84,9 @@ describe('HelpDrawer — rendered content', () => {
       screen.getByPlaceholderText(i18next.t('help:modal.searchPlaceholder')),
       'resolución',
     );
-    expect(screen.getByRole('option', { name: i18next.t('help:sections.dns') })).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: i18next.t('help:sections.dns') }),
+    ).toBeInTheDocument();
   });
 
   it.each([

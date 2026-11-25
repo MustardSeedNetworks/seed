@@ -2,9 +2,8 @@
  * ListDetail — the List + detail page archetype: a filtered record list on
  * the left, the selected record's detail on the right.
  *
- * Shared shell pattern, kept visually and behaviourally consistent across
- * seed / stem / niac / trellis by convention; each repo owns this file
- * independently (no master, no sync). All colours reference theme tokens.
+ * The shared set has no list-plus-detail archetype, so this stays seed's own,
+ * built from the shared Card and EmptyState. All colours reference theme tokens.
  *
  * The archetype is presentational only — selection, filtering and data live
  * in the page. That keeps one layout serving records as different as polling
@@ -25,6 +24,8 @@
  *   </ListDetail>
  */
 import type { ReactNode } from 'react';
+import { Card } from '../shared/Card';
+import { EmptyState } from '../shared/EmptyState';
 import { cn } from '../styles/theme';
 import type { RollupState } from './StatusRollup';
 
@@ -65,7 +66,7 @@ export function RecordPane({ filter, chips, empty, children }: RecordPaneProps) 
   const isEmpty = Array.isArray(rows) ? rows.filter(Boolean).length === 0 : !rows;
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-surface-border bg-surface-raised">
+    <div className="panel flex flex-col overflow-hidden">
       {filter ? <div className="pad-sm border-b border-surface-border">{filter}</div> : null}
       {chips ? (
         <div className="flex items-center gap-tight px-cell py-2 border-b border-surface-border">
@@ -73,7 +74,11 @@ export function RecordPane({ filter, chips, empty, children }: RecordPaneProps) 
         </div>
       ) : null}
       {isEmpty && empty ? (
-        <div className="pad-lg text-center body-small text-text-muted">{empty}</div>
+        typeof empty === 'string' ? (
+          <EmptyState title={empty} />
+        ) : (
+          <div className="px-4 py-10 text-center text-sm">{empty}</div>
+        )
       ) : (
         <div className="overflow-y-auto">{rows}</div>
       )}
@@ -194,7 +199,7 @@ interface DetailPaneProps {
 
 export function DetailPane({ eyebrow, title, meta, status, actions, children }: DetailPaneProps) {
   return (
-    <div className="stack-lg rounded-2xl border border-surface-border bg-surface-raised pad-lg">
+    <Card className="stack-lg">
       <div className="flex flex-wrap items-start gap-default">
         <div className="stack-xs min-w-0">
           <p className="kicker">{eyebrow}</p>
@@ -205,7 +210,7 @@ export function DetailPane({ eyebrow, title, meta, status, actions, children }: 
       </div>
       {actions ? <div className="flex flex-wrap gap-compact">{actions}</div> : null}
       {children}
-    </div>
+    </Card>
   );
 }
 
@@ -229,11 +234,11 @@ export function DetailFacts({ items }: DetailFactsProps) {
   );
 }
 
-/** Nothing selected is a normal state, not an error — say so plainly. */
-export function DetailEmpty({ children }: { children: ReactNode }) {
+/** Nothing selected is a normal state, not an error: say what to do. */
+export function DetailEmpty({ children }: { children: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-surface-border pad-xl text-center body-small text-text-muted">
-      {children}
-    </div>
+    <Card>
+      <EmptyState title={children} />
+    </Card>
   );
 }

@@ -224,10 +224,15 @@
     "tryAgain": "Try again"
   },
   "dataTable": {
+    "actionsColumn": "Actions",
+    "selectAll": "Select all rows on this page",
+    "pagination": "Table pages",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "pageStatus": "Page {{page}} of {{pageCount}} ({{total}} rows)",
     "clearAll": "Clear all",
     "showingResults": "Showing {{shown}} of {{total}} results",
     "loadingData": "Loading data...",
-    "actionsColumn": "Actions",
     "scrollRegion": "Table contents",
     "noData": "No data found"
   },
