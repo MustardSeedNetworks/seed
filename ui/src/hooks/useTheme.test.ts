@@ -1,6 +1,7 @@
+import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import html from '../../index.html?raw';
-import { initThemeFromStorage } from './useTheme';
+import { initThemeFromStorage, useTheme } from './useTheme';
 
 function stubSystemDark(matches: boolean): void {
   vi.stubGlobal(
@@ -46,21 +47,45 @@ describe('initThemeFromStorage', () => {
     expect(document.documentElement.classList.contains('dark')).toBe(expected);
   });
 
-  it('defaults to dark when nothing, or an unknown value, is stored', () => {
-    initThemeFromStorage();
-    expect(document.documentElement.classList.contains('dark')).toBe(true);
-    document.documentElement.classList.remove('dark');
-    localStorage.setItem('seed-theme', 'sepia');
-    initThemeFromStorage();
-    expect(document.documentElement.classList.contains('dark')).toBe(true);
-  });
+  it.each([
+    [true, true],
+    [false, false],
+  ])(
+    'follows the OS (dark=%s) when nothing, or an unknown value, is stored',
+    (systemDark, expected) => {
+      stubSystemDark(systemDark);
+      initThemeFromStorage();
+      expect(document.documentElement.classList.contains('dark')).toBe(expected);
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('seed-theme', 'sepia');
+      initThemeFromStorage();
+      expect(document.documentElement.classList.contains('dark')).toBe(expected);
+    },
+  );
 
-  it('defaults to dark when storage throws', () => {
+  it('follows the OS when storage throws', () => {
+    stubSystemDark(false);
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new DOMException('blocked', 'SecurityError');
     });
     initThemeFromStorage();
-    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+  });
+});
+
+describe('useTheme store', () => {
+  it('shares one state between the rail toggle and the Settings control', () => {
+    stubSystemDark(false);
+    initThemeFromStorage();
+    const rail = renderHook(() => useTheme());
+    const settings = renderHook(() => useTheme());
+    expect(settings.result.current.theme).toBe('system');
+    act(() => rail.result.current.toggleTheme());
+    expect(settings.result.current.theme).toBe('dark');
+    expect(settings.result.current.isDark).toBe(true);
+    act(() => settings.result.current.setTheme('light'));
+    expect(rail.result.current.isDark).toBe(false);
+    expect(localStorage.getItem('seed-theme')).toBe('light');
   });
 });
 

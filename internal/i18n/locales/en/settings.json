@@ -628,5 +628,15 @@
     "locationHelp": "Where the device is installed. Up to 128 characters.",
     "locationPlaceholder": "Main Office, IDF 3B, Port 21",
     "save": "Save identity"
+  },
+  "tabs": {
+    "label": "Settings sections",
+    "general": "General",
+    "network": "Network",
+    "tests": "Tests",
+    "discovery": "Discovery",
+    "alerts": "Alerts",
+    "access": "Access",
+    "about": "About"
   }
 }

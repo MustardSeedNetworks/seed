@@ -51,7 +51,7 @@ describe('HelpDrawer — section targeting', () => {
     const user = userEvent.setup();
     const { rerender } = render(<HelpDrawer isOpen={true} onClose={() => {}} section="wifi" />);
 
-    await user.click(screen.getByRole('button', { name: 'Glossary' }));
+    await user.selectOptions(screen.getByTestId('help-section-select'), 'glossary');
     expect(heading()).toBe('Glossary');
 
     // Close clears the target, then the same (?) is clicked again.
@@ -84,7 +84,7 @@ describe('HelpDrawer — rendered content', () => {
       screen.getByPlaceholderText(i18next.t('help:modal.searchPlaceholder')),
       'resolución',
     );
-    expect(screen.getByRole('button', { name: i18next.t('help:sections.dns') })).toBeVisible();
+    expect(screen.getByRole('option', { name: i18next.t('help:sections.dns') })).toBeInTheDocument();
   });
 
   it.each([

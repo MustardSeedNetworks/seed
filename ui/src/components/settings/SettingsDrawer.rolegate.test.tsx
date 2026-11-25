@@ -14,7 +14,7 @@
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -101,12 +101,17 @@ const VIEWER_SECTIONS = [
   'Configuration Backups',
 ];
 
+/** Every tab's section headers, gathered by visiting each tab in turn. */
 function sectionHeaders(): string[] {
-  return screen.queryAllByRole('button').map((el) => {
-    const heading = el.querySelector('h3, h4, span');
+  const headers: string[] = [];
+  for (const tab of screen.getAllByRole('tab')) {
+    fireEvent.click(tab);
+    for (const el of screen.queryAllByRole('button')) {
+      headers.push((el.querySelector('h3, h4, span')?.textContent ?? '').trim());
+    }
+  }
 
-    return (heading?.textContent ?? '').trim();
-  });
+  return headers;
 }
 
 describe('SettingsDrawer — viewer gating', () => {
@@ -115,7 +120,7 @@ describe('SettingsDrawer — viewer gating', () => {
     renderDrawer();
 
     await waitFor(() => {
-      expect(screen.getByText('Link')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Network' })).toBeInTheDocument();
     });
 
     expect(screen.queryByTestId('settings-viewer-notice')).not.toBeInTheDocument();
@@ -130,12 +135,14 @@ describe('SettingsDrawer — viewer gating', () => {
     renderDrawer();
 
     await waitFor(() => {
-      expect(screen.getByText('Link')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Network' })).toBeInTheDocument();
     });
 
     // The all-write sections carry the badge on the header itself; the ones
     // with a read of their own gate per control and are covered by
     // sections/settings-sections.rolegate.test.tsx.
+    sectionHeaders();
+    fireEvent.click(screen.getByRole('tab', { name: 'Network' }));
     expect(screen.getAllByText(/read-only/i).length).toBeGreaterThan(0);
   });
 
@@ -144,7 +151,7 @@ describe('SettingsDrawer — viewer gating', () => {
     renderDrawer();
 
     await waitFor(() => {
-      expect(screen.getByText('Link')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Network' })).toBeInTheDocument();
     });
 
     expect(sectionHeaders()).not.toContain('User Management');
@@ -155,13 +162,16 @@ describe('SettingsDrawer — viewer gating', () => {
     renderDrawer();
 
     await waitFor(() => {
-      expect(screen.getByText('Link')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Network' })).toBeInTheDocument();
     });
 
     const headers = sectionHeaders();
     for (const name of VIEWER_SECTIONS) {
       expect(headers).toContain(name);
     }
-    expect(screen.queryByText(/read-only/i)).not.toBeInTheDocument();
+    for (const tab of screen.getAllByRole('tab')) {
+      fireEvent.click(tab);
+      expect(screen.queryByText(/read-only/i)).not.toBeInTheDocument();
+    }
   });
 });

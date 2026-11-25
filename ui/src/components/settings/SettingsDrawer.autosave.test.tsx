@@ -80,6 +80,7 @@ async function openDiscovery(): Promise<HTMLInputElement> {
   );
   render(node);
   await tick(0);
+  fireEvent.click(screen.getByRole('tab', { name: 'Discovery' }));
   const section = within(screen.getByTestId('discovery-settings-section'));
   fireEvent.click(section.getByRole('button', { name: /^Discovery/, expanded: false }));
   await tick(0);

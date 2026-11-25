@@ -628,5 +628,15 @@
     "locationHelp": "Dónde está instalado el equipo. Hasta 128 caracteres.",
     "locationPlaceholder": "Oficina principal, IDF 3B, puerto 21",
     "save": "Guardar identidad"
+  },
+  "tabs": {
+    "label": "Secciones de ajustes",
+    "general": "General",
+    "network": "Red",
+    "tests": "Pruebas",
+    "discovery": "Descubrimiento",
+    "alerts": "Alertas",
+    "access": "Acceso",
+    "about": "Acerca de"
   }
 }

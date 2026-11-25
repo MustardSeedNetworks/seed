@@ -135,6 +135,7 @@ describe('SettingsDrawer probe settings', () => {
     );
     render(node);
     await tick(0);
+    fireEvent.click(screen.getByRole('tab', { name: 'Tests' }));
     const section = within(screen.getByTestId('dns-settings-section'));
     fireEvent.click(section.getByRole('button', { expanded: false }));
     await tick(0);
