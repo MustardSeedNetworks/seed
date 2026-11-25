@@ -331,6 +331,8 @@ export function DiscoveryModal({
         title={t('discovery.title')}
         closeLabel={t('common:buttons.close')}
         size="full"
+        // The device table needs the width of the screen: the shared `full` size is 56rem.
+        className="max-w-[min(96rem,100%)]!"
         data-testid="discovery-modal"
         header={
           <div className="flex items-center gap-default">
