@@ -98,7 +98,10 @@ for (const [name, viewport] of [
       }) => {
         await page.goto(route, { waitUntil: 'domcontentloaded' });
         await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
-        await expect(page.locator('#main-content header')).toHaveCount(0);
+        // The shared PageHeader is itself a <header>; any other one is a bar above it.
+        await expect(
+          page.locator('#main-content header:not([data-testid="page-header"])'),
+        ).toHaveCount(0);
         expect(await onScreenMarkCount(page, viewport)).toBe(1);
       });
     }
