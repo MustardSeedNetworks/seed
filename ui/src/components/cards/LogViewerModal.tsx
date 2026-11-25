@@ -486,6 +486,10 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
     URL.revokeObjectURL(url);
   };
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
     <Modal
       open={isOpen}

@@ -141,7 +141,7 @@ describe('InsecurePortScanCard', () => {
       expect(input).toBeDisabled();
     });
     const scan = screen.getByRole('button', { name: 'Scan' });
-    expect(scan).toBeDisabled();
+    expect(scan).toHaveAttribute('aria-disabled', 'true');
     await userEvent.click(scan);
     await userEvent.keyboard('{Enter} ');
     expect(mockPost).not.toHaveBeenCalled();
