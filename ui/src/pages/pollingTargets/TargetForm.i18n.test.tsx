@@ -62,7 +62,7 @@ describe('TargetForm — Spanish, with no English left behind', () => {
     ]) {
       expect(screen.queryByText(english)).toBeNull();
     }
-    expect(screen.getByRole('button', { name: 'Cerrar ventana' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Cerrar' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Cancelar' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Agregar destino' })).toBeVisible();
     for (const english of ['Close modal', 'Cancel', 'Add target']) {
@@ -83,7 +83,7 @@ describe('TargetForm — Spanish, with no English left behind', () => {
     renderForm('create');
     // The inputs carry `required`; submit the form itself so the handler's
     // own check runs rather than the browser's constraint validation.
-    const form = screen.getByTestId('target-save').closest('form');
+    const form = screen.getByRole('dialog').querySelector('form');
     if (!form) {
       throw new Error('TargetForm renders no form');
     }
