@@ -326,9 +326,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await loginAndAwaitDashboard(page);
 
       // Verify dashboard cards are loading
-      const linkCard = page
-        .locator('[data-testid="link-card"]')
-        .or(page.locator('h3:has-text("Link"), h4:has-text("Link")').first());
+      const linkCard = page.getByRole('heading', { name: 'Link Status', exact: true });
 
       await expect(linkCard).toBeVisible({ timeout: 5000 });
     });

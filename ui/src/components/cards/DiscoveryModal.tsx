@@ -331,6 +331,10 @@ export function DiscoveryModal({
         title={t('discovery.title')}
         closeLabel={t('common:buttons.close')}
         size="full"
+        // The table folds Ports, CVEs and Methods into the row summary below a 72rem
+        // container (DiscoveryModalCells); the shared `full` is 56rem, so the dialog
+        // takes the width the table needs. A shared wide size would replace this.
+        className="max-w-[min(96rem,100%)]!"
         data-testid="discovery-modal"
         header={
           <div className="flex items-center gap-default">
