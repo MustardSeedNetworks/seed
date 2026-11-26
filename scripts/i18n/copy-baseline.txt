@@ -41,3 +41,13 @@ ui/src/components/settings/sections/specialty/IndustrialEndpoints.tsx copy-prop 
 # Thrown before React mounts, when index.html has no #root: there is no UI to
 # render into and no operator to read it. A build defect, not shipped copy.
 ui/src/main.tsx literal Root element not found
+
+# --- ui/src/shared/DataTableTestUtils.tsx
+# The fleet's DataTable test fixture, copied byte-for-byte from MustardSeedNetworks/.github.
+# The shared gate only skips *.test.tsx and *.stories.tsx, so it reads this helper as
+# shipped source. It is never imported by the app; the gate should skip it upstream.
+ui/src/shared/DataTableTestUtils.tsx copy-prop caption=Devices
+ui/src/shared/DataTableTestUtils.tsx literal Loading devices
+ui/src/shared/DataTableTestUtils.tsx literal Next page
+ui/src/shared/DataTableTestUtils.tsx literal Previous page
+ui/src/shared/DataTableTestUtils.tsx literal Select all
