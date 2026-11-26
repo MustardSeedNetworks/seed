@@ -502,6 +502,7 @@ export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.El
       icon={<HeartPulse className={iconTokens.size.md} />}
       status={cardStatus}
       statusLabel={labelFor(cardStatus)}
+      aria-label={t('health.title')}
       data-testid="card"
       headerAction={
         <Button
