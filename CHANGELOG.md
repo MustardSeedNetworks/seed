@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.285.7](https://github.com/MustardSeedNetworks/seed/compare/v0.285.6...v0.285.7) (2026-11-26)
+
+
+### Miscellaneous
+
+* **deps:** update ossf/scorecard-action action to v2.6.0 ([#3898](https://github.com/MustardSeedNetworks/seed/issues/3898)) ([ff2272a](https://github.com/MustardSeedNetworks/seed/commit/ff2272aa6873216a90a88285e7f4014cf132fdb4))
+
 ## [0.285.6](https://github.com/MustardSeedNetworks/seed/compare/v0.285.5...v0.285.6) (2026-11-26)
 
 
