@@ -8,7 +8,6 @@
  * - Speedtest.net integration: download/upload speeds, latency, server info, distance
  * - iperf3 support: UDP and TCP throughput testing, bandwidth, jitter, packet loss
  * - Real-time progress: shows test phase and progress percentage
- * - Multiple test result history: displays last completed test results
  * - Visual gauges: SpeedGauge components for visual speed representation
  * - Protocol metrics: separate IPv4/IPv6 results (when available)
  * - Latency thresholds: warning/critical levels from settings

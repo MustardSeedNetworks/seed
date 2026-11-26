@@ -10,7 +10,6 @@
  * - SSL/TLS certificate monitoring: expiry date, days remaining, issuer, common name, TLS version
  * - Per-test latency thresholds: warning/critical levels from settings
  * - CollapsibleSection for each test type to show detailed results
- * - Status indicators for each phase: DNS, TCP, TLS, TTFB with color-coding
  *
  * Usage:
  * ```typescript
