@@ -26,7 +26,9 @@ import { useTranslation } from 'react-i18next';
 import { RecoveryForm } from '../components/login/RecoveryForm';
 import type { LoginOutcome } from '../hooks/useAuth';
 import { LoginSchema } from '../schemas/auth';
-import { button, cn, input, layout, radius, spacing } from '../styles/theme';
+import { FormField } from '../shared/FormField';
+import { Input } from '../shared/Input';
+import { button, cn, layout, radius, spacing } from '../styles/theme';
 
 // API base URL - configurable via environment variable
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';
@@ -170,29 +172,23 @@ export function LoginForm({
             </p>
           </div>
 
-          <label htmlFor="mfa-code" className="body-small font-medium text-text-primary">
-            {t('login.secondFactor.codeLabel')}
-          </label>
-          <input
-            id="mfa-code"
-            data-testid="mfa-code-input"
-            value={mfaCode}
-            onChange={(event): void => setMfaCode(event.target.value)}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={6}
-            // The field is the only thing on this screen; taking focus saves a
-            // click and matches what an authenticator app user expects.
-            // biome-ignore lint/a11y/noAutofocus: sole control on a dedicated step
-            autoFocus
-            className={cn(
-              'w-full',
-              input.size.md,
-              radius.md,
-              'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary',
-              'text-center tracking-widest',
+          <FormField id="mfa-code" label={t('login.secondFactor.codeLabel')}>
+            {(control) => (
+              <Input
+                {...control}
+                data-testid="mfa-code-input"
+                value={mfaCode}
+                onChange={(event): void => setMfaCode(event.target.value)}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                // The field is the only thing on this screen; taking focus saves a
+                // click and matches what an authenticator app user expects.
+                autoFocus
+                className="text-center tracking-widest"
+              />
             )}
-          />
+          </FormField>
 
           {error ? (
             <p role="alert" className="body-small text-status-error">
@@ -347,55 +343,37 @@ export function LoginForm({
             'border border-surface-border pad-lg stack-lg',
           )}
         >
-          <div>
-            <label
-              htmlFor="login-username"
-              className={cn('label block', spacing.margin.bottom.inline)}
-            >
-              {t('labels.username')}
-            </label>
-            <input
-              id="login-username"
-              type="text"
-              required={true}
-              {...register('username')}
-              className={cn(
-                'w-full',
-                input.size.md,
-                radius.md,
-                'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary',
-              )}
-              placeholder="admin"
-            />
-            {errors.username ? (
-              <p className="caption mt-tight text-status-error">{errors.username.message}</p>
-            ) : null}
-          </div>
+          <FormField
+            id="login-username"
+            label={t('labels.username')}
+            {...(errors.username?.message ? { error: errors.username.message } : {})}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="text"
+                required={true}
+                {...register('username')}
+                placeholder="admin"
+              />
+            )}
+          </FormField>
 
-          <div>
-            <label
-              htmlFor="login-password"
-              className={cn('label block', spacing.margin.bottom.inline)}
-            >
-              {t('labels.password')}
-            </label>
-            <input
-              id="login-password"
-              type="password"
-              required={true}
-              {...register('password')}
-              className={cn(
-                'w-full',
-                input.size.md,
-                radius.md,
-                'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary',
-              )}
-              placeholder="••••••••"
-            />
-            {errors.password ? (
-              <p className="caption mt-tight text-status-error">{errors.password.message}</p>
-            ) : null}
-          </div>
+          <FormField
+            id="login-password"
+            label={t('labels.password')}
+            {...(errors.password?.message ? { error: errors.password.message } : {})}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="password"
+                required={true}
+                {...register('password')}
+                placeholder="••••••••"
+              />
+            )}
+          </FormField>
 
           {error || ssoError ? (
             <div
