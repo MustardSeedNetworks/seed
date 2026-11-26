@@ -2,10 +2,13 @@
 import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useEnginePhase } from '../../hooks/useEnginePhase';
 import { useEngineScan } from '../../hooks/useEngineScan';
 import { useNetworkDiscoveryAutoScan } from '../../hooks/useNetworkDiscoveryAutoScan';
 import { accessibleNameIncluding } from '../../lib/accessibleName';
+import { Card, CardValue } from '../../shared/Card';
+import { Tooltip } from '../../shared/Tooltip';
 import {
   button,
   cn,
@@ -14,9 +17,7 @@ import {
   spacing,
   status as statusColor,
 } from '../../styles/theme';
-import { Card, CardValue, type Status } from '../ui/Card';
 import { Maximize2, RefreshCw, ScanSearch } from '../ui/Icons';
-import { Tooltip } from '../ui/Tooltip';
 import { DiscoveryEmptyState, discoveryPhase } from './DiscoveryEmptyState';
 import { DiscoveryModal } from './DiscoveryModal';
 import { LearnedNetworksNotice } from './LearnedNetworksNotice';
@@ -84,6 +85,7 @@ export function NetworkDiscoveryCard({
   onOpenSettings,
 }: NetworkDiscoveryCardProps): React.ReactElement | null {
   const { t } = useTranslation('cards');
+  const statusLabel = useCardStatusLabel();
   // Search and sort state lived here when the card embedded a sortable
   // device table; those rows now live entirely inside DiscoveryModal.
 
@@ -116,11 +118,13 @@ export function NetworkDiscoveryCard({
   if (loading) {
     return (
       <Card
+        data-testid="card"
         title={t('discovery.title')}
         icon={<ScanSearch className={iconTokens.size.md} />}
         status="loading"
-        enableLiveRegion={true}
-        ariaLabel={t('discovery.ariaScanning')}
+        statusLabel={statusLabel('loading')}
+        liveRegion
+        aria-label={t('discovery.ariaScanning')}
       >
         <CardValue value={t('discovery.scanning')} size="lg" />
       </Card>
@@ -130,11 +134,13 @@ export function NetworkDiscoveryCard({
   if (!(data && status)) {
     return (
       <Card
+        data-testid="card"
         title={t('discovery.title')}
         icon={<ScanSearch className={iconTokens.size.md} />}
         status={scanError ? 'error' : 'unknown'}
-        enableLiveRegion={true}
-        ariaLabel={t('discovery.ariaNoData')}
+        statusLabel={statusLabel(scanError ? 'error' : 'unknown')}
+        liveRegion
+        aria-label={t('discovery.ariaNoData')}
       >
         <LearnedNetworksNotice />
         <DiscoveryEmptyState
@@ -174,7 +180,7 @@ export function NetworkDiscoveryCard({
   // Categorize devices for summary
   const categories = categorizeDevices(devices);
 
-  const getOverallStatus = (): Status => {
+  const getOverallStatus = (): CardStatus => {
     if (status.scanning || running) {
       return 'loading';
     }
@@ -194,8 +200,9 @@ export function NetworkDiscoveryCard({
       title={t('discovery.title')}
       icon={<ScanSearch className={iconTokens.size.md} />}
       status={cardStatus}
-      enableLiveRegion={true}
-      ariaLabel={t('discovery.ariaDevicesFound', { count: deviceCount })}
+      statusLabel={statusLabel(cardStatus)}
+      liveRegion
+      aria-label={t('discovery.ariaDevicesFound', { count: deviceCount })}
       headerAction={
         <div className="flex items-center gap-compact">
           {/* Full Screen button */}

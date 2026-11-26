@@ -18,13 +18,16 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { FormField } from '../../../shared/FormField';
+import { Select } from '../../../shared/Select';
+import { Toggle } from '../../../shared/Toggle';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import type {
   CardSettings,
   LinkSettings as LinkSettingsType,
   SaveStatus,
 } from '../../../types/settings';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { PlugZap } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
@@ -101,87 +104,41 @@ export function LinkSettings({
       <div className="stack">
         {/* Card Visibility & FAB Controls */}
         <div className="stack-sm">
-          <label
-            className={cn(
-              layout.flex.between,
-              spacing.pad.sm,
-              'bg-surface-base',
-              radius.default,
-              'border border-surface-border',
-            )}
-          >
-            <div>
-              <span className="body-small text-text-primary font-medium">
-                {t('common.showCard')}
-              </span>
-              <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={cardSettings.link.enabled}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateCardSettings({
-                  link: { ...cardSettings.link, enabled: e.target.checked },
-                })
-              }
-              className={iconTokens.size.sm}
-            />
-          </label>
-          <label
-            className={cn(
-              layout.flex.between,
-              spacing.pad.sm,
-              'bg-surface-base',
-              radius.default,
-              'border border-surface-border',
-            )}
-          >
-            <div>
-              <span className="body-small text-text-primary font-medium">
-                {t('common.runOnFab')}
-              </span>
-              <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={cardSettings.link.autoRunOnLink}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateCardSettings({
-                  link: { ...cardSettings.link, autoRunOnLink: e.target.checked },
-                })
-              }
-              className={iconTokens.size.sm}
-            />
-          </label>
+          <Toggle
+            label={t('common.showCard')}
+            description={t('common.showCardDesc')}
+            checked={cardSettings.link.enabled}
+            onChange={(checked: boolean): void =>
+              updateCardSettings({
+                link: { ...cardSettings.link, enabled: checked },
+              })
+            }
+            className="rounded-lg border border-surface-border bg-surface-base p-3"
+          />
+          <Toggle
+            label={t('common.runOnFab')}
+            description={t('common.runOnFabDesc')}
+            checked={cardSettings.link.autoRunOnLink}
+            onChange={(checked: boolean): void =>
+              updateCardSettings({
+                link: { ...cardSettings.link, autoRunOnLink: checked },
+              })
+            }
+            className="rounded-lg border border-surface-border bg-surface-base p-3"
+          />
         </div>
 
         {/* Combined Speed/Duplex Dropdown */}
-        <div>
-          <label className="caption text-text-muted font-medium" htmlFor="link-mode">
-            {t('link.speedDuplex')}
-          </label>
-          <select
-            id="link-mode"
-            value={linkSettings.mode}
-            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-              handleModeChange(e.target.value)
-            }
-            className={cn(
-              'w-full',
-              spacing.margin.top.tight,
-              spacing.chip.lg,
-              'bg-surface-base border border-surface-border',
-              radius.default,
-              'body-small text-text-primary',
-            )}
-          >
-            {LINK_MODE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <FormField label={t('link.speedDuplex')}>
+          {(control) => (
+            <Select
+              {...control}
+              value={linkSettings.mode}
+              onValueChange={handleModeChange}
+              options={LINK_MODE_OPTIONS}
+            />
+          )}
+        </FormField>
 
         {/* Warning for manual settings */}
         {isManualMode ? (

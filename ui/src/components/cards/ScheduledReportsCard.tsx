@@ -7,8 +7,9 @@
  * come from useReportSchedules. The editor is local state; a refused save keeps
  * it open with the server's reason, shown as given.
  */
-import { type JSX, type ReactNode, useState } from 'react';
+import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import {
   draftFromSchedule,
   MAX_SCHEDULE_DAY_OF_MONTH,
@@ -20,11 +21,14 @@ import {
   type ScheduleFrequency,
   scheduleTime,
 } from '../../hooks/useReportSchedules';
-import { cn, input as inputTokens, spacing } from '../../styles/theme';
+import { Button } from '../../shared/Button';
+import { Card, CardDivider, CardRow } from '../../shared/Card';
+import { Checkbox } from '../../shared/Checkbox';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
+import { Select } from '../../shared/Select';
+import { cn, spacing } from '../../styles/theme';
 import type { ReportScheduleInfo } from '../../types/generated/report-schedule-info';
-import { Button } from '../ui/Button';
-import { Card, CardDivider, CardRow } from '../ui/Card';
-import type { Status } from '../ui/StatusBadge';
 
 export interface ScheduledReportsCardProps {
   schedules: ReportScheduleInfo[];
@@ -50,7 +54,7 @@ function cardStatus(
   schedules: ReportScheduleInfo[],
   loading: boolean,
   error: string | null,
-): Status {
+): CardStatus {
   if (loading) {
     return 'loading';
   }
@@ -58,15 +62,6 @@ function cardStatus(
     return 'error';
   }
   return schedules.some((s) => s.enabled) ? 'success' : 'unknown';
-}
-
-function Field({ id, label, children }: { id: string; label: string; children: ReactNode }) {
-  return (
-    <label className="stack-xs" htmlFor={id}>
-      <span className="body-small font-medium text-text-primary">{label}</span>
-      {children}
-    </label>
-  );
 }
 
 interface EditorProps {
@@ -80,7 +75,6 @@ function ScheduleEditor({ initial, onSave, onCancel }: EditorProps): JSX.Element
   const [draft, setDraft] = useState(initial);
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
-  const inputClass = cn(inputTokens.base, 'w-full');
 
   const edit = (patch: Partial<ScheduleDraft>): void => {
     setDraft((current) => ({ ...current, ...patch }));
@@ -97,151 +91,141 @@ function ScheduleEditor({ initial, onSave, onCancel }: EditorProps): JSX.Element
 
   return (
     <div data-testid="schedule-editor" className={cn('stack-sm', spacing.margin.top.inline)}>
-      <Field id="schedule-name" label={t('reportSchedules.name')}>
-        <input
-          id="schedule-name"
-          data-testid="schedule-name"
-          type="text"
-          autoComplete="off"
-          value={draft.name}
-          onChange={(e): void => edit({ name: e.target.value })}
-          className={inputClass}
-        />
-      </Field>
+      <FormField id="schedule-name" label={t('reportSchedules.name')}>
+        {(control) => (
+          <Input
+            {...control}
+            data-testid="schedule-name"
+            type="text"
+            autoComplete="off"
+            value={draft.name}
+            onChange={(e): void => edit({ name: e.target.value })}
+          />
+        )}
+      </FormField>
 
       <div className="flex flex-wrap gap-default">
-        <Field id="schedule-template" label={t('reportSchedules.template')}>
-          <select
-            id="schedule-template"
-            data-testid="schedule-template"
-            value={draft.template}
-            onChange={(e): void => {
-              const template = e.target.value as ReportTemplate;
-              const formats = REPORT_TEMPLATE_FORMATS[template];
-              // Keep the format when the new template produces it.
-              edit({
-                template,
-                format: formats.includes(draft.format) ? draft.format : formats[0],
-              });
-            }}
-            className={inputTokens.base}
-          >
-            {REPORT_TEMPLATES.map((template) => (
-              <option key={template} value={template}>
-                {t(`reportSchedules.templates.${template}`)}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field id="schedule-format" label={t('reportSchedules.format')}>
-          <select
-            id="schedule-format"
-            data-testid="schedule-format"
-            value={draft.format}
-            onChange={(e): void => {
-              const format = REPORT_TEMPLATE_FORMATS[draft.template].find(
-                (f) => f === e.target.value,
-              );
-              if (format) {
-                edit({ format });
-              }
-            }}
-            className={inputTokens.base}
-          >
-            {REPORT_TEMPLATE_FORMATS[draft.template].map((format) => (
-              <option key={format} value={format}>
-                {format.toUpperCase()}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <FormField id="schedule-template" label={t('reportSchedules.template')}>
+          {(control) => (
+            <Select
+              {...control}
+              data-testid="schedule-template"
+              value={draft.template}
+              onValueChange={(value): void => {
+                const template = value as ReportTemplate;
+                const formats = REPORT_TEMPLATE_FORMATS[template];
+                // Keep the format when the new template produces it.
+                edit({
+                  template,
+                  format: formats.includes(draft.format) ? draft.format : formats[0],
+                });
+              }}
+              options={REPORT_TEMPLATES.map((template) => ({
+                value: template,
+                label: t(`reportSchedules.templates.${template}`),
+              }))}
+            />
+          )}
+        </FormField>
+        <FormField id="schedule-format" label={t('reportSchedules.format')}>
+          {(control) => (
+            <Select
+              {...control}
+              data-testid="schedule-format"
+              value={draft.format}
+              onValueChange={(value): void => {
+                const format = REPORT_TEMPLATE_FORMATS[draft.template].find((f) => f === value);
+                if (format) {
+                  edit({ format });
+                }
+              }}
+              options={REPORT_TEMPLATE_FORMATS[draft.template].map((format) => ({
+                value: format,
+                label: format.toUpperCase(),
+              }))}
+            />
+          )}
+        </FormField>
       </div>
 
       <div className="flex flex-wrap gap-default">
-        <Field id="schedule-frequency" label={t('reportSchedules.frequency')}>
-          <select
-            id="schedule-frequency"
-            data-testid="schedule-frequency"
-            value={draft.frequency}
-            onChange={(e): void => edit({ frequency: e.target.value as ScheduleFrequency })}
-            className={inputTokens.base}
-          >
-            {FREQUENCIES.map((frequency) => (
-              <option key={frequency} value={frequency}>
-                {t(`reportSchedules.frequencies.${frequency}`)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <FormField id="schedule-frequency" label={t('reportSchedules.frequency')}>
+          {(control) => (
+            <Select
+              {...control}
+              data-testid="schedule-frequency"
+              value={draft.frequency}
+              onValueChange={(value): void => edit({ frequency: value as ScheduleFrequency })}
+              options={FREQUENCIES.map((frequency) => ({
+                value: frequency,
+                label: t(`reportSchedules.frequencies.${frequency}`),
+              }))}
+            />
+          )}
+        </FormField>
         {draft.frequency === 'weekly' ? (
-          <Field id="schedule-day-of-week" label={t('reportSchedules.dayOfWeek')}>
-            <select
-              id="schedule-day-of-week"
-              data-testid="schedule-day-of-week"
-              value={draft.dayOfWeek}
-              onChange={(e): void => edit({ dayOfWeek: Number(e.target.value) })}
-              className={inputTokens.base}
-            >
-              {WEEKDAYS.map((day) => (
-                <option key={day} value={day}>
-                  {weekdayName(day, i18n.language)}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <FormField id="schedule-day-of-week" label={t('reportSchedules.dayOfWeek')}>
+            {(control) => (
+              <Select
+                {...control}
+                data-testid="schedule-day-of-week"
+                value={String(draft.dayOfWeek)}
+                onValueChange={(value): void => edit({ dayOfWeek: Number(value) })}
+                options={WEEKDAYS.map((day) => ({
+                  value: String(day),
+                  label: weekdayName(day, i18n.language),
+                }))}
+              />
+            )}
+          </FormField>
         ) : null}
         {draft.frequency === 'monthly' ? (
-          <Field id="schedule-day-of-month" label={t('reportSchedules.dayOfMonth')}>
-            <select
-              id="schedule-day-of-month"
-              data-testid="schedule-day-of-month"
-              value={draft.dayOfMonth}
-              onChange={(e): void => edit({ dayOfMonth: Number(e.target.value) })}
-              className={inputTokens.base}
-            >
-              {MONTH_DAYS.map((day) => (
-                <option key={day} value={day}>
-                  {day}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <FormField id="schedule-day-of-month" label={t('reportSchedules.dayOfMonth')}>
+            {(control) => (
+              <Select
+                {...control}
+                data-testid="schedule-day-of-month"
+                value={String(draft.dayOfMonth)}
+                onValueChange={(value): void => edit({ dayOfMonth: Number(value) })}
+                options={MONTH_DAYS.map((day) => ({ value: String(day), label: String(day) }))}
+              />
+            )}
+          </FormField>
         ) : null}
-        <Field id="schedule-time" label={t('reportSchedules.time')}>
-          <input
-            id="schedule-time"
-            data-testid="schedule-time"
-            type="time"
-            required={true}
-            value={draft.time}
-            onChange={(e): void => edit({ time: e.target.value })}
-            className={inputTokens.base}
-          />
-        </Field>
+        <FormField id="schedule-time" label={t('reportSchedules.time')} required>
+          {(control) => (
+            <Input
+              {...control}
+              data-testid="schedule-time"
+              type="time"
+              required={true}
+              value={draft.time}
+              onChange={(e): void => edit({ time: e.target.value })}
+            />
+          )}
+        </FormField>
       </div>
 
-      <Field id="schedule-timezone" label={t('reportSchedules.timezone')}>
-        <input
-          id="schedule-timezone"
-          data-testid="schedule-timezone"
-          type="text"
-          autoComplete="off"
-          value={draft.timezone}
-          onChange={(e): void => edit({ timezone: e.target.value })}
-          className={inputClass}
-        />
-      </Field>
+      <FormField id="schedule-timezone" label={t('reportSchedules.timezone')}>
+        {(control) => (
+          <Input
+            {...control}
+            data-testid="schedule-timezone"
+            type="text"
+            autoComplete="off"
+            value={draft.timezone}
+            onChange={(e): void => edit({ timezone: e.target.value })}
+          />
+        )}
+      </FormField>
 
-      <label className="flex items-center gap-compact body-small" htmlFor="schedule-enabled">
-        <input
-          id="schedule-enabled"
-          data-testid="schedule-enabled"
-          type="checkbox"
-          checked={draft.enabled}
-          onChange={(e): void => edit({ enabled: e.target.checked })}
-        />
-        {t('reportSchedules.enabled')}
-      </label>
+      <Checkbox
+        id="schedule-enabled"
+        data-testid="schedule-enabled"
+        label={t('reportSchedules.enabled')}
+        checked={draft.enabled}
+        onChange={(enabled): void => edit({ enabled })}
+      />
 
       {reason === '' ? null : (
         <p data-testid="schedule-error" className="body-small text-status-error">
@@ -251,6 +235,7 @@ function ScheduleEditor({ initial, onSave, onCancel }: EditorProps): JSX.Element
 
       <div className="flex gap-compact">
         <Button
+          variant="primary"
           size="sm"
           loading={saving}
           // Nothing to send without a name, or an hour once the time is cleared.
@@ -278,6 +263,8 @@ export function ScheduledReportsCard({
   onDelete,
 }: ScheduledReportsCardProps): JSX.Element {
   const { t, i18n } = useTranslation('cards');
+  const statusLabel = useCardStatusLabel();
+  const status = cardStatus(schedules, loading, error);
   // null id: a new schedule. Only one editor is open at a time.
   const [editing, setEditing] = useState<{ id: string | null; draft: ScheduleDraft } | null>(null);
 
@@ -318,10 +305,12 @@ export function ScheduledReportsCard({
   return (
     <Card
       title={t('reportSchedules.title')}
-      status={cardStatus(schedules, loading, error)}
+      status={status}
+      statusLabel={statusLabel(status)}
       headerAction={
         onSave && editing === null ? (
           <Button
+            variant="primary"
             size="sm"
             onClick={(): void => setEditing({ id: null, draft: newScheduleDraft() })}
             data-testid="schedule-new"

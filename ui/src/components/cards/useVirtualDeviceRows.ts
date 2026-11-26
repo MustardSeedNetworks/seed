@@ -12,8 +12,9 @@ import type React from 'react';
 import { useEffect, useRef } from 'react';
 
 const VIRTUALIZE_ABOVE = 200;
-// A full-width row as rendered (the discovery badges wrap to two lines).
-const ROW_HEIGHT_ESTIMATE = 61;
+// A full-width row as rendered (the discovery badges wrap to two lines; the
+// shared CategoryChip is 2px taller than the badge it replaced).
+const ROW_HEIGHT_ESTIMATE = 65;
 
 function rowControls(row: Element): HTMLElement[] {
   return Array.from(row.querySelectorAll<HTMLElement>('button:not([disabled])')).filter(

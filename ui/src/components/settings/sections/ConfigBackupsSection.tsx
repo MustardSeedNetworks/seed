@@ -1,4 +1,4 @@
-import { Tooltip } from '../../ui/Tooltip';
+import { Tooltip } from '../../../shared/Tooltip';
 /**
  * ConfigBackupsSection Component
  *
@@ -28,9 +28,9 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
 import { useRole } from '../../../contexts/RoleContext';
 import { formatBytes } from '../../../lib/format';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import type { BackupInfo } from '../../../types/generated/backup-list-response';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 
 export type { BackupInfo };
 

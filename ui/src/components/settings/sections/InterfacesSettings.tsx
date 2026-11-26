@@ -20,15 +20,18 @@ import { useTranslation } from 'react-i18next';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useProfileContext } from '../../../contexts/profileContext';
 import { useRole } from '../../../contexts/RoleContext';
-import { Button } from '../../ui/Button';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
+import { Button } from '../../../shared/Button';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { ConfirmDialog } from '../../../shared/ConfirmDialog';
+import { Input } from '../../../shared/Input';
+import { StatusPill } from '../../../shared/StatusPill';
+import { Tooltip } from '../../../shared/Tooltip';
 import { Check, Plus, Trash2, Wifi } from '../../ui/Icons';
-import { Input } from '../../ui/Input';
 
 type IfaceKind = 'ethernet' | 'wifi';
 
 export function InterfacesSettings(): React.ReactElement {
-  const { t } = useTranslation(['settings', 'errors']);
+  const { t } = useTranslation(['settings', 'errors', 'common']);
   const { canWrite } = useRole();
   const readOnlyReason = canWrite ? undefined : t('settings:common.readOnly');
   const { status: licenseStatus } = useLicense();
@@ -48,6 +51,7 @@ export function InterfacesSettings(): React.ReactElement {
   const [newEthernetName, setNewEthernetName] = useState('');
   const [newWifiName, setNewWifiName] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<{ kind: IfaceKind; name: string } | null>(null);
 
   const ethernetInterfaces = getAllEthernetInterfaces();
   const wifiInterfaces = getAllWifiInterfaces();
@@ -78,12 +82,7 @@ export function InterfacesSettings(): React.ReactElement {
   };
 
   const handleRemove = async (kind: IfaceKind, name: string): Promise<void> => {
-    const ok = window.confirm(
-      t('settings:interfaces.removeConfirm', { name }) +
-        '\n\n' +
-        t('settings:interfaces.removeConfirmPrompt'),
-    );
-    if (!ok) return;
+    setRemoveTarget(null);
     setError(null);
     if (kind === 'ethernet') {
       await removeEthernetInterface(name);
@@ -140,7 +139,7 @@ export function InterfacesSettings(): React.ReactElement {
           setNewName={setNewEthernetName}
           canAdd={canAddEthernet}
           onAdd={() => void handleAdd('ethernet', newEthernetName)}
-          onRemove={(name) => void handleRemove('ethernet', name)}
+          onRemove={(name) => setRemoveTarget({ kind: 'ethernet', name })}
           onSetActive={(name) => void handleSetActive('ethernet', name)}
         />
 
@@ -153,10 +152,22 @@ export function InterfacesSettings(): React.ReactElement {
           setNewName={setNewWifiName}
           canAdd={canAddWifi}
           onAdd={() => void handleAdd('wifi', newWifiName)}
-          onRemove={(name) => void handleRemove('wifi', name)}
+          onRemove={(name) => setRemoveTarget({ kind: 'wifi', name })}
           onSetActive={(name) => void handleSetActive('wifi', name)}
         />
       </div>
+      <ConfirmDialog
+        open={removeTarget !== null}
+        title={t('settings:interfaces.removeConfirm', { name: removeTarget?.name ?? '' })}
+        message={t('settings:interfaces.removeConfirmPrompt')}
+        confirmLabel={t('settings:interfaces.removeInterface')}
+        cancelLabel={t('common:buttons.cancel')}
+        closeLabel={t('common:buttons.close')}
+        onConfirm={() => {
+          if (removeTarget) void handleRemove(removeTarget.kind, removeTarget.name);
+        }}
+        onCancel={() => setRemoveTarget(null)}
+      />
     </CollapsibleSection>
   );
 }
@@ -211,17 +222,12 @@ function InterfaceGroup({
                 data-testid={`interface-row-${kind}-${iface.name}`}
               >
                 <span className="font-mono text-sm flex-1">{iface.name}</span>
-                {isActive && (
-                  <span className="rounded bg-status-success/10 px-1.5 py-0.5 text-xs text-status-success-strong">
-                    {t('interfaces.active')}
-                  </span>
-                )}
+                {isActive && <StatusPill tone="success" label={t('interfaces.active')} />}
                 {!isActive && (
                   <Button
                     variant="ghost"
-                    tone="gray"
                     size="xs"
-                    leftIcon={<Check className="w-3 h-3" />}
+                    icon={<Check className="w-3 h-3" />}
                     onClick={() => onSetActive(iface.name)}
                     data-testid={`set-active-${kind}-${iface.name}`}
                   >
@@ -229,10 +235,9 @@ function InterfaceGroup({
                   </Button>
                 )}
                 <Button
-                  variant="ghost"
-                  tone="red"
-                  size="xs"
-                  leftIcon={<Trash2 className="w-3 h-3" />}
+                  variant="destructive"
+                  size="sm"
+                  icon={<Trash2 className="w-3 h-3" />}
                   onClick={() => onRemove(iface.name)}
                   data-testid={`remove-${kind}-${iface.name}`}
                 >
@@ -248,6 +253,7 @@ function InterfaceGroup({
         <div className="flex-1">
           <Input
             id={`add-${kind}-name`}
+            aria-label={label}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder={placeholder}
@@ -256,18 +262,18 @@ function InterfaceGroup({
             data-testid={`add-${kind}-input`}
           />
         </div>
-        <Button
-          variant="solid"
-          tone="violet"
-          size="sm"
-          leftIcon={<Plus className="w-3 h-3" />}
-          disabled={!canAdd || !newName.trim()}
-          onClick={onAdd}
-          data-testid={`add-${kind}-button`}
-          title={canAdd ? undefined : t('interfaces.limitReachedFreeStarter')}
-        >
-          {kind === 'ethernet' ? t('interfaces.addEthernet') : t('interfaces.addWifi')}
-        </Button>
+        <Tooltip text={canAdd ? undefined : t('interfaces.limitReachedFreeStarter')}>
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<Plus className="w-3 h-3" />}
+            disabled={!canAdd || !newName.trim()}
+            onClick={onAdd}
+            data-testid={`add-${kind}-button`}
+          >
+            {kind === 'ethernet' ? t('interfaces.addEthernet') : t('interfaces.addWifi')}
+          </Button>
+        </Tooltip>
       </div>
     </div>
   );

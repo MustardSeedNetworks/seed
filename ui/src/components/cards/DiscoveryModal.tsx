@@ -1,4 +1,9 @@
-import { Tooltip } from '../ui/Tooltip';
+import type { JSX } from 'react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Modal } from '../../shared/Modal';
+import { SearchInput } from '../../shared/SearchInput';
+import { Tooltip } from '../../shared/Tooltip';
 /**
  * DiscoveryModal - Full-screen modal for network device discovery.
  *
@@ -16,13 +21,8 @@ import { Tooltip } from '../ui/Tooltip';
  * - Keyboard support (Escape to close)
  */
 
-import type React from 'react';
-import type { JSX } from 'react';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useFocusTrap } from '../../hooks/useFocusTrap';
-import { button, cn, icon as iconTokens, modal, radius } from '../../styles/theme';
-import { ArrowUpDown, ChevronDown, ChevronUp, Download, RefreshCw, Search, X } from '../ui/Icons';
+import { button, cn, icon as iconTokens, radius } from '../../styles/theme';
+import { ArrowUpDown, ChevronDown, ChevronUp, Download, RefreshCw } from '../ui/Icons';
 import { column } from './DiscoveryModalCells';
 import { DeviceRow } from './DiscoveryModalDeviceRow';
 import type { DiscoveredDevice, NetworkDiscoveryData } from './NetworkDiscoveryCard';
@@ -315,53 +315,28 @@ export function DiscoveryModal({
     URL.revokeObjectURL(url);
   };
 
-  const dialogRef = useFocusTrap<HTMLDivElement>({ isActive: isOpen, onEscape: onClose });
-
   const { scrollRef, rows, padTop, padBottom, measureRef, onKeyDown } = useVirtualDeviceRows(
     filteredDevices,
     deviceKey,
   );
 
-  if (!isOpen) {
-    return null;
-  }
-
   const deviceCount = data?.devices?.length || 0;
   const localCount = data?.devices?.filter((d) => d.isLocal).length || 0;
 
   return (
-    <div className={modal.overlay}>
-      {/* Backdrop */}
-      <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
-      {/* Modal - full width */}
-      <div
-        ref={dialogRef}
-        className={cn(
-          'relative',
-          modal.content,
-          modal.size.full,
-          modal.padding.lg,
-          'flex flex-col',
-        )}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="discovery-modal-title"
-      >
-        {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-default mb-content pb-4 border-b border-surface-border">
-          <div>
-            <h2 id="discovery-modal-title" className="heading-2 text-text-primary">
-              {t('discovery.title')}
-            </h2>
-            <p className="text-sm text-text-muted mt-tight">
-              {t('discovery.modalSubtitle', {
-                total: deviceCount,
-                local: localCount,
-              })}
-              {data?.status?.subnet ? ` - ${data.status.subnet}` : ''}
-            </p>
-          </div>
-
+    <>
+      <Modal
+        open={isOpen}
+        onClose={onClose}
+        title={t('discovery.title')}
+        closeLabel={t('common:buttons.close')}
+        size="full"
+        // The table folds Ports, CVEs and Methods into the row summary below a 72rem
+        // container (DiscoveryModalCells); the shared `full` is 56rem, so the dialog
+        // takes the width the table needs. A shared wide size would replace this.
+        className="max-w-[min(96rem,100%)]!"
+        data-testid="discovery-modal"
+        header={
           <div className="flex items-center gap-default">
             {/* Scan button */}
             {onScan ? (
@@ -420,58 +395,25 @@ export function DiscoveryModal({
                 </button>
               </Tooltip>
             </div>
-
-            {/* Close button */}
-            <button
-              type="button"
-              onClick={onClose}
-              className={cn(
-                'pad-xs rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors',
-              )}
-              aria-label={t('common:buttons.close')}
-            >
-              <X className={iconTokens.size.md} />
-            </button>
           </div>
-        </div>
+        }
+      >
+        <p className="text-sm text-text-muted mb-content">
+          {t('discovery.modalSubtitle', { total: deviceCount, local: localCount })}
+          {data?.status?.subnet ? ` - ${data.status.subnet}` : ''}
+        </p>
 
         {/* Search and filters */}
         <div className="flex items-center gap-comfortable mb-content">
           {/* Search input */}
-          <div className="relative flex-1 max-w-md">
-            <Search
-              className={cn(
-                'absolute left-3 top-1/2 -translate-y-1/2',
-                iconTokens.size.sm,
-                'text-text-muted',
-              )}
-            />
-            <input
-              type="text"
+          <div className="flex-1">
+            <SearchInput
               value={searchQuery}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                setSearchQuery(e.target.value)
-              }
+              onValueChange={setSearchQuery}
+              label={t('discovery.searchPlaceholder')}
+              clearLabel={t('discovery.clearSearch')}
               placeholder={t('discovery.searchPlaceholder')}
-              className={cn(
-                'w-full pl-10 pr-4 py-row',
-                'text-sm bg-surface-base border border-surface-border',
-                radius.md,
-                'focus:outline-none focus:ring-1 focus:ring-brand-primary text-text-primary placeholder:text-text-muted',
-              )}
             />
-            {searchQuery ? (
-              <Tooltip text={t('discovery.clearSearch')}>
-                <button
-                  type="button"
-                  onClick={(): void => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-                  aria-label={t('discovery.clearSearch')}
-                >
-                  <X className={iconTokens.size.sm} />
-                </button>
-              </Tooltip>
-            ) : null}
           </div>
 
           {/* Filter toggles */}
@@ -505,7 +447,7 @@ export function DiscoveryModal({
             (30,000 px landed near 58,000 on Chromium, #2962). */}
         <div
           ref={scrollRef}
-          className="@container flex-1 overflow-auto scroll-pt-12 [overflow-anchor:none]"
+          className="@container max-h-[50vh] overflow-auto scroll-pt-12 [overflow-anchor:none]"
         >
           <table className="w-full table-fixed" onKeyDown={onKeyDown} data-testid="discovery-table">
             <thead className="bg-surface-base sticky top-0 z-10">
@@ -584,13 +526,13 @@ export function DiscoveryModal({
             </div>
           ) : null}
         </div>
-      </div>
+      </Modal>
       {vulnDeviceIp ? (
         <VulnerabilityDetailsModal
           deviceIp={vulnDeviceIp}
           onClose={(): void => setVulnDeviceIp(null)}
         />
       ) : null}
-    </div>
+    </>
   );
 }

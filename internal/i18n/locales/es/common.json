@@ -129,7 +129,6 @@
     "skipToMainContent": "Saltar al contenido principal",
     "collapseSidebar": "Contraer barra lateral",
     "expandSidebar": "Expandir barra lateral",
-    "toggleFilters": "Mostrar u ocultar filtros",
     "manageProfiles": "Crear, editar y eliminar perfiles",
     "pageHelpHint": "¿Qué es {{title}}?",
     "openPageHelp": "Abrir ayuda para {{title}}",
@@ -153,6 +152,7 @@
       "warning": "Estado: advertencia",
       "error": "Estado: error",
       "unknown": "Estado: desconocido",
+      "info": "Estado: información",
       "loading": "Estado: cargando"
     }
   },
@@ -166,6 +166,7 @@
     "title": "Registros del sistema",
     "subtitle": "Registros de la aplicación en tiempo real con filtrado",
     "searchPlaceholder": "Buscar registros...",
+    "clearSearch": "Borrar búsqueda",
     "clearFilters": "Limpiar filtros",
     "level": "Nivel",
     "layer": "Capa",
@@ -189,7 +190,6 @@
     "noMatchingLogs": "No hay registros que coincidan con los filtros",
     "noLogs": "Aún no hay registros",
     "fullScreen": "Pantalla Completa",
-    "close": "Cerrar visor de registros",
     "viewLogs": "Ver Registros",
     "clearHint": "Borrar todos los registros del búfer",
     "exportCsvHint": "Exportar registros a un archivo CSV",
@@ -224,12 +224,15 @@
     "tryAgain": "Reintentar"
   },
   "dataTable": {
-    "clearAll": "Limpiar todo",
-    "showingResults": "Mostrando {{shown}} de {{total}} resultados",
-    "loadingData": "Cargando datos...",
     "actionsColumn": "Acciones",
-    "scrollRegion": "Contenido de la tabla",
-    "noData": "No se encontraron datos"
+    "selectAll": "Seleccionar todas las filas de esta página",
+    "pagination": "Páginas de la tabla",
+    "previousPage": "Página anterior",
+    "nextPage": "Página siguiente",
+    "pageStatus": "Página {{page}} de {{pageCount}} ({{total}} filas)",
+    "filterRows": "Filtrar filas",
+    "clearFilter": "Borrar filtro",
+    "noMatches": "Ninguna fila coincide con el filtro"
   },
   "capabilities": {
     "warning": {
@@ -263,6 +266,7 @@
     "notesPlaceholder": "Notas opcionales",
     "profiles": "Perfiles",
     "searchPlaceholder": "Buscar perfiles…",
+    "clearSearch": "Borrar búsqueda",
     "setAsDefault": "Establecer como predeterminado",
     "updated": "Actualizado",
     "activate": "Activar",
@@ -304,7 +308,6 @@
     "close": "Cerrar",
     "create": "Crear",
     "delete": "Eliminar",
-    "deleting": "Eliminando…",
     "edit": "Editar",
     "loading": "Cargando…",
     "save": "Guardar",
@@ -320,6 +323,7 @@
     "printers": "Impresoras",
     "routers": "Enrutadores",
     "search": "Buscar dispositivos",
+    "clearSearch": "Borrar búsqueda",
     "searchResults": "Resultados de búsqueda",
     "select": "Seleccionar dispositivo",
     "servers": "Servidores",

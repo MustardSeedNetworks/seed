@@ -36,6 +36,7 @@ test.describe('SNMP Settings', () => {
     await settingsButton.click();
 
     await expect(page.getByTestId('settings-drawer')).toBeVisible({ timeout: 5000 });
+    await page.getByRole('tab', { name: 'Discovery' }).click();
   });
 
   test('should mask password/passphrase fields', async ({ page }) => {

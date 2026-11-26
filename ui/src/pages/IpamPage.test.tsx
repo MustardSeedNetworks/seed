@@ -107,7 +107,6 @@ describe('IpamPage', () => {
     refusal = null;
     writes.length = 0;
     role = 'operator';
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
   it('lists each network with its source and utilization and opens the first', async () => {
@@ -191,6 +190,18 @@ describe('IpamPage', () => {
     expect(screen.getByTestId('ipam-counts')).toHaveTextContent('1 DHCP scope');
 
     await user.click(screen.getByTestId('scope-delete'));
+    const dialog = await screen.findByTestId('confirm-dialog');
+    expect(dialog).toHaveTextContent('Delete DHCP scope 192.168.1.100 – 192.168.1.199?');
+    // Nothing is sent until the dialog is confirmed.
+    expect(writes.some((write) => write.method === 'DELETE')).toBe(false);
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByTestId('confirm-dialog')).toBeNull());
+    expect(writes.some((write) => write.method === 'DELETE')).toBe(false);
+
+    await user.click(screen.getByTestId('scope-delete'));
+    await user.click(
+      within(await screen.findByTestId('confirm-dialog')).getByRole('button', { name: 'Delete' }),
+    );
     await waitFor(() => expect(screen.queryByTestId('ipam-scope-192.168.1.100')).toBeNull());
     expect(writes.at(-1)).toEqual({
       method: 'DELETE',

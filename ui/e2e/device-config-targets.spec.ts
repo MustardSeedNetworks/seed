@@ -183,7 +183,7 @@ test('an operator adds a device, backs it up, trusts its host key and removes it
   await expect(page.getByTestId('config-host-key-pinned')).toHaveText(FINGERPRINT);
 
   await page.getByTestId('config-target-remove').click();
-  await page.getByTestId('confirm-modal-confirm').click();
+  await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Remove' }).click();
   await expect(page.getByText('No devices are backed up yet.')).toBeVisible();
 
   expect(writes).toEqual([

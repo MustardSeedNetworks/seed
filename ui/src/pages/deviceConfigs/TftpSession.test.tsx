@@ -87,7 +87,7 @@ describe('TftpSession', () => {
     render(<TftpSession />);
 
     expect(await screen.findByTestId('tftp-interface')).toHaveValue('eth0');
-    expect(screen.getByTestId('tftp-allow-upload')).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Allow uploads' })).not.toBeChecked();
     expect(screen.getByText('Any host on that segment can then write files.')).toBeVisible();
 
     await user.click(screen.getByTestId('tftp-start'));
@@ -106,7 +106,7 @@ describe('TftpSession', () => {
     const user = userEvent.setup();
     render(<TftpSession />);
 
-    await user.click(await screen.findByTestId('tftp-allow-upload'));
+    await user.click(await screen.findByRole('checkbox', { name: 'Allow uploads' }));
     await user.click(screen.getByTestId('tftp-start'));
 
     expect(calls.find((c) => c.method === 'POST')?.body).toEqual({

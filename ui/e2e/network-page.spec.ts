@@ -48,6 +48,6 @@ test.describe('Network Page', () => {
 
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    await expect(body).toHaveCount(0);
+    await expect(body).toBeHidden();
   });
 });

@@ -1,17 +1,22 @@
 /**
- * SummaryTable — a captioned, fixed-layout table of a job's tallies, for the
- * cards that summarise a bounded run (packet capture, multicast listen).
- * Renders nothing when there are no rows.
+ * SummaryTable — a captioned table of a job's tallies, for the cards that
+ * summarise a bounded run (packet capture, multicast listen). Renders nothing
+ * when there are no rows.
  */
 
 import type { JSX } from 'react';
 
-import { cn, radius } from '../../styles/theme';
+import { useTableLabels } from '../../hooks/useTableLabels';
+import { DataTable, type DataTableColumn } from '../../shared/DataTable';
 
 export interface SummaryColumn {
   label: string;
-  width: string;
   mono?: boolean;
+}
+
+interface SummaryRow {
+  key: string;
+  cells: string[];
 }
 
 export function SummaryTable({
@@ -23,47 +28,33 @@ export function SummaryTable({
   testId: string;
   caption: string;
   columns: SummaryColumn[];
-  rows: { key: string; cells: string[] }[];
+  rows: SummaryRow[];
 }): JSX.Element | null {
+  const labels = useTableLabels<SummaryRow>({ loading: caption });
   if (rows.length === 0) {
     return null;
   }
+  // Cells are positional and the cell text is already formatted ("12 KB"), so
+  // the columns keep the job's order rather than sorting it.
+  const tableColumns: DataTableColumn<SummaryRow>[] = columns.map((column, index) => ({
+    key: column.label,
+    header: column.label,
+    cell: (row) => (
+      <span className={column.mono ? 'font-mono' : undefined} title={row.cells[index]}>
+        {row.cells[index]}
+      </span>
+    ),
+  }));
   return (
-    // See NeighbourCacheCard: table-fixed, not overflow-x-auto (#2708).
-    <div className={cn(radius.default, 'border border-surface-border')}>
-      <table className="w-full table-fixed body-small" data-testid={testId}>
-        <caption className="caption text-text-muted text-left px-cell pt-row">{caption}</caption>
-        <thead>
-          <tr className="border-b border-surface-border text-text-muted">
-            {columns.map((column) => (
-              <th
-                key={column.label}
-                scope="col"
-                className={cn('px-cell py-row text-left truncate', column.width)}
-                title={column.label}
-              >
-                {column.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.key} className="border-b border-surface-border last:border-0">
-              {row.cells.map((cell, i) => (
-                <td
-                  // Cells are positional; the column label is unique per table.
-                  key={columns[i]?.label ?? i}
-                  className={cn('px-cell py-row truncate', columns[i]?.mono && 'font-mono')}
-                  title={cell}
-                >
-                  {cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      rows={rows}
+      columns={tableColumns}
+      getRowKey={(row) => row.key}
+      caption={caption}
+      empty={null}
+      labels={labels}
+      pageSize={10}
+      data-testid={testId}
+    />
   );
 }

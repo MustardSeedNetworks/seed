@@ -1,4 +1,4 @@
-import { Tooltip } from '../../../ui/Tooltip';
+import { Tooltip } from '../../../../shared/Tooltip';
 /**
  * OPC-UA / Modbus TCP industrial endpoint editors.
  *
@@ -11,7 +11,9 @@ import type React from 'react';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useArrayItem } from '../../../../hooks/useArrayItem';
-import { cn, input, layout, spacing } from '../../../../styles/theme';
+import { Input } from '../../../../shared/Input';
+import { Select } from '../../../../shared/Select';
+import { cn, layout, spacing } from '../../../../styles/theme';
 import type { TestsSettings } from '../../../../types/settings';
 
 interface IndustrialEndpointsProps {
@@ -71,39 +73,46 @@ export function IndustrialEndpoints({
             key={endpoint.id}
             className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
           >
-            <input
-              type="text"
-              value={endpoint.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateOpcuaEndpoint(endpoint.id ?? '', 'name', e.target.value)
-              }
-              placeholder={t('common.name')}
-              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-            />
-            <input
-              type="text"
-              value={endpoint.endpointUrl}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateOpcuaEndpoint(endpoint.id ?? '', 'endpointUrl', e.target.value)
-              }
-              placeholder="opc.tcp://host:4840"
-              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-            />
-            <select
-              value={endpoint.securityMode}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                updateOpcuaEndpoint(
-                  endpoint.id ?? '',
-                  'securityMode',
-                  e.target.value as 'None' | 'Sign' | 'SignAndEncrypt',
-                )
-              }
-              className={cn(input.base, input.state.default, input.size.md, 'w-32')}
-            >
-              <option value="None">{t('health.opcuaSecurityNone')}</option>
-              <option value="Sign">{t('health.opcuaSecuritySign')}</option>
-              <option value="SignAndEncrypt">{t('health.opcuaSecuritySignAndEncrypt')}</option>
-            </select>
+            <div className="w-24 shrink-0">
+              <Input
+                type="text"
+                aria-label={t('common.name')}
+                value={endpoint.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateOpcuaEndpoint(endpoint.id ?? '', 'name', e.target.value)
+                }
+                placeholder={t('common.name')}
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <Input
+                type="text"
+                aria-label={t('health.opcuaEndpointUrl')}
+                value={endpoint.endpointUrl}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateOpcuaEndpoint(endpoint.id ?? '', 'endpointUrl', e.target.value)
+                }
+                placeholder="opc.tcp://host:4840"
+              />
+            </div>
+            <div className="w-36 shrink-0">
+              <Select
+                aria-label={t('health.opcuaSecurityMode')}
+                value={endpoint.securityMode}
+                onValueChange={(value): void =>
+                  updateOpcuaEndpoint(
+                    endpoint.id ?? '',
+                    'securityMode',
+                    value as 'None' | 'Sign' | 'SignAndEncrypt',
+                  )
+                }
+                options={[
+                  { value: 'None', label: t('health.opcuaSecurityNone') },
+                  { value: 'Sign', label: t('health.opcuaSecuritySign') },
+                  { value: 'SignAndEncrypt', label: t('health.opcuaSecuritySignAndEncrypt') },
+                ]}
+              />
+            </div>
             <button
               type="button"
               onClick={(): void => removeOpcuaEndpoint(endpoint.id ?? '')}
@@ -134,62 +143,82 @@ export function IndustrialEndpoints({
             key={endpoint.id}
             className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
           >
-            <input
-              type="text"
-              value={endpoint.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateModbusEndpoint(endpoint.id ?? '', 'name', e.target.value)
-              }
-              placeholder={t('common.name')}
-              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-            />
-            <input
-              type="text"
-              value={endpoint.host}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateModbusEndpoint(endpoint.id ?? '', 'host', e.target.value)
-              }
-              placeholder={t('common.host')}
-              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-            />
-            <input
-              type="number"
-              value={endpoint.port}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateModbusEndpoint(endpoint.id ?? '', 'port', Number.parseInt(e.target.value, 10))
-              }
-              placeholder="502"
-              className={cn(input.base, input.state.default, input.size.md, 'w-20')}
-            />
-            <Tooltip text={t('health.unitId')}>
-              <input
+            <div className="w-24 shrink-0">
+              <Input
+                type="text"
+                aria-label={t('common.name')}
+                value={endpoint.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateModbusEndpoint(endpoint.id ?? '', 'name', e.target.value)
+                }
+                placeholder={t('common.name')}
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <Input
+                type="text"
+                aria-label={t('common.host')}
+                value={endpoint.host}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateModbusEndpoint(endpoint.id ?? '', 'host', e.target.value)
+                }
+                placeholder={t('common.host')}
+              />
+            </div>
+            <div className="w-20 shrink-0">
+              <Input
                 type="number"
-                value={endpoint.unitId}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                aria-label={t('common.port')}
+                value={endpoint.port}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                   updateModbusEndpoint(
                     endpoint.id ?? '',
-                    'unitId',
+                    'port',
                     Number.parseInt(e.target.value, 10),
                   )
                 }
-                placeholder="Unit"
-                className={cn(input.base, input.state.default, input.size.md, 'w-16')}
+                placeholder="502"
               />
+            </div>
+            <Tooltip text={t('health.unitId')}>
+              {(description) => (
+                <div className="w-16 shrink-0">
+                  <Input
+                    {...description}
+                    type="number"
+                    aria-label={t('health.unitId')}
+                    value={endpoint.unitId}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      updateModbusEndpoint(
+                        endpoint.id ?? '',
+                        'unitId',
+                        Number.parseInt(e.target.value, 10),
+                      )
+                    }
+                    placeholder="Unit"
+                  />
+                </div>
+              )}
             </Tooltip>
             <Tooltip text={t('health.testRegister')}>
-              <input
-                type="number"
-                value={endpoint.testRegister}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateModbusEndpoint(
-                    endpoint.id ?? '',
-                    'testRegister',
-                    Number.parseInt(e.target.value, 10),
-                  )
-                }
-                placeholder="Reg"
-                className={cn(input.base, input.state.default, input.size.md, 'w-16')}
-              />
+              {(description) => (
+                <div className="w-16 shrink-0">
+                  <Input
+                    {...description}
+                    type="number"
+                    aria-label={t('health.testRegister')}
+                    value={endpoint.testRegister}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      updateModbusEndpoint(
+                        endpoint.id ?? '',
+                        'testRegister',
+                        Number.parseInt(e.target.value, 10),
+                      )
+                    }
+                    placeholder="Reg"
+                  />
+                </div>
+              )}
             </Tooltip>
             <button
               type="button"

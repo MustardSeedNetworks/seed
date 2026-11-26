@@ -7,10 +7,16 @@
  */
 
 import type { TFunction } from 'i18next';
-import { type FormEvent, type JSX, type ReactNode, useId, useState } from 'react';
+import { type FormEvent, type JSX, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, ModalFooter } from '../../components/ui/Modal';
 import { useDeviceCredentials } from '../../hooks/useDeviceCredentials';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { Checkbox } from '../../shared/Checkbox';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
+import { Modal } from '../../shared/Modal';
+import { Select } from '../../shared/Select';
 import type { Credentials } from '../../types/generated/device-credential-list-response';
 import type { PollingTargetRequest } from '../../types/generated/polling-target-request';
 import type { PollingTargetResponse } from '../../types/generated/polling-target-response';
@@ -28,7 +34,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
   const vault = useDeviceCredentials();
-  const id = useId();
+  const summaryId = useId();
 
   // The poller speaks the target's version with whatever the credential holds,
   // so a v3 credential on a v2c target can never authenticate. Only matching
@@ -92,164 +98,140 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
 
   return (
     <Modal
-      isOpen
+      open
       onClose={onCancel}
-      title={
-        mode === 'create' ? t('pollingTargets.formCreateTitle') : t('pollingTargets.formEditTitle')
-      }
-      // A stray click outside would throw away a half-typed target; Escape
-      // and the close button are deliberate.
-      closeOnBackdropClick={false}
-    >
-      <form
-        onSubmit={(e): void => {
-          void handleSubmit(e);
-        }}
-      >
-        {formError ? (
-          <div
-            data-testid="target-form-error"
-            className="mb-content rounded-md border border-status-error/40 bg-status-error/10 pad-xs text-sm text-status-error-strong"
-          >
-            {formError}
-          </div>
-        ) : null}
-
-        <div className="stack">
-          <Field id={`${id}-name`} label={t('pollingTargets.fieldName')}>
-            <input
-              id={`${id}-name`}
-              type="text"
-              value={form.name}
-              onChange={(e): void => update('name', e.target.value)}
-              required
-              data-testid="target-name"
-              className={inputClass}
-            />
-          </Field>
-          <Field id={`${id}-ip`} label={t('pollingTargets.fieldIpAddress')}>
-            <input
-              id={`${id}-ip`}
-              type="text"
-              value={form.ipAddress}
-              onChange={(e): void => update('ipAddress', e.target.value)}
-              required
-              data-testid="target-ip"
-              placeholder="10.0.0.1"
-              className={inputClass}
-            />
-          </Field>
-          <Field id={`${id}-version`} label={t('pollingTargets.fieldSnmpVersion')}>
-            <select
-              id={`${id}-version`}
-              value={form.snmpVersion}
-              onChange={(e): void => changeVersion(e.target.value)}
-              data-testid="target-version"
-              className={inputClass}
-            >
-              <option value="v2c">v2c</option>
-              <option value="v3">v3</option>
-            </select>
-          </Field>
-          <Field id={`${id}-credential`} label={t('pollingTargets.fieldCredential')}>
-            <select
-              id={`${id}-credential`}
-              value={chosen?.id ?? ''}
-              onChange={(e): void => update('credentialsId', e.target.value || undefined)}
-              disabled={vault.loading}
-              aria-describedby={`${id}-credential-summary`}
-              data-testid="target-credential"
-              className={inputClass}
-            >
-              <option value="">{t('pollingTargets.credentialNone')}</option>
-              {offered.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <p
-              id={`${id}-credential-summary`}
-              data-testid="target-credential-summary"
-              className="mt-tight text-xs text-text-muted"
-            >
-              {credentialSummary()}
-            </p>
-          </Field>
-          <Field id={`${id}-interval`} label={t('pollingTargets.fieldPollInterval')}>
-            <input
-              id={`${id}-interval`}
-              type="number"
-              min={10}
-              max={3600}
-              value={form.pollIntervalSeconds ?? 300}
-              onChange={(e): void => update('pollIntervalSeconds', Number(e.target.value))}
-              className={inputClass}
-            />
-          </Field>
-          <label className="flex items-center gap-compact text-sm text-text-secondary">
-            <input
-              type="checkbox"
-              checked={form.enabled}
-              onChange={(e): void => update('enabled', e.target.checked)}
-            />
-            {t('pollingTargets.enabledHint')}
-          </label>
-          {/* Read-only: the chain is the server's, and a form that retypes
-              the server's default is the mirror this row exists to remove.
-              An absent chain is filled in on create by the repository. */}
-          <div>
-            <span className={labelClass}>{t('pollingTargets.collectorChain')}</span>
-            <div data-testid="target-chain" className="mt-tight text-sm text-text-secondary">
-              {form.collectorChain?.length
-                ? form.collectorChain.join(', ')
-                : t('pollingTargets.chainServerDefault')}
-            </div>
-          </div>
-        </div>
-
-        <ModalFooter>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md px-3 py-2 text-sm text-text-muted hover:text-text-primary"
-          >
-            {t('common:buttons.cancel')}
-          </button>
-          <button
+      closeLabel={t('common:buttons.close')}
+      size="md"
+      footer={
+        <>
+          <Button onClick={onCancel}>{t('common:buttons.cancel')}</Button>
+          <Button
             type="submit"
-            disabled={submitting}
+            form="polling-target-form"
+            variant="primary"
+            loading={submitting}
             data-testid="target-save"
-            className="rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:control-disabled"
           >
             {submitting
               ? t('common:common.saving')
               : mode === 'create'
                 ? t('pollingTargets.addTarget')
                 : t('pollingTargets.saveChanges')}
-          </button>
-        </ModalFooter>
+          </Button>
+        </>
+      }
+      title={
+        mode === 'create' ? t('pollingTargets.formCreateTitle') : t('pollingTargets.formEditTitle')
+      }
+      // A stray click outside would throw away a half-typed target; Escape
+      // and the close button are deliberate.
+      closeOnBackdrop={false}
+    >
+      <form
+        id="polling-target-form"
+        onSubmit={(e): void => {
+          void handleSubmit(e);
+        }}
+      >
+        {formError ? (
+          <div data-testid="target-form-error" className="mb-4">
+            <Alert tone="error">{formError}</Alert>
+          </div>
+        ) : null}
+
+        <div className="space-y-4">
+          <FormField label={t('pollingTargets.fieldName')} required>
+            {(control) => (
+              <Input
+                {...control}
+                value={form.name}
+                onChange={(e): void => update('name', e.target.value)}
+                required
+                data-testid="target-name"
+              />
+            )}
+          </FormField>
+          <FormField label={t('pollingTargets.fieldIpAddress')} required>
+            {(control) => (
+              <Input
+                {...control}
+                value={form.ipAddress}
+                onChange={(e): void => update('ipAddress', e.target.value)}
+                required
+                data-testid="target-ip"
+                placeholder="10.0.0.1"
+              />
+            )}
+          </FormField>
+          <FormField label={t('pollingTargets.fieldSnmpVersion')}>
+            {(control) => (
+              <Select
+                {...control}
+                value={form.snmpVersion}
+                onValueChange={changeVersion}
+                options={SNMP_VERSIONS}
+                data-testid="target-version"
+              />
+            )}
+          </FormField>
+          <FormField label={t('pollingTargets.fieldCredential')}>
+            {(control) => (
+              <>
+                <Select
+                  {...control}
+                  aria-describedby={summaryId}
+                  value={chosen?.id ?? ''}
+                  onValueChange={(value): void => update('credentialsId', value || undefined)}
+                  disabled={vault.loading}
+                  options={[
+                    { value: '', label: t('pollingTargets.credentialNone') },
+                    ...offered.map((c) => ({ value: c.id, label: c.name })),
+                  ]}
+                  data-testid="target-credential"
+                />
+                <p
+                  id={summaryId}
+                  data-testid="target-credential-summary"
+                  className="mt-1.5 text-xs text-text-muted"
+                >
+                  {credentialSummary()}
+                </p>
+              </>
+            )}
+          </FormField>
+          <FormField label={t('pollingTargets.fieldPollInterval')}>
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                min={10}
+                max={3600}
+                value={form.pollIntervalSeconds ?? 300}
+                onChange={(e): void => update('pollIntervalSeconds', Number(e.target.value))}
+              />
+            )}
+          </FormField>
+          <Checkbox
+            checked={form.enabled}
+            onChange={(checked): void => update('enabled', checked)}
+            label={t('pollingTargets.enabledHint')}
+          />
+          {/* Read-only: the chain is the server's, and a form that retypes
+              the server's default is the mirror this row exists to remove.
+              An absent chain is filled in on create by the repository. */}
+          <div>
+            <span className="mb-1.5 block text-sm font-medium text-text-secondary">
+              {t('pollingTargets.collectorChain')}
+            </span>
+            <div data-testid="target-chain" className="text-sm text-text-secondary">
+              {form.collectorChain?.length
+                ? form.collectorChain.join(', ')
+                : t('pollingTargets.chainServerDefault')}
+            </div>
+          </div>
+        </div>
       </form>
     </Modal>
-  );
-}
-
-function Field({
-  id,
-  label,
-  children,
-}: {
-  id: string;
-  label: string;
-  children: ReactNode;
-}): JSX.Element {
-  return (
-    <div>
-      <label htmlFor={id} className={labelClass}>
-        {label}
-      </label>
-      <div className="mt-tight">{children}</div>
-    </div>
   );
 }
 
@@ -264,10 +246,10 @@ function describeCredential(c: Credentials, t: TFunction<['pages', 'common']>): 
   return t('pollingTargets.credentialSummaryV3', { user: c.snmpV3User ?? '', detail });
 }
 
-const labelClass: string = 'block text-xs font-medium uppercase tracking-wide text-text-muted';
-
-const inputClass: string =
-  'w-full rounded-md border border-surface-border bg-surface-sunken px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-brand-primary focus:outline-none';
+const SNMP_VERSIONS = [
+  { value: 'v2c', label: 'v2c' },
+  { value: 'v3', label: 'v3' },
+] as const;
 
 /**
  * emptyInput is the create-form default.

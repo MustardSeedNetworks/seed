@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { JSX } from 'react';
+import { Card, CardDivider, CardRow, CardValue } from '../../shared/Card';
+import { Skeleton } from '../../shared/Skeleton';
 import { cn, spacing } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue } from '../ui/Card';
 import { Cable } from '../ui/Icons';
-import { Skeleton } from '../ui/Skeleton';
 
 /**
  * LinkCard displays physical link layer (L2) and network layer (L3) status.
@@ -52,7 +52,13 @@ const linkDataNoIp = {
 
 export const Online: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="success">
+    <Card
+      title="Link"
+      subtitle="en0"
+      icon={<Cable className="w-4 h-4" />}
+      status="success"
+      statusLabel="Status: success"
+    >
       <CardValue value="Connected" size="lg" status="success" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Speed" value={linkDataOnline.speed} />
@@ -69,7 +75,13 @@ export const Online: StoryObj = {
 
 export const NoIpAddress: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="warning">
+    <Card
+      title="Link"
+      subtitle="en0"
+      icon={<Cable className="w-4 h-4" />}
+      status="warning"
+      statusLabel="Status: warning"
+    >
       <CardValue value="No IP" size="lg" status="warning" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Speed" value={linkDataNoIp.speed} />
@@ -86,7 +98,13 @@ export const NoIpAddress: StoryObj = {
 
 export const Disconnected: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="error">
+    <Card
+      title="Link"
+      subtitle="en0"
+      icon={<Cable className="w-4 h-4" />}
+      status="error"
+      statusLabel="Status: error"
+    >
       <CardValue value="No Carrier" size="lg" status="error" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Speed" value="—" />
@@ -103,7 +121,13 @@ export const Disconnected: StoryObj = {
 
 export const Loading: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="loading">
+    <Card
+      title="Link"
+      subtitle="en0"
+      icon={<Cable className="w-4 h-4" />}
+      status="loading"
+      statusLabel="Status: loading"
+    >
       <Skeleton className={cn('h-8 w-32', spacing.margin.bottom.content)} />
       <div className={cn(spacing.stack.sm, spacing.margin.top.content)}>
         <div className="flex justify-between">
@@ -125,7 +149,13 @@ export const Loading: StoryObj = {
 
 export const WithLinkFlaps: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="warning">
+    <Card
+      title="Link"
+      subtitle="en0"
+      icon={<Cable className="w-4 h-4" />}
+      status="warning"
+      statusLabel="Status: warning"
+    >
       <CardValue value="Unstable" size="lg" status="warning" />
       <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Speed" value="1000Mb/s" />

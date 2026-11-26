@@ -11,6 +11,10 @@ import type React from 'react';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../contexts/RoleContext';
+import { CollapsibleSection } from '../../shared/CollapsibleSection';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
+import { Toggle } from '../../shared/Toggle';
 import {
   button,
   cn,
@@ -20,7 +24,6 @@ import {
   status as statusColor,
 } from '../../styles/theme';
 import type { DisplayOptions, IpSettings, SaveStatus } from '../../types/settings';
-import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { Network } from '../ui/Icons';
 import { AutoSaveIndicator } from './sections/AutoSaveIndicator';
 import { MtuControl } from './sections/MtuControl';
@@ -107,109 +110,62 @@ export function SettingsDrawerNetworkSection({
           <div
             className={cn('stack', spacing.padding.top.heading, 'border-t border-surface-border')}
           >
-            <div>
-              <label htmlFor="static-ip-address" className="caption font-medium">
-                {t('network.ipAddress')} *
-              </label>
-              <input
-                id="static-ip-address"
-                type="text"
-                value={ipSettings.address}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setIpSettings((prev) => ({
-                    ...prev,
-                    address: e.target.value,
-                  }))
-                }
-                placeholder="192.168.1.100"
-                className={cn(
-                  'w-full',
-                  spacing.margin.top.tight,
-                  spacing.chip.sm,
-                  'bg-surface-base border',
-                  radius.md,
-                  'body-small text-text-primary',
-                  ipSettings.address && !isValidIp(ipSettings.address)
-                    ? statusColor.border.error
-                    : 'border-surface-border',
-                )}
-              />
-            </div>
-            <div>
-              <label htmlFor="static-subnet-mask" className="caption font-medium">
-                {t('network.subnetMask')} *
-              </label>
-              <input
-                id="static-subnet-mask"
-                type="text"
-                value={ipSettings.netmask}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setIpSettings((prev) => ({
-                    ...prev,
-                    netmask: e.target.value,
-                  }))
-                }
-                placeholder="24 or 255.255.255.0"
-                className={cn(
-                  'w-full',
-                  spacing.margin.top.tight,
-                  spacing.chip.lg,
-                  'bg-surface-base border border-surface-border',
-                  radius.md,
-                  'body-small text-text-primary',
-                )}
-              />
-            </div>
-            <div>
-              <label htmlFor="static-gateway" className="caption font-medium">
-                {t('network.gateway')}
-              </label>
-              <input
-                id="static-gateway"
-                type="text"
-                value={ipSettings.gateway}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setIpSettings((prev) => ({
-                    ...prev,
-                    gateway: e.target.value,
-                  }))
-                }
-                placeholder="192.168.1.1"
-                className={cn(
-                  'w-full',
-                  spacing.margin.top.tight,
-                  spacing.chip.sm,
-                  'bg-surface-base border',
-                  radius.md,
-                  'body-small text-text-primary',
-                  ipSettings.gateway && !isValidIp(ipSettings.gateway)
-                    ? statusColor.border.error
-                    : 'border-surface-border',
-                )}
-              />
-            </div>
-            <div>
-              <label htmlFor="static-dns-servers" className="caption font-medium">
-                {t('network.dnsServers')}
-              </label>
-              <input
-                id="static-dns-servers"
-                type="text"
-                value={dnsInput}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setDnsInput(e.target.value)
-                }
-                placeholder="8.8.8.8, 8.8.4.4"
-                className={cn(
-                  'w-full',
-                  spacing.margin.top.tight,
-                  spacing.chip.lg,
-                  'bg-surface-base border border-surface-border',
-                  radius.md,
-                  'body-small text-text-primary',
-                )}
-              />
-            </div>
+            <FormField id="static-ip-address" label={t('network.ipAddress')} required>
+              {(control) => (
+                <Input
+                  {...control}
+                  aria-invalid={
+                    ipSettings.address && !isValidIp(ipSettings.address)
+                      ? true
+                      : control['aria-invalid']
+                  }
+                  value={ipSettings.address}
+                  onChange={(e): void =>
+                    setIpSettings((prev) => ({ ...prev, address: e.target.value }))
+                  }
+                  placeholder="192.168.1.100"
+                />
+              )}
+            </FormField>
+            <FormField id="static-subnet-mask" label={t('network.subnetMask')} required>
+              {(control) => (
+                <Input
+                  {...control}
+                  value={ipSettings.netmask}
+                  onChange={(e): void =>
+                    setIpSettings((prev) => ({ ...prev, netmask: e.target.value }))
+                  }
+                  placeholder="24 or 255.255.255.0"
+                />
+              )}
+            </FormField>
+            <FormField id="static-gateway" label={t('network.gateway')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  aria-invalid={
+                    ipSettings.gateway && !isValidIp(ipSettings.gateway)
+                      ? true
+                      : control['aria-invalid']
+                  }
+                  value={ipSettings.gateway}
+                  onChange={(e): void =>
+                    setIpSettings((prev) => ({ ...prev, gateway: e.target.value }))
+                  }
+                  placeholder="192.168.1.1"
+                />
+              )}
+            </FormField>
+            <FormField id="static-dns-servers" label={t('network.dnsServers')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  value={dnsInput}
+                  onChange={(e): void => setDnsInput(e.target.value)}
+                  placeholder="8.8.8.8, 8.8.4.4"
+                />
+              )}
+            </FormField>
           </div>
         )}
 
@@ -257,33 +213,18 @@ export function SettingsDrawerNetworkSection({
         </p>
         <div className="stack-sm">
           {/* Show Public IP */}
-          <label
-            className={cn(
-              'flex-between',
-              spacing.pad.xs,
-              'bg-surface-base',
-              radius.md,
-              'border border-surface-border',
-            )}
-          >
-            <div>
-              <span className="body-small text-text-primary font-medium">
-                {t('network.showPublicIp')}
-              </span>
-              <p className="caption text-text-muted">{t('network.displayInNetworkCard')}</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={displayOptions.showPublicIp}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                setDisplayOptions((prev) => ({
-                  ...prev,
-                  showPublicIp: e.target.checked,
-                }))
-              }
-              className={iconTokens.size.sm}
-            />
-          </label>
+          <Toggle
+            label={t('network.showPublicIp')}
+            description={t('network.displayInNetworkCard')}
+            checked={displayOptions.showPublicIp}
+            onChange={(checked: boolean): void =>
+              setDisplayOptions((prev) => ({
+                ...prev,
+                showPublicIp: checked,
+              }))
+            }
+            className="rounded-lg border border-surface-border bg-surface-base p-3"
+          />
         </div>
       </div>
       {/* VLAN Configuration */}

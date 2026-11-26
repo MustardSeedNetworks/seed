@@ -17,15 +17,11 @@ import {
   useDeviceIdentity,
   useSaveDeviceIdentity,
 } from '../../../hooks/useDeviceIdentity';
-import {
-  button as buttonTokens,
-  cn,
-  icon as iconTokens,
-  input as inputTokens,
-  layout,
-} from '../../../styles/theme';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
+import { button as buttonTokens, cn, icon as iconTokens, layout } from '../../../styles/theme';
 import type { SaveStatus } from '../../../types/settings';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Server } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
@@ -96,24 +92,27 @@ export function DeviceIdentitySettings() {
         <p className="body-small text-text-muted">{t('identity.description')}</p>
 
         {fields.map((field) => (
-          <label key={field.key} className="stack-xs" htmlFor={`device-identity-${field.key}`}>
-            <span className="body-small font-medium text-text-primary">{field.label}</span>
-            <input
-              id={`device-identity-${field.key}`}
-              data-testid={`device-identity-${field.key}`}
-              type="text"
-              maxLength={field.max}
-              value={draft[field.key]}
-              disabled={!canWrite}
-              placeholder={field.placeholder}
-              onChange={(e): void => {
-                const { value } = e.target;
-                setDraft((current) => ({ ...current, [field.key]: value }));
-              }}
-              className={cn(inputTokens.base, 'w-full')}
-            />
-            <span className="caption text-text-muted">{field.help}</span>
-          </label>
+          <FormField
+            key={field.key}
+            id={`device-identity-${field.key}`}
+            label={field.label}
+            hint={field.help}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                data-testid={`device-identity-${field.key}`}
+                maxLength={field.max}
+                value={draft[field.key]}
+                disabled={!canWrite}
+                placeholder={field.placeholder}
+                onChange={(e): void => {
+                  const { value } = e.target;
+                  setDraft((current) => ({ ...current, [field.key]: value }));
+                }}
+              />
+            )}
+          </FormField>
         ))}
 
         {save.isError ? (

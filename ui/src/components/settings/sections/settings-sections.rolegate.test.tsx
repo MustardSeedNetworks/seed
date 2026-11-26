@@ -78,7 +78,7 @@ async function openSection(header: RegExp): Promise<HTMLElement> {
   const button = await screen.findByRole('button', { name: header });
   await userEvent.click(button);
 
-  return button.closest('section') as HTMLElement;
+  return button.parentElement as HTMLElement;
 }
 
 beforeEach(() => {
@@ -112,6 +112,7 @@ describe.each(SECTIONS)('$name — viewer read-only', ({ header, render: renderS
     const controls = [
       ...within(section).queryAllByRole('textbox'),
       ...within(section).queryAllByRole('checkbox'),
+      ...within(section).queryAllByRole('switch'),
       ...within(section).queryAllByRole('combobox'),
       ...within(section).queryAllByRole('spinbutton'),
       // The header toggle is the one button outside the fieldset.
@@ -143,6 +144,7 @@ function writeControls(section: HTMLElement, reads: HTMLElement[]): HTMLElement[
   return [
     ...within(section).queryAllByRole('textbox'),
     ...within(section).queryAllByRole('checkbox'),
+    ...within(section).queryAllByRole('switch'),
     ...within(section).queryAllByRole('combobox'),
     ...within(section).queryAllByRole('spinbutton'),
     ...within(section).queryAllByRole('button'),

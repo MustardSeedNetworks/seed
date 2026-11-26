@@ -61,11 +61,11 @@ const ROUTES = [
 const WIDTHS = [1280, 1440];
 
 /**
- * 80px. Measured on main: 83px on every route with the old `text-2xl
- * sm:text-3xl` title and the 32px icon. stem and niac-go hold the same
- * ceiling after the same step, so a regression in any one repo fails here.
+ * 104px: the shared PageHeader with its breadcrumb row (the three title lines
+ * alone are 76px). stem, niac-go and trellis hold the same ceiling, so a
+ * regression in any one repo fails here.
  */
-const HEADER_CEILING = 80;
+const HEADER_CEILING = 104;
 
 /**
  * 96px. The footer was 192px on every route. One quiet line of legal and
@@ -103,11 +103,7 @@ test.describe('desktop density', () => {
           await settle(page, route);
 
           const measured = await page.evaluate(() => {
-            const title = document.querySelector('[data-testid="page-header-title"]');
-            let header: Element | null = title;
-            while (header && !header.classList.contains('animate-fade-in')) {
-              header = header.parentElement;
-            }
+            const header = document.querySelector('[data-testid="page-header"]');
             const footer = document.querySelector('[data-testid="app-footer"]');
 
             return {
@@ -116,6 +112,7 @@ test.describe('desktop density', () => {
             };
           });
 
+          expect(measured.header, 'page header is measured').toBeGreaterThan(0);
           expect(measured.header, 'page header height').toBeLessThanOrEqual(HEADER_CEILING);
           expect(measured.footer, 'footer height').toBeLessThanOrEqual(FOOTER_CEILING);
         });
@@ -129,6 +126,10 @@ test.describe('desktop density', () => {
             for (const element of Array.from(document.querySelectorAll('*'))) {
               const el = element as HTMLElement;
               if (el.clientWidth === 0 || el.scrollWidth - el.clientWidth <= 1) {
+                continue;
+              }
+              // A shared control's invisible touch-target pseudo-element, not clipped content.
+              if (el.hasAttribute('data-touch-target-overflow')) {
                 continue;
               }
               if (el.classList.contains('sr-only') || el.closest('[data-phone-width-exempt]')) {

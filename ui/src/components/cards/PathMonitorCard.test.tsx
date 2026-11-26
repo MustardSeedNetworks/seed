@@ -91,8 +91,9 @@ async function startMonitor(): Promise<void> {
 
 function hopRow(ttl: number): HTMLElement {
   const row = screen
-    .getAllByTestId('path-monitor-hop')
-    .find((r) => r.getAttribute('data-ttl') === String(ttl));
+    .getAllByTestId('path-monitor-hop-ttl')
+    .find((cell) => cell.getAttribute('data-ttl') === String(ttl))
+    ?.closest('tr');
   if (!row) {
     throw new Error(`no row for hop ${ttl}`);
   }
@@ -139,7 +140,7 @@ describe('PathMonitorCard', () => {
 
     act(() => frame(snapshot(1, [hop(1)])));
     expect(screen.getByTestId('path-monitor-rounds')).toHaveTextContent('1 round to 10.0.0.1');
-    expect(screen.getAllByTestId('path-monitor-hop')).toHaveLength(1);
+    expect(screen.getAllByTestId('path-monitor-hop-ttl')).toHaveLength(1);
 
     act(() => frame(snapshot(9, [hop(1), hop(2)], '192.0.2.9')));
     expect(screen.getByTestId('path-monitor-rounds')).toHaveTextContent('1 round to 10.0.0.1');
@@ -209,12 +210,12 @@ describe('PathMonitorCard', () => {
     expect(jobs.cancelJob).toHaveBeenCalledWith(JOB_ID);
     expect(screen.getByTestId('path-monitor')).toHaveAttribute('data-phase', 'stopping');
     // The table stays up while the stop is in flight.
-    expect(screen.getAllByTestId('path-monitor-hop')).toHaveLength(1);
+    expect(screen.getAllByTestId('path-monitor-hop-ttl')).toHaveLength(1);
 
     act(() => jobs.onJob(job('succeeded', { result: snapshot(3, [hop(1), hop(2)]) })));
     expect(screen.getByTestId('path-monitor')).toHaveAttribute('data-phase', 'stopped');
     expect(screen.getByTestId('path-monitor-rounds')).toHaveTextContent('3 rounds to 10.0.0.1');
-    expect(screen.getAllByTestId('path-monitor-hop')).toHaveLength(2);
+    expect(screen.getAllByTestId('path-monitor-hop-ttl')).toHaveLength(2);
     expect(screen.getByTestId('path-monitor-start')).toBeEnabled();
   });
 
@@ -254,7 +255,7 @@ describe('PathMonitorCard', () => {
     expect(screen.getByTestId('path-monitor-link-down')).toHaveTextContent(
       'Stopped because the link went down.',
     );
-    expect(screen.getAllByTestId('path-monitor-hop')).toHaveLength(1);
+    expect(screen.getAllByTestId('path-monitor-hop-ttl')).toHaveLength(1);
   });
 
   it('runs on a link that was already down when it started', async () => {

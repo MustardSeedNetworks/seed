@@ -58,11 +58,11 @@ describe('SetupWizard — setup token', () => {
     const user = userEvent.setup();
     renderWizard();
 
-    await user.type(screen.getByLabelText('Password'), PASSWORD);
-    await user.type(screen.getByLabelText('Confirm Password'), PASSWORD);
+    await user.type(screen.getByLabelText('Password*'), PASSWORD);
+    await user.type(screen.getByLabelText('Confirm Password*'), PASSWORD);
     await user.click(screen.getByRole('button', { name: 'Complete Setup' }));
 
-    expect(screen.getByLabelText('Setup token')).toBeInvalid();
+    expect(screen.getByLabelText('Setup token*')).toBeInvalid();
     expect(setupCompleteBodies()).toHaveLength(0);
   });
 
@@ -70,9 +70,9 @@ describe('SetupWizard — setup token', () => {
     const user = userEvent.setup();
     renderWizard();
 
-    await user.type(screen.getByLabelText('Setup token'), '  token-from-file  ');
-    await user.type(screen.getByLabelText('Password'), PASSWORD);
-    await user.type(screen.getByLabelText('Confirm Password'), PASSWORD);
+    await user.type(screen.getByLabelText('Setup token*'), '  token-from-file  ');
+    await user.type(screen.getByLabelText('Password*'), PASSWORD);
+    await user.type(screen.getByLabelText('Confirm Password*'), PASSWORD);
     await user.click(screen.getByRole('button', { name: 'Complete Setup' }));
 
     await waitFor(() => {

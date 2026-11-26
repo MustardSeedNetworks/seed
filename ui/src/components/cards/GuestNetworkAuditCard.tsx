@@ -13,20 +13,17 @@
 
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useGuestNetworkAudit } from '../../hooks/useGuestNetworkAudit';
-import {
-  button,
-  cn,
-  icon as iconTokens,
-  radius,
-  spacing,
-  status as statusColor,
-} from '../../styles/theme';
-import { Card, type Status } from '../ui/Card';
-import { AlertTriangle, CheckCircle, Shield } from '../ui/Icons';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { Card, type CardStatus } from '../../shared/Card';
+import { icon as iconTokens } from '../../styles/theme';
+import { Shield } from '../ui/Icons';
 
 export function GuestNetworkAuditCard(): JSX.Element | null {
   const { t } = useTranslation('cards');
+  const labelFor = useCardStatusLabel();
   const { settings, runAudit, report, running, error } = useGuestNetworkAudit();
 
   // Hide entirely when the feature is disabled - matches the pattern of
@@ -35,7 +32,7 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
     return null;
   }
 
-  const status: Status = (() => {
+  const status: CardStatus = (() => {
     if (running) {
       return 'loading';
     }
@@ -55,6 +52,8 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
       title={t('guestAudit.title')}
       icon={<Shield className={iconTokens.size.md} />}
       status={status}
+      statusLabel={labelFor(status)}
+      data-testid="card"
     >
       <div className="stack-sm">
         {!hasTargets ? (
@@ -62,53 +61,33 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
         ) : (
           <>
             <p className="body-small text-text-muted">{t('guestAudit.description')}</p>
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              loading={running}
               onClick={(): void => {
                 runAudit().catch(() => undefined);
               }}
-              disabled={running}
-              className={cn(
-                button.size.md,
-                'bg-brand-primary text-on-brand',
-                radius.md,
-                'font-medium hover:bg-brand-primary/90 disabled:control-disabled disabled:cursor-not-allowed',
-              )}
             >
               {running
                 ? t('guestAudit.running')
                 : t('guestAudit.runButton', { count: settings.targets.length })}
-            </button>
+            </Button>
 
             {error ? (
-              <div className={cn(spacing.pad.sm, statusColor.bg.errorSoft, radius.md)} role="alert">
-                <span className="body-small text-status-error">{error}</span>
-              </div>
+              <Alert tone="error" size="sm">
+                {error}
+              </Alert>
             ) : null}
 
             {report?.isolationFailed ? (
-              <div
-                className={cn(
-                  spacing.pad.sm,
-                  'bg-status-error/10 border border-status-error',
-                  radius.md,
-                  'stack-xs',
-                )}
-                role="alert"
-              >
-                <div className={cn('flex items-center', spacing.gap.compact)}>
-                  <AlertTriangle className={cn(iconTokens.size.sm, statusColor.text.error)} />
-                  <span className="body-small font-semibold text-status-error">
-                    {t('guestAudit.criticalAlert')}
-                  </span>
-                </div>
-                <p className="caption text-text-secondary">
+              <Alert tone="error" size="sm" title={t('guestAudit.criticalAlert')}>
+                <p>
                   {t('guestAudit.criticalDetail', {
                     count: report.reachableTargets,
                     total: report.totalTargets,
                   })}
                 </p>
-                <ul className="stack-xs caption">
+                <ul className="mt-1 space-y-1">
                   {report.results
                     .filter((r) => r.reachable)
                     .map((r) => (
@@ -122,25 +101,13 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
                       </li>
                     ))}
                 </ul>
-              </div>
+              </Alert>
             ) : null}
 
             {report && !report.isolationFailed ? (
-              <div
-                className={cn(
-                  spacing.pad.sm,
-                  'bg-status-success/10 border border-status-success',
-                  radius.md,
-                )}
-                role="status"
-              >
-                <div className={cn('flex items-center', spacing.gap.compact)}>
-                  <CheckCircle className={cn(iconTokens.size.sm, statusColor.text.success)} />
-                  <span className="body-small font-medium text-status-success">
-                    {t('guestAudit.passed', { total: report.totalTargets })}
-                  </span>
-                </div>
-              </div>
+              <Alert tone="success" size="sm">
+                {t('guestAudit.passed', { total: report.totalTargets })}
+              </Alert>
             ) : null}
           </>
         )}

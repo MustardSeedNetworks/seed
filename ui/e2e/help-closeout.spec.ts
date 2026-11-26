@@ -82,12 +82,7 @@ for (const width of [1440, 390]) {
           body: await page.screenshot({ animations: 'disabled' }),
           contentType: 'image/png',
         });
-      if (width === 390) await page.getByTestId('help-section-select').selectOption('glossary');
-      else
-        await page
-          .getByTestId('help-drawer')
-          .getByRole('button', { name: esHelp.sections.glossary, exact: true })
-          .click();
+      await page.getByTestId('help-section-select').selectOption('glossary');
       await page.getByTestId('help-drawer-close').click();
       await revealSidebar(page);
       await sidebarHelpButton(page).click();
@@ -298,15 +293,14 @@ test('viewer settings retain disabled controls and a reachable reason', async ({
   );
   await page.goto('/network');
   await sidebarSettingsButton(page).click();
-  await page.getByTestId('discovery-settings-section').click();
-  const fieldset = page
-    .getByTestId('discovery-settings-section')
-    .locator('fieldset[disabled]')
-    .first();
+  await page.getByRole('tab', { name: 'Discovery' }).click();
+  const section = page.getByTestId('discovery-settings-section');
+  await section.getByRole('button').first().click();
+  const fieldset = section.locator('fieldset[disabled]').first();
   const reason = fieldset.locator('legend button');
   await tabTo(page, reason);
   await expect(reason).toHaveAccessibleDescription(/read.only|viewer/i);
-  await expect(fieldset.locator('input').first()).toBeDisabled();
+  await expect(fieldset.locator('input, [role="switch"]').first()).toBeDisabled();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('tooltip')).toHaveCount(0);
   await expect(page.getByTestId('settings-drawer')).toBeVisible();
@@ -315,22 +309,22 @@ test('viewer settings retain disabled controls and a reachable reason', async ({
 for (const width of [1440, 390]) {
   test(`${width}px help content scrolls by keyboard and returns focus to the section navigation`, async ({
     page,
-    browserName,
   }) => {
     await page.setViewportSize({ width, height: 700 });
     await page.goto('/network');
     await page.getByTestId('page-header-help-button').click();
-    const back = page.getByTestId(width === 390 ? 'help-return-to-select' : 'help-return-to-toc');
-    // macOS WebKit uses Option+Tab to include native links in keyboard navigation.
-    const linkTab = browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
-    await tabTo(page, back, linkTab);
+    const back = page.getByTestId('help-return-to-select');
+    await tabTo(page, back);
     await expectFocused(back);
+    // The drawer body scrolls, not the content block inside it.
     const content = page.getByTestId('help-drawer-content');
     await page.keyboard.press('PageDown');
-    await expect.poll(() => content.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    await expect
+      .poll(() =>
+        content.evaluate((element) => element.closest('.overflow-y-auto')?.scrollTop ?? 0),
+      )
+      .toBeGreaterThan(0);
     await page.keyboard.press('Enter');
-    await expectFocused(
-      page.getByTestId(width === 390 ? 'help-section-select' : 'help-section-network'),
-    );
+    await expectFocused(page.getByTestId('help-section-select'));
   });
 }

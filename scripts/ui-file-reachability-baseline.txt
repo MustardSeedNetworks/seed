@@ -19,16 +19,13 @@ src/i18n/dnt.ts                                                      # do-not-tr
 # Components and helpers only a story or test mounts. Each is a surface the
 # app does not show: mount it where the UI needs it or delete it.
 src/components/settings/SettingsSectionHeader.tsx   # story only
-src/components/ui/Alert.tsx                         # story + i18n test only
 src/components/ui/Combobox.tsx                      # story only
 src/components/ui/DeviceSelector.tsx                # story + i18n test only
-src/components/ui/InputModal.tsx                    # story only
 src/components/ui/InterfaceSelector.tsx             # story + identity test only
 src/components/ui/LimitedFeature.tsx                # PlatformGates test only
 src/components/ui/ProfileSelector.tsx               # story only
 src/components/ui/Slider.tsx                        # story + tests only
 src/components/ui/Sparkline.tsx                     # story + identity test only
-src/components/ui/Tag.tsx                           # story + BetaBadge only
 src/components/ui/Toast.constants.tsx               # imported only by Toast.tsx
 src/components/ui/Toast.tsx                         # story + i18n test only; no ToastProvider in the app
 src/components/ui/toastContext.ts                   # imported only by Toast.tsx and useToast.ts
@@ -36,7 +33,6 @@ src/components/ui/useToast.ts                       # story + i18n test only
 src/hooks/useDiscoveredDevices.ts                   # imported only by DeviceSelector.tsx
 
 # Nothing imports these at all.
-src/components/ui/BetaBadge.tsx
 src/components/ui/TierGate.tsx
 src/styles/inputPresets.ts
 src/styles/tokens.ts

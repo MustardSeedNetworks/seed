@@ -23,7 +23,7 @@ import { skipSetupWizard } from './helpers/auth';
  *     (testid-based, deterministic).
  *
  * Surviving tests use:
- *   - `#card-title-gateway` (stable id from BaseCard)
+ *   - the Gateway card heading
  *   - `data-testid="gateway-ip"`, `gateway-status-badge`,
  *     `gateway-latency-{min,avg,max}` (added in this PR)
  *   - real-data regexes (IPv4 dotted-quad, "Nms" latency) — these
@@ -86,7 +86,9 @@ test.describe('Gateway', () => {
   });
 
   test('should display Gateway card', async ({ page }) => {
-    await expect(page.locator('#card-title-gateway')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('heading', { name: 'Gateway', exact: true })).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('should show gateway IP address', async ({ page }) => {

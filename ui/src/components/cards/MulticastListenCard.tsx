@@ -15,17 +15,19 @@ import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useRole } from '../../contexts/RoleContext';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import {
   type ListenResult,
   type ListenState,
   useMulticastListen,
 } from '../../hooks/useMulticastListen';
 import { formatBytes } from '../../lib/format';
-import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
-import { Button } from '../ui/Button';
-import { Card, type Status } from '../ui/Card';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { Card } from '../../shared/Card';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
 import { Tv } from '../ui/Icons';
-import { Input } from '../ui/Input';
 import { SummaryTable } from './SummaryTable';
 
 // The job's bounds (internal/diagnostics/multicast): ten seconds catches both
@@ -41,7 +43,7 @@ function parseWhole(raw: string, max: number): number | null {
   return raw.trim() !== '' && Number.isInteger(value) && value >= 1 && value <= max ? value : null;
 }
 
-function cardStatus(state: ListenState): Status {
+function cardStatus(state: ListenState): CardStatus {
   switch (state.phase) {
     case 'starting':
     case 'running':
@@ -66,6 +68,8 @@ export function MulticastListenCard({
   const { t } = useTranslation('cards');
   const { canWrite } = useRole();
   const { state, start, stop } = useMulticastListen();
+  const statusLabel = useCardStatusLabel();
+  const status = cardStatus(state);
 
   // null until the operator edits the field, so a current interface that
   // loads after mount still fills it.
@@ -96,13 +100,14 @@ export function MulticastListenCard({
 
   return (
     <Card
+      data-testid="card"
       title={t('multicastListen.title')}
       icon={<Tv className="w-4 h-4" />}
-      status={cardStatus(state)}
-      ariaLabel={t('multicastListen.title')}
-      // A sender table needs more than a quarter of a 4-up grid; see
-      // BonjourCard for why max-w-none rides with the span.
-      className="sm:col-span-2 max-w-none"
+      status={status}
+      statusLabel={statusLabel(status)}
+      aria-label={t('multicastListen.title')}
+      // A sender table needs more than a quarter of a 4-up grid.
+      className="sm:col-span-2"
     >
       <div className="stack-sm" data-testid="multicast-listen" data-phase={state.phase}>
         <p className="caption text-text-muted">{t('multicastListen.description')}</p>
@@ -116,61 +121,79 @@ export function MulticastListenCard({
             }}
           >
             <div className="grid gap-compact sm:grid-cols-2">
-              <Input
-                id="multicast-listen-group"
-                label={t('multicastListen.group')}
-                value={group}
-                placeholder="239.1.1.1"
-                onChange={(event) => setGroup(event.target.value)}
-                disabled={busy}
-                data-testid="multicast-listen-group"
-              />
-              <Input
+              <FormField id="multicast-listen-group" label={t('multicastListen.group')}>
+                {(control) => (
+                  <Input
+                    {...control}
+                    value={group}
+                    placeholder="239.1.1.1"
+                    onChange={(event) => setGroup(event.target.value)}
+                    disabled={busy}
+                    data-testid="multicast-listen-group"
+                  />
+                )}
+              </FormField>
+              <FormField
                 id="multicast-listen-port"
                 label={t('multicastListen.port')}
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={MAX_PORT}
-                step={1}
-                value={portRaw}
-                placeholder="5000"
-                onChange={(event) => setPortRaw(event.target.value)}
-                disabled={busy}
                 error={
                   portRaw !== '' && port === null
                     ? t('multicastListen.portInvalid', { max: MAX_PORT })
                     : undefined
                 }
-                data-testid="multicast-listen-port"
-              />
-              <Input
-                id="multicast-listen-interface"
-                label={t('multicastListen.interface')}
-                value={iface ?? defaultInterface}
-                placeholder={t('multicastListen.interfacePlaceholder')}
-                onChange={(event) => setIface(event.target.value)}
-                disabled={busy}
-                data-testid="multicast-listen-interface"
-              />
-              <Input
+              >
+                {(control) => (
+                  <Input
+                    {...control}
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={MAX_PORT}
+                    step={1}
+                    value={portRaw}
+                    placeholder="5000"
+                    onChange={(event) => setPortRaw(event.target.value)}
+                    disabled={busy}
+                    data-testid="multicast-listen-port"
+                  />
+                )}
+              </FormField>
+              <FormField id="multicast-listen-interface" label={t('multicastListen.interface')}>
+                {(control) => (
+                  <Input
+                    {...control}
+                    value={iface ?? defaultInterface}
+                    placeholder={t('multicastListen.interfacePlaceholder')}
+                    onChange={(event) => setIface(event.target.value)}
+                    disabled={busy}
+                    data-testid="multicast-listen-interface"
+                  />
+                )}
+              </FormField>
+              <FormField
                 id="multicast-listen-duration"
                 label={t('multicastListen.duration')}
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={MAX_SECONDS}
-                step={1}
-                value={secondsRaw}
-                onChange={(event) => setSecondsRaw(event.target.value)}
-                disabled={busy}
                 error={
                   seconds === null
                     ? t('multicastListen.durationInvalid', { max: MAX_SECONDS })
                     : undefined
                 }
-                data-testid="multicast-listen-duration"
-              />
+              >
+                {(control) => (
+                  <Input
+                    {...control}
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={MAX_SECONDS}
+                    step={1}
+                    value={secondsRaw}
+                    onChange={(event) => setSecondsRaw(event.target.value)}
+                    disabled={busy}
+                    data-testid="multicast-listen-duration"
+                  />
+                )}
+              </FormField>
             </div>
 
             {busy ? (
@@ -184,7 +207,7 @@ export function MulticastListenCard({
             ) : (
               <Button
                 type="submit"
-                variant="solid"
+                variant="primary"
                 size="sm"
                 disabled={!ready}
                 data-testid="multicast-listen-start"
@@ -200,21 +223,17 @@ export function MulticastListenCard({
         )}
 
         {state.phase === 'failed' ? (
-          <div
-            className={cn(spacing.pad.sm, statusColor.bg.errorSoft, radius.md, 'stack-xs')}
-            role="alert"
-            data-testid="multicast-listen-failed"
-          >
-            <p className="body-small text-status-error-strong">{t('multicastListen.failed')}</p>
+          <Alert tone="error" size="sm" data-testid="multicast-listen-failed">
+            <p className="font-medium">{t('multicastListen.failed')}</p>
             {state.error ? (
               <p
-                className="caption font-mono text-text-secondary break-words"
+                className="figure mt-1 break-words text-text-secondary"
                 data-testid="multicast-listen-error-detail"
               >
                 {state.error}
               </p>
             ) : null}
-          </div>
+          </Alert>
         ) : null}
 
         {state.phase === 'finished' ? <ListenSummary result={state.result} /> : null}
@@ -248,8 +267,7 @@ function ListenRunning({
       <div className="flex items-center gap-compact">
         <Button
           type="button"
-          variant="outline"
-          tone="red"
+          variant="destructive"
           size="sm"
           onClick={onStop}
           disabled={state.phase !== 'running'}
@@ -293,9 +311,9 @@ function ListenSummary({ result }: { result: ListenResult }): JSX.Element {
           testId="multicast-listen-sources"
           caption={t('multicastListen.sourcesCaption')}
           columns={[
-            { label: t('multicastListen.colSender'), width: 'w-[50%]', mono: true },
-            { label: t('multicastListen.colPackets'), width: 'w-[25%]' },
-            { label: t('multicastListen.colBytes'), width: 'w-[25%]' },
+            { label: t('multicastListen.colSender'), mono: true },
+            { label: t('multicastListen.colPackets') },
+            { label: t('multicastListen.colBytes') },
           ]}
           rows={result.sources.map((source) => ({
             key: source.address,

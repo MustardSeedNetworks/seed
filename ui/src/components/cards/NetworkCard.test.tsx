@@ -63,7 +63,7 @@ describe('NetworkCard', () => {
         'false',
       );
       for (const label of ['Interface', 'MAC', 'Vendor', 'Mode', 'DHCP Server', 'Lease']) {
-        expect(card.queryByText(label)).not.toBeInTheDocument();
+        expect(card.getByText(label)).not.toBeVisible();
       }
     });
 
@@ -88,7 +88,7 @@ describe('NetworkCard', () => {
       await userEvent.click(toggle);
 
       expect(toggle).toHaveAttribute('aria-expanded', 'false');
-      expect(card.queryByText('Example Networks')).not.toBeInTheDocument();
+      expect(card.getByText('Example Networks')).not.toBeVisible();
     });
 
     it('lists only the facts the response carries', async () => {
@@ -127,9 +127,9 @@ describe('NetworkCard', () => {
     );
     const card = within(container);
 
-    expect(card.queryByText('Total')).not.toBeInTheDocument();
+    expect(card.getByText('Total')).not.toBeVisible();
     await userEvent.click(card.getByRole('button', { name: 'DHCP Timing' }));
-    expect(card.getByText('Total')).toBeInTheDocument();
+    expect(card.getByText('Total')).toBeVisible();
   });
 
   // The fallback asked for `network.noIp`; the key is `network.noIP`, so an

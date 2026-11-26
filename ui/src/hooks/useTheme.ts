@@ -5,7 +5,10 @@
  *
  * Features:
  * - Light and dark theme modes
- * - Automatic system theme detection
+ * - Automatic system theme detection (the default: with nothing stored, the
+ *   theme follows the OS)
+ * - One store: the Settings control and the rail toggle read and write the
+ *   same state, so neither can show a stale choice
  * - Persistent theme storage in localStorage
  * - Automatic system theme change detection
  * - Theme toggling functionality
@@ -33,10 +36,10 @@
  * ```
  */
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 
 /** Theme mode options */
-type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark' | 'system';
 
 /** localStorage key for theme persistence */
 const STORAGE_KEY = 'seed-theme';
@@ -53,35 +56,72 @@ function getSystemTheme(): 'light' | 'dark' {
   return 'dark'; // Default to dark if unable to detect
 }
 
-/**
- * Applies the theme to the document root element.
- * Resolves 'system' theme to actual light/dark preference.
- *
- * @param theme - Theme to apply ('light', 'dark', or 'system')
- */
-function applyTheme(theme: Theme): void {
-  const root: HTMLElement = document.documentElement;
-  const effectiveTheme: 'light' | 'dark' = theme === 'system' ? getSystemTheme() : theme;
+function resolve(theme: Theme): 'light' | 'dark' {
+  return theme === 'system' ? getSystemTheme() : theme;
+}
 
-  // Tailwind dark mode uses the 'dark' class on root element
-  if (effectiveTheme === 'dark') {
-    root.classList.add('dark');
-  } else {
-    root.classList.remove('dark');
-  }
+/** Applies the resolved theme to the document root (Tailwind's 'dark' class). */
+function applyTheme(theme: Theme): void {
+  document.documentElement.classList.toggle('dark', resolve(theme) === 'dark');
 }
 
 /**
  * Reads the persisted theme. Anything unreadable (storage blocked, or a value
- * this build never wrote) falls back to dark, the default for a first visit.
+ * this build never wrote) falls back to system, the default for a first visit.
  */
 function readStoredTheme(): Theme {
   try {
     const stored: string | null = localStorage.getItem(STORAGE_KEY);
-    return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'dark';
+    return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
   } catch {
-    return 'dark';
+    return 'system';
   }
+}
+
+interface ThemeSnapshot {
+  theme: Theme;
+  effectiveTheme: 'light' | 'dark';
+}
+
+let snapshot: ThemeSnapshot | undefined;
+const listeners = new Set<() => void>();
+let systemQuery: MediaQueryList | undefined;
+
+function current(): ThemeSnapshot {
+  if (!snapshot) {
+    const theme = readStoredTheme();
+    snapshot = { theme, effectiveTheme: resolve(theme) };
+  }
+  return snapshot;
+}
+
+function commit(theme: Theme): void {
+  snapshot = { theme, effectiveTheme: resolve(theme) };
+  applyTheme(theme);
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+function onSystemChange(): void {
+  if (current().theme === 'system') {
+    commit('system');
+  }
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  if (listeners.size === 1 && typeof window !== 'undefined' && window.matchMedia) {
+    systemQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    systemQuery.addEventListener('change', onSystemChange);
+  }
+  return () => {
+    listeners.delete(listener);
+    if (listeners.size === 0) {
+      systemQuery?.removeEventListener('change', onSystemChange);
+      systemQuery = undefined;
+    }
+  };
 }
 
 /**
@@ -91,14 +131,25 @@ function readStoredTheme(): Theme {
  * script, and the markup carries no theme class of its own.
  */
 export function initThemeFromStorage(): void {
-  applyTheme(readStoredTheme());
+  snapshot = undefined;
+  commit(readStoredTheme());
+}
+
+function setTheme(newTheme: Theme): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, newTheme);
+  } catch {
+    // Storage blocked: the choice still applies for this page's lifetime.
+  }
+  commit(newTheme);
+}
+
+function toggleTheme(): void {
+  setTheme(current().effectiveTheme === 'dark' ? 'light' : 'dark');
 }
 
 /**
- * Custom hook for managing application theme.
- *
- * Handles theme persistence, system theme detection, and automatic updates
- * when system theme changes.
+ * Theme state and controls. Every caller shares one store.
  *
  * @returns Theme state and control functions
  */
@@ -109,44 +160,6 @@ export function useTheme(): {
   toggleTheme: () => void;
   isDark: boolean;
 } {
-  const [theme, setThemeState] = useState<Theme>(readStoredTheme);
-
-  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(() =>
-    theme === 'system' ? getSystemTheme() : theme,
-  );
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-    localStorage.setItem(STORAGE_KEY, newTheme);
-    applyTheme(newTheme);
-    setEffectiveTheme(newTheme === 'system' ? getSystemTheme() : newTheme);
-  };
-
-  const toggleTheme = () => {
-    const newTheme = effectiveTheme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-  };
-
-  // Apply theme on mount and listen for system theme changes
-  useEffect(() => {
-    applyTheme(theme);
-
-    if (theme === 'system') {
-      const mediaQuery: MediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
-      const handler = (e: MediaQueryListEvent): void => {
-        setEffectiveTheme(e.matches ? 'dark' : 'light');
-        applyTheme('system');
-      };
-      mediaQuery.addEventListener('change', handler);
-      return (): void => mediaQuery.removeEventListener('change', handler);
-    }
-  }, [theme]);
-
-  return {
-    theme,
-    effectiveTheme,
-    setTheme,
-    toggleTheme,
-    isDark: effectiveTheme === 'dark',
-  };
+  const { theme, effectiveTheme } = useSyncExternalStore(subscribe, current, current);
+  return { theme, effectiveTheme, setTheme, toggleTheme, isDark: effectiveTheme === 'dark' };
 }

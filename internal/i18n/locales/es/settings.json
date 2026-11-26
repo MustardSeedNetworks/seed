@@ -189,9 +189,7 @@
     "enableServer": "Habilitar servidor iperf3",
     "serverPort": "Puerto del servidor",
     "serverAutoStart": "Cuando está habilitado, inicia el servidor iperf3 automáticamente",
-    "autoRunOnLinkDesc": "Volver a ejecutar las pruebas de rendimiento cuando cambie el estado del enlace.",
-    "directionSelection": "Selección de dirección",
-    "protocolSelection": "Selección de protocolo"
+    "autoRunOnLinkDesc": "Volver a ejecutar las pruebas de rendimiento cuando cambie el estado del enlace."
   },
   "health": {
     "title": "Verificaciones de salud",
@@ -246,12 +244,22 @@
     "modbusDescription": "Probar conectividad de dispositivos industriales Modbus",
     "unitId": "Unit ID",
     "testRegister": "Registro de prueba",
+    "httpUrl": "URL del endpoint",
+    "calledAe": "Título AE llamado",
+    "fhirBaseUrl": "URL base de FHIR",
+    "opcuaEndpointUrl": "URL del endpoint OPC-UA",
+    "streamUrl": "URL de la transmisión",
+    "ltiLaunchUrl": "URL de inicio LTI",
     "fhirAuthNone": "Ninguna",
     "fhirAuthBasic": "Basic",
     "fhirAuthOauth2": "OAuth2",
     "opcuaSecurityNone": "Ninguna",
     "opcuaSecuritySign": "Firmar",
-    "opcuaSecuritySignAndEncrypt": "Firmar+Cifrar"
+    "opcuaSecuritySignAndEncrypt": "Firmar+Cifrar",
+    "opcuaSecurityMode": "Modo de seguridad",
+    "fhirAuthType": "Autenticación",
+    "sqlDriver": "Controlador de base de datos",
+    "fileShareProtocol": "Protocolo de recurso compartido"
   },
   "dns": {
     "title": "DNS",
@@ -518,13 +526,14 @@
     "revoke": "Revocar",
     "statusActive": "activo",
     "statusRevoked": "revocado",
-    "confirmRevoke": "¿Revocar el token «{{name}}»? Cualquier script que lo use dejará de funcionar de inmediato.",
+    "confirmRevoke": "Cualquier script que lo use dejará de funcionar de inmediato.",
     "mintNeedsOperator": "Solo lectura: se requiere el rol de operador para crear tokens de API.",
     "mintNeedsPro": "La creación de tokens de API requiere el nivel Pro.",
     "revokeNeedsOperator": "Solo lectura: se requiere el rol de operador para revocar tokens.",
     "loadFailed": "No se pudieron cargar los tokens de API.",
     "mintFailed": "No se pudo crear el token.",
-    "revokeFailed": "No se pudo revocar el token."
+    "revokeFailed": "No se pudo revocar el token.",
+    "confirmRevokeTitle": "¿Revocar el token «{{name}}»?"
   },
   "guestAudit": {
     "title": "Auditoría de red de invitados",
@@ -628,5 +637,16 @@
     "locationHelp": "Dónde está instalado el equipo. Hasta 128 caracteres.",
     "locationPlaceholder": "Oficina principal, IDF 3B, puerto 21",
     "save": "Guardar identidad"
+  },
+  "tabs": {
+    "label": "Secciones de ajustes",
+    "general": "General",
+    "network": "Red",
+    "tests": "Pruebas",
+    "discovery": "Descubrimiento",
+    "alerts": "Alertas",
+    "access": "Acceso",
+    "about": "Acerca de",
+    "profiles": "Perfiles"
   }
 }

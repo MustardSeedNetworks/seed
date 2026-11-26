@@ -273,7 +273,7 @@ async function openSection(container: HTMLElement): Promise<HTMLElement> {
   expect(button).not.toBeNull();
   await userEvent.click(button as HTMLButtonElement);
 
-  return (button as HTMLButtonElement).closest('section') as HTMLElement;
+  return (button as HTMLButtonElement).parentElement as HTMLElement;
 }
 
 beforeEach(() => {

@@ -41,8 +41,8 @@ test('setup ends by asking the EoX feed question, answered off by default', asyn
 
   await page.goto('/');
   await page.getByLabel('Setup token').fill('fresh-install-token');
-  await page.getByLabel('Password', { exact: true }).fill(TEST_CREDENTIALS.password);
-  await page.getByLabel('Confirm Password').fill(TEST_CREDENTIALS.password);
+  await page.getByLabel(/^Password\*?$/).fill(TEST_CREDENTIALS.password);
+  await page.getByLabel(/^Confirm Password\*?$/).fill(TEST_CREDENTIALS.password);
   await page.getByRole('button', { name: 'Complete Setup' }).click();
   await page.getByRole('button', { name: 'Skip for now' }).click();
 

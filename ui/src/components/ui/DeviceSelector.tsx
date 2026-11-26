@@ -31,6 +31,8 @@ import {
   useDiscoveredDevices,
 } from '../../hooks/useDiscoveredDevices';
 import { accessibleNameIncluding } from '../../lib/accessibleName';
+import { Input } from '../../shared/Input';
+import { SearchInput } from '../../shared/SearchInput';
 import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
 import {
   ChevronDown,
@@ -353,30 +355,14 @@ export function DeviceSelector({
           {/* Search box */}
           {!manualEntry && (
             <div className={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
-              <div className="relative">
-                <Search
-                  className={cn(
-                    iconTokens.size.sm,
-                    'absolute left-2 top-1/2 -translate-y-1/2 text-text-muted',
-                  )}
-                />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    setSearchTerm(e.target.value)
-                  }
-                  placeholder={t('device.search')}
-                  className={cn(
-                    'w-full pl-8 pr-3 py-compact-md',
-                    'body-small text-text-primary placeholder-text-muted',
-                    'bg-surface-base border border-surface-border',
-                    radius.md,
-                    'focus:outline-none focus:ring-2 focus:ring-brand-primary',
-                  )}
-                />
-              </div>
+              <SearchInput
+                ref={searchInputRef}
+                value={searchTerm}
+                onValueChange={setSearchTerm}
+                label={t('device.search')}
+                clearLabel={t('device.clearSearch')}
+                placeholder={t('device.search')}
+              />
             </div>
           )}
 
@@ -386,9 +372,9 @@ export function DeviceSelector({
               <div className="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
                 {t('device.manualEntry')}
               </div>
-              <input
+              <Input
                 ref={manualInputRef}
-                type="text"
+                aria-label={t('device.manualEntry')}
                 placeholder="192.168.1.1"
                 defaultValue={value}
                 onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -396,13 +382,6 @@ export function DeviceSelector({
                     submitManualIp(e.currentTarget.value);
                   }
                 }}
-                className={cn(
-                  'w-full px-3 py-compact-md',
-                  'body-small text-text-primary placeholder-text-muted',
-                  'bg-surface-base border border-surface-border',
-                  radius.md,
-                  'focus:outline-none focus:ring-2 focus:ring-brand-primary',
-                )}
               />
               <div className="flex gap-compact mt-inline">
                 <button

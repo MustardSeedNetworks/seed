@@ -43,7 +43,7 @@ test('an operator groups a polling target and the membership round-trips', async
 
     const dialog = page.getByRole('dialog', { name: 'Add device group' });
     await dialog.getByTestId('group-name').fill(groupName);
-    await dialog.getByTestId(`group-member-${targetId}`).check();
+    await dialog.getByRole('checkbox', { name: `Add ${targetName} to the group` }).check();
     const saved = page.waitForResponse(
       (r) => r.request().method() === 'POST' && r.url().endsWith('/api/v1/device-groups'),
     );
@@ -57,18 +57,22 @@ test('an operator groups a polling target and the membership round-trips', async
     await row.click();
     await expect(page.getByTestId(`group-summary-member-${targetId}`)).toContainText(targetName);
     // A disabled target is not polled, so it is unknown, never healthy.
-    await expect(page.getByTestId(`group-summary-member-${targetId}`)).toHaveAttribute(
-      'data-state',
-      'unknown',
-    );
+    await expect(
+      page
+        .getByTestId(`group-summary-member-${targetId}`)
+        .locator('xpath=ancestor::tr')
+        .locator('[data-tone]'),
+    ).toHaveAttribute('data-tone', 'unknown');
 
     await page.getByTestId('group-edit').click();
     const edit = page.getByRole('dialog', { name: 'Edit device group' });
-    await expect(edit.getByTestId(`group-member-${targetId}`)).toBeChecked();
+    await expect(
+      edit.getByRole('checkbox', { name: `Add ${targetName} to the group` }),
+    ).toBeChecked();
     await edit.getByRole('button', { name: 'Cancel' }).click();
 
-    page.once('dialog', (confirm) => void confirm.accept());
     await page.getByTestId('group-delete').click();
+    await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Delete' }).click();
     await expect(row).toBeHidden();
     await page.reload();
     await expect(page.getByRole('button', { name: new RegExp(groupName) })).toBeHidden();

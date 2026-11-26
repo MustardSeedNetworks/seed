@@ -3,7 +3,10 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { logger } from '../../../lib/logger';
-import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { Toggle } from '../../../shared/Toggle';
+import { Tooltip } from '../../../shared/Tooltip';
+import { icon as iconTokens, layout } from '../../../styles/theme';
 import type { DiscoveryServiceStatusResponse } from '../../../types/generated/discovery-service-status-response';
 import type {
   CardSettings,
@@ -12,9 +15,7 @@ import type {
   SnmpSettings as SnmpSettingsType,
   SubnetConfig,
 } from '../../../types/settings';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Info, ScanSearch } from '../../ui/Icons';
-import { Tooltip } from '../../ui/Tooltip';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { DiscoveryCustomOptions } from './discovery/DiscoveryCustomOptions';
 import { DiscoveryServiceStatus } from './discovery/DiscoveryServiceStatus';
@@ -142,64 +143,34 @@ export function DiscoverySettings({
               ) : null}
               {/* Card Visibility & FAB Controls */}
               <div className="stack-sm">
-                <label
-                  className={cn(
-                    layout.flex.between,
-                    spacing.pad.sm,
-                    'bg-surface-base',
-                    radius.default,
-                    'border border-surface-border',
-                  )}
-                >
-                  <div>
-                    <span className="body-small text-text-primary font-medium">
-                      {t('common.showCard')}
-                    </span>
-                    <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={cardSettings.networkDiscovery.enabled}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      updateCardSettings({
-                        networkDiscovery: {
-                          ...cardSettings.networkDiscovery,
-                          enabled: e.target.checked,
-                        },
-                      })
-                    }
-                    className={iconTokens.size.sm}
-                  />
-                </label>
-                <label
-                  className={cn(
-                    layout.flex.between,
-                    spacing.pad.sm,
-                    'bg-surface-base',
-                    radius.default,
-                    'border border-surface-border',
-                  )}
-                >
-                  <div>
-                    <span className="body-small text-text-primary font-medium">
-                      {t('common.runOnFab')}
-                    </span>
-                    <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={cardSettings.networkDiscovery.autoRunOnLink}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      updateCardSettings({
-                        networkDiscovery: {
-                          ...cardSettings.networkDiscovery,
-                          autoRunOnLink: e.target.checked,
-                        },
-                      })
-                    }
-                    className={iconTokens.size.sm}
-                  />
-                </label>
+                <Toggle
+                  label={t('common.showCard')}
+                  description={t('common.showCardDesc')}
+                  checked={cardSettings.networkDiscovery.enabled}
+                  onChange={(checked: boolean): void =>
+                    updateCardSettings({
+                      networkDiscovery: {
+                        ...cardSettings.networkDiscovery,
+                        enabled: checked,
+                      },
+                    })
+                  }
+                  className="rounded-lg border border-surface-border bg-surface-base p-3"
+                />
+                <Toggle
+                  label={t('common.runOnFab')}
+                  description={t('common.runOnFabDesc')}
+                  checked={cardSettings.networkDiscovery.autoRunOnLink}
+                  onChange={(checked: boolean): void =>
+                    updateCardSettings({
+                      networkDiscovery: {
+                        ...cardSettings.networkDiscovery,
+                        autoRunOnLink: checked,
+                      },
+                    })
+                  }
+                  className="rounded-lg border border-surface-border bg-surface-base p-3"
+                />
               </div>
 
               {/* Enable/Auto-scan Toggles */}

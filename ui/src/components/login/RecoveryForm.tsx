@@ -12,17 +12,9 @@ import { useEffect, useState } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { RecoveryCompleteSchema } from '../../schemas/auth';
-import {
-  alert,
-  button,
-  cn,
-  icon,
-  input,
-  layout,
-  radius,
-  spacing,
-  status as statusColor,
-} from '../../styles/theme';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
+import { alert, button, cn, icon, layout, radius, spacing } from '../../styles/theme';
 
 // API base URL - configurable via environment variable
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';
@@ -212,153 +204,125 @@ export function RecoveryForm({
           )}
         >
           {/* Token Input */}
-          <div>
-            <label
-              htmlFor="recovery-token"
-              className={cn('label block', spacing.margin.bottom.inline)}
-            >
-              {t('recovery.tokenLabel')}
-            </label>
-            <div className="relative">
-              <KeyRound
-                className={cn(
-                  icon.size.sm,
-                  'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted',
-                )}
-              />
-              <input
-                id="recovery-token"
-                type="text"
-                required={true}
-                {...register('token')}
-                className={cn(
-                  'w-full pl-10',
-                  input.size.md,
-                  radius.md,
-                  'border border-surface-border bg-surface-base text-text-primary',
-                  'focus:outline-none focus:border-brand-primary font-mono',
-                )}
-                placeholder={t('recovery.tokenPlaceholder')}
-                autoComplete="off"
-                spellCheck={false}
-              />
-            </div>
-            {errors.token ? (
-              <p className="caption mt-tight text-status-error">{errors.token.message}</p>
-            ) : null}
-          </div>
+          <FormField
+            id="recovery-token"
+            label={t('recovery.tokenLabel')}
+            required
+            error={errors.token?.message}
+            size="lg"
+          >
+            {(control) => (
+              <div className="relative">
+                <KeyRound
+                  className={cn(
+                    icon.size.sm,
+                    'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted',
+                  )}
+                />
+                <Input
+                  {...control}
+                  type="text"
+                  required={true}
+                  {...register('token')}
+                  className="pl-10 font-mono"
+                  placeholder={t('recovery.tokenPlaceholder')}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </div>
+            )}
+          </FormField>
 
           {/* New Password Input */}
-          <div>
-            <label
-              htmlFor="recovery-password"
-              className={cn('label block', spacing.margin.bottom.inline)}
-            >
-              {t('recovery.newPasswordLabel')}
-            </label>
-            <div className="relative">
-              <Lock
-                className={cn(
-                  icon.size.sm,
-                  'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted',
-                )}
-              />
-              <input
-                id="recovery-password"
-                type={showPassword ? 'text' : 'password'}
-                required={true}
-                {...register('password')}
-                className={cn(
-                  'w-full pl-10 pr-icon',
-                  input.size.md,
-                  radius.md,
-                  'border bg-surface-base text-text-primary',
-                  errors.password ? statusColor.border.error : 'border-surface-border',
-                  'focus:outline-none focus:border-brand-primary',
-                )}
-                placeholder="••••••••••••"
-              />
-              <button
-                type="button"
-                onClick={(): void => setShowPassword(!showPassword)}
-                className={cn(
-                  'absolute right-3 top-1/2 -translate-y-1/2 text-text-muted',
-                  'hover:text-text-primary focus:outline-none',
-                )}
-                aria-label={showPassword ? t('buttons.hidePassword') : t('buttons.showPassword')}
-              >
-                {showPassword ? (
-                  <EyeOff className={icon.size.sm} />
-                ) : (
-                  <Eye className={icon.size.sm} />
-                )}
-              </button>
-            </div>
-            {errors.password ? (
-              <p className="caption mt-tight text-status-error">{errors.password.message}</p>
-            ) : (
-              <p className="caption mt-tight text-text-muted">
-                {t('recovery.passwordRequirement', {
-                  min: MIN_PASSWORD_LENGTH,
-                })}
-              </p>
+          <FormField
+            id="recovery-password"
+            label={t('recovery.newPasswordLabel')}
+            required
+            size="lg"
+            {...(errors.password
+              ? { error: errors.password.message }
+              : { hint: t('recovery.passwordRequirement', { min: MIN_PASSWORD_LENGTH }) })}
+          >
+            {(control) => (
+              <div className="relative">
+                <Lock
+                  className={cn(
+                    icon.size.sm,
+                    'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted',
+                  )}
+                />
+                <Input
+                  {...control}
+                  type={showPassword ? 'text' : 'password'}
+                  required={true}
+                  {...register('password')}
+                  className="pl-10 pr-10"
+                  placeholder="••••••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={(): void => setShowPassword(!showPassword)}
+                  className={cn(
+                    'absolute right-3 top-1/2 -translate-y-1/2 text-text-muted',
+                    'hover:text-text-primary focus:outline-none',
+                  )}
+                  aria-label={showPassword ? t('buttons.hidePassword') : t('buttons.showPassword')}
+                >
+                  {showPassword ? (
+                    <EyeOff className={icon.size.sm} />
+                  ) : (
+                    <Eye className={icon.size.sm} />
+                  )}
+                </button>
+              </div>
             )}
-          </div>
+          </FormField>
 
           {/* Confirm Password Input */}
-          <div>
-            <label
-              htmlFor="recovery-confirm-password"
-              className={cn('label block', spacing.margin.bottom.inline)}
-            >
-              {t('recovery.confirmPasswordLabel')}
-            </label>
-            <div className="relative">
-              <Lock
-                className={cn(
-                  icon.size.sm,
-                  'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted',
-                )}
-              />
-              <input
-                id="recovery-confirm-password"
-                type={showConfirmPassword ? 'text' : 'password'}
-                required={true}
-                {...register('confirmPassword')}
-                className={cn(
-                  'w-full pl-10 pr-icon',
-                  input.size.md,
-                  radius.md,
-                  'border bg-surface-base text-text-primary',
-                  errors.confirmPassword || crossFieldError
-                    ? statusColor.border.error
-                    : 'border-surface-border',
-                  'focus:outline-none focus:border-brand-primary',
-                )}
-                placeholder="••••••••••••"
-              />
-              <button
-                type="button"
-                onClick={(): void => setShowConfirmPassword(!showConfirmPassword)}
-                className={cn(
-                  'absolute right-3 top-1/2 -translate-y-1/2 text-text-muted',
-                  'hover:text-text-primary focus:outline-none',
-                )}
-                aria-label={
-                  showConfirmPassword ? t('buttons.hidePassword') : t('buttons.showPassword')
-                }
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className={icon.size.sm} />
-                ) : (
-                  <Eye className={icon.size.sm} />
-                )}
-              </button>
-            </div>
-            {errors.confirmPassword ? (
-              <p className="caption mt-tight text-status-error">{errors.confirmPassword.message}</p>
-            ) : null}
-          </div>
+          <FormField
+            id="recovery-confirm-password"
+            label={t('recovery.confirmPasswordLabel')}
+            required
+            error={errors.confirmPassword?.message}
+            size="lg"
+          >
+            {(control) => (
+              <div className="relative">
+                <Lock
+                  className={cn(
+                    icon.size.sm,
+                    'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted',
+                  )}
+                />
+                <Input
+                  {...control}
+                  aria-invalid={crossFieldError ? true : control['aria-invalid']}
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  required={true}
+                  {...register('confirmPassword')}
+                  className="pl-10 pr-10"
+                  placeholder="••••••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={(): void => setShowConfirmPassword(!showConfirmPassword)}
+                  className={cn(
+                    'absolute right-3 top-1/2 -translate-y-1/2 text-text-muted',
+                    'hover:text-text-primary focus:outline-none',
+                  )}
+                  aria-label={
+                    showConfirmPassword ? t('buttons.hidePassword') : t('buttons.showPassword')
+                  }
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className={icon.size.sm} />
+                  ) : (
+                    <Eye className={icon.size.sm} />
+                  )}
+                </button>
+              </div>
+            )}
+          </FormField>
 
           {/* Cross-field error (passwords don't match) */}
           {crossFieldError ? (

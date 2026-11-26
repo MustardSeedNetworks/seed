@@ -12,9 +12,13 @@
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from '../components/ui/Icons';
-import { Tooltip } from '../components/ui/Tooltip';
 import { useRole } from '../contexts/RoleContext';
 import { useIpam } from '../hooks/useIpam';
+import { Alert } from '../shared/Alert';
+import { Button } from '../shared/Button';
+import { ConfirmDialog } from '../shared/ConfirmDialog';
+import { EmptyState } from '../shared/EmptyState';
+import { StatusPill } from '../shared/StatusPill';
 import type { IPAMScope, IPAMSubnet } from '../types/generated/ipam-subnets-response';
 import {
   DetailEmpty,
@@ -44,6 +48,7 @@ export function IpamPage(): JSX.Element {
   const { data, error, addScope, deleteScope } = useIpam();
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [deleting, setDeleting] = useState<IPAMScope | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const subnets = data?.subnets ?? [];
@@ -69,33 +74,24 @@ export function IpamPage(): JSX.Element {
 
   return (
     <>
-      {error ? (
-        <div
-          role="alert"
-          className="rounded-md border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error-strong"
-        >
-          {t('ipam.loadFailed', { reason: error })}
-        </div>
-      ) : null}
+      {error ? <Alert tone="error">{t('ipam.loadFailed', { reason: error })}</Alert> : null}
 
-      <div className="flex-between">
-        <p className="body-small" data-testid="ipam-counts">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-text-secondary" data-testid="ipam-counts">
           {data
             ? `${t('ipam.networkCount', { count: subnets.length })} · ${t('ipam.scopeCount', { count: scopes.length })}`
             : t('common:status.loading')}
         </p>
-        <Tooltip text={readOnlyReason}>
-          <button
-            type="button"
-            onClick={(): void => setShowAdd(true)}
-            disabled={!canWrite}
-            data-testid="scope-add"
-            className="inline-flex items-center gap-compact rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:cursor-not-allowed disabled:control-disabled"
-          >
-            <Plus className="h-4 w-4" />
-            {t('ipam.addScope')}
-          </button>
-        </Tooltip>
+        <Button
+          variant="primary"
+          icon={<Plus className="h-4 w-4" />}
+          disabled={Boolean(readOnlyReason)}
+          disabledReason={readOnlyReason}
+          onClick={(): void => setShowAdd(true)}
+          data-testid="scope-add"
+        >
+          {t('ipam.addScope')}
+        </Button>
       </div>
 
       <ListDetail>
@@ -148,51 +144,32 @@ export function IpamPage(): JSX.Element {
             meta={selected.record.name || undefined}
             status={
               selected.kind === 'scope' && selected.record.exhaustion !== 'none' ? (
-                <span
-                  data-testid="scope-exhaustion"
-                  className={
-                    selected.record.exhaustion === 'full'
-                      ? 'text-sm font-medium text-status-error-strong'
-                      : 'text-sm font-medium text-status-warning'
-                  }
-                >
-                  {t(`ipam.exhaustion.${selected.record.exhaustion}`)}
+                <span data-testid="scope-exhaustion">
+                  <StatusPill
+                    tone={selected.record.exhaustion === 'full' ? 'error' : 'warning'}
+                    label={t(`ipam.exhaustion.${selected.record.exhaustion}`)}
+                  />
                 </span>
               ) : undefined
             }
             actions={
               selected.kind === 'scope' ? (
-                <Tooltip text={readOnlyReason}>
-                  <button
-                    type="button"
-                    onClick={(): void => {
-                      const scope = selected.record;
-                      if (
-                        window.confirm(
-                          t('ipam.confirmDelete', { range: `${scope.start} – ${scope.end}` }),
-                        )
-                      ) {
-                        void removeScope(scope);
-                      }
-                    }}
-                    disabled={!canWrite}
-                    data-testid="scope-delete"
-                    className="rounded-md px-3 py-2 text-sm text-status-error-strong hover:bg-status-error/10 disabled:cursor-not-allowed disabled:control-disabled"
-                  >
-                    {t('common:buttons.delete')}
-                  </button>
-                </Tooltip>
+                <Button
+                  variant="destructive"
+                  disabled={Boolean(readOnlyReason)}
+                  disabledReason={readOnlyReason}
+                  onClick={(): void => setDeleting(selected.record)}
+                  data-testid="scope-delete"
+                >
+                  {t('common:buttons.delete')}
+                </Button>
               ) : undefined
             }
           >
             {deleteError ? (
-              <p
-                role="alert"
-                data-testid="scope-delete-error"
-                className="body-small text-status-error-strong"
-              >
-                {t('ipam.deleteFailed', { reason: deleteError })}
-              </p>
+              <div data-testid="scope-delete-error">
+                <Alert tone="error">{t('ipam.deleteFailed', { reason: deleteError })}</Alert>
+              </div>
             ) : null}
             <DetailFacts
               items={[
@@ -235,6 +212,24 @@ export function IpamPage(): JSX.Element {
           }}
         />
       ) : null}
+
+      <ConfirmDialog
+        open={deleting !== null}
+        title={t('ipam.confirmDelete', {
+          range: deleting ? `${deleting.start} – ${deleting.end}` : '',
+        })}
+        message={t('ipam.deleteMessage')}
+        confirmLabel={t('common:buttons.delete')}
+        cancelLabel={t('common:buttons.cancel')}
+        closeLabel={t('common:buttons.close')}
+        onConfirm={(): void => {
+          if (deleting) {
+            void removeScope(deleting);
+          }
+          setDeleting(null);
+        }}
+        onCancel={(): void => setDeleting(null)}
+      />
     </>
   );
 }
@@ -243,16 +238,16 @@ export function IpamPage(): JSX.Element {
 function InUseList({ addresses }: { addresses: string[] }): JSX.Element {
   const { t } = useTranslation(['pages']);
   return (
-    <div className="stack-xs">
-      <p className="caption">{t('ipam.inUseHeading', { count: addresses.length })}</p>
+    <div className="space-y-1">
+      <p className="kicker">{t('ipam.inUseHeading', { count: addresses.length })}</p>
       {addresses.length === 0 ? (
-        <p data-testid="ipam-in-use-empty" className="body-small">
-          {t('ipam.noneInUse')}
-        </p>
+        <div data-testid="ipam-in-use-empty">
+          <EmptyState title={t('ipam.noneInUse')} />
+        </div>
       ) : (
         <ul
           data-testid="ipam-in-use"
-          className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-x-default gap-y-1 rounded-lg border border-surface-border px-cell py-2"
+          className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-x-4 gap-y-1 rounded-lg border border-hairline px-3 py-2"
         >
           {addresses.map((address) => (
             <li key={address} className="figure text-sm text-text-primary">

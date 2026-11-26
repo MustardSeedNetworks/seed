@@ -1,5 +1,6 @@
+import { Button } from '../../shared/Button';
+import { Tooltip } from '../../shared/Tooltip';
 import { Info } from '../ui/Icons';
-import { Tooltip } from '../ui/Tooltip';
 /**
  * InsecurePortScanCard — the on-demand insecure-port audit (#347).
  *
@@ -22,11 +23,13 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useRole } from '../../contexts/RoleContext';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useInsecurePortScan } from '../../hooks/useInsecurePortScan';
+import { Card } from '../../shared/Card';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
 import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
 import type { ServiceInfo } from '../../types/generated/port-scan-response';
-import { Button } from '../ui/Button';
-import { Card, type Status } from '../ui/Card';
 import { AlertTriangle, CheckCircle, ShieldAlert } from '../ui/Icons';
 
 /**
@@ -111,6 +114,7 @@ export function InsecurePortScanCard(): JSX.Element {
   const { canWrite } = useRole();
   const { result, scanning, error, scan } = useInsecurePortScan();
   const [target, setTarget] = useState('');
+  const statusLabel = useCardStatusLabel();
 
   const run = (): void => {
     const trimmed = target.trim();
@@ -125,62 +129,64 @@ export function InsecurePortScanCard(): JSX.Element {
   const scanned = result !== null;
   const readOnlyReason = canWrite ? undefined : t('insecurePorts.readOnly');
 
-  let cardStatus: Status = 'unknown';
+  let cardStatus: CardStatus = 'unknown';
   if (scanned) {
     cardStatus = openPorts.length > 0 ? 'error' : 'success';
   }
 
   return (
     <Card
+      data-testid="card"
       title={t('insecurePorts.title')}
       icon={<ShieldAlert className="w-4 h-4" />}
       status={cardStatus}
-      ariaLabel={t('insecurePorts.title')}
+      statusLabel={statusLabel(cardStatus)}
+      aria-label={t('insecurePorts.title')}
     >
       <div className="stack-sm">
         <p className="caption text-text-muted">{t('insecurePorts.description')}</p>
 
-        <label className="caption text-text-muted" htmlFor="insecure-scan-target">
-          {t('insecurePorts.target')}
-        </label>
-        <Tooltip text={readOnlyReason}>
-          {(description) => (
-            <span className="contents">
-              <input
-                {...description}
-                id="insecure-scan-target"
-                type="text"
-                value={target}
-                disabled={!canWrite || scanning}
-                onChange={(e): void => setTarget(e.target.value)}
-                placeholder={t('insecurePorts.targetPlaceholder')}
-                className={cn(
-                  'w-full',
-                  spacing.chip.lg,
-                  'bg-surface-base border border-surface-border',
-                  radius.default,
-                  'body-small text-text-primary',
-                )}
-              />
-              {(!canWrite || scanning) && readOnlyReason ? (
-                <button
-                  type="button"
-                  {...description}
-                  aria-label={readOnlyReason}
-                  onClick={(event) => event.preventDefault()}
-                  className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
-                >
-                  <Info className="h-4 w-4" aria-hidden="true" />
-                </button>
-              ) : null}
-            </span>
+        <FormField id="insecure-scan-target" label={t('insecurePorts.target')}>
+          {(control) => (
+            <Tooltip text={readOnlyReason}>
+              {(description) => (
+                <span className="flex items-center gap-2">
+                  <Input
+                    {...control}
+                    aria-describedby={
+                      [control['aria-describedby'], description['aria-describedby']]
+                        .filter(Boolean)
+                        .join(' ') || undefined
+                    }
+                    onClick={description.onClick}
+                    type="text"
+                    value={target}
+                    disabled={!canWrite || scanning}
+                    onChange={(e): void => setTarget(e.target.value)}
+                    placeholder={t('insecurePorts.targetPlaceholder')}
+                  />
+                  {(!canWrite || scanning) && readOnlyReason ? (
+                    <button
+                      type="button"
+                      {...description}
+                      aria-label={readOnlyReason}
+                      onClick={(event) => event.preventDefault()}
+                      className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                    >
+                      <Info className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </span>
+              )}
+            </Tooltip>
           )}
-        </Tooltip>
+        </FormField>
         <Button
+          variant="primary"
           onClick={run}
           disabled={!canWrite || target.trim() === ''}
+          disabledReason={canWrite ? undefined : readOnlyReason}
           loading={scanning}
-          title={readOnlyReason}
           className="w-full"
         >
           {scanning ? t('insecurePorts.scanning') : t('insecurePorts.scan')}

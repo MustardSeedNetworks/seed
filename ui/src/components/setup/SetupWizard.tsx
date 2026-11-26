@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/Tooltip';
+import { Tooltip } from '../../shared/Tooltip';
 /**
  * Initial Setup Wizard Component
  *
@@ -27,12 +27,14 @@ import type { LoginOutcome } from '../../hooks/useAuth';
 import { LogComponents, logger } from '../../lib/logger';
 import { evaluatePassword, type PasswordRule } from '../../lib/passwordPolicy';
 import { SetupWizardSchema, type SetupWizardValues } from '../../schemas/auth';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
+import { RadioGroup } from '../../shared/RadioGroup';
 import {
   button,
   card,
   cn,
   icon as iconTokens,
-  input,
   layout,
   radius,
   spacing,
@@ -244,170 +246,120 @@ export function SetupWizard({
 
           {/* Password mode selection */}
           <div className={cn(spacing.margin.bottom.section, 'stack-sm')}>
-            <p
-              className={cn(
-                'body-small font-medium text-text-primary',
-                spacing.margin.bottom.inline,
-              )}
-            >
-              {t('password.chooseMethod')}
-            </p>
-
-            {/* Custom password option */}
-            <label
-              className={cn(
-                'flex items-start',
-                spacing.gap.default,
-                'pad-sm',
-                radius.md,
-                'border border-surface-border cursor-pointer hover:bg-surface-base transition-colors',
-              )}
-            >
-              <input
-                type="radio"
-                name="passwordMode"
-                value="custom"
-                checked={passwordMode === 'custom'}
-                onChange={(): void => handlePasswordModeChange('custom')}
+            <RadioGroup
+              label={t('password.chooseMethod')}
+              name="passwordMode"
+              value={passwordMode}
+              onValueChange={(mode): void =>
+                handlePasswordModeChange(mode === 'generated' ? 'generated' : 'custom')
+              }
+              options={[
+                {
+                  value: 'custom',
+                  label: (
+                    <span className="flex items-center gap-compact">
+                      <Lock className={iconTokens.size.sm} />
+                      {t('password.custom.title')}
+                    </span>
+                  ),
+                  description: t('password.custom.description'),
+                },
+                ...(suggestedPassword
+                  ? [
+                      {
+                        value: 'generated',
+                        label: (
+                          <span className="flex items-center gap-compact">
+                            <Zap className={iconTokens.size.sm} />
+                            {t('password.generated.title')}
+                          </span>
+                        ),
+                        description: t('password.generated.description'),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+            {passwordMode === 'generated' && (
+              <div
                 className={cn(
                   spacing.margin.top.inline,
-                  iconTokens.size.sm,
-                  'text-brand-primary focus:ring-brand-primary',
-                )}
-              />
-              <div>
-                <span className="body-small font-medium text-text-primary flex items-center gap-compact">
-                  <Lock className={iconTokens.size.sm} />
-                  {t('password.custom.title')}
-                </span>
-                <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
-                  {t('password.custom.description')}
-                </p>
-              </div>
-            </label>
-
-            {/* Generated password option */}
-            {suggestedPassword ? (
-              <label
-                className={cn(
-                  'flex items-start',
-                  spacing.gap.default,
-                  'pad-sm',
-                  radius.md,
-                  'border border-surface-border cursor-pointer hover:bg-surface-base transition-colors',
+                  spacing.pad.sm,
+                  'bg-surface-sunken',
+                  radius.default,
                 )}
               >
-                <input
-                  type="radio"
-                  name="passwordMode"
-                  value="generated"
-                  checked={passwordMode === 'generated'}
-                  onChange={(): void => handlePasswordModeChange('generated')}
-                  className={cn(
-                    spacing.margin.top.inline,
-                    iconTokens.size.sm,
-                    'text-brand-primary focus:ring-brand-primary',
-                  )}
-                />
-                <div className="flex-1">
-                  <span className="body-small font-medium text-text-primary flex items-center gap-compact">
-                    <Zap className={iconTokens.size.sm} />
-                    {t('password.generated.title')}
-                  </span>
-                  <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
-                    {t('password.generated.description')}
-                  </p>
-                  {passwordMode === 'generated' && (
-                    <div
+                <div className={cn(layout.inline.default)}>
+                  <code className="flex-1 font-mono body-small text-brand-primary select-all break-all">
+                    {suggestedPassword}
+                  </code>
+                  <Tooltip text={t('buttons.copy')}>
+                    <button
+                      aria-label={t('buttons.copy')}
+                      type="button"
+                      onClick={handleCopyPassword}
                       className={cn(
-                        spacing.margin.top.inline,
-                        spacing.pad.sm,
-                        'bg-surface-sunken',
-                        radius.default,
+                        button.size.xs,
+                        'text-text-muted hover:text-text-primary border border-surface-border',
+                        radius.md,
+                        'hover:bg-surface-base transition-colors shrink-0 p-1.5',
                       )}
                     >
-                      <div className={cn(layout.inline.default)}>
-                        <code className="flex-1 font-mono body-small text-brand-primary select-all break-all">
-                          {suggestedPassword}
-                        </code>
-                        <Tooltip text={t('buttons.copy')}>
-                          <button
-                            aria-label={t('buttons.copy')}
-                            type="button"
-                            onClick={handleCopyPassword}
-                            className={cn(
-                              button.size.xs,
-                              'text-text-muted hover:text-text-primary border border-surface-border',
-                              radius.md,
-                              'hover:bg-surface-base transition-colors shrink-0 p-1.5',
-                            )}
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
-                        </Tooltip>
-                      </div>
-                      {copied ? (
-                        <p className={cn('caption text-status-success', spacing.margin.top.inline)}>
-                          {tCommon('buttons.copied')}
-                        </p>
-                      ) : null}
-                      <p className={cn('caption text-status-warning', spacing.margin.top.inline)}>
-                        {t('password.generated.saveWarning')}
-                      </p>
-                    </div>
-                  )}
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </Tooltip>
                 </div>
-              </label>
-            ) : null}
+                {copied ? (
+                  <p className={cn('caption text-status-success', spacing.margin.top.inline)}>
+                    {tCommon('buttons.copied')}
+                  </p>
+                ) : null}
+                <p className={cn('caption text-status-warning', spacing.margin.top.inline)}>
+                  {t('password.generated.saveWarning')}
+                </p>
+              </div>
+            )}
           </div>
 
           {passwordMode === 'custom' && (
             <>
               <div className={spacing.margin.bottom.content}>
-                <label
-                  htmlFor="setup-password"
-                  className={cn(
-                    'block body-small font-medium text-text-primary',
-                    spacing.margin.bottom.inline,
-                  )}
+                <FormField
+                  id="setup-password"
+                  label={t('password.label')}
+                  required
+                  hint={t('password.minLength')}
                 >
-                  {t('password.label')}
-                </label>
-                <div className="relative">
-                  <input
-                    id="setup-password"
-                    type={showPassword ? 'text' : 'password'}
-                    required={true}
-                    minLength={12}
-                    {...register('password')}
-                    className={cn(
-                      input.base,
-                      input.state.default,
-                      input.size.md,
-                      spacing.padding.right.icon,
-                    )}
-                    placeholder={t('password.placeholder')}
-                  />
-                  <button
-                    type="button"
-                    onClick={(): void => setShowPassword(!showPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center text-text-muted hover:text-text-primary"
-                    aria-label={
-                      showPassword
-                        ? tCommon('buttons.hidePassword')
-                        : tCommon('buttons.showPassword')
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeOff className={iconTokens.size.md} />
-                    ) : (
-                      <Eye className={iconTokens.size.md} />
-                    )}
-                  </button>
-                </div>
-                <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
-                  {t('password.minLength')}
-                </p>
+                  {(control) => (
+                    <div className="relative">
+                      <Input
+                        {...control}
+                        type={showPassword ? 'text' : 'password'}
+                        required={true}
+                        minLength={12}
+                        {...register('password')}
+                        className="pr-10"
+                        placeholder={t('password.placeholder')}
+                      />
+                      <button
+                        type="button"
+                        onClick={(): void => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center text-text-muted hover:text-text-primary"
+                        aria-label={
+                          showPassword
+                            ? tCommon('buttons.hidePassword')
+                            : tCommon('buttons.showPassword')
+                        }
+                      >
+                        {showPassword ? (
+                          <EyeOff className={iconTokens.size.md} />
+                        ) : (
+                          <Eye className={iconTokens.size.md} />
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </FormField>
                 {/* Fixes #723: live complexity-rule checklist so the user
                     can see exactly which constraints they still need to meet. */}
                 {password.length > 0 ? (
@@ -432,28 +384,22 @@ export function SetupWizard({
               </div>
 
               <div className={spacing.margin.bottom.section}>
-                <label
-                  htmlFor="setup-confirm-password"
-                  className={cn(
-                    'block body-small font-medium text-text-primary',
-                    spacing.margin.bottom.inline,
-                  )}
-                >
-                  {t('password.confirm.label')}
-                </label>
-                <input
+                <FormField
                   id="setup-confirm-password"
-                  type={showPassword ? 'text' : 'password'}
-                  required={true}
-                  {...register('confirmPassword')}
-                  className={cn(input.base, input.state.default, input.size.md)}
-                  placeholder={t('password.confirm.placeholder')}
-                />
-                {errors.confirmPassword ? (
-                  <p className={cn('caption mt-tight', statusColor.text.error)}>
-                    {errors.confirmPassword.message}
-                  </p>
-                ) : null}
+                  label={t('password.confirm.label')}
+                  required
+                  {...(errors.confirmPassword ? { error: errors.confirmPassword.message } : {})}
+                >
+                  {(control) => (
+                    <Input
+                      {...control}
+                      type={showPassword ? 'text' : 'password'}
+                      required={true}
+                      {...register('confirmPassword')}
+                      placeholder={t('password.confirm.placeholder')}
+                    />
+                  )}
+                </FormField>
               </div>
             </>
           )}

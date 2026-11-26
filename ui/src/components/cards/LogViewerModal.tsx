@@ -1,9 +1,10 @@
-import { Tooltip } from '../ui/Tooltip';
+import { Modal } from '../../shared/Modal';
+import { SearchInput } from '../../shared/SearchInput';
+import { Tooltip } from '../../shared/Tooltip';
 /** Full-screen log filtering, streaming and export. */
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useFocusTrap } from '../../hooks/useFocusTrap';
 import {
   formatLogTimestamp,
   LOG_LEVEL_COLORS,
@@ -13,7 +14,7 @@ import {
   type LogLevel,
   useLogs,
 } from '../../hooks/useLogs';
-import { button, cn, icon as iconTokens, layout, modal, radius, spacing } from '../../styles/theme';
+import { button, cn, layout, radius, spacing } from '../../styles/theme';
 
 interface LogViewerModalProps {
   isOpen: boolean;
@@ -299,21 +300,15 @@ function LogFiltersBar({
     <div className={cn('stack', 'pad', 'bg-surface-base', radius.lg)}>
       {/* Search bar - larger */}
       <div className={cn(layout.inline.default)}>
-        <input
-          type="text"
-          placeholder={t('logs.searchPlaceholder')}
-          value={filters.search}
-          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-            onFilterChange({ search: e.target.value })
-          }
-          className={cn(
-            'flex-1',
-            'px-4 py-2.5 text-base',
-            radius.lg,
-            'border border-surface-border bg-surface-raised text-text-primary',
-            'focus:outline-none focus:ring-2 focus:ring-brand-primary',
-          )}
-        />
+        <div className="flex-1">
+          <SearchInput
+            value={filters.search}
+            onValueChange={(search): void => onFilterChange({ search })}
+            label={t('logs.searchPlaceholder')}
+            clearLabel={t('logs.clearSearch')}
+            placeholder={t('logs.searchPlaceholder')}
+          />
+        </div>
         {hasActiveFilters ? (
           <button
             type="button"
@@ -434,8 +429,6 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
     });
   };
 
-  const dialogRef = useFocusTrap<HTMLDivElement>({ isActive: isOpen, onEscape: onClose });
-
   // Export functions
   const exportJson = (): void => {
     const blob = new Blob([JSON.stringify(logs, null, 2)], {
@@ -493,231 +486,173 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
   }
 
   return (
-    <div className={modal.overlay}>
-      {/* Backdrop */}
-      <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
-      {/* Modal - use xl size for logs */}
-      <div
-        ref={dialogRef}
-        className={cn(
-          'relative',
-          modal.content,
-          modal.size.xl,
-          radius.lg,
-          'flex',
-          'flex-col',
-          'h-[90vh]', // 90% viewport height
-        )}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="log-viewer-modal-title"
-      >
-        {/* Header */}
-        <div
-          className={cn(
-            layout.flex.between,
-            'px-6 py-4',
-            'border-b',
-            'border-surface-border',
-            'bg-surface-raised',
-            'shrink-0',
-          )}
-        >
-          <div>
-            <h2 id="log-viewer-modal-title" className="heading-2">
-              {t('logs.title')}
-            </h2>
-            <p className="body-small text-text-secondary mt-tight">
-              {t('logs.subtitle')}
-              {stats ? (
-                <span className="ml-content">
-                  <strong>{stats.totalCount}</strong> {t('logs.totalLogs')}
-                  {stats.errorsLastHour > 0 ? (
-                    <span className="text-status-error ml-inline">
-                      ({stats.errorsLastHour} {t('logs.errorsLastHour')})
-                    </span>
-                  ) : null}
-                </span>
-              ) : null}
-            </p>
-          </div>
-
-          <div className={cn('flex items-center', spacing.gap.comfortable)}>
-            {/* Streaming toggle */}
-            <Tooltip
-              text={getStreamingToggleHint(
-                isStreaming,
-                t as unknown as (k: string, f?: string) => string,
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      title={t('logs.title')}
+      closeLabel={t('buttons.close')}
+      size="full"
+      data-testid="log-viewer-modal"
+      header={
+        <div className={cn('flex items-center', spacing.gap.comfortable)}>
+          {/* Streaming toggle */}
+          <Tooltip
+            text={getStreamingToggleHint(
+              isStreaming,
+              t as unknown as (k: string, f?: string) => string,
+            )}
+          >
+            <button
+              type="button"
+              onClick={() => setIsStreaming(!isStreaming)}
+              className={cn(
+                button.size.md,
+                radius.lg,
+                'font-medium transition-colors',
+                isStreaming
+                  ? 'bg-status-success text-text-inverse hover:brightness-90'
+                  : 'bg-surface-base text-text-primary hover:bg-surface-hover border border-surface-border',
               )}
             >
-              <button
-                type="button"
-                onClick={() => setIsStreaming(!isStreaming)}
-                className={cn(
-                  button.size.md,
-                  radius.lg,
-                  'font-medium transition-colors',
-                  isStreaming
-                    ? 'bg-status-success text-text-inverse hover:brightness-90'
-                    : 'bg-surface-base text-text-primary hover:bg-surface-hover border border-surface-border',
-                )}
-              >
-                {isStreaming ? t('logs.streaming') : t('logs.paused')}
-              </button>
-            </Tooltip>
+              {isStreaming ? t('logs.streaming') : t('logs.paused')}
+            </button>
+          </Tooltip>
 
-            {/* Clear logs */}
-            <Tooltip text={t('logs.clearHint')}>
-              <button
-                type="button"
-                className={cn(
-                  button.size.md,
-                  radius.lg,
-                  'border border-surface-border hover:bg-surface-hover',
-                )}
-                onClick={clearLogs}
-              >
-                {t('logs.clear')}
-              </button>
-            </Tooltip>
+          {/* Clear logs */}
+          <Tooltip text={t('logs.clearHint')}>
+            <button
+              type="button"
+              className={cn(
+                button.size.md,
+                radius.lg,
+                'border border-surface-border hover:bg-surface-hover',
+              )}
+              onClick={clearLogs}
+            >
+              {t('logs.clear')}
+            </button>
+          </Tooltip>
 
-            {/* Export JSON */}
-            <Tooltip text={t('logs.exportJsonHint')}>
-              <button
-                type="button"
-                className={cn(
-                  button.size.md,
-                  radius.lg,
-                  'border border-surface-border hover:bg-surface-hover',
-                  'flex items-center gap-compact',
-                )}
-                onClick={exportJson}
+          {/* Export JSON */}
+          <Tooltip text={t('logs.exportJsonHint')}>
+            <button
+              type="button"
+              className={cn(
+                button.size.md,
+                radius.lg,
+                'border border-surface-border hover:bg-surface-hover',
+                'flex items-center gap-compact',
+              )}
+              onClick={exportJson}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                JSON
-              </button>
-            </Tooltip>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
+              </svg>
+              JSON
+            </button>
+          </Tooltip>
 
-            {/* Export CSV */}
-            <Tooltip text={t('logs.exportCsvHint')}>
-              <button
-                type="button"
-                className={cn(
-                  button.size.md,
-                  radius.lg,
-                  'border border-surface-border hover:bg-surface-hover',
-                  'flex items-center gap-compact',
-                )}
-                onClick={exportCsv}
+          {/* Export CSV */}
+          <Tooltip text={t('logs.exportCsvHint')}>
+            <button
+              type="button"
+              className={cn(
+                button.size.md,
+                radius.lg,
+                'border border-surface-border hover:bg-surface-hover',
+                'flex items-center gap-compact',
+              )}
+              onClick={exportCsv}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                CSV
-              </button>
-            </Tooltip>
-
-            {/* Close button */}
-            <Tooltip text={t('logs.close')}>
-              <button
-                type="button"
-                onClick={onClose}
-                className={cn(
-                  'pad-xs',
-                  'text-text-muted',
-                  'hover:text-text-primary',
-                  'transition-colors',
-                  radius.lg,
-                  'hover:bg-surface-base',
-                )}
-                aria-label={t('logs.close')}
-              >
-                <svg
-                  className={iconTokens.size.lg}
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
-            </Tooltip>
-          </div>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
+              </svg>
+              CSV
+            </button>
+          </Tooltip>
         </div>
+      }
+    >
+      <p className="body-small text-text-secondary mb-content">
+        {t('logs.subtitle')}
+        {stats ? (
+          <span className="ml-content">
+            <strong>{stats.totalCount}</strong> {t('logs.totalLogs')}
+            {stats.errorsLastHour > 0 ? (
+              <span className="text-status-error ml-inline">
+                ({stats.errorsLastHour} {t('logs.errorsLastHour')})
+              </span>
+            ) : null}
+          </span>
+        ) : null}
+      </p>
 
-        {/* Filters */}
-        <div className="px-6 py-4 bg-surface-raised border-b border-surface-border shrink-0">
-          <LogFiltersBar
-            filters={filters}
-            onFilterChange={setFilters}
-            onReset={resetFilters}
-            availableComponents={availableComponents}
-          />
-        </div>
-
-        {/* Log entries - scrollable area */}
-        <div
-          data-testid="log-viewer-entries"
-          className={cn('flex-1 overflow-y-auto pad-lg bg-surface-base/40')}
-        >
-          {/* Loading state */}
-          {isLoading ? (
-            <div className={cn('text-center text-text-secondary py-8')}>{t('logs.loading')}</div>
-          ) : null}
-
-          {/* Error state */}
-          {error ? <div className={cn('text-center text-status-error py-8')}>{error}</div> : null}
-
-          {/* Empty state */}
-          {logs.length === 0 && !isLoading ? (
-            <div className={cn('text-center text-text-secondary py-centered')}>
-              {filters.search || filters.levels.length > 0 || filters.layers.length > 0
-                ? t('logs.noMatchingLogs')
-                : t('logs.noLogs')}
-            </div>
-          ) : null}
-
-          {/* Log entries */}
-          {logs.map((entry) => (
-            <LogEntryRow
-              key={`${entry.timestamp}-${entry.message.substring(0, 20)}`}
-              entry={entry}
-              expanded={expandedIds.has(entry.timestamp)}
-              onToggle={() => toggleExpand(entry.timestamp)}
-              onClose={() => closeExpanded(entry.timestamp)}
-            />
-          ))}
-        </div>
+      {/* Filters */}
+      <div className="mb-content">
+        <LogFiltersBar
+          filters={filters}
+          onFilterChange={setFilters}
+          onReset={resetFilters}
+          availableComponents={availableComponents}
+        />
       </div>
-    </div>
+
+      {/* Log entries - scrollable area */}
+      <div
+        data-testid="log-viewer-entries"
+        className={cn('max-h-[60vh] overflow-y-auto pad-lg bg-surface-base/40')}
+      >
+        {/* Loading state */}
+        {isLoading ? (
+          <div className={cn('text-center text-text-secondary py-8')}>{t('logs.loading')}</div>
+        ) : null}
+
+        {/* Error state */}
+        {error ? <div className={cn('text-center text-status-error py-8')}>{error}</div> : null}
+
+        {/* Empty state */}
+        {logs.length === 0 && !isLoading ? (
+          <div className={cn('text-center text-text-secondary py-centered')}>
+            {filters.search || filters.levels.length > 0 || filters.layers.length > 0
+              ? t('logs.noMatchingLogs')
+              : t('logs.noLogs')}
+          </div>
+        ) : null}
+
+        {/* Log entries */}
+        {logs.map((entry) => (
+          <LogEntryRow
+            key={`${entry.timestamp}-${entry.message.substring(0, 20)}`}
+            entry={entry}
+            expanded={expandedIds.has(entry.timestamp)}
+            onToggle={() => toggleExpand(entry.timestamp)}
+            onClose={() => closeExpanded(entry.timestamp)}
+          />
+        ))}
+      </div>
+    </Modal>
   );
 }
 

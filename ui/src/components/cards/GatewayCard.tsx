@@ -26,11 +26,12 @@
 
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../contexts/useSettings';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { formatTime, isValidNumber } from '../../lib/format';
+import { Card, CardDivider, CardRow, type CardStatus, CardValue } from '../../shared/Card';
+import { StatusIndicator } from '../../shared/StatusPill';
 import { cn, icon as iconTokens, layout, spacing, status as statusColor } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
 import { Router } from '../ui/Icons';
-import { StatusBadge } from '../ui/StatusBadge';
 
 export interface GatewayData {
   gateway: string;
@@ -54,7 +55,7 @@ interface GatewayCardProps {
 function getLatencyStatus(
   value: number | undefined | null,
   thresholds: { warning: number; critical: number },
-): Status {
+): CardStatus {
   if (!isValidNumber(value)) {
     return 'unknown';
   }
@@ -69,6 +70,7 @@ function getLatencyStatus(
 
 export function GatewayCard({ data, loading }: GatewayCardProps) {
   const { t: tr } = useTranslation('cards');
+  const labelFor = useCardStatusLabel();
   const { thresholds } = useSettings();
   // Map context ThresholdPair (good/warning) to card format (warning/critical)
   // Use defaults if thresholds not yet loaded
@@ -104,6 +106,8 @@ export function GatewayCard({ data, loading }: GatewayCardProps) {
         title={tr('gateway.title')}
         icon={<Router className={iconTokens.size.md} />}
         status="loading"
+        statusLabel={labelFor('loading')}
+        data-testid="card"
       >
         <CardValue value={tr('gateway.pinging')} size="lg" />
       </Card>
@@ -120,6 +124,8 @@ export function GatewayCard({ data, loading }: GatewayCardProps) {
         title={tr('gateway.title')}
         icon={<Router className={iconTokens.size.md} />}
         status="unknown"
+        statusLabel={labelFor('unknown')}
+        data-testid="card"
       >
         <CardValue value={tr('gateway.noGateway')} size="md" />
         <p className={cn('caption', spacing.margin.top.tight)}>{tr('gateway.unableToDetect')}</p>
@@ -128,7 +134,7 @@ export function GatewayCard({ data, loading }: GatewayCardProps) {
   }
 
   // Map API status to card status
-  let status: Status;
+  let status: CardStatus;
   switch (data.status) {
     case 'success':
       status = 'success';
@@ -148,13 +154,18 @@ export function GatewayCard({ data, loading }: GatewayCardProps) {
       title={tr('gateway.title')}
       icon={<Router className={iconTokens.size.md} />}
       status={status}
+      statusLabel={labelFor(status)}
+      data-testid="card"
     >
       <div className={layout.flex.between}>
         <span data-testid="gateway-ip">
           <CardValue value={data.gateway} size="lg" />
         </span>
         <span data-testid="gateway-status-badge">
-          <StatusBadge status={data.reachable ? 'success' : 'error'} size="sm" />
+          <StatusIndicator
+            tone={data.reachable ? 'success' : 'error'}
+            label={labelFor(data.reachable ? 'success' : 'error')}
+          />
         </span>
       </div>
       <CardDivider />

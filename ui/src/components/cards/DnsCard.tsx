@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/Tooltip';
+import { Tooltip } from '../../shared/Tooltip';
 /**
  * DNSCard Component
  *
@@ -27,19 +27,20 @@ import { Tooltip } from '../ui/Tooltip';
 
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { formatTime } from '../../lib/format';
+import { Card, CardDivider, type CardStatus, CardValue } from '../../shared/Card';
+import { CollapsibleSection } from '../../shared/CollapsibleSection';
+import { StatusIndicator } from '../../shared/StatusPill';
 import { cn, icon as iconTokens, layout, spacing, status as statusColor } from '../../styles/theme';
 import type { DNSLookupResult } from '../../types/generated/dns-response';
-import { Card, CardDivider, CardValue, type Status } from '../ui/Card';
-import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { Globe } from '../ui/Icons';
-import { StatusBadge } from '../ui/StatusBadge';
 
 interface LookupResult {
   outcome: DNSLookupResult['outcome'];
   time: number; // ms
   timeMs: number;
-  status: Status;
+  status: CardStatus;
   error?: string;
   resolved?: string[];
 }
@@ -53,7 +54,7 @@ interface ServerTestResult {
   server: string;
   forward: LookupResult | null;
   forwardIpv6: LookupResult | null;
-  status: Status;
+  status: CardStatus;
   avgTimeMs: number;
 }
 
@@ -118,6 +119,7 @@ function LookupRow({
   lookup: LookupResult | null | undefined;
 }): JSX.Element | null {
   const { t } = useTranslation('cards');
+  const labelFor = useCardStatusLabel();
   if (!lookup) {
     return null;
   }
@@ -133,7 +135,7 @@ function LookupRow({
       <div className={layout.flex.between}>
         <span className="caption">{label}</span>
         <span className={layout.inline.default}>
-          <StatusBadge status={statusBadge} size="sm" />
+          <StatusIndicator tone={statusBadge} label={labelFor(statusBadge)} />
           <span className={cn('caption font-medium', statusClass)}>
             {formatTime(lookup.timeMs || lookup.time)}
           </span>
@@ -148,10 +150,17 @@ function LookupRow({
 
 export function DnsCard({ data, loading }: DnsCardProps): JSX.Element {
   const { t } = useTranslation('cards');
+  const labelFor = useCardStatusLabel();
 
   if (loading) {
     return (
-      <Card title={t('dns.title')} icon={<Globe className={iconTokens.size.md} />} status="loading">
+      <Card
+        title={t('dns.title')}
+        icon={<Globe className={iconTokens.size.md} />}
+        status="loading"
+        statusLabel={labelFor('loading')}
+        data-testid="card"
+      >
         <CardValue value={t('dns.testing')} size="lg" />
       </Card>
     );
@@ -159,7 +168,13 @@ export function DnsCard({ data, loading }: DnsCardProps): JSX.Element {
 
   if (!data) {
     return (
-      <Card title={t('dns.title')} icon={<Globe className={iconTokens.size.md} />} status="unknown">
+      <Card
+        title={t('dns.title')}
+        icon={<Globe className={iconTokens.size.md} />}
+        status="unknown"
+        statusLabel={labelFor('unknown')}
+        data-testid="card"
+      >
         <CardValue value={t('dns.noData')} size="md" />
       </Card>
     );
@@ -167,7 +182,13 @@ export function DnsCard({ data, loading }: DnsCardProps): JSX.Element {
 
   if (hasNoResolversOfItsOwn(data)) {
     return (
-      <Card title={t('dns.title')} icon={<Globe className={iconTokens.size.md} />} status="warning">
+      <Card
+        title={t('dns.title')}
+        icon={<Globe className={iconTokens.size.md} />}
+        status="warning"
+        statusLabel={labelFor('warning')}
+        data-testid="card"
+      >
         <CardValue value={t('dns.noResolvers')} size="md" />
         <p className="caption">{t('dns.noResolversHint')}</p>
       </Card>
@@ -175,7 +196,7 @@ export function DnsCard({ data, loading }: DnsCardProps): JSX.Element {
   }
 
   // Determine overall status based on forward/reverse lookups
-  let overallStatus: Status = 'success';
+  let overallStatus: CardStatus = 'success';
   const lookups = [data.forward, data.forwardIpv6, data.reverse, data.reverseIpv6];
   if (lookups.some((l) => l?.status === 'error')) {
     overallStatus = 'error';
@@ -195,6 +216,8 @@ export function DnsCard({ data, loading }: DnsCardProps): JSX.Element {
       title={t('dns.title')}
       icon={<Globe className={iconTokens.size.md} />}
       status={overallStatus}
+      statusLabel={labelFor(overallStatus)}
+      data-testid="card"
     >
       {/* DNS Servers */}
       <div className={spacing.margin.bottom.inline}>
@@ -240,6 +263,7 @@ export function DnsCard({ data, loading }: DnsCardProps): JSX.Element {
             count={data.perServerResults.length}
             variant="compact"
             status={getAggregatedStatus(data.perServerResults)}
+            statusLabel={labelFor(getAggregatedStatus(data.perServerResults))}
           >
             {data.perServerResults.map((server) => (
               <div key={server.server} className={spacing.chip.sm}>
@@ -253,7 +277,10 @@ export function DnsCard({ data, loading }: DnsCardProps): JSX.Element {
                   <div className={cn(layout.flex.between, 'caption')}>
                     <span>A</span>
                     <span className={layout.inline.default}>
-                      <StatusBadge status={server.forward.status} size="sm" />
+                      <StatusIndicator
+                        tone={server.forward.status}
+                        label={labelFor(server.forward.status)}
+                      />
                       <span className={getStatusColorClass(server.forward.status)}>
                         {answeredNothing(server.forward)
                           ? 'N/A'
@@ -266,7 +293,10 @@ export function DnsCard({ data, loading }: DnsCardProps): JSX.Element {
                   <div className={cn(layout.flex.between, 'caption')}>
                     <span>AAAA</span>
                     <span className={layout.inline.default}>
-                      <StatusBadge status={server.forwardIpv6.status} size="sm" />
+                      <StatusIndicator
+                        tone={server.forwardIpv6.status}
+                        label={labelFor(server.forwardIpv6.status)}
+                      />
                       <span className={getStatusColorClass(server.forwardIpv6.status)}>
                         {answeredNothing(server.forwardIpv6)
                           ? 'N/A'

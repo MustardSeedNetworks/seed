@@ -10,7 +10,8 @@ import type React from 'react';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useArrayItem } from '../../../../hooks/useArrayItem';
-import { cn, input, layout, spacing } from '../../../../styles/theme';
+import { Input } from '../../../../shared/Input';
+import { cn, layout, spacing } from '../../../../styles/theme';
 import type { TestsSettings } from '../../../../types/settings';
 
 interface StreamingEndpointsProps {
@@ -56,24 +57,28 @@ export function StreamingEndpoints({
             key={endpoint.id}
             className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
           >
-            <input
-              type="text"
-              value={endpoint.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateRtspEndpoint(endpoint.id ?? '', 'name', e.target.value)
-              }
-              placeholder={t('common.name')}
-              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-            />
-            <input
-              type="text"
-              value={endpoint.url}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateRtspEndpoint(endpoint.id ?? '', 'url', e.target.value)
-              }
-              placeholder="rtsp://host:554/stream"
-              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-            />
+            <div className="w-24 shrink-0">
+              <Input
+                type="text"
+                aria-label={t('common.name')}
+                value={endpoint.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateRtspEndpoint(endpoint.id ?? '', 'name', e.target.value)
+                }
+                placeholder={t('common.name')}
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <Input
+                type="text"
+                aria-label={t('health.streamUrl')}
+                value={endpoint.url}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateRtspEndpoint(endpoint.id ?? '', 'url', e.target.value)
+                }
+                placeholder="rtsp://host:554/stream"
+              />
+            </div>
             <button
               type="button"
               onClick={(): void => removeRtspEndpoint(endpoint.id ?? '')}

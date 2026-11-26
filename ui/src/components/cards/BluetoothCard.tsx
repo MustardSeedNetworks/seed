@@ -14,25 +14,22 @@ import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBluetoothScan } from '../../hooks/useBluetoothScan';
-import {
-  button,
-  cn,
-  icon as iconTokens,
-  radius,
-  spacing,
-  status as statusColor,
-} from '../../styles/theme';
-import { Card, type Status } from '../ui/Card';
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { Card, type CardStatus } from '../../shared/Card';
+import { cn, icon as iconTokens } from '../../styles/theme';
 import { Bluetooth, Loader, Maximize2, X } from '../ui/Icons';
 import { BluetoothDeviceModal } from './BluetoothDeviceModal';
 
 export function BluetoothCard(): React.ReactElement {
   const { t } = useTranslation('cards');
+  const labelFor = useCardStatusLabel();
   const { running, status: scanStatus, devices, stats, startScan, cancelScan } = useBluetoothScan();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const hasResult = scanStatus.state === 'complete' || devices.length > 0;
-  const cardStatus: Status = (() => {
+  const cardStatus: CardStatus = (() => {
     if (running) {
       return 'loading';
     }
@@ -47,21 +44,19 @@ export function BluetoothCard(): React.ReactElement {
       title={t('bluetooth.title')}
       icon={<Bluetooth className={iconTokens.size.md} />}
       status={cardStatus}
+      statusLabel={labelFor(cardStatus)}
+      data-testid="card"
       headerAction={
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="xs"
+          iconOnly
+          icon={<Maximize2 className={iconTokens.size.sm} />}
           onClick={() => setIsModalOpen(true)}
           disabled={devices.length === 0}
           data-testid="bluetooth-card-maximize"
-          className={cn(
-            'p-1 text-text-muted hover:text-text-primary transition-colors',
-            radius.md,
-            'hover:bg-surface-hover disabled:control-disabled disabled:cursor-not-allowed',
-          )}
           aria-label={t('bluetooth.viewAll')}
-        >
-          <Maximize2 className={iconTokens.size.sm} />
-        </button>
+        />
       }
     >
       <div className="stack-sm">
@@ -86,44 +81,32 @@ export function BluetoothCard(): React.ReactElement {
           <div className="flex items-center gap-compact" data-testid="bluetooth-scanning">
             <Loader className={cn(iconTokens.size.sm, 'text-brand-primary animate-spin')} />
             <span className="body-small text-text-secondary">{t('bluetooth.scanning')}</span>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="xs"
+              icon={<X className={iconTokens.size.xs} />}
               onClick={() => cancelScan().catch(() => undefined)}
               data-testid="bluetooth-cancel-button"
-              className={cn(
-                button.base,
-                button.size.sm,
-                button.variant.secondary,
-                'ml-auto flex items-center gap-tight',
-              )}
               aria-label={t('bluetooth.cancel')}
+              className="ml-auto"
             >
-              <X className={iconTokens.size.xs} />
               <span className="hidden sm:inline">{t('bluetooth.cancel')}</span>
-            </button>
+            </Button>
           </div>
         ) : (
-          <button
-            type="button"
+          <Button
+            variant="primary"
             onClick={() => startScan().catch(() => undefined)}
             data-testid="bluetooth-scan-button"
-            className={cn(
-              button.size.md,
-              'bg-brand-primary text-on-brand',
-              radius.md,
-              'font-medium hover:bg-brand-primary/90 disabled:control-disabled',
-            )}
           >
             {t('bluetooth.scanButton')}
-          </button>
+          </Button>
         )}
 
         {scanStatus.error ? (
-          <div className={cn(spacing.pad.sm, statusColor.bg.errorSoft, radius.md)} role="alert">
-            <span className="body-small text-status-error" data-testid="bluetooth-error">
-              {scanStatus.error}
-            </span>
-          </div>
+          <Alert tone="error" size="sm">
+            <span data-testid="bluetooth-error">{scanStatus.error}</span>
+          </Alert>
         ) : null}
       </div>
 

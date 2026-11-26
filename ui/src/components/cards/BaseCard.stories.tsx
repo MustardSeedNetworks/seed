@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Globe, Server, Wifi } from 'lucide-react';
+import { CardRow, CardValue } from '../../shared/Card';
 import { cn, spacing } from '../../styles/theme';
-import { CardRow, CardValue } from '../ui/Card';
 import { BaseCard, SimpleBaseCard } from './BaseCard';
 
 interface SampleData {

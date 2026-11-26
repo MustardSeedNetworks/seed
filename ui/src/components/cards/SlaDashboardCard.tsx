@@ -24,10 +24,10 @@ import { Shield } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
+import { Card } from '../../shared/Card';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
 import type { ProbeAnomaliesResponse } from '../../types/generated/probe-anomalies-response';
-import { Card } from '../ui/Card';
-import type { Status } from '../ui/StatusBadge';
 
 interface SLADashboardCardProps {
   className?: string;
@@ -47,6 +47,7 @@ async function fetchActiveAnomalyCount(): Promise<number | null> {
 
 export function SLADashboardCard({ className }: SLADashboardCardProps): React.ReactElement {
   const { t } = useTranslation('cards');
+  const statusLabel = useCardStatusLabel();
   const [anomalyCount, setAnomalyCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +78,7 @@ export function SLADashboardCard({ className }: SLADashboardCardProps): React.Re
     return (): void => clearInterval(interval);
   }, [fetchData]);
 
-  const overallStatus = (): Status => {
+  const overallStatus = (): CardStatus => {
     if (loading) {
       return 'loading';
     }
@@ -87,12 +88,16 @@ export function SLADashboardCard({ className }: SLADashboardCardProps): React.Re
     return anomalyCount > 0 ? 'warning' : 'success';
   };
 
+  const status = overallStatus();
+
   return (
     <Card
+      data-testid="card"
       title={t('slaDashboard.title')}
       subtitle={t('slaDashboard.subtitle')}
       icon={<Shield className={iconTokens.size.md} />}
-      status={overallStatus()}
+      status={status}
+      statusLabel={statusLabel(status)}
       className={className}
     >
       {loading ? (

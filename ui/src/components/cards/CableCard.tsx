@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/Tooltip';
+import { Tooltip } from '../../shared/Tooltip';
 /**
  * CableCard Component
  *
@@ -35,6 +35,7 @@ import type { CablePairResult, CablePinout } from '../../types/generated/cable-r
 export type { CablePairResult, CablePinout };
 
 import { useTranslation } from 'react-i18next';
+import { CardDivider, CardRow, type CardStatus, CardValue } from '../../shared/Card';
 import {
   cn,
   icon as iconTokens,
@@ -44,7 +45,6 @@ import {
   status as statusColor,
 } from '../../styles/theme';
 import type { UnitSystem } from '../../types/settings';
-import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
 import { Cable } from '../ui/Icons';
 import { SimpleBaseCard } from './BaseCard';
 import { wireColorMap } from './cableWire';
@@ -72,7 +72,7 @@ interface CableCardProps {
 }
 
 // Status mapping - labels are resolved dynamically using i18n
-const statusMap: Record<string, Status> = {
+const statusMap: Record<string, CardStatus> = {
   ok: 'success',
   open: 'error',
   short: 'error',
@@ -82,7 +82,7 @@ const statusMap: Record<string, Status> = {
   unknown: 'unknown',
 };
 
-function getCardStatus(data: CableData | null): Status {
+function getCardStatus(data: CableData | null): CardStatus {
   if (!data?.supported) {
     return 'unknown';
   }

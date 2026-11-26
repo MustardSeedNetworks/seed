@@ -1,10 +1,10 @@
 // biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Complex component
 /**
- * SettingsDrawer Component (~1399 lines)
+ * SettingsDrawer Component
  *
  * Purpose: Master settings configuration panel managing all application settings.
- * Provides tabbed interface to Appearance, Discovery, Network, Performance, Health,
- * DNS, WiFi, SNMP, and Thresholds configuration sections with persistent storage.
+ * Renders the sections as SettingsTabs inside a RightDrawer (General, Network, Tests,
+ * Discovery, Alerts, Access, About) with persistent storage.
  *
  * Key Features:
  * - Multi-section settings: Appearance, Discovery, Network, Performance, Health, DNS, WiFi, SNMP, Thresholds
@@ -26,6 +26,16 @@
  * State: All settings state, save status, validation errors, iperf3 suggestions
  */
 
+import {
+  Bell,
+  Gauge,
+  Info,
+  KeyRound,
+  Network,
+  Radar,
+  SlidersHorizontal,
+  Users,
+} from 'lucide-react';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -33,13 +43,13 @@ import { api } from '../../api';
 import { useRole } from '../../contexts/RoleContext';
 import { useSettings } from '../../contexts/useSettings';
 import { useDebouncedAutoSave } from '../../hooks/useDebouncedAutoSave';
-import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useSettingsDrawerLoaders } from '../../hooks/useSettingsDrawerLoaders';
 import { useSettingsDrawerSavers } from '../../hooks/useSettingsDrawerSavers';
 import { useSubnetSettings } from '../../hooks/useSubnetSettings';
 import { useTheme } from '../../hooks/useTheme';
 import { useVulnerabilitySettings } from '../../hooks/useVulnerabilitySettings';
-import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
+import { RightDrawer } from '../../shared/RightDrawer';
+import { SettingsTabs } from '../../shared/SettingsTabs';
 import type { IperfSuggestion } from '../../types/generated/iperf-suggestion';
 import type { ThresholdSettings } from '../../types/generated/settings-response';
 import type {
@@ -71,6 +81,7 @@ import { HealthChecksSettings } from './sections/HealthChecksSettings';
 import { InterfacesSettings } from './sections/InterfacesSettings';
 import { LinkSettings } from './sections/LinkSettings';
 import { PerformanceSettings } from './sections/PerformanceSettings';
+import { ProfilesSettings } from './sections/ProfilesSettings';
 import { SsoSettings } from './sections/SsoSettings';
 import { ThresholdsSettings } from './sections/ThresholdsSettings';
 import { UsersSettings } from './sections/UsersSettings';
@@ -81,12 +92,26 @@ import {
   INLINE_DEFAULT_LINK_SETTINGS,
 } from './settingsDrawerNormalizer';
 
+type SettingsTabId =
+  | 'general'
+  | 'profiles'
+  | 'network'
+  | 'tests'
+  | 'discovery'
+  | 'alerts'
+  | 'access'
+  | 'about';
+
+const TAB_ICON = 'h-4 w-4';
+
 interface SettingsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   version?: string;
   /** Whether currently viewing WiFi mode (shows WiFi settings instead of Link/Cable). */
   isWifi?: boolean;
+  /** Opens the profile manager from the Profiles tab. */
+  onManageProfiles: () => void;
 }
 
 export function SettingsDrawer({
@@ -94,10 +119,22 @@ export function SettingsDrawer({
   onClose,
   version = 'dev',
   isWifi = false,
+  onManageProfiles,
 }: SettingsDrawerProps): React.ReactElement | null {
   const { t } = useTranslation(['settings', 'errors']);
   const { canWrite } = useRole();
   const { theme, setTheme, isDark } = useTheme();
+  const [activeTab, setActiveTab] = useState<SettingsTabId>('general');
+  const tabs = [
+    { id: 'general', label: t('tabs.general'), icon: <SlidersHorizontal className={TAB_ICON} /> },
+    { id: 'profiles', label: t('tabs.profiles'), icon: <Users className={TAB_ICON} /> },
+    { id: 'network', label: t('tabs.network'), icon: <Network className={TAB_ICON} /> },
+    { id: 'tests', label: t('tabs.tests'), icon: <Gauge className={TAB_ICON} /> },
+    { id: 'discovery', label: t('tabs.discovery'), icon: <Radar className={TAB_ICON} /> },
+    { id: 'alerts', label: t('tabs.alerts'), icon: <Bell className={TAB_ICON} /> },
+    { id: 'access', label: t('tabs.access'), icon: <KeyRound className={TAB_ICON} /> },
+    { id: 'about', label: t('tabs.about'), icon: <Info className={TAB_ICON} /> },
+  ] as const;
 
   // Get settings from context - single source of truth
   const {
@@ -121,17 +158,9 @@ export function SettingsDrawer({
     updateIperfSettings(newValue);
   };
 
-  const scrollRef = useRef<HTMLDivElement | null>(null);
   // Track if health check settings were modified - dispatch event on drawer close
   const testsSettingsChangedRef = useRef(false);
   const prevIsOpenRef = useRef(isOpen);
-
-  // Smooth scroll to top when opened
-  useEffect(() => {
-    if (isOpen && scrollRef.current) {
-      scrollRef.current.scrollTop = 0;
-    }
-  }, [isOpen]);
 
   // When drawer closes, dispatch healthChecksUpdated if test settings changed
   useEffect(() => {
@@ -390,234 +419,181 @@ export function SettingsDrawer({
     });
   };
 
-  // Focus trap: ESC to close, Tab cycling, and focus restore on close.
-  const drawerRef = useFocusTrap<HTMLDivElement>({
-    isActive: isOpen,
-    onEscape: onClose,
-  });
+  const renderTab = (): React.ReactElement => {
+    switch (activeTab) {
+      case 'general':
+        return (
+          <>
+            <DeviceIdentitySettings />
 
-  if (!isOpen) {
-    return null;
-  }
-
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-scrim/50 backdrop-blur-sm z-40"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      {/* Drawer - full width on mobile, 384px on larger screens */}
-      <div
-        ref={drawerRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="settings-drawer-title"
-        data-testid="settings-drawer"
-        className="fixed right-0 top-0 h-full w-full sm:w-96 lg:w-lg bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl animate-slide-in"
-      >
-        {/* Header */}
-        <div
-          className={cn(
-            layout.flex.between,
-            'pad border-b border-surface-border sticky top-0 bg-surface-raised z-10',
-          )}
-        >
-          <div className="stack-xs">
-            <h2 id="settings-drawer-title" className="heading-3">
-              {t('title')}
-            </h2>
-            <p className="body-small">{t('subtitle')}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            data-testid="settings-drawer-close"
-            className={cn(
-              button.size.md,
-              radius.md,
-              'hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-raised',
-            )}
-            aria-label={t('network.closeSettings')}
-          >
-            <svg
-              className={iconTokens.size.lg}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <div
-          className={cn(spacing.drawerPad, 'section-gap body-small leading-relaxed')}
-          ref={scrollRef}
-        >
-          {/* Settings sections ordered to match dashboard card order */}
-          {/* Link Settings - always visible for ethernet interface config */}
-          <LinkSettings
-            linkSettings={linkSettings}
-            setLinkSettings={editLinkSettings}
-            linkStatus={linkStatus}
-            cardSettings={cardSettings}
-            updateCardSettings={updateCardSettings}
-          />
-
-          {/* Cable Test Settings - always visible for cable diagnostics */}
-          <CableTestSettings
-            cableTestSettings={cableTestSettings}
-            setCableTestSettings={editCableTestSettings}
-            cableTestStatus={cableTestStatus}
-          />
-
-          {/* Network Section - IP/DHCP config (third) */}
-          <SettingsDrawerNetworkSection
-            ipSettings={ipSettings}
-            setIpSettings={setIpSettings}
-            dnsInput={dnsInput}
-            setDnsInput={setDnsInput}
-            saveIpSettings={saveIpSettings}
-            savingIp={savingIp}
-            ipMessage={ipMessage}
-            displayOptions={displayOptions}
-            setDisplayOptions={setDisplayOptions}
-            displayStatus={displayStatus}
-            isValidIp={isValidIp}
-          />
-
-          {/* WiFi Settings - only shown in WiFi mode (#754) */}
-          {isWifi ? (
-            <WiFiSettings
-              wifiSettings={wifiSettings}
-              setWifiSettings={editWifiSettings}
-              wifiStatus={wifiStatus}
+            {/* Appearance Section */}
+            <AppearanceSettings
+              theme={theme}
+              setTheme={setTheme}
+              isDark={isDark}
+              unitSystem={displayOptions.unitSystem || 'sae'}
+              setUnitSystem={(unit: 'sae' | 'metric'): void =>
+                setDisplayOptions((prev) => ({ ...prev, unitSystem: unit }))
+              }
             />
-          ) : null}
 
-          {/* DNS Settings - matches DnsCard position */}
-          <DnsSettings
-            testsSettings={testsSettings}
-            setTestsSettings={editTestsSettings}
-            testsStatus={testsStatus}
-            cardSettings={cardSettings}
-            updateCardSettings={updateCardSettings}
-          />
+            <ConfigBackupsSection />
+          </>
+        );
+      case 'profiles':
+        return <ProfilesSettings onManage={onManageProfiles} />;
+      case 'network':
+        return (
+          <>
+            <LinkSettings
+              linkSettings={linkSettings}
+              setLinkSettings={editLinkSettings}
+              linkStatus={linkStatus}
+              cardSettings={cardSettings}
+              updateCardSettings={updateCardSettings}
+            />
 
-          <HealthChecksSettings
-            testsSettings={testsSettings}
-            setTestsSettings={editTestsSettings}
-            testsStatus={testsStatus}
-            cardSettings={cardSettings}
-            updateCardSettings={updateCardSettings}
-          />
+            <CableTestSettings
+              cableTestSettings={cableTestSettings}
+              setCableTestSettings={editCableTestSettings}
+              cableTestStatus={cableTestStatus}
+            />
 
-          <PerformanceSettings
-            testsSettings={testsSettings}
-            setTestsSettings={editTestsSettings}
-            iperfSettings={iperfSettings}
-            setIperfSettings={setIperfSettings}
-            iperfStatus={iperfStatus}
-            iperfSuggestions={iperfSuggestions}
-            iperfSuggestionsStatus={iperfSuggestionsStatus}
-            iperfSuggestionsError={iperfSuggestionsError}
-            fetchIperfSuggestions={fetchIperfSuggestions}
-            cardSettings={cardSettings}
-            updateCardSettings={updateCardSettings}
-          />
+            <SettingsDrawerNetworkSection
+              ipSettings={ipSettings}
+              setIpSettings={setIpSettings}
+              dnsInput={dnsInput}
+              setDnsInput={setDnsInput}
+              saveIpSettings={saveIpSettings}
+              savingIp={savingIp}
+              ipMessage={ipMessage}
+              displayOptions={displayOptions}
+              setDisplayOptions={setDisplayOptions}
+              displayStatus={displayStatus}
+              isValidIp={isValidIp}
+            />
 
-          <DiscoverySettings
-            networkDiscoverySettings={networkDiscoverySettings}
-            setNetworkDiscoverySettings={editNetworkDiscoverySettings}
-            networkDiscoveryStatus={networkDiscoveryStatus}
-            subnets={subnets}
-            subnetsStatus={subnetsStatus}
-            newSubnetCidr={newSubnetCidr}
-            setNewSubnetCidr={setNewSubnetCidr}
-            newSubnetName={newSubnetName}
-            setNewSubnetName={setNewSubnetName}
-            subnetError={subnetError}
-            setSubnetError={setSubnetError}
-            addSubnet={addSubnet}
-            toggleSubnet={toggleSubnet}
-            deleteSubnet={deleteSubnet}
-            snmpSettings={snmpSettings}
-            setSnmpSettings={editSnmpSettings}
-            snmpStatus={snmpStatus}
-            cardSettings={cardSettings}
-            updateCardSettings={updateCardSettings}
-          />
+            {isWifi ? (
+              <WiFiSettings
+                wifiSettings={wifiSettings}
+                setWifiSettings={editWifiSettings}
+                wifiStatus={wifiStatus}
+              />
+            ) : null}
 
-          <VulnerabilitySettings
-            settings={vulnSettings}
-            setSettings={editVulnSettings}
-            status={vulnStatus}
-          />
+            <InterfacesSettings />
+          </>
+        );
+      case 'tests':
+        return (
+          <>
+            <DnsSettings
+              testsSettings={testsSettings}
+              setTestsSettings={editTestsSettings}
+              testsStatus={testsStatus}
+              cardSettings={cardSettings}
+              updateCardSettings={updateCardSettings}
+            />
 
-          <AlertDeliverySettings />
+            <HealthChecksSettings
+              testsSettings={testsSettings}
+              setTestsSettings={editTestsSettings}
+              testsStatus={testsStatus}
+              cardSettings={cardSettings}
+              updateCardSettings={updateCardSettings}
+            />
 
-          <AlertEmailSettings />
+            <PerformanceSettings
+              testsSettings={testsSettings}
+              setTestsSettings={editTestsSettings}
+              iperfSettings={iperfSettings}
+              setIperfSettings={setIperfSettings}
+              iperfStatus={iperfStatus}
+              iperfSuggestions={iperfSuggestions}
+              iperfSuggestionsStatus={iperfSuggestionsStatus}
+              iperfSuggestionsError={iperfSuggestionsError}
+              fetchIperfSuggestions={fetchIperfSuggestions}
+              cardSettings={cardSettings}
+              updateCardSettings={updateCardSettings}
+            />
 
-          <AlertEscalationSettings />
+            <ThresholdsSettings
+              thresholds={thresholds}
+              setThresholds={editThresholds}
+              thresholdsStatus={thresholdsStatus}
+            />
+          </>
+        );
+      case 'discovery':
+        return (
+          <>
+            <DiscoverySettings
+              networkDiscoverySettings={networkDiscoverySettings}
+              setNetworkDiscoverySettings={editNetworkDiscoverySettings}
+              networkDiscoveryStatus={networkDiscoveryStatus}
+              subnets={subnets}
+              subnetsStatus={subnetsStatus}
+              newSubnetCidr={newSubnetCidr}
+              setNewSubnetCidr={setNewSubnetCidr}
+              newSubnetName={newSubnetName}
+              setNewSubnetName={setNewSubnetName}
+              subnetError={subnetError}
+              setSubnetError={setSubnetError}
+              addSubnet={addSubnet}
+              toggleSubnet={toggleSubnet}
+              deleteSubnet={deleteSubnet}
+              snmpSettings={snmpSettings}
+              setSnmpSettings={editSnmpSettings}
+              snmpStatus={snmpStatus}
+              cardSettings={cardSettings}
+              updateCardSettings={updateCardSettings}
+            />
 
-          <ThresholdsSettings
-            thresholds={thresholds}
-            setThresholds={editThresholds}
-            thresholdsStatus={thresholdsStatus}
-          />
+            <VulnerabilitySettings
+              settings={vulnSettings}
+              setSettings={editVulnSettings}
+              status={vulnStatus}
+            />
 
-          <DeviceIdentitySettings />
+            {/* Guest-network isolation audit target list (#1004). */}
+            <GuestNetworkAuditSettings />
+          </>
+        );
+      case 'alerts':
+        return (
+          <>
+            <AlertDeliverySettings />
 
-          {/* Appearance Section */}
-          <AppearanceSettings
-            theme={theme}
-            setTheme={setTheme}
-            isDark={isDark}
-            unitSystem={displayOptions.unitSystem || 'sae'}
-            setUnitSystem={(unit: 'sae' | 'metric'): void =>
-              setDisplayOptions((prev) => ({ ...prev, unitSystem: unit }))
-            }
-          />
+            <AlertEmailSettings />
 
-          {/* API tokens (Phase D-2 LICENSE_STRATEGY) */}
-          <ApiTokensSettings />
+            <AlertEscalationSettings />
+          </>
+        );
+      case 'access':
+        return (
+          <>
+            <ApiTokensSettings />
 
-          {/* Users CRUD (multi_user, seed#1191) — admin-only section, so an
+            {/* Users CRUD (multi_user, seed#1191) — admin-only section, so an
                 operator/viewer never sees user management at all (#1254). The
                 in-section buttons stay isAdmin-gated as defense-in-depth. */}
-          <RequireAdmin>
-            <UsersSettings />
-          </RequireAdmin>
+            <RequireAdmin>
+              <UsersSettings />
+            </RequireAdmin>
 
-          {/* Guest-network isolation audit target list (#1004). */}
-          <GuestNetworkAuditSettings />
-
-          {/* SSO admin panel (seed#1198). GET /sso/settings is readable by
+            {/* SSO admin panel (seed#1198). GET /sso/settings is readable by
                 every role; PUT /sso/update is minRole: op and the section
                 disables its own controls for a viewer. */}
-          <SsoSettings />
+            <SsoSettings />
 
-          {/* Network Interfaces (multi_interface, seed#1192) */}
-          <InterfacesSettings />
-
-          {/* Opt-in EoX feed (P-D9) — admin-only, as GET/PUT /lifecycle/feed are. */}
-          <RequireAdmin>
-            <EoxFeedSettings />
-          </RequireAdmin>
-
-          {/* Config Backups Section (implements #494) */}
-          <ConfigBackupsSection />
-
-          {/* Updates Section (implements #862) */}
-
+            {/* Opt-in EoX feed (P-D9) — admin-only, as GET/PUT /lifecycle/feed are. */}
+            <RequireAdmin>
+              <EoxFeedSettings />
+            </RequireAdmin>
+          </>
+        );
+      case 'about':
+        return (
           <SettingsDrawerFooter
             version={version}
             fetchLogPreview={fetchLogPreview}
@@ -625,8 +601,32 @@ export function SettingsDrawer({
             logError={logError}
             logPreview={logPreview}
           />
-        </div>
+        );
+    }
+  };
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <RightDrawer
+      open={isOpen}
+      onClose={onClose}
+      title={t('title')}
+      closeLabel={t('network.closeSettings')}
+      data-testid="settings-drawer"
+    >
+      <div className="text-sm leading-relaxed">
+        <SettingsTabs
+          tabs={tabs}
+          value={activeTab}
+          onChange={(id) => setActiveTab(id as SettingsTabId)}
+          label={t('tabs.label')}
+        >
+          <div className="space-y-4">{renderTab()}</div>
+        </SettingsTabs>
       </div>
-    </>
+    </RightDrawer>
   );
 }

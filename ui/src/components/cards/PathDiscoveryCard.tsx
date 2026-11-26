@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/Tooltip';
+import { Tooltip } from '../../shared/Tooltip';
 /**
  * PathDiscoveryCard Component
  *
@@ -29,19 +29,21 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { PathDiscoverySchema } from '../../schemas/auth';
+import { Card, CardDivider, CardValue } from '../../shared/Card';
+import { Input } from '../../shared/Input';
+import { Select } from '../../shared/Select';
 import {
   button as buttonTokens,
   cn,
   icon as iconTokens,
-  input as inputTokens,
   layout,
   radius,
   spacing,
   status as statusColor,
 } from '../../styles/theme';
 import type { PathResponse, TracerouteHop } from '../../types';
-import { Card, CardDivider, CardValue, type Status } from '../ui/Card';
 import { Route } from '../ui/Icons';
 import { PathTimeline } from './PathDiscoveryTimeline';
 import { formatRtt, getMaxRtt } from './pathDiscoveryHelpers';
@@ -69,7 +71,7 @@ function pathCardStatus(
   loading: boolean,
   error: string | null,
   result: PathResponse | null,
-): Status {
+): CardStatus {
   if (loading) {
     return 'loading';
   }
@@ -293,14 +295,17 @@ export function PathDiscoveryCard({
   };
 
   const cardStatus = pathCardStatus(loading, error, result);
+  const statusLabel = useCardStatusLabel();
 
   const maxRtt = result?.l3Path ? getMaxRtt(result.l3Path.hops) : 1;
 
   return (
     <Card
+      data-testid="card"
       title={t('pathDiscovery.title')}
       icon={<Route className={iconTokens.size.md} />}
       status={cardStatus}
+      statusLabel={statusLabel(cardStatus)}
     >
       {/* Target Input Form - Responsive layout for various screen sizes */}
       <form
@@ -313,61 +318,51 @@ export function PathDiscoveryCard({
         {/* Target Input Row - Stack on mobile, inline on larger screens */}
         <div className="flex flex-col sm:flex-row gap-compact">
           {/* Target input - full width on mobile */}
-          <input
-            type="text"
+          <Input
             {...register('target')}
             placeholder={t('pathDiscovery.enterTarget')}
+            aria-label={t('pathDiscovery.enterTarget')}
             disabled={loading}
-            className={cn(
-              'flex-1 min-w-0',
-              inputTokens.base,
-              inputTokens.state.default,
-              inputTokens.size.sm,
-              'body-small',
-            )}
+            className="flex-1"
           />
 
           {/* Protocol and Trace button group - inline always */}
           <div className="flex items-center gap-compact shrink-0">
             {/* Protocol selector - styled to match design system */}
             <Tooltip text={t('pathDiscovery.protocol')}>
-              <select
-                {...register('protocol')}
-                disabled={loading}
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  'w-20 body-small cursor-pointer',
-                )}
-                // title alone does not name a form control (axe
-                // label-title-only); the inline layout has no room for a
-                // visible label beside a 20-wide select.
-                aria-label={t('pathDiscovery.protocol')}
-              >
-                <option value="icmp">ICMP</option>
-                <option value="udp">UDP</option>
-                <option value="tcp">TCP</option>
-              </select>
+              <div className="w-24 shrink-0">
+                {/* title alone does not name a form control (axe
+                    label-title-only); the inline layout has no room for a
+                    visible label beside a select this narrow. */}
+                <Select
+                  aria-label={t('pathDiscovery.protocol')}
+                  value={protocol}
+                  disabled={loading}
+                  onValueChange={(value): void =>
+                    setValue('protocol', value as Protocol, { shouldDirty: true })
+                  }
+                  options={[
+                    { value: 'icmp', label: 'ICMP' },
+                    { value: 'udp', label: 'UDP' },
+                    { value: 'tcp', label: 'TCP' },
+                  ]}
+                />
+              </div>
             </Tooltip>
 
             {/* Port input (only for TCP/UDP) */}
             {protocol !== 'icmp' && (
-              <input
-                type="number"
-                {...register('port', { valueAsNumber: true })}
-                placeholder={t('pathDiscovery.port')}
-                min={1}
-                max={65535}
-                disabled={loading}
-                className={cn(
-                  'w-16',
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  'body-small',
-                )}
-              />
+              <div className="w-20 shrink-0">
+                <Input
+                  type="number"
+                  {...register('port', { valueAsNumber: true })}
+                  placeholder={t('pathDiscovery.port')}
+                  aria-label={t('pathDiscovery.port')}
+                  min={1}
+                  max={65535}
+                  disabled={loading}
+                />
+              </div>
             )}
 
             <button

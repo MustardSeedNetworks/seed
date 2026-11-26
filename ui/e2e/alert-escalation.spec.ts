@@ -19,6 +19,7 @@ async function openEscalation(page: Page): Promise<void> {
   await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
   await sidebarSettingsButton(page).click();
   await expect(page.getByTestId('settings-drawer')).toBeVisible({ timeout: 5000 });
+  await page.getByRole('tab', { name: 'Alerts' }).click();
   const section = page.getByTestId('alert-escalation-section');
   await section.getByRole('button', { expanded: false }).first().click();
   await expect(page.getByTestId('escalation-save')).toBeVisible();
@@ -45,6 +46,8 @@ test.describe('Alert escalation', () => {
 
     // A ladder with no rule could not run: the server says so, nothing is stored.
     await page.getByTestId('escalation-add').click();
+    // Save only once the new ladder is in the form, or it saves the empty list.
+    await expect(page.getByTestId('escalation-ladder-0')).toBeVisible();
     await save(page);
     await expect(page.getByTestId('escalation-error')).toContainText('rule is required');
 

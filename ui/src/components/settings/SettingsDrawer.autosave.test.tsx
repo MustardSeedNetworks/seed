@@ -73,13 +73,19 @@ async function openDiscovery(): Promise<HTMLInputElement> {
     <QueryClientProvider client={queryClient}>
       <ProfileProvider>
         <RoleProvider isAuthenticated={true}>
-          <SettingsDrawer isOpen={true} onClose={(): void => undefined} version="1.0.0" />
+          <SettingsDrawer
+            onManageProfiles={() => undefined}
+            isOpen={true}
+            onClose={(): void => undefined}
+            version="1.0.0"
+          />
         </RoleProvider>
       </ProfileProvider>
     </QueryClientProvider>
   );
   render(node);
   await tick(0);
+  fireEvent.click(screen.getByRole('tab', { name: 'Discovery' }));
   const section = within(screen.getByTestId('discovery-settings-section'));
   fireEvent.click(section.getByRole('button', { name: /^Discovery/, expanded: false }));
   await tick(0);

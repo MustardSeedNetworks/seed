@@ -7,9 +7,13 @@ import { valibotResolver } from '@hookform/resolvers/valibot';
 import type React from 'react';
 import { type SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { ProfileEditorSchema } from '../../schemas/auth';
-import { cn, radius, spacing } from '../../styles/theme';
+import { Button } from '../../shared/Button';
+import { Checkbox } from '../../shared/Checkbox';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
+import { Modal } from '../../shared/Modal';
+import { Textarea } from '../../shared/Textarea';
 import type { Profile, ProfileRequest } from '../../types/profile';
 
 interface ProfileEditorProps {
@@ -37,7 +41,6 @@ export function ProfileEditor({
 }: ProfileEditorProps): React.JSX.Element {
   const { t } = useTranslation();
   const isEditing = profile !== null;
-  const dialogRef = useFocusTrap<HTMLDivElement>({ isActive: true, onEscape: onCancel });
 
   const initialNotes = (profile?.config as { notes?: string })?.notes || '';
 
@@ -80,149 +83,76 @@ export function ProfileEditor({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex-center pad">
-      <div className="fixed inset-0 bg-scrim/50" onClick={onCancel} aria-hidden="true" />
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="profile-editor-title"
-        className={cn(
-          'relative w-full max-w-lg',
-          radius.lg,
-          'bg-surface-raised shadow-xl overflow-hidden',
-        )}
-      >
-        {/* Header */}
-        <div className={cn(spacing.pad.default, 'border-b border-surface-border')}>
-          <h2 id="profile-editor-title" className="heading-2 text-text-primary">
-            {isEditing ? t('profile.edit') : t('profile.create')}
-          </h2>
-        </div>
+    <Modal
+      open
+      onClose={onCancel}
+      title={isEditing ? t('profile.edit') : t('profile.create')}
+      closeLabel={t('common.close')}
+      busy={isLoading}
+      closeOnBackdrop={false}
+      data-testid="profile-editor"
+      footer={
+        <>
+          <Button onClick={onCancel} disabled={isLoading}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            type="submit"
+            form="profile-editor-form"
+            variant="primary"
+            disabled={isLoading || !isValid}
+          >
+            {getButtonLabel()}
+          </Button>
+        </>
+      }
+    >
+      <form id="profile-editor-form" onSubmit={handleSubmit(onSubmit)}>
+        <div className="stack-lg">
+          <FormField
+            id="profile-name"
+            label={t('profile.name')}
+            required
+            {...(errors.name ? { error: errors.name.message } : {})}
+          >
+            {(field) => (
+              <Input {...field} {...register('name')} placeholder={t('profile.namePlaceholder')} />
+            )}
+          </FormField>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className={cn(spacing.pad.default, 'stack-lg')}>
-            {/* Name */}
-            <div>
-              <label
-                htmlFor="profile-name"
-                className="block body-small font-medium text-text-primary mb-tight"
-              >
-                {t('profile.name')} *
-              </label>
-              <input
-                id="profile-name"
-                type="text"
-                {...register('name')}
-                className={cn(
-                  'w-full',
-                  spacing.pad.sm,
-                  radius.md,
-                  'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary',
-                )}
-                placeholder={t('profile.namePlaceholder')}
-              />
-              {errors.name ? (
-                <p className="caption mt-tight text-status-error">{errors.name.message}</p>
-              ) : null}
-            </div>
-
-            {/* Description */}
-            <div>
-              <label
-                htmlFor="profile-description"
-                className="block body-small font-medium text-text-primary mb-tight"
-              >
-                {t('profile.description')}
-              </label>
-              <input
-                id="profile-description"
-                type="text"
+          <FormField
+            id="profile-description"
+            label={t('profile.description')}
+            {...(errors.description ? { error: errors.description.message } : {})}
+          >
+            {(field) => (
+              <Input
+                {...field}
                 {...register('description')}
-                className={cn(
-                  'w-full',
-                  spacing.pad.sm,
-                  radius.md,
-                  'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary',
-                )}
                 placeholder={t('profile.descriptionPlaceholder')}
               />
-              {errors.description ? (
-                <p className="caption mt-tight text-status-error">{errors.description.message}</p>
-              ) : null}
-            </div>
+            )}
+          </FormField>
 
-            {/* Notes */}
-            <div>
-              <label
-                htmlFor="profile-notes"
-                className="block body-small font-medium text-text-primary mb-tight"
-              >
-                {t('profile.notes')}
-              </label>
-              <textarea
-                id="profile-notes"
+          <FormField id="profile-notes" label={t('profile.notes')}>
+            {(field) => (
+              <Textarea
+                {...field}
                 {...register('notes')}
                 rows={3}
-                className={cn(
-                  'w-full',
-                  spacing.pad.sm,
-                  radius.md,
-                  'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none',
-                )}
                 placeholder={t('profile.notesPlaceholder')}
               />
-            </div>
-
-            {/* Default checkbox */}
-            <label className="flex items-center gap-compact cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isDefault}
-                onChange={(e) => setValue('isDefault', e.target.checked, { shouldDirty: true })}
-                className="w-4 h-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary"
-              />
-              <span className="body-small text-text-primary">{t('profile.setAsDefault')}</span>
-            </label>
-          </div>
-
-          {/* Footer */}
-          <div
-            className={cn(
-              spacing.pad.default,
-              'border-t border-surface-border flex justify-end gap-default',
             )}
-          >
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={isLoading}
-              className={cn(
-                spacing.pad.sm,
-                'px-4',
-                radius.md,
-                'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary body-small font-medium disabled:control-disabled',
-              )}
-            >
-              {t('common.cancel')}
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading || !isValid}
-              className={cn(
-                spacing.pad.sm,
-                'px-4',
-                radius.md,
-                'bg-brand-primary hover:bg-brand-accent text-on-brand body-small font-medium disabled:control-disabled',
-              )}
-            >
-              {getButtonLabel()}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+          </FormField>
+
+          <Checkbox
+            label={t('profile.setAsDefault')}
+            checked={isDefault}
+            onChange={(checked): void => setValue('isDefault', checked, { shouldDirty: true })}
+          />
+        </div>
+      </form>
+    </Modal>
   );
 }
 

@@ -17,11 +17,12 @@
 
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
-
+import { useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useDriverStats } from '../../hooks/useDriverStats';
+import { Alert } from '../../shared/Alert';
+import { Button } from '../../shared/Button';
+import { Card, type CardStatus } from '../../shared/Card';
 import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
-import { Button } from '../ui/Button';
-import { Card, type Status } from '../ui/Card';
 import { FeatureUnavailable } from '../ui/FeatureUnavailable';
 import { Activity } from '../ui/Icons';
 
@@ -31,13 +32,14 @@ interface DriverStatsCardProps {
 
 export function DriverStatsCard({ interfaceName }: DriverStatsCardProps): JSX.Element {
   const { t } = useTranslation('cards');
+  const labelFor = useCardStatusLabel();
   const { counters, total, loading, error, refresh } = useDriverStats(interfaceName);
 
   // Any non-zero curated counter is worth flagging: every one of them counts
   // something that should be zero on a healthy link.
   const unhealthy = counters.some((counter) => counter.value > 0);
 
-  let cardStatus: Status = 'success';
+  let cardStatus: CardStatus = 'success';
   if (loading) {
     cardStatus = 'loading';
   } else if (error) {
@@ -52,12 +54,18 @@ export function DriverStatsCard({ interfaceName }: DriverStatsCardProps): JSX.El
         title={t('driverStats.title')}
         icon={<Activity className="w-4 h-4" />}
         status={cardStatus}
-        ariaLabel={t('driverStats.title')}
+        statusLabel={labelFor(cardStatus)}
+        aria-label={t('driverStats.title')}
+        data-testid="card"
       >
         <div className="stack-sm">
           <p className="caption text-text-muted">{t('driverStats.description')}</p>
 
-          {error ? <p className="caption text-status-error">{error}</p> : null}
+          {error ? (
+            <Alert tone="error" size="sm">
+              {error}
+            </Alert>
+          ) : null}
 
           {!loading && !error && counters.length === 0 ? (
             <p className="caption text-text-muted">{t('driverStats.noCounters')}</p>

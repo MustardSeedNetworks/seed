@@ -20,7 +20,8 @@ import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
-import { button, cn, input, layout, radius, status as statusColor } from '../../../styles/theme';
+import { Input } from '../../../shared/Input';
+import { button, cn, layout, radius, status as statusColor } from '../../../styles/theme';
 import type { SetMTURequest } from '../../../types/generated/set-mtu';
 import type { SetMTUResponse } from '../../../types/generated/set-mtu-response';
 
@@ -64,22 +65,15 @@ export function MtuControl(): React.ReactElement {
   return (
     <div className="stack-sm">
       <div className={layout.inline.default}>
-        <input
+        <Input
           type="number"
           min="68"
           max="9000"
           value={mtu}
-          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-            setMtu(e.target.value)
-          }
+          onChange={(e): void => setMtu(e.target.value)}
           placeholder={t('network.mtuControl.placeholder')}
-          className={cn(
-            'flex-1',
-            input.size.sm,
-            'bg-surface-base border border-surface-border',
-            radius.md,
-            'body-small text-text-primary',
-          )}
+          aria-label={t('network.mtuControl.placeholder')}
+          className="flex-1"
           disabled={loading}
         />
         <button

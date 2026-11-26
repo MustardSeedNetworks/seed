@@ -12,9 +12,10 @@ import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { BoundedJobState } from '../../hooks/useBoundedJob';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { type PMTUDResult, usePathMTU } from '../../hooks/usePathChecks';
+import { Card } from '../../shared/Card';
 import { cn, status as statusColor } from '../../styles/theme';
-import { Card, type Status } from '../ui/Card';
 import { Maximize2 } from '../ui/Icons';
 import { isBusy, PathCheckForm } from './PathCheckForm';
 
@@ -32,7 +33,7 @@ function readingOf(result: PMTUDResult): Reading {
   return result.pathMtu >= JUMBO_CEILING ? 'ceiling' : 'smaller';
 }
 
-function resultStatus(result: PMTUDResult): Status {
+function resultStatus(result: PMTUDResult): CardStatus {
   switch (result.status) {
     case 'ok':
       return readingOf(result) === 'smaller' ? 'warning' : 'success';
@@ -43,7 +44,7 @@ function resultStatus(result: PMTUDResult): Status {
   }
 }
 
-function cardStatus(state: BoundedJobState<PMTUDResult>): Status {
+function cardStatus(state: BoundedJobState<PMTUDResult>): CardStatus {
   if (isBusy(state)) {
     return 'loading';
   }
@@ -61,13 +62,17 @@ export function PathMTUCard(): JSX.Element {
   const { t } = useTranslation('cards');
   const check = usePathMTU();
   const { state } = check;
+  const statusLabel = useCardStatusLabel();
+  const status = cardStatus(state);
 
   return (
     <Card
+      data-testid="card"
       title={t('pathMtu.title')}
       icon={<Maximize2 className="w-4 h-4" />}
-      status={cardStatus(state)}
-      ariaLabel={t('pathMtu.title')}
+      status={status}
+      statusLabel={statusLabel(status)}
+      aria-label={t('pathMtu.title')}
     >
       <div className="stack-sm" data-testid="path-mtu" data-phase={state.phase}>
         <p className="caption text-text-muted">{t('pathMtu.description')}</p>

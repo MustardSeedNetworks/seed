@@ -10,19 +10,14 @@
 
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  cn,
-  discoveryMethod as discoveryMethodTheme,
-  radius,
-  severity as severityTheme,
-} from '../../styles/theme';
+import { CategoryChip } from '../../shared/CategoryChip';
+import { Tooltip } from '../../shared/Tooltip';
+import { cn, radius, severity as severityTheme } from '../../styles/theme';
 import type {
   DiscoveredDevice,
   Vulnerability,
 } from '../../types/generated/engine-discovery-response';
 import { AlertTriangle } from '../ui/Icons';
-import { Tooltip } from '../ui/Tooltip';
-import type { DiscoveryMethod } from './NetworkDiscoveryCard';
 import { formatLastSeen } from './NetworkDiscoveryCardHelpers';
 
 /**
@@ -46,16 +41,11 @@ export function deviceName(device: DiscoveredDevice): string | undefined {
   return device.displayName || device.mdnsName || device.netbiosName || device.hostname;
 }
 
-// `discoveryMethod` is an open string set on the wire — the Go type has no enum
-// and a collector may add one — so the badge takes whatever arrives and falls
-// back to the ARP styling for a method it has no colour for.
+// `discoveryMethod` is an open string set on the wire (the Go type has no enum
+// and a collector may add one), so the chip takes whatever arrives. A method is
+// a category, not a verdict, so it is a neutral chip rather than a status hue.
 export function MethodBadge({ method }: { method: string }): JSX.Element {
-  const themeClass = discoveryMethodTheme[method as DiscoveryMethod] ?? discoveryMethodTheme.arp;
-  return (
-    <span className={cn('px-1.5 py-0.5 text-xs font-medium uppercase', radius.md, themeClass)}>
-      {method}
-    </span>
-  );
+  return <CategoryChip label={method} className="uppercase" />;
 }
 
 export function getSeverityClasses(severity: string): string {

@@ -10,7 +10,10 @@ import type React from 'react';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useArrayItem } from '../../../hooks/useArrayItem';
-import { cn, input, layout, radius, spacing } from '../../../styles/theme';
+import { Checkbox } from '../../../shared/Checkbox';
+import { Input } from '../../../shared/Input';
+import { Select } from '../../../shared/Select';
+import { cn, layout, radius, spacing } from '../../../styles/theme';
 import type { SqlEndpoint, TestsSettings } from '../../../types/settings';
 
 // Product names, written the same in every locale.
@@ -100,42 +103,27 @@ export function HealthChecksSettingsEnterprise({
             )}
           >
             <div className={cn('flex', spacing.gap.compact)}>
-              <input
-                type="text"
-                value={endpoint.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateSqlEndpoint(endpoint.id ?? '', 'name', e.target.value)
-                }
-                placeholder={t('common.name')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'flex-1 bg-surface-raised',
-                )}
-              />
-              <select
-                value={endpoint.driver}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                  updateSqlEndpoint(
-                    endpoint.id ?? '',
-                    'driver',
-                    e.target.value as SqlEndpoint['driver'],
-                  )
-                }
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'w-28 bg-surface-raised',
-                )}
-              >
-                {SQL_DRIVERS.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('common.name')}
+                  value={endpoint.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateSqlEndpoint(endpoint.id ?? '', 'name', e.target.value)
+                  }
+                  placeholder={t('common.name')}
+                />
+              </div>
+              <div className="w-32 shrink-0">
+                <Select
+                  aria-label={t('health.sqlDriver')}
+                  value={endpoint.driver}
+                  onValueChange={(value): void =>
+                    updateSqlEndpoint(endpoint.id ?? '', 'driver', value as SqlEndpoint['driver'])
+                  }
+                  options={SQL_DRIVERS}
+                />
+              </div>
               <button
                 type="button"
                 onClick={(): void => removeSqlEndpoint(endpoint.id ?? '')}
@@ -145,50 +133,45 @@ export function HealthChecksSettingsEnterprise({
               </button>
             </div>
             <div className={cn('flex', spacing.gap.compact)}>
-              <input
-                type="text"
-                value={endpoint.host}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateSqlEndpoint(endpoint.id ?? '', 'host', e.target.value)
-                }
-                placeholder={t('common.host')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'flex-1 bg-surface-raised',
-                )}
-              />
-              <input
-                type="number"
-                value={endpoint.port}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateSqlEndpoint(endpoint.id ?? '', 'port', Number.parseInt(e.target.value, 10))
-                }
-                placeholder={t('common.port')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'w-20 bg-surface-raised',
-                )}
-              />
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('common.host')}
+                  value={endpoint.host}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateSqlEndpoint(endpoint.id ?? '', 'host', e.target.value)
+                  }
+                  placeholder={t('common.host')}
+                />
+              </div>
+              <div className="w-20 shrink-0">
+                <Input
+                  type="number"
+                  aria-label={t('common.port')}
+                  value={endpoint.port}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateSqlEndpoint(
+                      endpoint.id ?? '',
+                      'port',
+                      Number.parseInt(e.target.value, 10),
+                    )
+                  }
+                  placeholder={t('common.port')}
+                />
+              </div>
             </div>
             <div className={cn('flex', spacing.gap.compact)}>
-              <input
-                type="text"
-                value={endpoint.database}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateSqlEndpoint(endpoint.id ?? '', 'database', e.target.value)
-                }
-                placeholder={t('health.database')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'flex-1 bg-surface-raised',
-                )}
-              />
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('health.database')}
+                  value={endpoint.database}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateSqlEndpoint(endpoint.id ?? '', 'database', e.target.value)
+                  }
+                  placeholder={t('health.database')}
+                />
+              </div>
             </div>
           </div>
         ))}
@@ -215,47 +198,52 @@ export function HealthChecksSettingsEnterprise({
             key={endpoint.id}
             className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
           >
-            <input
-              type="text"
-              value={endpoint.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateFileShareEndpoint(endpoint.id ?? '', 'name', e.target.value)
-              }
-              placeholder={t('common.name')}
-              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-            />
-            <select
-              value={endpoint.protocol}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                updateFileShareEndpoint(
-                  endpoint.id ?? '',
-                  'protocol',
-                  e.target.value as 'smb' | 'nfs',
-                )
-              }
-              className={cn(input.base, input.state.default, input.size.md, 'w-20')}
-            >
-              <option value="smb">SMB</option>
-              <option value="nfs">NFS</option>
-            </select>
-            <input
-              type="text"
-              value={endpoint.host}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateFileShareEndpoint(endpoint.id ?? '', 'host', e.target.value)
-              }
-              placeholder={t('common.host')}
-              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-            />
-            <input
-              type="text"
-              value={endpoint.share}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateFileShareEndpoint(endpoint.id ?? '', 'share', e.target.value)
-              }
-              placeholder={t('health.sharePath')}
-              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-            />
+            <div className="w-24 shrink-0">
+              <Input
+                type="text"
+                aria-label={t('common.name')}
+                value={endpoint.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateFileShareEndpoint(endpoint.id ?? '', 'name', e.target.value)
+                }
+                placeholder={t('common.name')}
+              />
+            </div>
+            <div className="w-24 shrink-0">
+              <Select
+                aria-label={t('health.fileShareProtocol')}
+                value={endpoint.protocol}
+                onValueChange={(value): void =>
+                  updateFileShareEndpoint(endpoint.id ?? '', 'protocol', value as 'smb' | 'nfs')
+                }
+                options={[
+                  { value: 'smb', label: 'SMB' },
+                  { value: 'nfs', label: 'NFS' },
+                ]}
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <Input
+                type="text"
+                aria-label={t('common.host')}
+                value={endpoint.host}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateFileShareEndpoint(endpoint.id ?? '', 'host', e.target.value)
+                }
+                placeholder={t('common.host')}
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <Input
+                type="text"
+                aria-label={t('health.sharePath')}
+                value={endpoint.share}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateFileShareEndpoint(endpoint.id ?? '', 'share', e.target.value)
+                }
+                placeholder={t('health.sharePath')}
+              />
+            </div>
             <button
               type="button"
               onClick={(): void => removeFileShareEndpoint(endpoint.id ?? '')}
@@ -293,48 +281,43 @@ export function HealthChecksSettingsEnterprise({
             )}
           >
             <div className={cn('flex', spacing.gap.compact)}>
-              <input
-                type="text"
-                value={endpoint.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateLdapEndpoint(endpoint.id ?? '', 'name', e.target.value)
-                }
-                placeholder={t('common.name')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'w-32 bg-surface-raised',
-                )}
-              />
-              <input
-                type="text"
-                value={endpoint.host}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateLdapEndpoint(endpoint.id ?? '', 'host', e.target.value)
-                }
-                placeholder={t('common.host')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'flex-1 bg-surface-raised',
-                )}
-              />
-              <input
-                type="number"
-                value={endpoint.port}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateLdapEndpoint(endpoint.id ?? '', 'port', Number.parseInt(e.target.value, 10))
-                }
-                placeholder={t('common.port')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'w-20 bg-surface-raised',
-                )}
-              />
+              <div className="w-32 shrink-0">
+                <Input
+                  type="text"
+                  aria-label={t('common.name')}
+                  value={endpoint.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateLdapEndpoint(endpoint.id ?? '', 'name', e.target.value)
+                  }
+                  placeholder={t('common.name')}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('common.host')}
+                  value={endpoint.host}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateLdapEndpoint(endpoint.id ?? '', 'host', e.target.value)
+                  }
+                  placeholder={t('common.host')}
+                />
+              </div>
+              <div className="w-20 shrink-0">
+                <Input
+                  type="number"
+                  aria-label={t('common.port')}
+                  value={endpoint.port}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateLdapEndpoint(
+                      endpoint.id ?? '',
+                      'port',
+                      Number.parseInt(e.target.value, 10),
+                    )
+                  }
+                  placeholder={t('common.port')}
+                />
+              </div>
               <button
                 type="button"
                 onClick={(): void => removeLdapEndpoint(endpoint.id ?? '')}
@@ -344,32 +327,24 @@ export function HealthChecksSettingsEnterprise({
               </button>
             </div>
             <div className={cn('flex items-center', spacing.gap.compact)}>
-              <input
-                type="text"
-                value={endpoint.baseDn}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateLdapEndpoint(endpoint.id ?? '', 'baseDn', e.target.value)
-                }
-                placeholder={t('health.baseDn')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'flex-1 bg-surface-raised',
-                )}
-              />
-              <label
-                className={cn('flex items-center', spacing.gap.compact, 'caption text-text-muted')}
-              >
-                <input
-                  type="checkbox"
-                  checked={endpoint.useTls}
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('health.baseDn')}
+                  value={endpoint.baseDn}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    updateLdapEndpoint(endpoint.id ?? '', 'useTls', e.target.checked)
+                    updateLdapEndpoint(endpoint.id ?? '', 'baseDn', e.target.value)
                   }
+                  placeholder={t('health.baseDn')}
                 />
-                TLS
-              </label>
+              </div>
+              <Checkbox
+                label={<>TLS</>}
+                checked={endpoint.useTls}
+                onChange={(checked: boolean): void =>
+                  updateLdapEndpoint(endpoint.id ?? '', 'useTls', checked)
+                }
+              />
             </div>
           </div>
         ))}

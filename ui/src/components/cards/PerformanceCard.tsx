@@ -3,16 +3,13 @@
  *
  * Purpose: Internet speed and network performance testing with speedtest.net integration and
  * iperf3 support. Displays download/upload speeds, latency, jitter, and packet loss metrics.
- * (~670 lines - complex testing orchestration)
  *
  * Key Features:
  * - Speedtest.net integration: download/upload speeds, latency, server info, distance
  * - iperf3 support: UDP and TCP throughput testing, bandwidth, jitter, packet loss
  * - Real-time progress: shows test phase and progress percentage
- * - Multiple test result history: displays last completed test results
  * - Visual gauges: SpeedGauge components for visual speed representation
  * - Protocol metrics: separate IPv4/IPv6 results (when available)
- * - Test controls: start/stop test, clear results
  * - Latency thresholds: warning/critical levels from settings
  * - System info: iperf3 installation status and version
  *
@@ -34,8 +31,10 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { useSettings } from '../../contexts/useSettings';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
 import { useIperfServerSync } from '../../hooks/useIperfServerSync';
 import { LogComponents, logger } from '../../lib/logger';
+import { Card, CardDivider, CardRow, CardValue } from '../../shared/Card';
 import { useTestRunSignal, useTestRunStore } from '../../stores/testRunStore';
 import {
   cn,
@@ -47,7 +46,6 @@ import {
 } from '../../styles/theme';
 import type { IperfClientRequest } from '../../types/generated/iperf-client-request';
 import type { ServerStatus } from '../../types/generated/iperf-server-status';
-import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
 import { Gauge } from '../ui/Icons';
 import { ProgressRing, PulsingDot, SpeedGauge } from '../ui/SpeedGauge';
 
@@ -129,6 +127,7 @@ export function PerformanceCard({
   runIperfEnabled = true,
 }: PerformanceCardProps): React.ReactElement {
   const { t } = useTranslation('cards');
+  const statusLabel = useCardStatusLabel();
   // Get iperf settings from context
   const { iperfSettings } = useSettings();
 
@@ -403,7 +402,7 @@ export function PerformanceCard({
     return `${mbps.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Mbps`;
   };
 
-  const getStatus = (): Status => {
+  const getStatus = (): CardStatus => {
     if (!(runSpeedtestEnabled || runIperfEnabled)) {
       return 'unknown';
     }
@@ -418,13 +417,14 @@ export function PerformanceCard({
     }
     return 'unknown';
   };
-
   return (
     <Card
+      data-testid="card"
       title={t('performance.title')}
       subtitle={t('performance.subtitle')}
       icon={<Gauge className={iconTokens.size.md} />}
       status={getStatus()}
+      statusLabel={statusLabel(getStatus())}
     >
       <div>
         {/* Internet Speed Section */}

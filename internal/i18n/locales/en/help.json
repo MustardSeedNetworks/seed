@@ -4,7 +4,8 @@
     "searchPlaceholder": "Search help...",
     "contents": "Contents",
     "closeHelp": "Close help",
-    "backToSections": "Back to help sections"
+    "backToSections": "Back to help sections",
+    "clearSearch": "Clear search"
   },
   "sections": {
     "about": "About Seed",

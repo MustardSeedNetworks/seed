@@ -5,31 +5,13 @@
  * own save action and status.
  */
 
-import type { JSX, ReactNode } from 'react';
+import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { FeedDraft } from '../../../hooks/useLifecycleFeed';
-import { cn, input as inputTokens, layout } from '../../../styles/theme';
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
+import { RadioGroup } from '../../../shared/RadioGroup';
 import type { LifecycleFeedResponse } from '../../../types/generated/lifecycle-feed-response';
-
-function Field({
-  id,
-  label,
-  help,
-  children,
-}: {
-  id: string;
-  label: string;
-  help?: string;
-  children: ReactNode;
-}): JSX.Element {
-  return (
-    <label className="stack-xs" htmlFor={id}>
-      <span className="body-small font-medium text-text-primary">{label}</span>
-      {children}
-      {help === undefined ? null : <span className="caption text-text-muted">{help}</span>}
-    </label>
-  );
-}
 
 interface EoxFeedFieldsProps {
   /** What the server holds; the fields stay disabled until it has loaded. */
@@ -40,75 +22,70 @@ interface EoxFeedFieldsProps {
 
 export function EoxFeedFields({ stored, draft, setDraft }: EoxFeedFieldsProps): JSX.Element {
   const { t } = useTranslation('settings');
-  const inputClass = cn(inputTokens.base, 'w-full');
   const secretStored = stored?.hasClientSecret === true && !draft.clearClientSecret;
 
   const text = (
     key: 'endpoint' | 'tokenUrl' | 'clientId',
     id: string,
+    label: string,
+    hint?: string,
     placeholder?: string,
   ): JSX.Element => (
-    <input
-      id={id}
-      data-testid={id}
-      type="text"
-      autoComplete="off"
-      value={draft[key]}
-      placeholder={placeholder}
-      onChange={(e): void => {
-        const { value } = e.target;
-        setDraft((current) => ({ ...current, [key]: value }));
-      }}
-      className={inputClass}
-    />
+    <FormField id={id} label={label} {...(hint === undefined ? {} : { hint })}>
+      {(control) => (
+        <Input
+          {...control}
+          data-testid={id}
+          autoComplete="off"
+          value={draft[key]}
+          placeholder={placeholder}
+          onChange={(e): void => {
+            const { value } = e.target;
+            setDraft((current) => ({ ...current, [key]: value }));
+          }}
+        />
+      )}
+    </FormField>
   );
   return (
     <fieldset disabled={stored === null} className="stack">
-      <legend className="body-small font-medium text-text-primary">{t('eoxFeed.choice')}</legend>
-      <div className={layout.inline.default}>
-        {(
-          [
-            ['off', t('eoxFeed.off')],
-            ['on', t('eoxFeed.on')],
-          ] as const
-        ).map(([choice, label]) => (
-          <label key={choice} className="inline-flex items-center gap-compact body-small">
-            <input
-              type="radio"
-              name="eox-feed-choice"
-              data-testid={`eox-feed-${choice}`}
-              checked={draft.choice === choice}
-              onChange={(): void => setDraft((current) => ({ ...current, choice }))}
-            />
-            {label}
-          </label>
-        ))}
-      </div>
+      <RadioGroup
+        label={t('eoxFeed.choice')}
+        name="eox-feed-choice"
+        orientation="horizontal"
+        value={draft.choice}
+        onValueChange={(choice): void =>
+          setDraft((current) => ({ ...current, choice: choice === 'on' ? 'on' : 'off' }))
+        }
+        options={[
+          { value: 'off', label: t('eoxFeed.off'), 'data-testid': 'eox-feed-off' },
+          { value: 'on', label: t('eoxFeed.on'), 'data-testid': 'eox-feed-on' },
+        ]}
+      />
 
       {draft.choice === 'on' ? (
         <>
-          <Field id="eox-feed-client-id" label={t('eoxFeed.clientId')}>
-            {text('clientId', 'eox-feed-client-id')}
-          </Field>
-          <Field
+          {text('clientId', 'eox-feed-client-id', t('eoxFeed.clientId'))}
+          <FormField
             id="eox-feed-client-secret"
             label={t('eoxFeed.clientSecret')}
-            help={t('eoxFeed.clientSecretHelp')}
+            hint={t('eoxFeed.clientSecretHelp')}
           >
-            <input
-              id="eox-feed-client-secret"
-              data-testid="eox-feed-client-secret"
-              type="password"
-              autoComplete="off"
-              value={draft.clientSecret}
-              placeholder={secretStored ? t('eoxFeed.secretStored') : ''}
-              onChange={(e): void => {
-                const clientSecret = e.target.value;
-                setDraft((current) => ({ ...current, clientSecret, clearClientSecret: false }));
-              }}
-              className={inputClass}
-            />
-          </Field>
+            {(control) => (
+              <Input
+                {...control}
+                data-testid="eox-feed-client-secret"
+                type="password"
+                autoComplete="off"
+                value={draft.clientSecret}
+                placeholder={secretStored ? t('eoxFeed.secretStored') : ''}
+                onChange={(e): void => {
+                  const clientSecret = e.target.value;
+                  setDraft((current) => ({ ...current, clientSecret, clearClientSecret: false }));
+                }}
+              />
+            )}
+          </FormField>
           {secretStored && draft.clientSecret === '' ? (
             <button
               type="button"
@@ -119,20 +96,20 @@ export function EoxFeedFields({ stored, draft, setDraft }: EoxFeedFieldsProps): 
               {t('eoxFeed.clearSecret')}
             </button>
           ) : null}
-          <Field
-            id="eox-feed-endpoint"
-            label={t('eoxFeed.endpoint')}
-            help={t('eoxFeed.endpointHelp')}
-          >
-            {text('endpoint', 'eox-feed-endpoint', 'https://apix.cisco.com/…')}
-          </Field>
-          <Field
-            id="eox-feed-token-url"
-            label={t('eoxFeed.tokenUrl')}
-            help={t('eoxFeed.tokenUrlHelp')}
-          >
-            {text('tokenUrl', 'eox-feed-token-url', 'https://id.cisco.com/…')}
-          </Field>
+          {text(
+            'endpoint',
+            'eox-feed-endpoint',
+            t('eoxFeed.endpoint'),
+            t('eoxFeed.endpointHelp'),
+            'https://apix.cisco.com/…',
+          )}
+          {text(
+            'tokenUrl',
+            'eox-feed-token-url',
+            t('eoxFeed.tokenUrl'),
+            t('eoxFeed.tokenUrlHelp'),
+            'https://id.cisco.com/…',
+          )}
         </>
       ) : null}
     </fieldset>

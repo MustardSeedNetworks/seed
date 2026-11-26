@@ -17,7 +17,7 @@
       "warning": "Advertencia",
       "info": "Información"
     },
-    "noAlerts": "Ninguna alerta coincide con el filtro actual. O nada va mal o el filtro es demasiado estricto.",
+    "noAlerts": "Ninguna alerta coincide con este filtro.",
     "unknownSource": "origen desconocido",
     "selectedAlert": "Alerta seleccionada",
     "acknowledge": "Reconocer",
@@ -43,7 +43,11 @@
     "valueNo": "no",
     "stateResolved": "Resuelta",
     "stateAcknowledged": "Reconocida",
-    "stateOpen": "Abierta"
+    "stateOpen": "Abierta",
+    "noAlertsHint": "Amplíe los filtros de gravedad o de ciclo de vida para ver más.",
+    "columnField": "Campo",
+    "columnValue": "Valor",
+    "payloadCaption": "Campos de la carga de la alerta"
   },
   "dashboard": {
     "label": "Panel",
@@ -62,7 +66,6 @@
     "reset": "Restaurar predeterminado",
     "saveFailed": "No se guardó: {{reason}}",
     "loadFailed": "No se pudo cargar su panel: {{reason}}",
-    "empty": "Su panel no tiene tarjetas. Elija Personalizar para añadir algunas.",
     "widget": {
       "link": "Enlace",
       "network": "Red",
@@ -72,12 +75,14 @@
       "switch": "Switch más cercano",
       "neighbours": "Caché de vecinos",
       "driverStats": "Contadores de errores del controlador"
-    }
+    },
+    "emptyTitle": "Su panel no tiene tarjetas",
+    "emptyHint": "Elija Personalizar para añadir algunas."
   },
   "flows": {
     "label": "Flujos",
     "title": "Flujos",
-    "description": "Principales hosts, conversaciones y aplicaciones de los flujos que los exportadores envían a Seed.",
+    "description": "Principales hosts, conversaciones y aplicaciones de los flujos enviados a Seed.",
     "windowLabel": "Periodo",
     "window": {
       "1d": "Últimas 24 horas",
@@ -92,7 +97,6 @@
     },
     "clamped_one": "Se muestra el 1 día que conserva su licencia.",
     "clamped_other": "Se muestran los {{count}} días que conserva su licencia.",
-    "empty": "No hay flujos en este periodo. Los flujos aparecen cuando un router o switch exporta NetFlow, IPFIX o sFlow a Seed.",
     "none": "Ninguno en este periodo.",
     "talkers": "Hosts con más tráfico",
     "conversations": "Conversaciones principales",
@@ -104,7 +108,10 @@
     "colBytes": "Bytes",
     "colPackets": "Paquetes",
     "protocolNumber": "IP {{number}}",
-    "unknownApplication": "Sin identificar"
+    "unknownApplication": "Sin identificar",
+    "emptyTitle": "No hay flujos en este periodo",
+    "emptyHint": "Los flujos aparecen cuando un router o switch exporta NetFlow, IPFIX o sFlow a Seed.",
+    "loading": "Cargando {{name}}"
   },
   "groups": {
     "diagnostics": "Diagnóstico",
@@ -113,12 +120,11 @@
     "reporting": "Informes"
   },
   "interfaces": {
-    "description": "Todas las interfaces que informan sus destinos de sondeo, con su tráfico, utilización, errores y descartes más recientes.",
+    "description": "Cada interfaz sondeada, con su tráfico, utilización, errores y descartes recientes.",
     "label": "Interfaces",
     "title": "Interfaces",
     "count_one": "{{count}} interfaz",
     "count_other": "{{count}} interfaces",
-    "empty": "Aún no hay interfaces. Añada un destino de sondeo; sus interfaces aparecen tras el primer sondeo.",
     "addTarget": "Añadir un destino de sondeo",
     "noData": "Aún no hay tasas. Una tasa necesita dos sondeos, así que aparecen un intervalo de sondeo después del primero.",
     "noRateYet": "Sin tasa todavía",
@@ -139,12 +145,15 @@
     "history": {
       "openHint": "Seleccione una interfaz para ver su historial.",
       "close": "Cerrar historial",
-      "empty": "No hay sondeos con tasa en este periodo. Un destino recién añadido, o que dejó de responder, aún no tiene ninguno.",
       "traffic": "Tráfico",
       "errors": "Errores y descartes",
       "in": "Entrada",
-      "out": "Salida"
-    }
+      "out": "Salida",
+      "emptyTitle": "No hay sondeos con tasa en este periodo",
+      "emptyHint": "Un destino recién añadido, o que dejó de responder, aún no tiene ninguno."
+    },
+    "emptyTitle": "Aún no hay interfaces",
+    "emptyHint": "Añada un destino de sondeo; sus interfaces aparecen tras el primer sondeo."
   },
   "deviceConfigs": {
     "description": "Configuraciones guardadas y qué cambió entre copias de seguridad.",
@@ -180,7 +189,9 @@
       "forget": "Olvidar clave",
       "pending": "El dispositivo presentó esta clave, así que la copia no guardó nada. Compruébela en el dispositivo y luego confíe en ella.",
       "confirm": "Confiar en la clave",
-      "none": "Aún no hay clave. La próxima copia registra la clave del dispositivo para que la confirme."
+      "none": "Aún no hay clave. La próxima copia registra la clave del dispositivo para que la confirme.",
+      "forgetTitle": "¿Olvidar la clave de host de {{name}}?",
+      "forgetMessage": "La próxima copia registra la clave que presente el dispositivo y usted debe confirmarla de nuevo antes de que se guarde ninguna copia."
     },
     "form": {
       "addTitle": "Añadir dispositivo",
@@ -248,10 +259,13 @@
       "anyHost": "Cualquier equipo del segmento",
       "labelStarted": "Iniciada",
       "labelTransfers": "Transferencias activas"
-    }
+    },
+    "loadingBackups": "Cargando copias de seguridad",
+    "columnTaken": "Realizada",
+    "columnResult": "Resultado"
   },
   "link": {
-    "description": "Estado del enlace físico, diagnóstico de cableado y asociación Wi-Fi de la interfaz activa.",
+    "description": "Estado del enlace, diagnóstico de cableado y asociación Wi-Fi de la interfaz activa.",
     "label": "Enlace",
     "title": "Enlace",
     "rollupWireless": "Esta interfaz es inalámbrica",
@@ -308,7 +322,7 @@
     "rollupNoDnsForInterfaceBody": "La interfaz seleccionada no tiene resolutores propios, por lo que no se pueden resolver nombres por este enlace."
   },
   "path": {
-    "description": "Descubrimiento de rutas L2/L3, saltos de traceroute y descubrimiento de dispositivos en el enlace.",
+    "description": "Rutas L2/L3, saltos de traceroute y descubrimiento de dispositivos en el enlace.",
     "label": "Análisis de ruta",
     "title": "Análisis de ruta"
   },
@@ -318,7 +332,7 @@
     "title": "Rendimiento"
   },
   "pollingTargets": {
-    "description": "Dispositivos sondeados por SNMP. Los destinos nuevos adoptan la cadena de colectores predeterminada y comienzan a sondear en el siguiente ciclo.",
+    "description": "Dispositivos sondeados por SNMP; los nuevos usan la cadena de colectores predeterminada.",
     "label": "Destinos de sondeo",
     "title": "Destinos de sondeo",
     "addTarget": "Agregar destino",
@@ -371,7 +385,10 @@
     "fieldPollInterval": "Intervalo de sondeo (segundos)",
     "nameAndIpRequired": "El nombre y la dirección IP son obligatorios.",
     "saveFailed": "No se pudo guardar",
-    "saveChanges": "Guardar cambios"
+    "saveChanges": "Guardar cambios",
+    "deleteMessage": "El destino deja de sondearse.",
+    "columnOrder": "Orden",
+    "columnCollector": "Recolector"
   },
   "deviceGroups": {
     "description": "Conjuntos de destinos de sondeo para limitar alertas e informes.",
@@ -425,12 +442,27 @@
     "memberFilterLabel": "Filtrar destinos de sondeo",
     "noTargets": "Aún no hay destinos de sondeo. Añádalos en Destinos de sondeo y luego selecciónelos aquí.",
     "nameRequired": "El nombre es obligatorio.",
-    "saveFailed": "No se pudo guardar"
+    "saveFailed": "No se pudo guardar",
+    "deleteMessage": "Sus miembros siguen siendo destinos de sondeo; solo se elimina el grupo.",
+    "loadingMembers": "Cargando miembros",
+    "columnName": "Nombre",
+    "columnAddress": "Dirección",
+    "columnState": "Estado",
+    "columnLastPoll": "Último sondeo",
+    "columnAlerts": "Alertas",
+    "memberState": {
+      "ok": "Correcto",
+      "warn": "Con alertas",
+      "crit": "Sondeo fallido",
+      "unknown": "Sin sondear"
+    },
+    "selectMember": "Añadir {{name}} al grupo",
+    "memberNoMatch": "Ningún destino de sondeo coincide con este filtro."
   },
   "ipam": {
     "label": "Direcciones IP",
     "title": "Direcciones IP",
-    "description": "Ocupación de cada red y ámbito DHCP, según las direcciones vistas en uso en el último día.",
+    "description": "Ocupación de cada red y ámbito DHCP, según las direcciones vistas el último día.",
     "addScope": "Añadir ámbito DHCP",
     "readOnly": "Solo lectura: se requiere el rol de operador para añadir o eliminar un ámbito DHCP",
     "loadFailed": "No se pudo cargar el uso de direcciones: {{reason}}",
@@ -467,12 +499,13 @@
     "formHint": "El rango que concede un servidor DHCP, con ambos extremos incluidos. Seed cuenta una dirección como usada cuando el descubrimiento o la tabla ARP de un router la vio en el último día.",
     "rangeRequired": "Introduzca la primera y la última dirección.",
     "invalidRange": "Un ámbito DHCP son dos direcciones IPv4, la primera menor.",
-    "overlaps": "Este rango se solapa con otro ámbito DHCP."
+    "overlaps": "Este rango se solapa con otro ámbito DHCP.",
+    "deleteMessage": "Solo se elimina el registro del rango en Seed; su servidor DHCP no cambia."
   },
   "lifecycle": {
     "label": "Ciclo de vida del hardware",
     "title": "Ciclo de vida del hardware",
-    "description": "En qué punto de su calendario de fin de vida está cada pieza inventariada, según los datos EoX de Cisco.",
+    "description": "En qué punto del calendario de fin de vida está cada pieza inventariada.",
     "import": "Importar archivo EoX",
     "readOnly": "Solo lectura: se requiere el rol de operador para importar datos EoX",
     "loadFailed": "No se pudo cargar el ciclo de vida del hardware: {{reason}}",
@@ -481,7 +514,6 @@
     "recordCount_one": "Datos EoX de {{count}} producto",
     "recordCount_other": "Datos EoX de {{count}} productos",
     "noRecords": "No se han importado datos EoX",
-    "noParts": "Aún no hay piezas inventariadas. El descubrimiento lista las piezas de un dispositivo cuando responde por SNMP con su inventario ENTITY-MIB.",
     "status": {
       "not_listed": "No listado",
       "announced": "Fin de vida anunciado",
@@ -507,18 +539,22 @@
     "notListed": "Los datos EoX importados no tienen registro de este producto.",
     "importFirst": "Aún no hay datos EoX. Importe una respuesta de la API EoX de Cisco, o pida a un administrador que active la fuente EoX en Configuración.",
     "bulletin": "Leer el boletín de fin de vida",
-    "emptyPrompt": "Seleccione una pieza para ver sus fechas de fin de vida."
+    "emptyPrompt": "Seleccione una pieza para ver sus fechas de fin de vida.",
+    "colPart": "Pieza",
+    "colStatus": "Ciclo de vida",
+    "tableCaption": "Piezas inventariadas",
+    "noPartsTitle": "Aún no hay piezas inventariadas",
+    "noPartsHint": "El descubrimiento lista las piezas de un dispositivo cuando responde por SNMP con su inventario ENTITY-MIB."
   },
   "ipSla": {
     "label": "IP SLA",
     "title": "IP SLA",
-    "description": "Las operaciones Cisco IP SLA que ejecutan sus destinos de sondeo, con el último resultado y la tendencia de cada una.",
+    "description": "Operaciones Cisco IP SLA de sus destinos de sondeo, con su último resultado y tendencia.",
     "loadFailed": "No se pudieron cargar las operaciones IP SLA: {{reason}}",
     "operationCount_one": "{{count}} operación",
     "operationCount_other": "{{count}} operaciones",
     "failingCount_one": "{{count}} con fallo",
     "failingCount_other": "{{count}} con fallo",
-    "noOperations": "Aún no hay operaciones IP SLA. El sondeo lista las operaciones de un destino Cisco cuando responde por SNMP con CISCO-RTTMON-MIB.",
     "emptyPrompt": "Seleccione una operación para ver su tendencia.",
     "operation": "Operación {{index}}",
     "type": {
@@ -564,7 +600,12 @@
     "seriesRtt": "RTT",
     "seriesJitter": "Jitter",
     "seriesCompleted": "Completadas",
-    "seriesLoss": "Pérdida"
+    "seriesLoss": "Pérdida",
+    "colOperation": "Operación",
+    "colResult": "Última ejecución",
+    "tableCaption": "Operaciones IP SLA",
+    "noOperationsTitle": "Aún no hay operaciones IP SLA",
+    "noOperationsHint": "El sondeo lista las operaciones de un destino Cisco cuando responde por SNMP con CISCO-RTTMON-MIB."
   },
   "reports": {
     "description": "Panel de SLA agregado, seguimiento de cumplimiento e informes históricos.",
@@ -572,24 +613,20 @@
     "title": "Informes"
   },
   "security": {
-    "description": "Auditoría de aislamiento de la red de invitados y comprobaciones de postura de seguridad.",
+    "description": "Auditoría de la red de invitados y comprobaciones de postura de seguridad.",
     "label": "Seguridad",
     "title": "Seguridad"
   },
   "topology": {
-    "description": "Dispositivos sondeados y enlaces aprendidos mediante el descubrimiento de vecinos LLDP/CDP/FDP.",
+    "description": "Dispositivos sondeados y enlaces aprendidos por descubrimiento de vecinos LLDP/CDP/FDP.",
     "label": "Topología",
     "title": "Topología",
     "selectNode": "Seleccione un nodo para ver las interfaces y los enlaces.",
     "loadingNode": "Cargando el nodo…",
     "nodeNotFound": "Nodo no encontrado.",
-    "noInterfaceData": "Aún no hay datos de interfaz. El reconciliador if_table los incorpora en el próximo sondeo.",
     "adminOper": "Admin / Oper",
-    "noEdges": "Aún no hay enlaces. LLDP/CDP/FDP necesita que ambos extremos sean nodos conocidos.",
     "nodeCount_one": "{{count}} nodo",
     "nodeCount_other": "{{count}} nodos",
-    "noNodes": "Aún no hay nodos. Añada un destino de sondeo y espere un ciclo de sondeo.",
-    "missedPolls": "Sondeos perdidos",
     "selectedNode": "Nodo seleccionado",
     "deviceType": "Tipo de dispositivo",
     "vendor": "Fabricante",
@@ -610,10 +647,41 @@
     "graphLegendLearned": "Aprendido (FDB)",
     "graphNodeAria": "{{name}}, {{type}}",
     "linkCount_one": "{{count}} enlace",
-    "linkCount_other": "{{count}} enlaces"
+    "linkCount_other": "{{count}} enlaces",
+    "freshness": {
+      "current": "Al día",
+      "stale": "Sondeos perdidos",
+      "unknown": "Sin medir"
+    },
+    "colNode": "Nodo",
+    "colAddress": "Dirección",
+    "colType": "Tipo",
+    "colStatus": "Estado",
+    "nodesCaption": "Nodos descubiertos",
+    "noNodesTitle": "Aún no hay nodos",
+    "noNodesHint": "Añada un destino de sondeo y espere un ciclo de sondeo.",
+    "ifState": {
+      "up": "activo",
+      "down": "inactivo",
+      "other": "desconocido"
+    },
+    "adminState": "Admin {{state}}",
+    "operState": "Oper {{state}}",
+    "noInterfaceDataTitle": "Aún no hay datos de interfaz",
+    "noInterfaceDataHint": "El reconciliador if_table los incorpora en el próximo sondeo.",
+    "colNeighbor": "Vecino",
+    "colLinkType": "Tipo de enlace",
+    "noEdgesTitle": "Aún no hay enlaces",
+    "noEdgesHint": "LLDP/CDP/FDP necesita que ambos extremos sean nodos conocidos.",
+    "interfacesCaption": "Interfaces del nodo seleccionado",
+    "linksCaption": "Enlaces vecinos del nodo seleccionado",
+    "colSeen": "Visto",
+    "searchNodes": "Buscar dispositivos",
+    "clearSearch": "Borrar búsqueda",
+    "noMatchTitle": "Ningún dispositivo coincide"
   },
   "wifi": {
-    "description": "Enlace inalámbrico, utilización de canales y visualización de solapamiento de canales.",
+    "description": "Enlace inalámbrico, utilización de canales y solapamiento de canales.",
     "label": "Wi-Fi",
     "title": "Wi-Fi",
     "airspaceLoading": "Cargando el espacio radioeléctrico…",
@@ -636,5 +704,12 @@
     "airspaceLabel": "Espacio radioeléctrico",
     "anomaliesLabel": "Anomalías de asociación",
     "channelGraphAlt": "Gráfico de señal por canal Wi-Fi"
+  },
+  "notFound": {
+    "label": "No encontrada",
+    "kicker": "No encontrada",
+    "emptyTitle": "Esta página no existe",
+    "emptyHint": "Puede que la dirección esté mal escrita o que la página se haya movido.",
+    "back": "Ir a Link"
   }
 }

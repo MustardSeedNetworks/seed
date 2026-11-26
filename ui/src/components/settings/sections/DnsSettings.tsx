@@ -30,18 +30,19 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
+import { Toggle } from '../../../shared/Toggle';
 import {
   cn,
   icon as iconTokens,
-  input as inputTokens,
   layout,
-  radius,
   spacing,
   status as statusColor,
 } from '../../../styles/theme';
 import type { CardSettings, DnsServer, SaveStatus, TestsSettings } from '../../../types/settings';
 import { generateId } from '../../../utils/id';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Globe } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
@@ -102,89 +103,50 @@ export function DnsSettings({
       <div className="stack">
         {/* Card Visibility & FAB Controls */}
         <div className="stack-sm">
-          <label
-            className={cn(
-              layout.flex.between,
-              spacing.pad.sm,
-              'bg-surface-base',
-              radius.default,
-              'border border-surface-border',
-            )}
-          >
-            <div>
-              <span className="body-small text-text-primary font-medium">
-                {t('common.showCard')}
-              </span>
-              <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={cardSettings.dns.enabled}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateCardSettings({
-                  dns: { ...cardSettings.dns, enabled: e.target.checked },
-                })
-              }
-              className={iconTokens.size.sm}
-            />
-          </label>
-          <label
-            className={cn(
-              layout.flex.between,
-              spacing.pad.sm,
-              'bg-surface-base',
-              radius.default,
-              'border border-surface-border',
-            )}
-          >
-            <div>
-              <span className="body-small text-text-primary font-medium">
-                {t('common.runOnFab')}
-              </span>
-              <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={cardSettings.dns.autoRunOnLink}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateCardSettings({
-                  dns: { ...cardSettings.dns, autoRunOnLink: e.target.checked },
-                })
-              }
-              className={iconTokens.size.sm}
-            />
-          </label>
+          <Toggle
+            label={t('common.showCard')}
+            description={t('common.showCardDesc')}
+            checked={cardSettings.dns.enabled}
+            onChange={(checked: boolean): void =>
+              updateCardSettings({
+                dns: { ...cardSettings.dns, enabled: checked },
+              })
+            }
+            className="rounded-lg border border-surface-border bg-surface-base p-3"
+          />
+          <Toggle
+            label={t('common.runOnFab')}
+            description={t('common.runOnFabDesc')}
+            checked={cardSettings.dns.autoRunOnLink}
+            onChange={(checked: boolean): void =>
+              updateCardSettings({
+                dns: { ...cardSettings.dns, autoRunOnLink: checked },
+              })
+            }
+            className="rounded-lg border border-surface-border bg-surface-base p-3"
+          />
         </div>
 
         {/* DNS Hostname */}
-        <div>
-          <label htmlFor="dns-test-hostname" className="caption text-text-muted">
-            {t('dns.testHostname')}
-          </label>
-          <input
-            id="dns-test-hostname"
-            type="text"
-            value={testsSettings.dnsHostname}
-            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-              setTestsSettings((prev) => ({
-                ...prev,
-                dnsHostname: e.target.value,
-              }))
-            }
-            placeholder="google.com"
-            className={cn(
-              inputTokens.base,
-              inputTokens.state.default,
-              inputTokens.size.md,
-              'w-full',
-              spacing.margin.top.tight,
-              'body-small',
-            )}
-          />
-          <p className={cn('caption', 'text-text-muted', spacing.margin.top.tight)}>
-            {t('dns.testHostnameDesc')}
-          </p>
-        </div>
+        <FormField
+          id="dns-test-hostname"
+          label={t('dns.testHostname')}
+          hint={t('dns.testHostnameDesc')}
+        >
+          {(control) => (
+            <Input
+              {...control}
+              value={testsSettings.dnsHostname}
+              onChange={(e): void =>
+                setTestsSettings((prev) => ({
+                  ...prev,
+                  dnsHostname: e.target.value,
+                }))
+              }
+              placeholder="google.com"
+            />
+          )}
+        </FormField>
 
         {/* DNS Servers for per-server testing */}
         <div className={cn('border-t', 'border-surface-border', spacing.padding.top.heading)}>
@@ -208,20 +170,12 @@ export function DnsSettings({
               key={server.id || server.address}
               className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
             >
-              <input
-                type="text"
+              <Input
                 value={server.address}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateDnsServer(server.id ?? '', 'address', e.target.value)
-                }
+                onChange={(e): void => updateDnsServer(server.id ?? '', 'address', e.target.value)}
                 placeholder={t('dns.serverIp')}
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.md,
-                  'flex-1',
-                  'caption',
-                )}
+                aria-label={t('dns.serverIp')}
+                className="flex-1"
               />
               <button
                 type="button"

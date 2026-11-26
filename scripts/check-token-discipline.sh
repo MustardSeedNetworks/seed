@@ -22,6 +22,7 @@
 # Scope: *.tsx / *.ts under ui/src/, EXCEPT:
 #   - test files (.test/.spec/.stories/.mock)
 #   - token definition sites (styles/, constants/)
+#   - shared/ (the fleet-owned component copies; fixed in MustardSeedNetworks/.github)
 #   - documented fixed-palette exceptions (intentional, not theme colors):
 #       components/cards/cableWire.ts          physical T568B wire colors
 #       lib/logger.ts                          devtools console %c colors
@@ -47,7 +48,7 @@ else
 fi
 
 # Definition sites, tests, and the documented fixed-palette exceptions.
-EXCLUDE_RE='\.(test|spec|stories|mock)\.(ts|tsx):|/styles/|/constants/|/cableWire\.ts:|/logger\.ts:'
+EXCLUDE_RE='\.(test|spec|stories|mock)\.(ts|tsx):|/shared/|/styles/|/constants/|/cableWire\.ts:|/logger\.ts:'
 
 FAIL_COUNT=0
 

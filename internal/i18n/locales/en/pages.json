@@ -17,7 +17,7 @@
       "warning": "Warning",
       "info": "Info"
     },
-    "noAlerts": "No alerts match the current filter. Either nothing's misbehaving or your filter is too strict.",
+    "noAlerts": "No alerts match this filter.",
     "unknownSource": "unknown source",
     "selectedAlert": "Selected alert",
     "acknowledge": "Acknowledge",
@@ -43,7 +43,11 @@
     "valueNo": "no",
     "stateResolved": "Resolved",
     "stateAcknowledged": "Acknowledged",
-    "stateOpen": "Open"
+    "stateOpen": "Open",
+    "noAlertsHint": "Widen the severity or the lifecycle filters to see more.",
+    "columnField": "Field",
+    "columnValue": "Value",
+    "payloadCaption": "Alert payload fields"
   },
   "dashboard": {
     "label": "Dashboard",
@@ -62,7 +66,6 @@
     "reset": "Restore default",
     "saveFailed": "Not saved: {{reason}}",
     "loadFailed": "Could not load your dashboard: {{reason}}",
-    "empty": "Your dashboard has no cards. Choose Customize to add some.",
     "widget": {
       "link": "Link",
       "network": "Network",
@@ -72,7 +75,9 @@
       "switch": "Nearest switch",
       "neighbours": "Neighbour cache",
       "driverStats": "Driver error counters"
-    }
+    },
+    "emptyTitle": "Your dashboard has no cards",
+    "emptyHint": "Choose Customize to add some."
   },
   "flows": {
     "label": "Flows",
@@ -92,7 +97,6 @@
     },
     "clamped_one": "Showing the 1 day your license keeps.",
     "clamped_other": "Showing the {{count}} days your license keeps.",
-    "empty": "No flows in this window. Flows appear once a router or switch exports NetFlow, IPFIX or sFlow to Seed.",
     "none": "None in this window.",
     "talkers": "Top talkers",
     "conversations": "Top conversations",
@@ -104,7 +108,10 @@
     "colBytes": "Bytes",
     "colPackets": "Packets",
     "protocolNumber": "IP {{number}}",
-    "unknownApplication": "Unidentified"
+    "unknownApplication": "Unidentified",
+    "emptyTitle": "No flows in this window",
+    "emptyHint": "Flows appear once a router or switch exports NetFlow, IPFIX or sFlow to Seed.",
+    "loading": "Loading {{name}}"
   },
   "groups": {
     "diagnostics": "Diagnostics",
@@ -113,12 +120,11 @@
     "reporting": "Reporting"
   },
   "interfaces": {
-    "description": "Every interface your polling targets report, with its latest traffic, utilization, errors and discards.",
+    "description": "Every polled interface, with its latest traffic, utilization, errors and discards.",
     "label": "Interfaces",
     "title": "Interfaces",
     "count_one": "{{count}} interface",
     "count_other": "{{count}} interfaces",
-    "empty": "No interfaces yet. Add a polling target; its interfaces appear after the first poll.",
     "addTarget": "Add a polling target",
     "noData": "No rates yet. A rate needs two polls, so rates appear one poll interval after the first.",
     "noRateYet": "No rate yet",
@@ -139,12 +145,15 @@
     "history": {
       "openHint": "Select an interface to see its history.",
       "close": "Close history",
-      "empty": "No rated polls in this window. A target that was just added, or stopped answering, has none yet.",
       "traffic": "Traffic",
       "errors": "Errors and discards",
       "in": "In",
-      "out": "Out"
-    }
+      "out": "Out",
+      "emptyTitle": "No rated polls in this window",
+      "emptyHint": "A target that was just added, or stopped answering, has none yet."
+    },
+    "emptyTitle": "No interfaces yet",
+    "emptyHint": "Add a polling target; its interfaces appear after the first poll."
   },
   "deviceConfigs": {
     "description": "Saved device configurations and what changed between backups.",
@@ -180,7 +189,9 @@
       "forget": "Forget key",
       "pending": "The device presented this key, so the backup saved nothing. Check it on the device, then trust it.",
       "confirm": "Trust key",
-      "none": "No key yet. The next backup records the device's key for you to confirm."
+      "none": "No key yet. The next backup records the device's key for you to confirm.",
+      "forgetTitle": "Forget the host key of {{name}}?",
+      "forgetMessage": "The next backup records the key the device presents, and you confirm it again before any backup is saved."
     },
     "form": {
       "addTitle": "Add device",
@@ -248,10 +259,13 @@
       "anyHost": "Any host on the segment",
       "labelStarted": "Started",
       "labelTransfers": "Active transfers"
-    }
+    },
+    "loadingBackups": "Loading backups",
+    "columnTaken": "Taken",
+    "columnResult": "Result"
   },
   "link": {
-    "description": "Physical link state, cable diagnostics, and Wi-Fi association for the active interface.",
+    "description": "Link state, cable diagnostics and Wi-Fi association for the active interface.",
     "label": "Link",
     "title": "Link",
     "rollupWireless": "This interface is wireless",
@@ -318,7 +332,7 @@
     "title": "Performance"
   },
   "pollingTargets": {
-    "description": "SNMP-polled devices. New targets pick up the default collector chain and start polling on the next tick.",
+    "description": "SNMP-polled devices. New targets use the default collector chain.",
     "label": "Polling targets",
     "title": "Polling targets",
     "addTarget": "Add target",
@@ -371,7 +385,10 @@
     "fieldPollInterval": "Poll interval (seconds)",
     "nameAndIpRequired": "Name and IP address are required.",
     "saveFailed": "Failed to save",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "deleteMessage": "The target stops being polled.",
+    "columnOrder": "Order",
+    "columnCollector": "Collector"
   },
   "deviceGroups": {
     "description": "Named sets of polling targets, to scope alert rules and reports.",
@@ -425,12 +442,27 @@
     "memberFilterLabel": "Filter polling targets",
     "noTargets": "No polling targets yet. Add targets on Polling targets, then pick them here.",
     "nameRequired": "Name is required.",
-    "saveFailed": "Failed to save"
+    "saveFailed": "Failed to save",
+    "deleteMessage": "Its members stay as polling targets; only the group is removed.",
+    "loadingMembers": "Loading members",
+    "columnName": "Name",
+    "columnAddress": "Address",
+    "columnState": "State",
+    "columnLastPoll": "Last poll",
+    "columnAlerts": "Alerts",
+    "memberState": {
+      "ok": "Healthy",
+      "warn": "Open alerts",
+      "crit": "Poll failing",
+      "unknown": "Not polled"
+    },
+    "selectMember": "Add {{name}} to the group",
+    "memberNoMatch": "No polling target matches this filter."
   },
   "ipam": {
     "label": "IP addresses",
     "title": "IP addresses",
-    "description": "How full each network and DHCP scope is, from the addresses seen in use in the last day.",
+    "description": "Fill level of each network and DHCP scope, from addresses seen in the last day.",
     "addScope": "Add DHCP scope",
     "readOnly": "Read-only — operator role required to add or delete a DHCP scope",
     "loadFailed": "Could not load address use: {{reason}}",
@@ -467,12 +499,13 @@
     "formHint": "The range a DHCP server leases from, both ends included. Seed counts an address as used when discovery or a router's ARP table saw it in the last day.",
     "rangeRequired": "Enter the first and last address.",
     "invalidRange": "A DHCP scope is two IPv4 addresses, the first one lower.",
-    "overlaps": "This range overlaps another DHCP scope."
+    "overlaps": "This range overlaps another DHCP scope.",
+    "deleteMessage": "Only Seed's record of the range is removed; your DHCP server is not changed."
   },
   "lifecycle": {
     "label": "Hardware lifecycle",
     "title": "Hardware lifecycle",
-    "description": "Where each inventoried part stands in its vendor's end-of-life schedule, from Cisco EoX data.",
+    "description": "Where each inventoried part stands in its vendor's end-of-life schedule.",
     "import": "Import EoX file",
     "readOnly": "Read-only — operator role required to import EoX data",
     "loadFailed": "Could not load hardware lifecycle: {{reason}}",
@@ -481,7 +514,6 @@
     "recordCount_one": "EoX data for {{count}} product",
     "recordCount_other": "EoX data for {{count}} products",
     "noRecords": "No EoX data imported",
-    "noParts": "No inventoried part yet. Discovery lists a device's parts once it answers SNMP with its ENTITY-MIB inventory.",
     "status": {
       "not_listed": "Not listed",
       "announced": "End of life announced",
@@ -507,18 +539,22 @@
     "notListed": "The imported EoX data has no record for this product.",
     "importFirst": "No EoX data yet. Import a Cisco EoX API response, or have an admin turn on the EoX feed in Settings.",
     "bulletin": "Read the end-of-life bulletin",
-    "emptyPrompt": "Select a part to see its end-of-life dates."
+    "emptyPrompt": "Select a part to see its end-of-life dates.",
+    "colPart": "Part",
+    "colStatus": "Lifecycle",
+    "tableCaption": "Inventoried parts",
+    "noPartsTitle": "No inventoried part yet",
+    "noPartsHint": "Discovery lists a device's parts once it answers SNMP with its ENTITY-MIB inventory."
   },
   "ipSla": {
     "label": "IP SLA",
     "title": "IP SLA",
-    "description": "The Cisco IP SLA operations your polling targets run, with each one's latest result and its trend.",
+    "description": "Cisco IP SLA operations on your polling targets, with their latest result and trend.",
     "loadFailed": "Could not load IP SLA operations: {{reason}}",
     "operationCount_one": "{{count}} operation",
     "operationCount_other": "{{count}} operations",
     "failingCount_one": "{{count}} failing",
     "failingCount_other": "{{count}} failing",
-    "noOperations": "No IP SLA operation yet. Polling lists the operations a Cisco target runs once it answers SNMP with CISCO-RTTMON-MIB.",
     "emptyPrompt": "Select an operation to see its trend.",
     "operation": "Operation {{index}}",
     "type": {
@@ -564,7 +600,12 @@
     "seriesRtt": "RTT",
     "seriesJitter": "Jitter",
     "seriesCompleted": "Completed",
-    "seriesLoss": "Loss"
+    "seriesLoss": "Loss",
+    "colOperation": "Operation",
+    "colResult": "Latest run",
+    "tableCaption": "IP SLA operations",
+    "noOperationsTitle": "No IP SLA operation yet",
+    "noOperationsHint": "Polling lists the operations a Cisco target runs once it answers SNMP with CISCO-RTTMON-MIB."
   },
   "reports": {
     "description": "Aggregated SLA dashboard, compliance tracking, and historical reporting.",
@@ -583,13 +624,9 @@
     "selectNode": "Select a node to see interfaces and links.",
     "loadingNode": "Loading node…",
     "nodeNotFound": "Node not found.",
-    "noInterfaceData": "No interface data yet. The if_table reconciler folds these in on the next poll.",
     "adminOper": "Admin / Oper",
-    "noEdges": "No edges yet. LLDP/CDP/FDP needs both endpoints to be known nodes.",
     "nodeCount_one": "{{count}} node",
     "nodeCount_other": "{{count}} nodes",
-    "noNodes": "No nodes yet. Add a polling target and wait a poll cycle.",
-    "missedPolls": "Missed polls",
     "selectedNode": "Selected node",
     "deviceType": "Device type",
     "vendor": "Vendor",
@@ -610,7 +647,38 @@
     "graphLegendLearned": "Learned (FDB)",
     "graphNodeAria": "{{name}}, {{type}}",
     "linkCount_one": "{{count}} link",
-    "linkCount_other": "{{count}} links"
+    "linkCount_other": "{{count}} links",
+    "freshness": {
+      "current": "On schedule",
+      "stale": "Missed polls",
+      "unknown": "Not measured"
+    },
+    "colNode": "Node",
+    "colAddress": "Address",
+    "colType": "Type",
+    "colStatus": "Status",
+    "nodesCaption": "Discovered nodes",
+    "noNodesTitle": "No nodes yet",
+    "noNodesHint": "Add a polling target and wait a poll cycle.",
+    "ifState": {
+      "up": "up",
+      "down": "down",
+      "other": "unknown"
+    },
+    "adminState": "Admin {{state}}",
+    "operState": "Oper {{state}}",
+    "noInterfaceDataTitle": "No interface data yet",
+    "noInterfaceDataHint": "The if_table reconciler folds these in on the next poll.",
+    "colNeighbor": "Neighbor",
+    "colLinkType": "Link type",
+    "noEdgesTitle": "No edges yet",
+    "noEdgesHint": "LLDP/CDP/FDP needs both endpoints to be known nodes.",
+    "interfacesCaption": "Interfaces of the selected node",
+    "linksCaption": "Neighbor links of the selected node",
+    "colSeen": "Seen",
+    "searchNodes": "Search devices",
+    "clearSearch": "Clear search",
+    "noMatchTitle": "No device matches"
   },
   "wifi": {
     "description": "Wireless link, channel utilization, and channel-overlap visualisation.",
@@ -636,5 +704,12 @@
     "airspaceLabel": "Airspace",
     "anomaliesLabel": "Association anomalies",
     "channelGraphAlt": "Wi-Fi channel signal graph"
+  },
+  "notFound": {
+    "label": "Not found",
+    "kicker": "Not found",
+    "emptyTitle": "This page does not exist",
+    "emptyHint": "The address may be mistyped or the page may have moved.",
+    "back": "Go to Link"
   }
 }

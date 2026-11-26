@@ -86,7 +86,7 @@ describe('DiscoveryTimingSettings', () => {
     renderTiming(300_000, 45_000);
 
     expect(screen.getByLabelText('Rescan interval (minutes)')).toHaveValue(5);
-    expect(screen.queryByLabelText('Scan time limit (seconds)')).toBeNull();
+    expect(screen.getByLabelText('Scan time limit (seconds)')).not.toBeVisible();
 
     await openAdvanced();
     expect(screen.getByLabelText('Scan time limit (seconds)')).toHaveValue(45);

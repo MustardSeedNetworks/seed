@@ -4,7 +4,8 @@
     "searchPlaceholder": "Buscar ayuda...",
     "contents": "Contenido",
     "closeHelp": "Cerrar ayuda",
-    "backToSections": "Volver a las secciones de ayuda"
+    "backToSections": "Volver a las secciones de ayuda",
+    "clearSearch": "Borrar búsqueda"
   },
   "sections": {
     "about": "Acerca de Seed",

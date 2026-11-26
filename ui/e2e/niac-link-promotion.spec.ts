@@ -165,7 +165,7 @@ test.describe('promotion over a NIAC link', () => {
     const dialog = page.getByRole('dialog', { name: 'Add polling target' });
     await dialog.getByLabel('Name', { exact: true }).fill(name);
     await dialog.getByLabel('IP address', { exact: true }).fill(agentIPs[0] ?? '');
-    await dialog.getByLabel('SNMP version', { exact: true }).selectOption('v2c');
+    await dialog.getByLabel(/^SNMP version/).selectOption('v2c');
     await dialog
       .getByLabel('Credential', { exact: true })
       .selectOption({ label: 'discovery-first-run' });

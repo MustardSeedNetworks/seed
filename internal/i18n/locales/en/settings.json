@@ -189,9 +189,7 @@
     "enableServer": "Enable iperf3 Server",
     "serverPort": "Server Port",
     "serverAutoStart": "When enabled, starts iperf3 server automatically",
-    "autoRunOnLinkDesc": "Re-run performance tests whenever the link state changes.",
-    "directionSelection": "Direction selection",
-    "protocolSelection": "Protocol selection"
+    "autoRunOnLinkDesc": "Re-run performance tests whenever the link state changes."
   },
   "health": {
     "title": "Health Checks",
@@ -246,12 +244,22 @@
     "modbusDescription": "Test Modbus industrial device connectivity",
     "unitId": "Unit ID",
     "testRegister": "Test Register",
+    "httpUrl": "Endpoint URL",
+    "calledAe": "Called AE title",
+    "fhirBaseUrl": "FHIR base URL",
+    "opcuaEndpointUrl": "OPC-UA endpoint URL",
+    "streamUrl": "Stream URL",
+    "ltiLaunchUrl": "LTI launch URL",
     "fhirAuthNone": "None",
     "fhirAuthBasic": "Basic",
     "fhirAuthOauth2": "OAuth2",
     "opcuaSecurityNone": "None",
     "opcuaSecuritySign": "Sign",
-    "opcuaSecuritySignAndEncrypt": "Sign+Encrypt"
+    "opcuaSecuritySignAndEncrypt": "Sign+Encrypt",
+    "opcuaSecurityMode": "Security mode",
+    "fhirAuthType": "Authentication",
+    "sqlDriver": "Database driver",
+    "fileShareProtocol": "Share protocol"
   },
   "dns": {
     "title": "DNS",
@@ -518,13 +526,14 @@
     "revoke": "Revoke",
     "statusActive": "active",
     "statusRevoked": "revoked",
-    "confirmRevoke": "Revoke token \"{{name}}\"? Any script using it will stop working immediately.",
+    "confirmRevoke": "Any script using it will stop working immediately.",
     "mintNeedsOperator": "Read-only — the operator role is required to mint API tokens.",
     "mintNeedsPro": "Minting API tokens requires the Pro tier.",
     "revokeNeedsOperator": "Read-only — the operator role is required to revoke tokens.",
     "loadFailed": "The API tokens could not be loaded.",
     "mintFailed": "The token could not be created.",
-    "revokeFailed": "The token could not be revoked."
+    "revokeFailed": "The token could not be revoked.",
+    "confirmRevokeTitle": "Revoke token \"{{name}}\"?"
   },
   "guestAudit": {
     "title": "Guest Network Audit",
@@ -628,5 +637,16 @@
     "locationHelp": "Where the device is installed. Up to 128 characters.",
     "locationPlaceholder": "Main Office, IDF 3B, Port 21",
     "save": "Save identity"
+  },
+  "tabs": {
+    "label": "Settings sections",
+    "general": "General",
+    "network": "Network",
+    "tests": "Tests",
+    "discovery": "Discovery",
+    "alerts": "Alerts",
+    "access": "Access",
+    "about": "About",
+    "profiles": "Profiles"
   }
 }

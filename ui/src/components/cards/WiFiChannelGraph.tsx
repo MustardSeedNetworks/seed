@@ -19,12 +19,12 @@
 import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CardValue } from '../../shared/Card';
 import { cn, icon as iconTokens, layout, spacing } from '../../styles/theme';
 import type {
   ChannelNetwork,
   WiFiChannelGraphResponse,
 } from '../../types/generated/wifi-channel-graph-response';
-import { CardValue } from '../ui/Card';
 import { Wifi } from '../ui/Icons';
 import { SimpleBaseCard } from './BaseCard';
 

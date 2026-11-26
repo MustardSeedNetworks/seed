@@ -4,11 +4,11 @@ import { skipSetupWizard } from './helpers/auth';
 /**
  * Card data tables must fit their card (#2708).
  *
- * `NeighbourCacheCard` and `BonjourCard` wrap their tables in
- * `overflow-x-auto`, so a table wider than the card scrolls sideways inside it
- * and the last column sits off-card. The page-level gate in
- * minimum-width.spec.ts cannot see this: the card clips its own content, so the
- * document never overflows. This measures the scroll container itself.
+ * `NeighbourCacheCard` and `BonjourCard` render the shared DataTable, which
+ * scrolls sideways inside its own frame. The page-level gate in
+ * minimum-width.spec.ts cannot see a frame that pushes past its card: the card
+ * clips its own content, so the document never overflows. This measures the
+ * frame itself.
  *
  * The rows are mocked rather than taken from the daemon's real ARP table and
  * mDNS browse, for two reasons: a test host has no deterministic neighbours, so
@@ -101,18 +101,22 @@ async function cardTableOverflow(
       if (table.closest('[role="dialog"]')) {
         continue;
       }
-      const box = table.parentElement;
-      if (!box) {
+      // The shared DataTable scrolls sideways inside its own frame by design,
+      // so what must hold is that the frame itself stays inside the card and
+      // the page: the card never widens, and nothing leaves the viewport.
+      const frame = table.closest('.panel');
+      if (!frame) {
         continue;
       }
-      const card = table.closest('[data-testid], section, article');
+      const card = frame.parentElement?.closest('section, article, [data-testid]');
       const heading = card?.querySelector('h2, h3');
+      const cardRight = card ? card.getBoundingClientRect().right : window.innerWidth;
       out.push({
         label: heading?.textContent?.trim() ?? card?.getAttribute('data-testid') ?? 'unknown',
-        // Both readings matter: the box scrolling means content is hidden
-        // behind a scrollbar, and the table being wider than the box means it
-        // is clipped even where nothing scrolls.
-        overflow: Math.max(box.scrollWidth - box.clientWidth, table.scrollWidth - box.clientWidth),
+        overflow: Math.max(
+          frame.scrollWidth - frame.clientWidth,
+          frame.getBoundingClientRect().right - Math.min(cardRight, window.innerWidth),
+        ),
       });
     }
     return out;

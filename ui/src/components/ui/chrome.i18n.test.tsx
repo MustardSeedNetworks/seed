@@ -18,16 +18,12 @@ import { Router } from 'wouter';
 import { memoryLocation } from 'wouter/memory-location';
 
 import i18n from '../../i18n';
+import { NotFoundPage } from '../../pages/NotFoundPage';
 import { useTestRunStore } from '../../stores/testRunStore';
-import { Breadcrumbs } from '../../ui/Breadcrumbs';
 import { SidebarLayout } from '../../ui/Sidebar';
-import { Alert } from './Alert';
 import { CommandPalette } from './CommandPalette';
-import { type Column, DataTable } from './DataTable';
 import { DeviceSelector } from './DeviceSelector';
 import { Fab } from './Fab';
-import { Modal } from './Modal';
-import { StatusBadge } from './StatusBadge';
 import { ToastProvider } from './Toast';
 import { useToast } from './useToast';
 
@@ -47,17 +43,6 @@ function withQuery(node: ReactNode): ReactNode {
 }
 
 describe('shared chrome — Spanish, with no English left behind', () => {
-  it('names the Alert dismiss button', () => {
-    render(
-      <Alert status="info" onDismiss={() => {}}>
-        x
-      </Alert>,
-    );
-
-    expect(screen.getByRole('button', { name: 'Descartar alerta' })).toBeInTheDocument();
-    expect(screen.queryByLabelText('Dismiss alert')).not.toBeInTheDocument();
-  });
-
   it('labels the command palette, its search, its actions and the theme toggle', () => {
     // cmdk scrolls the active item into view, which jsdom does not implement.
     Element.prototype.scrollIntoView = (): void => {};
@@ -82,25 +67,6 @@ describe('shared chrome — Spanish, with no English left behind', () => {
     expect(screen.queryByPlaceholderText('Search pages and actions…')).not.toBeInTheDocument();
     // The prototype stub must not leak into other test files.
     Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
-  });
-
-  it('labels the DataTable empty, loading and search states', () => {
-    const columns: Column<{ name: string }>[] = [
-      { key: 'name', header: 'N', accessor: (r) => r.name },
-    ];
-    const { rerender } = render(
-      <DataTable data={[]} columns={columns} keyExtractor={(r) => r.name} />,
-    );
-
-    expect(screen.getByText('No se encontraron datos')).toBeInTheDocument();
-    expect(screen.queryByText('No data found')).not.toBeInTheDocument();
-    const search = screen.getByPlaceholderText('Buscar…');
-    fireEvent.change(search, { target: { value: 'x' } });
-    expect(screen.getByRole('button', { name: 'Limpiar búsqueda' })).toBeInTheDocument();
-
-    rerender(<DataTable data={[]} columns={columns} keyExtractor={(r) => r.name} loading={true} />);
-    expect(screen.getByRole('status', { name: 'Cargando datos...' })).toBeInTheDocument();
-    expect(screen.queryByLabelText('Loading data')).not.toBeInTheDocument();
   });
 
   it('shows the DeviceSelector placeholder', () => {
@@ -132,17 +98,6 @@ describe('shared chrome — Spanish, with no English left behind', () => {
     useTestRunStore.getState().reset();
   });
 
-  it('names both Modal close controls', () => {
-    render(
-      <Modal isOpen={true} onClose={() => {}} title="t" showCloseButton={true}>
-        body
-      </Modal>,
-    );
-
-    expect(screen.getAllByRole('button', { name: 'Cerrar ventana' })).toHaveLength(2);
-    expect(screen.queryByLabelText('Close modal')).not.toBeInTheDocument();
-  });
-
   it('labels the toast region, each toast and its dismiss button', async () => {
     function Trigger(): React.JSX.Element {
       const { addToast } = useToast();
@@ -167,24 +122,11 @@ describe('shared chrome — Spanish, with no English left behind', () => {
     expect(screen.queryByLabelText('Notification: success')).not.toBeInTheDocument();
   });
 
-  it.each([
-    ['success', 'Estado: correcto'],
-    ['warning', 'Estado: advertencia'],
-    ['error', 'Estado: error'],
-    ['unknown', 'Estado: desconocido'],
-    ['loading', 'Estado: cargando'],
-  ] as const)('names the %s StatusBadge', (status, spanish) => {
-    render(<StatusBadge status={status} />);
-
-    expect(screen.getByRole('img', { name: spanish })).toBeInTheDocument();
-    expect(screen.queryByLabelText(`Status: ${status}`)).not.toBeInTheDocument();
-  });
-
-  it('labels the breadcrumb trail and its home link', () => {
-    const { hook } = memoryLocation({ path: '/network' });
+  it('labels the breadcrumb trail and its home link on the not-found page', () => {
+    const { hook } = memoryLocation({ path: '/nowhere' });
     render(
       <Router hook={hook}>
-        <Breadcrumbs />
+        <NotFoundPage />
       </Router>,
     );
 
@@ -192,11 +134,19 @@ describe('shared chrome — Spanish, with no English left behind', () => {
     expect(screen.getByRole('link', { name: 'Inicio' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Breadcrumb')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Home')).not.toBeInTheDocument();
+    expect(screen.getByText('Esta página no existe')).toBeInTheDocument();
   });
 
   it('names the phone drawer scrim', () => {
     render(
-      <SidebarLayout groups={[{ label: 'g', items: [{ path: '/', label: 'x', icon: Server }] }]}>
+      <SidebarLayout
+        groups={[{ label: 'g', items: [{ path: '/', label: 'x', icon: Server }] }]}
+        footer={{
+          help: { label: 'h', onClick: () => undefined },
+          settings: { label: 's', onClick: () => undefined },
+          theme: { label: 't', onClick: () => undefined, isDark: true },
+        }}
+      >
         <div />
       </SidebarLayout>,
     );

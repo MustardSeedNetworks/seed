@@ -35,9 +35,11 @@ import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { useArrayItem } from '../../../hooks/useArrayItem';
-import { cn, icon as iconTokens, input, layout, radius, spacing } from '../../../styles/theme';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { Input } from '../../../shared/Input';
+import { Toggle } from '../../../shared/Toggle';
+import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import type { CardSettings, SaveStatus, TestsSettings } from '../../../types/settings';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { HeartPulse } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { HealthChecksSettingsEnterprise } from './HealthChecksSettingsEnterprise';
@@ -125,93 +127,49 @@ export function HealthChecksSettings({
       <div className={spacing.stack.default}>
         {/* Card Visibility & FAB Controls */}
         <div className="stack-sm">
-          <label
-            className={cn(
-              layout.flex.between,
-              spacing.pad.sm,
-              'bg-surface-base',
-              radius.default,
-              'border border-surface-border',
-            )}
-          >
-            <div>
-              <span className="body-small text-text-primary font-medium">
-                {t('common.showCard')}
-              </span>
-              <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={cardSettings.healthChecks.enabled}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateCardSettings({
-                  healthChecks: {
-                    ...cardSettings.healthChecks,
-                    enabled: e.target.checked,
-                  },
-                })
-              }
-              className={iconTokens.size.sm}
-            />
-          </label>
-          <label
-            className={cn(
-              layout.flex.between,
-              spacing.pad.sm,
-              'bg-surface-base',
-              radius.default,
-              'border border-surface-border',
-            )}
-          >
-            <div>
-              <span className="body-small text-text-primary font-medium">
-                {t('common.runOnFab')}
-              </span>
-              <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={cardSettings.healthChecks.autoRunOnLink}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateCardSettings({
-                  healthChecks: {
-                    ...cardSettings.healthChecks,
-                    autoRunOnLink: e.target.checked,
-                  },
-                })
-              }
-              className={iconTokens.size.sm}
-            />
-          </label>
+          <Toggle
+            label={t('common.showCard')}
+            description={t('common.showCardDesc')}
+            checked={cardSettings.healthChecks.enabled}
+            onChange={(checked: boolean): void =>
+              updateCardSettings({
+                healthChecks: {
+                  ...cardSettings.healthChecks,
+                  enabled: checked,
+                },
+              })
+            }
+            className="rounded-lg border border-surface-border bg-surface-base p-3"
+          />
+          <Toggle
+            label={t('common.runOnFab')}
+            description={t('common.runOnFabDesc')}
+            checked={cardSettings.healthChecks.autoRunOnLink}
+            onChange={(checked: boolean): void =>
+              updateCardSettings({
+                healthChecks: {
+                  ...cardSettings.healthChecks,
+                  autoRunOnLink: checked,
+                },
+              })
+            }
+            className="rounded-lg border border-surface-border bg-surface-base p-3"
+          />
         </div>
 
         {/* Enable Toggle */}
-        <label
-          className={cn(
-            layout.flex.between,
-            spacing.pad.sm,
-            'bg-surface-base border border-surface-border',
-            radius.default,
-          )}
-        >
-          <div>
-            <span className="body-small text-text-primary font-medium">
-              {t('health.enableHealthChecks')}
-            </span>
-            <p className="caption text-text-muted">{t('health.enableDescription')}</p>
-          </div>
-          <input
-            type="checkbox"
-            checked={testsSettings.runPerformance !== false}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-              setTestsSettings((prev) => ({
-                ...prev,
-                runPerformance: e.target.checked,
-              }))
-            }
-            className={iconTokens.size.sm}
-          />
-        </label>
+        <Toggle
+          label={t('health.enableHealthChecks')}
+          description={t('health.enableDescription')}
+          checked={testsSettings.runPerformance !== false}
+          onChange={(checked: boolean): void =>
+            setTestsSettings((prev) => ({
+              ...prev,
+              runPerformance: checked,
+            }))
+          }
+          className="rounded-lg border border-surface-border bg-surface-base p-3"
+        />
 
         {/* Ping Targets */}
         <div>
@@ -233,24 +191,28 @@ export function HealthChecksSettings({
               key={target.id || target.host}
               className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
             >
-              <input
-                type="text"
-                value={target.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updatePingTarget(target.id ?? '', 'name', e.target.value)
-                }
-                placeholder={t('common.name')}
-                className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-              />
-              <input
-                type="text"
-                value={target.host}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updatePingTarget(target.id ?? '', 'host', e.target.value)
-                }
-                placeholder={t('common.hostIp')}
-                className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-              />
+              <div className="w-24 shrink-0">
+                <Input
+                  type="text"
+                  aria-label={t('common.name')}
+                  value={target.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updatePingTarget(target.id ?? '', 'name', e.target.value)
+                  }
+                  placeholder={t('common.name')}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('common.hostIp')}
+                  value={target.host}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updatePingTarget(target.id ?? '', 'host', e.target.value)
+                  }
+                  placeholder={t('common.hostIp')}
+                />
+              </div>
               <button
                 type="button"
                 onClick={(): void => removePingTarget(target.id ?? '')}
@@ -280,33 +242,39 @@ export function HealthChecksSettings({
               key={port.id || `${port.host}:${port.port}`}
               className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
             >
-              <input
-                type="text"
-                value={port.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateTcpPort(port.id ?? '', 'name', e.target.value)
-                }
-                placeholder={t('common.name')}
-                className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-              />
-              <input
-                type="text"
-                value={port.host}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateTcpPort(port.id ?? '', 'host', e.target.value)
-                }
-                placeholder={t('common.host')}
-                className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-              />
-              <input
-                type="number"
-                value={port.port}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateTcpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 80)
-                }
-                placeholder={t('common.port')}
-                className={cn(input.base, input.state.default, input.size.md, 'w-20')}
-              />
+              <div className="w-24 shrink-0">
+                <Input
+                  type="text"
+                  aria-label={t('common.name')}
+                  value={port.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateTcpPort(port.id ?? '', 'name', e.target.value)
+                  }
+                  placeholder={t('common.name')}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('common.host')}
+                  value={port.host}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateTcpPort(port.id ?? '', 'host', e.target.value)
+                  }
+                  placeholder={t('common.host')}
+                />
+              </div>
+              <div className="w-20 shrink-0">
+                <Input
+                  type="number"
+                  aria-label={t('common.port')}
+                  value={port.port}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateTcpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 80)
+                  }
+                  placeholder={t('common.port')}
+                />
+              </div>
               <button
                 type="button"
                 onClick={(): void => removeTcpPort(port.id ?? '')}
@@ -339,33 +307,39 @@ export function HealthChecksSettings({
               key={port.id || `${port.host}:${port.port}`}
               className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
             >
-              <input
-                type="text"
-                value={port.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateUdpPort(port.id ?? '', 'name', e.target.value)
-                }
-                placeholder={t('common.name')}
-                className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-              />
-              <input
-                type="text"
-                value={port.host}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateUdpPort(port.id ?? '', 'host', e.target.value)
-                }
-                placeholder={t('common.host')}
-                className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-              />
-              <input
-                type="number"
-                value={port.port}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateUdpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 53)
-                }
-                placeholder={t('common.port')}
-                className={cn(input.base, input.state.default, input.size.md, 'w-20')}
-              />
+              <div className="w-24 shrink-0">
+                <Input
+                  type="text"
+                  aria-label={t('common.name')}
+                  value={port.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateUdpPort(port.id ?? '', 'name', e.target.value)
+                  }
+                  placeholder={t('common.name')}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('common.host')}
+                  value={port.host}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateUdpPort(port.id ?? '', 'host', e.target.value)
+                  }
+                  placeholder={t('common.host')}
+                />
+              </div>
+              <div className="w-20 shrink-0">
+                <Input
+                  type="number"
+                  aria-label={t('common.port')}
+                  value={port.port}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateUdpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 53)
+                  }
+                  placeholder={t('common.port')}
+                />
+              </div>
               <button
                 type="button"
                 onClick={(): void => removeUdpPort(port.id ?? '')}
@@ -402,38 +376,32 @@ export function HealthChecksSettings({
               )}
             >
               <div className={cn('flex', spacing.gap.compact)}>
-                <input
-                  type="text"
-                  value={endpoint.name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateHttpEndpoint(endpoint.id ?? '', 'name', e.target.value)
-                  }
-                  placeholder={t('common.name')}
-                  className={cn(
-                    input.base,
-                    input.state.default,
-                    input.size.md,
-                    'flex-1 bg-surface-raised',
-                  )}
-                />
-                <input
-                  type="number"
-                  value={endpoint.expectedStatus}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateHttpEndpoint(
-                      endpoint.id ?? '',
-                      'expectedStatus',
-                      Number.parseInt(e.target.value, 10) || 200,
-                    )
-                  }
-                  placeholder={t('health.status')}
-                  className={cn(
-                    input.base,
-                    input.state.default,
-                    input.size.md,
-                    'w-20 bg-surface-raised',
-                  )}
-                />
+                <div className="min-w-0 flex-1">
+                  <Input
+                    type="text"
+                    aria-label={t('common.name')}
+                    value={endpoint.name}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      updateHttpEndpoint(endpoint.id ?? '', 'name', e.target.value)
+                    }
+                    placeholder={t('common.name')}
+                  />
+                </div>
+                <div className="w-20 shrink-0">
+                  <Input
+                    type="number"
+                    aria-label={t('health.status')}
+                    value={endpoint.expectedStatus}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      updateHttpEndpoint(
+                        endpoint.id ?? '',
+                        'expectedStatus',
+                        Number.parseInt(e.target.value, 10) || 200,
+                      )
+                    }
+                    placeholder={t('health.status')}
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={(): void => removeHttpEndpoint(endpoint.id ?? '')}
@@ -443,14 +411,14 @@ export function HealthChecksSettings({
                   {t('common.remove')}
                 </button>
               </div>
-              <input
+              <Input
                 type="text"
+                aria-label={t('health.httpUrl')}
                 value={endpoint.url}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                   updateHttpEndpoint(endpoint.id ?? '', 'url', e.target.value)
                 }
                 placeholder="https://example.com/health"
-                className={cn(input.base, input.state.default, input.size.md, 'bg-surface-raised')}
               />
             </div>
           ))}

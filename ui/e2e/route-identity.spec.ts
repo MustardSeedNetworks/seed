@@ -90,7 +90,9 @@ test.describe('a route names itself the same way everywhere', () => {
     });
   }
 
-  test('a named device carries its name in the rail and every tab title', async ({ page }) => {
+  test('a named device carries its name in the rail, and the tab title stays the page and product', async ({
+    page,
+  }) => {
     await disableAnimations(page);
     await page.goto('/link', { waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
@@ -107,13 +109,13 @@ test.describe('a route names itself the same way everywhere', () => {
 
       // The rail and the tab follow the save, with no reload.
       await expect(page.getByTestId('rail-device-name')).toHaveText('seed-idf-3b');
-      await expect(page).toHaveTitle('Link · seed-idf-3b · Seed');
+      await expect(page).toHaveTitle('Link · Seed');
 
       // It is the daemon's, not this browser's: a fresh load on another
       // route reads it back from the server.
       await page.goto('/network', { waitUntil: 'domcontentloaded' });
       await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
-      await expect(page).toHaveTitle('Network · seed-idf-3b · Seed');
+      await expect(page).toHaveTitle('Network · Seed');
       await expect(page.getByTestId('rail-device-name')).toHaveText('seed-idf-3b');
       const settings = await page.request.get('/api/v1/settings');
       expect(await settings.json()).toMatchObject({

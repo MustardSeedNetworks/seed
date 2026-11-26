@@ -1,19 +1,14 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
-import {
-  cn,
-  icon as iconTokens,
-  input as inputTokens,
-  layout,
-  radius,
-  spacing,
-} from '../../../styles/theme';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
+import { Tooltip } from '../../../shared/Tooltip';
+import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import type { ThresholdSettings } from '../../../types/generated/settings-response';
 import type { SaveStatus } from '../../../types/settings';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Info, SlidersHorizontal } from '../../ui/Icons';
-import { Tooltip } from '../../ui/Tooltip';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { ThresholdsHttpSection } from './ThresholdsHttpSection';
 
@@ -113,46 +108,30 @@ export function ThresholdsSettings({
             </Tooltip>
           </div>
           <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
-            <div>
-              <label className="caption text-text-muted" htmlFor="dns-good">
-                {t('thresholds.goodLess')}
-              </label>
-              <input
-                id="dns-good"
-                type="number"
-                value={thresholds.dns.good}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateThreshold('dns', 'good', Number(e.target.value))
-                }
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  spacing.margin.top.tight,
-                  'body-small',
-                )}
-              />
-            </div>
-            <div>
-              <label className="caption text-text-muted" htmlFor="dns-warning">
-                {t('thresholds.warningLess')}
-              </label>
-              <input
-                id="dns-warning"
-                type="number"
-                value={thresholds.dns.warning}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateThreshold('dns', 'warning', Number(e.target.value))
-                }
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  spacing.margin.top.tight,
-                  'body-small',
-                )}
-              />
-            </div>
+            <FormField id="dns-good" label={t('thresholds.goodLess')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  value={thresholds.dns.good}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateThreshold('dns', 'good', Number(e.target.value))
+                  }
+                />
+              )}
+            </FormField>
+            <FormField id="dns-warning" label={t('thresholds.warningLess')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  value={thresholds.dns.warning}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateThreshold('dns', 'warning', Number(e.target.value))
+                  }
+                />
+              )}
+            </FormField>
           </div>
         </div>
 
@@ -185,46 +164,30 @@ export function ThresholdsSettings({
             </Tooltip>
           </div>
           <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
-            <div>
-              <label className="caption text-text-muted" htmlFor="gateway-good">
-                {t('thresholds.goodLess')}
-              </label>
-              <input
-                id="gateway-good"
-                type="number"
-                value={thresholds.gateway.good}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateThreshold('gateway', 'good', Number(e.target.value))
-                }
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  spacing.margin.top.tight,
-                  'body-small',
-                )}
-              />
-            </div>
-            <div>
-              <label className="caption text-text-muted" htmlFor="gateway-warning">
-                {t('thresholds.warningLess')}
-              </label>
-              <input
-                id="gateway-warning"
-                type="number"
-                value={thresholds.gateway.warning}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateThreshold('gateway', 'warning', Number(e.target.value))
-                }
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  spacing.margin.top.tight,
-                  'body-small',
-                )}
-              />
-            </div>
+            <FormField id="gateway-good" label={t('thresholds.goodLess')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  value={thresholds.gateway.good}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateThreshold('gateway', 'good', Number(e.target.value))
+                  }
+                />
+              )}
+            </FormField>
+            <FormField id="gateway-warning" label={t('thresholds.warningLess')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  value={thresholds.gateway.warning}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateThreshold('gateway', 'warning', Number(e.target.value))
+                  }
+                />
+              )}
+            </FormField>
           </div>
         </div>
 
@@ -257,46 +220,30 @@ export function ThresholdsSettings({
             </Tooltip>
           </div>
           <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
-            <div>
-              <label className="caption text-text-muted" htmlFor="wifi-good">
-                {t('thresholds.goodGreater')}
-              </label>
-              <input
-                id="wifi-good"
-                type="number"
-                value={thresholds.wifi.good}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateThreshold('wifi', 'good', Number(e.target.value))
-                }
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  spacing.margin.top.tight,
-                  'body-small',
-                )}
-              />
-            </div>
-            <div>
-              <label className="caption text-text-muted" htmlFor="wifi-warning">
-                {t('thresholds.warningGreater')}
-              </label>
-              <input
-                id="wifi-warning"
-                type="number"
-                value={thresholds.wifi.warning}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateThreshold('wifi', 'warning', Number(e.target.value))
-                }
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  spacing.margin.top.tight,
-                  'body-small',
-                )}
-              />
-            </div>
+            <FormField id="wifi-good" label={t('thresholds.goodGreater')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  value={thresholds.wifi.good}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateThreshold('wifi', 'good', Number(e.target.value))
+                  }
+                />
+              )}
+            </FormField>
+            <FormField id="wifi-warning" label={t('thresholds.warningGreater')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  value={thresholds.wifi.warning}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateThreshold('wifi', 'warning', Number(e.target.value))
+                  }
+                />
+              )}
+            </FormField>
           </div>
         </div>
 
@@ -329,46 +276,30 @@ export function ThresholdsSettings({
             </Tooltip>
           </div>
           <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
-            <div>
-              <label className="caption text-text-muted" htmlFor="ping-good">
-                {t('thresholds.goodLess')}
-              </label>
-              <input
-                id="ping-good"
-                type="number"
-                value={thresholds.customPing.good}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateThreshold('customPing', 'good', Number(e.target.value))
-                }
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  spacing.margin.top.tight,
-                  'body-small',
-                )}
-              />
-            </div>
-            <div>
-              <label className="caption text-text-muted" htmlFor="ping-warning">
-                {t('thresholds.warningLess')}
-              </label>
-              <input
-                id="ping-warning"
-                type="number"
-                value={thresholds.customPing.warning}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateThreshold('customPing', 'warning', Number(e.target.value))
-                }
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  spacing.margin.top.tight,
-                  'body-small',
-                )}
-              />
-            </div>
+            <FormField id="ping-good" label={t('thresholds.goodLess')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  value={thresholds.customPing.good}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateThreshold('customPing', 'good', Number(e.target.value))
+                  }
+                />
+              )}
+            </FormField>
+            <FormField id="ping-warning" label={t('thresholds.warningLess')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  value={thresholds.customPing.warning}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateThreshold('customPing', 'warning', Number(e.target.value))
+                  }
+                />
+              )}
+            </FormField>
           </div>
         </div>
 
@@ -401,46 +332,30 @@ export function ThresholdsSettings({
             </Tooltip>
           </div>
           <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
-            <div>
-              <label className="caption text-text-muted" htmlFor="tcp-good">
-                {t('thresholds.goodLess')}
-              </label>
-              <input
-                id="tcp-good"
-                type="number"
-                value={thresholds.customTcp.good}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateThreshold('customTcp', 'good', Number(e.target.value))
-                }
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  spacing.margin.top.tight,
-                  'body-small',
-                )}
-              />
-            </div>
-            <div>
-              <label className="caption text-text-muted" htmlFor="tcp-warning">
-                {t('thresholds.warningLess')}
-              </label>
-              <input
-                id="tcp-warning"
-                type="number"
-                value={thresholds.customTcp.warning}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateThreshold('customTcp', 'warning', Number(e.target.value))
-                }
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  spacing.margin.top.tight,
-                  'body-small',
-                )}
-              />
-            </div>
+            <FormField id="tcp-good" label={t('thresholds.goodLess')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  value={thresholds.customTcp.good}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateThreshold('customTcp', 'good', Number(e.target.value))
+                  }
+                />
+              )}
+            </FormField>
+            <FormField id="tcp-warning" label={t('thresholds.warningLess')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  value={thresholds.customTcp.warning}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateThreshold('customTcp', 'warning', Number(e.target.value))
+                  }
+                />
+              )}
+            </FormField>
           </div>
         </div>
 

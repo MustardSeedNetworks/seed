@@ -83,10 +83,10 @@ function ClassTable({ classes, testId }: { classes: ClassResult[]; testId: strin
       testId={testId}
       caption={t('dscpCheck.classesCaption')}
       columns={[
-        { label: t('dscpCheck.colClass'), width: 'w-[25%]', mono: true },
-        { label: t('dscpCheck.colResult'), width: 'w-[20%]' },
-        { label: t('dscpCheck.colArrivedAs'), width: 'w-[35%]', mono: true },
-        { label: t('dscpCheck.colReceived'), width: 'w-[20%]' },
+        { label: t('dscpCheck.colClass'), mono: true },
+        { label: t('dscpCheck.colResult') },
+        { label: t('dscpCheck.colArrivedAs'), mono: true },
+        { label: t('dscpCheck.colReceived') },
       ]}
       rows={classes.map((c) => ({
         key: String(c.sentDscp),

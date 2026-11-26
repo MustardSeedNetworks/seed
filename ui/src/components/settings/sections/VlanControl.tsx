@@ -19,7 +19,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
-import { button, cn, input, layout, radius, status as statusColor } from '../../../styles/theme';
+import { Input } from '../../../shared/Input';
+import { button, cn, layout, radius, status as statusColor } from '../../../styles/theme';
 
 export function VlanControl() {
   const { t } = useTranslation('settings');
@@ -74,22 +75,15 @@ export function VlanControl() {
   return (
     <div className="stack-sm">
       <div className={layout.inline.default}>
-        <input
+        <Input
           type="number"
           min="1"
           max="4094"
           value={vlanId}
-          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-            setVlanId(e.target.value)
-          }
+          onChange={(e): void => setVlanId(e.target.value)}
           placeholder={t('network.vlan.placeholder')}
-          className={cn(
-            'flex-1',
-            input.size.sm,
-            'bg-surface-base border border-surface-border',
-            radius.md,
-            'body-small text-text-primary',
-          )}
+          aria-label={t('network.vlan.placeholder')}
+          className="flex-1"
           disabled={loading}
         />
         <button

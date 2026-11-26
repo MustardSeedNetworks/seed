@@ -84,6 +84,15 @@ vi.mock('../api/client', async (importOriginal) => {
 
 const { LifecyclePage } = await import('./LifecyclePage');
 
+/** A list row, found by its part id and, for a repeat, the device that holds it. */
+function partRow(text: RegExp): HTMLElement {
+  return screen.getByRole('row', { name: text });
+}
+
+function tone(row: HTMLElement): string | null {
+  return row.querySelector('[data-tone]')?.getAttribute('data-tone') ?? null;
+}
+
 function renderPage(): void {
   render(
     <RoleProvider isAuthenticated={true}>
@@ -112,13 +121,12 @@ describe('LifecyclePage', () => {
   it('lists every part as not listed, claiming no state, until EoX data is imported', async () => {
     renderPage();
 
-    const part = await screen.findByTestId('lifecycle-part-10.0.0.2#0');
-    expect(part).toHaveTextContent('C9300-48P');
+    const part = await screen.findByRole('row', { name: /C9300-48P/ });
     expect(part).toHaveTextContent('core-sw · Switch 1');
     expect(part).toHaveTextContent('Not listed');
-    expect(part).toHaveAttribute('data-state', 'unknown');
+    expect(tone(part)).toBe('unknown');
     // A device without a name is named by its address.
-    expect(screen.getByTestId('lifecycle-part-10.0.0.9#0')).toHaveTextContent('10.0.0.9');
+    expect(partRow(/WS-C3750X-48P-S/)).toHaveTextContent('10.0.0.9');
     expect(screen.getByTestId('lifecycle-counts')).toHaveTextContent(
       '3 parts · No EoX data imported',
     );
@@ -139,15 +147,15 @@ describe('LifecyclePage', () => {
       '3 parts · EoX data for 2 products',
     );
 
-    const rows = screen.getAllByTestId(/^lifecycle-part-/);
-    expect(rows.map((row) => row.dataset.testid)).toEqual([
-      'lifecycle-part-10.0.0.9#0',
-      'lifecycle-part-10.0.0.2#0',
-      'lifecycle-part-10.0.0.2#1',
+    const rows = screen.getAllByRole('row').slice(1);
+    expect(rows.map((row) => row.querySelector('.figure')?.textContent)).toEqual([
+      'WS-C3750X-48P-S',
+      'C9300-48P',
+      'GLC-TE',
     ]);
-    expect(rows[0]).toHaveAttribute('data-state', 'crit');
+    expect(tone(rows[0] as HTMLElement)).toBe('error');
     expect(rows[0]).toHaveTextContent('End of support');
-    expect(rows[1]).toHaveAttribute('data-state', 'warn');
+    expect(tone(rows[1] as HTMLElement)).toBe('warning');
 
     // The first part opens: its dates, its replacement and its bulletin.
     expect(screen.getByTestId('lifecycle-device')).toHaveTextContent('10.0.0.9');
@@ -160,14 +168,14 @@ describe('LifecyclePage', () => {
     imported = true;
     const user = userEvent.setup();
     renderPage();
-    await user.click(await screen.findByTestId('lifecycle-part-10.0.0.2#0'));
+    await user.click(await screen.findByRole('row', { name: /C9300-48P/ }));
 
     expect(screen.getByTestId('lifecycle-device')).toHaveTextContent('core-sw (10.0.0.2)');
     expect(screen.getByTestId('lifecycle-end-of-sale')).toHaveTextContent('2026-09-01');
     expect(screen.getAllByText('Not announced')).toHaveLength(2);
     expect(screen.queryByTestId('lifecycle-bulletin')).toBeNull();
 
-    await user.click(screen.getByTestId('lifecycle-part-10.0.0.2#1'));
+    await user.click(partRow(/GLC-TE/));
     expect(screen.getByTestId('lifecycle-not-listed')).toHaveTextContent(
       'The imported EoX data has no record for this product.',
     );
@@ -197,14 +205,32 @@ describe('LifecyclePage', () => {
     expect(screen.getByTestId('lifecycle-counts')).toHaveTextContent('No EoX data imported');
   });
 
+  it('marks the open part in the list and re-sorts from the status header', async () => {
+    imported = true;
+    const user = userEvent.setup();
+    renderPage();
+    const first = await screen.findByRole('row', { name: /WS-C3750X-48P-S/ });
+    expect(first).toHaveAttribute('aria-selected', 'true');
+
+    await user.click(screen.getByRole('button', { name: 'Lifecycle' }));
+    // Descending was the default; the next click turns the ranking off.
+    expect(screen.getByRole('button', { name: 'Lifecycle' }).closest('th')).toHaveAttribute(
+      'aria-sort',
+      'none',
+    );
+  });
+
   it('leaves a viewer able to read but not import', async () => {
     role = 'viewer';
     renderPage();
 
-    await screen.findByTestId('lifecycle-part-10.0.0.2#0');
+    await screen.findByRole('row', { name: /C9300-48P/ });
     // The tooltip keeps a disabled control focusable, so it is aria-disabled.
     await waitFor(() =>
       expect(screen.getByTestId('lifecycle-import')).toHaveAttribute('aria-disabled', 'true'),
     );
+    expect(screen.getByTestId('lifecycle-import')).toBeEnabled();
+    // It is the page's one primary action.
+    expect(document.querySelectorAll('[data-variant="primary"]')).toHaveLength(1);
   });
 });

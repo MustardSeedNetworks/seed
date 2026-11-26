@@ -12,23 +12,21 @@
 import { type ChangeEvent, type JSX, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '../api/client';
-import { Upload } from '../components/ui/Icons';
-import { Tooltip } from '../components/ui/Tooltip';
+import { Cpu, Upload } from '../components/ui/Icons';
 import { useRole } from '../contexts/RoleContext';
 import { NotJsonError, useLifecycle } from '../hooks/useLifecycle';
+import { useTableLabels } from '../hooks/useTableLabels';
+import { Alert } from '../shared/Alert';
+import { Button } from '../shared/Button';
+import { DataTable, type DataTableColumn } from '../shared/DataTable';
+import { EmptyState } from '../shared/EmptyState';
+import { StatusPill, type StatusTone } from '../shared/StatusPill';
+import { Tooltip } from '../shared/Tooltip';
 import type {
   LifecycleComponent,
   LifecycleDevice,
 } from '../types/generated/lifecycle-devices-response';
-import {
-  DetailEmpty,
-  DetailFacts,
-  DetailPane,
-  ListDetail,
-  RecordPane,
-  RecordRow,
-  type RecordState,
-} from '../ui/ListDetail';
+import { DetailEmpty, DetailFacts, DetailPane } from '../ui/ListDetail';
 
 type Status = LifecycleComponent['status'];
 
@@ -46,11 +44,13 @@ const RANK: Record<Status, number> = {
  * No security fixes is the line that makes a part a risk. An announced or
  * unlisted part claims no state: neither is evidence it is healthy.
  */
-const STATE: Partial<Record<Status, RecordState>> = {
-  end_of_support: 'crit',
-  end_of_security_support: 'crit',
-  end_of_sw_maintenance: 'warn',
-  end_of_sale: 'warn',
+const TONE: Record<Status, StatusTone> = {
+  end_of_support: 'error',
+  end_of_security_support: 'error',
+  end_of_sw_maintenance: 'warning',
+  end_of_sale: 'warning',
+  announced: 'unknown',
+  not_listed: 'unknown',
 };
 
 interface Part {
@@ -116,19 +116,40 @@ export function LifecyclePage(): JSX.Element {
 
   const fmtDate = (value: string | undefined): string => value || t('lifecycle.notAnnounced');
 
+  const labels = useTableLabels<Part>({ loading: t('common:status.loading') });
+  const columns: DataTableColumn<Part>[] = [
+    {
+      key: 'part',
+      header: t('lifecycle.colPart'),
+      sortValue: (part) => part.component.productId,
+      cell: (part) => (
+        <div className="flex min-w-0 flex-col gap-0.5 py-1">
+          <span className="figure text-text-primary">{part.component.productId}</span>
+          <span className="text-xs text-text-muted">
+            {[part.device.name || part.device.ip, part.component.name].filter(Boolean).join(' · ')}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: t('lifecycle.colStatus'),
+      sortValue: (part) => RANK[part.component.status],
+      cell: (part) => (
+        <StatusPill
+          tone={TONE[part.component.status]}
+          label={t(`lifecycle.status.${part.component.status}`)}
+        />
+      ),
+    },
+  ];
+
   return (
     <>
-      {error ? (
-        <div
-          role="alert"
-          className="rounded-md border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error-strong"
-        >
-          {t('lifecycle.loadFailed', { reason: error })}
-        </div>
-      ) : null}
+      {error ? <Alert tone="error">{t('lifecycle.loadFailed', { reason: error })}</Alert> : null}
 
-      <div className="flex-between">
-        <p className="body-small" data-testid="lifecycle-counts">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-text-muted" data-testid="lifecycle-counts">
           {data
             ? `${t('lifecycle.partCount', { count: parts.length })} · ${
                 data.records > 0
@@ -138,16 +159,26 @@ export function LifecyclePage(): JSX.Element {
             : t('common:status.loading')}
         </p>
         <Tooltip text={readOnlyReason}>
-          <button
-            type="button"
-            onClick={(): void => fileInput.current?.click()}
-            disabled={!canWrite || importing}
-            data-testid="lifecycle-import"
-            className="inline-flex items-center gap-compact rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:cursor-not-allowed disabled:control-disabled"
-          >
-            <Upload className="h-4 w-4" />
-            {t('lifecycle.import')}
-          </button>
+          {(description) => (
+            <Button
+              variant="primary"
+              icon={<Upload className="h-4 w-4" />}
+              loading={importing}
+              // aria-disabled, not disabled: a viewer can still focus the
+              // button and read why it does nothing.
+              aria-disabled={canWrite ? undefined : true}
+              onClick={(): void => {
+                description.onClick();
+                if (canWrite) {
+                  fileInput.current?.click();
+                }
+              }}
+              aria-describedby={description['aria-describedby']}
+              data-testid="lifecycle-import"
+            >
+              {t('lifecycle.import')}
+            </Button>
+          )}
         </Tooltip>
         <input
           ref={fileInput}
@@ -160,36 +191,31 @@ export function LifecyclePage(): JSX.Element {
       </div>
 
       {importResult ? (
-        <p
-          role={importResult.ok ? 'status' : 'alert'}
-          data-testid="lifecycle-import-result"
-          className={
-            importResult.ok
-              ? 'body-small text-status-success'
-              : 'body-small text-status-error-strong'
-          }
-        >
-          {importResult.text}
-        </p>
+        <div data-testid="lifecycle-import-result">
+          <Alert tone={importResult.ok ? 'success' : 'error'}>{importResult.text}</Alert>
+        </div>
       ) : null}
 
-      <ListDetail>
-        <RecordPane empty={data ? t('lifecycle.noParts') : t('common:status.loading')}>
-          {parts.map((part) => (
-            <RecordRow
-              key={part.key}
-              data-testid={`lifecycle-part-${part.key}`}
-              name={part.component.productId}
-              meta={[part.device.name || part.device.ip, part.component.name]
-                .filter(Boolean)
-                .join(' · ')}
-              value={t(`lifecycle.status.${part.component.status}`)}
-              state={STATE[part.component.status]}
-              selected={selected?.key === part.key}
-              onSelect={(): void => setSelectedKey(part.key)}
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <DataTable
+          rows={parts}
+          columns={columns}
+          getRowKey={(part) => part.key}
+          caption={t('lifecycle.tableCaption')}
+          labels={labels}
+          loading={data === null && !error}
+          pageSize={25}
+          defaultSort={{ key: 'status', direction: 'desc' }}
+          onRowClick={(part): void => setSelectedKey(part.key)}
+          selectedRowKey={selected?.key}
+          empty={
+            <EmptyState
+              icon={<Cpu className="h-6 w-6" aria-hidden="true" />}
+              title={t('lifecycle.noPartsTitle')}
+              hint={t('lifecycle.noPartsHint')}
             />
-          ))}
-        </RecordPane>
+          }
+        />
 
         {selected ? (
           <DetailPane
@@ -242,7 +268,7 @@ export function LifecyclePage(): JSX.Element {
                 ]}
               />
             ) : (
-              <p data-testid="lifecycle-not-listed" className="body-small">
+              <p data-testid="lifecycle-not-listed" className="text-sm text-text-muted">
                 {data && data.records > 0 ? t('lifecycle.notListed') : t('lifecycle.importFirst')}
               </p>
             )}
@@ -252,7 +278,7 @@ export function LifecyclePage(): JSX.Element {
                 target="_blank"
                 rel="noopener noreferrer"
                 data-testid="lifecycle-bulletin"
-                className="body-small text-status-info hover:underline"
+                className="text-sm text-status-info-strong hover:underline"
               >
                 {t('lifecycle.bulletin')}
               </a>
@@ -261,7 +287,7 @@ export function LifecyclePage(): JSX.Element {
         ) : (
           <DetailEmpty>{t('lifecycle.emptyPrompt')}</DetailEmpty>
         )}
-      </ListDetail>
+      </div>
     </>
   );
 }

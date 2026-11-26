@@ -14,8 +14,8 @@
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLifecycleFeed } from '../../../hooks/useLifecycleFeed';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { button as buttonTokens, cn, icon as iconTokens, layout } from '../../../styles/theme';
-import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { CalendarClock } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { EoxFeedFields } from './EoxFeedFields';

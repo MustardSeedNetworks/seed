@@ -199,7 +199,7 @@ describe('DscpCheckCard', () => {
       params: { target: '192.0.2.10', port: 45400 },
     });
     // The mode cannot change under a running check.
-    expect(within(screen.getByTestId('dscp-check-mode-listen')).getByRole('radio')).toBeDisabled();
+    expect(screen.getByTestId('dscp-check-mode-listen')).toBeDisabled();
 
     emit(
       job('succeeded', {

@@ -129,7 +129,6 @@
     "skipToMainContent": "Skip to main content",
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar",
-    "toggleFilters": "Toggle filters",
     "manageProfiles": "Create, edit, and delete profiles",
     "pageHelpHint": "What is {{title}}?",
     "openPageHelp": "Open help for {{title}}",
@@ -153,6 +152,7 @@
       "warning": "Status: warning",
       "error": "Status: error",
       "unknown": "Status: unknown",
+      "info": "Status: info",
       "loading": "Status: loading"
     }
   },
@@ -166,6 +166,7 @@
     "title": "System Logs",
     "subtitle": "Real-time application logs with filtering",
     "searchPlaceholder": "Search logs...",
+    "clearSearch": "Clear search",
     "clearFilters": "Clear filters",
     "level": "Level",
     "layer": "Layer",
@@ -189,7 +190,6 @@
     "noMatchingLogs": "No logs match the current filters",
     "noLogs": "No logs yet",
     "fullScreen": "Full Screen",
-    "close": "Close log viewer",
     "viewLogs": "View Logs",
     "clearHint": "Clear all logs from the buffer",
     "exportCsvHint": "Export logs to a CSV file",
@@ -224,12 +224,15 @@
     "tryAgain": "Try again"
   },
   "dataTable": {
-    "clearAll": "Clear all",
-    "showingResults": "Showing {{shown}} of {{total}} results",
-    "loadingData": "Loading data...",
     "actionsColumn": "Actions",
-    "scrollRegion": "Table contents",
-    "noData": "No data found"
+    "selectAll": "Select all rows on this page",
+    "pagination": "Table pages",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "pageStatus": "Page {{page}} of {{pageCount}} ({{total}} rows)",
+    "filterRows": "Filter rows",
+    "clearFilter": "Clear filter",
+    "noMatches": "No rows match the filter"
   },
   "capabilities": {
     "warning": {
@@ -263,6 +266,7 @@
     "notesPlaceholder": "Optional notes",
     "profiles": "Profiles",
     "searchPlaceholder": "Search profiles…",
+    "clearSearch": "Clear search",
     "setAsDefault": "Set as default",
     "updated": "Updated",
     "activate": "Activate",
@@ -304,7 +308,6 @@
     "close": "Close",
     "create": "Create",
     "delete": "Delete",
-    "deleting": "Deleting…",
     "edit": "Edit",
     "loading": "Loading…",
     "save": "Save",
@@ -320,6 +323,7 @@
     "printers": "Printers",
     "routers": "Routers",
     "search": "Search devices",
+    "clearSearch": "Clear search",
     "searchResults": "Search results",
     "select": "Select device",
     "servers": "Servers",

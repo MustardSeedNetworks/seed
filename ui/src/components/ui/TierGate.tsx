@@ -26,7 +26,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLicense } from '../../contexts/LicenseContext';
-import { Tooltip } from './Tooltip';
+import { Tooltip } from '../../shared/Tooltip';
 
 interface TierGateProps {
   feature: string;

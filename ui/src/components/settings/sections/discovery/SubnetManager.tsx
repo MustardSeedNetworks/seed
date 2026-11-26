@@ -1,8 +1,10 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
-import { cn, icon as iconTokens, layout, radius, spacing } from '../../../../styles/theme';
+import { Checkbox } from '../../../../shared/Checkbox';
+import { Input } from '../../../../shared/Input';
+import { Tooltip } from '../../../../shared/Tooltip';
+import { cn, layout, radius, spacing } from '../../../../styles/theme';
 import type { SaveStatus, SubnetConfig } from '../../../../types/settings';
-import { Tooltip } from '../../../ui/Tooltip';
 import { AutoSaveIndicator } from '../AutoSaveIndicator';
 
 interface SubnetManagerProps {
@@ -74,24 +76,24 @@ export function SubnetManager({
                     subnet.enabled ? t('discovery.disableNetwork') : t('discovery.enableNetwork')
                   }
                 >
-                  <input
-                    type="checkbox"
-                    checked={subnet.enabled}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      toggleSubnet(subnet.cidr, e.target.checked)
-                    }
-                    className={iconTokens.size.sm}
-                    // title alone does not name a form control (axe
-                    // label-title-only). The name carries the CIDR because
-                    // every row would otherwise announce the same words, and
-                    // a screen-reader user picking one of several identical
-                    // "Enable subnet" checkboxes cannot tell which is which.
-                    aria-label={
-                      subnet.enabled
-                        ? t('discovery.disableNetworkNamed', { cidr: subnet.cidr })
-                        : t('discovery.enableNetworkNamed', { cidr: subnet.cidr })
-                    }
-                  />
+                  {(description) => (
+                    <Checkbox
+                      // The name carries the CIDR because every row would
+                      // otherwise announce the same words, and a screen-reader
+                      // user picking one of several identical "Enable subnet"
+                      // checkboxes cannot tell which is which.
+                      label={
+                        subnet.enabled
+                          ? t('discovery.disableNetworkNamed', { cidr: subnet.cidr })
+                          : t('discovery.enableNetworkNamed', { cidr: subnet.cidr })
+                      }
+                      hideLabel
+                      aria-describedby={description['aria-describedby']}
+                      onClick={description.onClick}
+                      checked={subnet.enabled}
+                      onChange={(enabled): void => toggleSubnet(subnet.cidr, enabled)}
+                    />
+                  )}
                 </Tooltip>
                 <Tooltip text={t('discovery.removeNetwork')}>
                   <button
@@ -109,36 +111,20 @@ export function SubnetManager({
       ) : null}
       {/* Add new subnet form */}
       <div className="stack-sm">
-        <input
-          type="text"
+        <Input
           value={newSubnetCidr}
-          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
+          onChange={(e): void => {
             setNewSubnetCidr(e.target.value);
             setSubnetError(null);
           }}
           placeholder={t('discovery.cidrPlaceholder')}
-          className={cn(
-            'w-full',
-            spacing.chip.lg,
-            'bg-surface-base border border-surface-border',
-            radius.default,
-            'body-small text-text-primary',
-          )}
+          aria-label={t('discovery.cidrPlaceholder')}
         />
-        <input
-          type="text"
+        <Input
           value={newSubnetName}
-          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-            setNewSubnetName(e.target.value)
-          }
+          onChange={(e): void => setNewSubnetName(e.target.value)}
           placeholder={t('discovery.namePlaceholder')}
-          className={cn(
-            'w-full',
-            spacing.chip.lg,
-            'bg-surface-base border border-surface-border',
-            radius.default,
-            'body-small text-text-primary',
-          )}
+          aria-label={t('discovery.namePlaceholder')}
         />
         {subnetError ? <p className="caption text-status-error">{subnetError}</p> : null}
         <button

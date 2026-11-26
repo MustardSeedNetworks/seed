@@ -33,12 +33,12 @@ test.describe('Wi-Fi Page', () => {
 
   test('should render either WiFi cards or the wired-mode fallback', async ({ page }) => {
     // One branch must be visible:
-    //   - isWifi=true  → at least one WiFi card (`#card-title-wifi` or
-    //     `#card-title-channels`).
+    //   - isWifi=true  → at least one WiFi card (the Wi-Fi heading or
+    //     the Channels heading).
     //   - isWifi=false → the Card grid archetype's absence note, which says
     //     why a wired interface has no wireless data
     //     (`data-testid="card-absent-wireless-data"`).
-    const wifiCards = page.locator('#card-title-wifi, #card-title-channels');
+    const wifiCards = page.getByRole('heading', { level: 2, name: /^(Wi-?Fi|Channels)/i });
     const wiredFallback = page.getByTestId('card-absent-wireless-data');
     await expect(wifiCards.first().or(wiredFallback)).toBeVisible({ timeout: 5000 });
   });
@@ -56,7 +56,7 @@ test.describe('Wi-Fi Page', () => {
     await expect(page.getByTestId('page-header-title')).toBeVisible();
     // Either the wired-mode message OR the cards must be rendered; both
     // branches are valid given different test environments.
-    const wifiCards = page.locator('#card-title-wifi, #card-title-channels');
+    const wifiCards = page.getByRole('heading', { level: 2, name: /^(Wi-?Fi|Channels)/i });
     const wiredFallback = page.getByTestId('card-absent-wireless-data');
     await expect(wiredFallback.or(wifiCards.first())).toBeVisible({ timeout: 5000 });
   });

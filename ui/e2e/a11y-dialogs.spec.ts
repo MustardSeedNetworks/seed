@@ -23,12 +23,12 @@ type Dialog = {
   prepare: (page: Page) => Promise<Locator>;
   /** Where focus belongs once the dialog closes. Defaults to the opener. */
   returnTo?: (page: Page) => Locator;
-  /** The dialog's own `aria-labelledby` id, or a test id inside it. */
+  /** The dialog's own test id, or a test id inside it. */
   dialog: (page: Page) => Locator;
 };
 
-const byLabelledBy = (id: string) => (page: Page) =>
-  page.locator(`[role="dialog"][aria-labelledby="${id}"]`);
+const byTestId = (id: string) => (page: Page) =>
+  page.locator(`[role="dialog"][data-testid="${id}"]`);
 
 const DIALOGS: Dialog[] = [
   {
@@ -48,25 +48,26 @@ const DIALOGS: Dialog[] = [
     name: 'discovery table',
     route: '/network',
     prepare: async (page) => page.getByTestId('discovery-card-maximize'),
-    dialog: byLabelledBy('discovery-modal-title'),
+    dialog: byTestId('discovery-modal'),
   },
   {
     name: 'log viewer',
     route: '/logs',
     prepare: async (page) => page.getByTestId('logs-card-maximize'),
-    dialog: byLabelledBy('log-viewer-modal-title'),
+    dialog: byTestId('log-viewer-modal'),
   },
   {
-    // "Manage profiles" lives in the account menu, which closes as the dialog
-    // opens, so the control focus can return to is the account button.
+    // "Manage profiles" is a button on Settings' Profiles tab; the drawer stays
+    // open under the manager, so focus returns to that button.
     name: 'profile manager',
     route: '/link',
     prepare: async (page) => {
-      await page.getByTestId('rail-account').click();
-      return page.getByTestId('rail-profile-manage');
+      await page.getByTestId('rail-settings').click();
+      await page.getByRole('tab', { name: 'Profiles' }).click();
+      return page.getByTestId('settings-profile-manage');
     },
-    returnTo: (page) => page.getByTestId('rail-account'),
-    dialog: byLabelledBy('profile-modal-title'),
+    returnTo: (page) => page.getByTestId('settings-profile-manage'),
+    dialog: byTestId('profile-modal'),
   },
 ];
 
@@ -82,7 +83,12 @@ async function closeWithEscape(page: Page, dialog: Locator): Promise<void> {
     await expect(tooltip).toHaveCount(0);
     await expect(dialog).toBeVisible();
   }
-  await page.keyboard.press('Escape');
+  // A hoverable tooltip that opened on focus takes the first Escape; the dialog
+  // takes the next.
+  for (let attempt = 0; attempt < 3 && (await dialog.isVisible()); attempt++) {
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(150);
+  }
   await expect(dialog).toBeHidden();
 }
 
@@ -125,15 +131,16 @@ for (const { name, route, prepare, returnTo, dialog } of DIALOGS) {
 test('the profile editor passes axe and returns focus to the profile manager', async ({ page }) => {
   await page.goto('/link');
   await expect(page.getByTestId('page-header-title')).toBeVisible();
-  await page.getByTestId('rail-account').click();
-  await page.getByTestId('rail-profile-manage').click();
+  await page.getByTestId('rail-settings').click();
+  await page.getByRole('tab', { name: 'Profiles' }).click();
+  await page.getByTestId('settings-profile-manage').click();
   const create = page.getByTestId('profile-create');
   await create.focus();
   await page.keyboard.press('Enter');
-  const editor = byLabelledBy('profile-editor-title')(page);
+  const editor = byTestId('profile-editor')(page);
   await expect(editor).toBeVisible();
 
-  expect(await axeViolations(page, '[aria-labelledby="profile-editor-title"]')).toEqual([]);
+  expect(await axeViolations(page, '[data-testid="profile-editor"]')).toEqual([]);
   for (let presses = 0; presses < 20; presses++) {
     await page.keyboard.press('Tab');
     expect(
@@ -144,7 +151,7 @@ test('the profile editor passes axe and returns focus to the profile manager', a
 
   // Escape closes the editor only; the manager it was opened from stays.
   await closeWithEscape(page, editor);
-  await expect(byLabelledBy('profile-modal-title')(page)).toBeVisible();
+  await expect(byTestId('profile-modal')(page)).toBeVisible();
   await expectFocused(create);
 });
 
@@ -192,7 +199,7 @@ test('the vulnerability details pass axe and return focus to the CVE badge', asy
   await expect(page.getByTestId('page-header-title')).toBeVisible();
   await page.getByTestId('discovery-card-maximize').focus();
   await page.keyboard.press('Enter');
-  const table = byLabelledBy('discovery-modal-title')(page);
+  const table = byTestId('discovery-modal')(page);
   await expect(table).toBeVisible();
 
   const badge = table.getByRole('button', { name: 'Show vulnerabilities for sw-core-01' });
@@ -201,7 +208,7 @@ test('the vulnerability details pass axe and return focus to the CVE badge', asy
   const details = page.getByRole('dialog', { name: 'Vulnerability Report' });
   await expect(details.getByText('CVE-2026-0002')).toBeVisible();
 
-  expect(await axeViolations(page, '[aria-labelledby="modal-title"]')).toEqual([]);
+  expect(await axeViolations(page, '[data-testid="modal"]')).toEqual([]);
   for (let presses = 0; presses < 20; presses++) {
     await page.keyboard.press('Tab');
     expect(
@@ -230,7 +237,7 @@ test('Rescan keeps keyboard focus while its scan runs', async ({ page }) => {
   await expect(page.getByTestId('page-header-title')).toBeVisible();
   await page.getByTestId('discovery-card-maximize').focus();
   await page.keyboard.press('Enter');
-  await expect(byLabelledBy('discovery-modal-title')(page)).toBeVisible();
+  await expect(byTestId('discovery-modal')(page)).toBeVisible();
 
   const rescan = page.getByTestId('discovery-rescan');
   await rescan.focus();
@@ -264,7 +271,7 @@ test('the log viewer opens at the newest entry and keeps Tab inside a long list'
   await expect(page.getByTestId('page-header-title')).toBeVisible();
   await page.getByTestId('logs-card-maximize').focus();
   await page.keyboard.press('Enter');
-  const viewer = byLabelledBy('log-viewer-modal-title')(page);
+  const viewer = byTestId('log-viewer-modal')(page);
   await expect(viewer).toBeVisible();
 
   const entries = page.getByTestId('log-viewer-entries');

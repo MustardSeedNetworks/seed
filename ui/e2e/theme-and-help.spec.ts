@@ -209,19 +209,18 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await expect(drawer).toHaveAttribute('aria-modal', 'true');
     });
 
-    test('should display help drawer with navigation/table of contents', async ({ page }) => {
+    test('should display help drawer with a section selector', async ({ page }) => {
       const helpButton = sidebarHelpButton(page);
       await helpButton.click();
 
       const drawer = page.getByTestId('help-drawer');
       await expect(drawer).toBeVisible();
 
-      // The drawer lists navigable sections in its sidebar nav.
-      const tocButtons = drawer.locator('nav button');
-      expect(
-        await tocButtons.count(),
-        'help drawer should list navigable sections',
-      ).toBeGreaterThan(0);
+      // The drawer lists its sections in the contents selector.
+      const sections = drawer.getByTestId('help-section-select').locator('option');
+      expect(await sections.count(), 'help drawer should list navigable sections').toBeGreaterThan(
+        0,
+      );
     });
 
     test('should close help drawer with close button', async ({ page }) => {
@@ -262,29 +261,29 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       // `if (await backdrop.isVisible())` gate that silently passed
       // when the locator missed — flagged by the cleanup audit as
       // the last hidden-failure test in seed E2E.
-      const backdrop = page.getByTestId('help-drawer-backdrop');
+      const backdrop = page.getByTestId('help-drawer-scrim');
       await expect(backdrop).toBeVisible();
       await backdrop.click({ position: { x: 10, y: 10 } });
       await expect(drawer).not.toBeVisible({ timeout: 3000 });
     });
 
-    test('should switch sections when clicking a table-of-contents entry', async ({ page }) => {
+    test('should switch sections from the contents selector', async ({ page }) => {
       const helpButton = sidebarHelpButton(page);
       await helpButton.click();
 
       const drawer = page.getByTestId('help-drawer');
       await expect(drawer).toBeVisible();
 
-      const tocButtons = drawer.locator('nav button');
-      expect(
-        await tocButtons.count(),
-        'help drawer should list navigable sections',
-      ).toBeGreaterThan(1);
+      const select = drawer.getByTestId('help-section-select');
+      const options = select.locator('option');
+      expect(await options.count(), 'help drawer should list navigable sections').toBeGreaterThan(
+        1,
+      );
 
       // Selecting a section keeps the drawer open and swaps the content pane.
       const content = page.getByTestId('help-drawer-content');
       const before = await content.innerText();
-      await tocButtons.nth(1).click();
+      await select.selectOption({ index: 1 });
       await expect(drawer).toBeVisible();
       // The active section's title heads the content pane and changes on switch.
       await expect.poll(async () => content.innerText()).not.toBe(before);
@@ -305,8 +304,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         'precondition: help drawer search input must be visible',
       ).toBeVisible();
 
-      // Narrow to a single section, then confirm the TOC shrank.
-      const tocButtons = drawer.locator('nav button');
+      // Narrow to a single section, then confirm the contents list shrank.
+      const tocButtons = drawer.getByTestId('help-section-select').locator('option');
       const allCount = await tocButtons.count();
       await searchInput.fill('wifi troubleshooting');
       await expect.poll(async () => tocButtons.count()).toBeLessThan(allCount);

@@ -1,4 +1,3 @@
-import { Tooltip } from '../components/ui/Tooltip';
 /**
  * AlertsPage — List + detail.
  *
@@ -17,6 +16,14 @@ import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../contexts/RoleContext';
 import { useAlerts } from '../hooks/useAlerts';
+import { useTableLabels } from '../hooks/useTableLabels';
+import { Alert as InlineAlert } from '../shared/Alert';
+import { Button } from '../shared/Button';
+import { CategoryChip } from '../shared/CategoryChip';
+import { Checkbox } from '../shared/Checkbox';
+import { DataTable, type DataTableColumn } from '../shared/DataTable';
+import { EmptyState } from '../shared/EmptyState';
+import { StatusPill, type StatusTone } from '../shared/StatusPill';
 import type { Alert, AlertDelivery } from '../types/generated/alert-list-response';
 import {
   DetailEmpty,
@@ -103,33 +110,23 @@ export function AlertsPage(): JSX.Element {
 
   return (
     <>
-      {error ? (
-        <div className="rounded-md border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error-strong">
-          {error}
-        </div>
-      ) : null}
+      {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
 
-      <div className="flex-between">
-        <p className="body-small">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-text-secondary">
           {loading ? t('common:status.loading') : t('alerts.alertCount', { count: alerts.length })}
         </p>
-        <div className="flex items-center gap-default">
-          <label className="flex items-center gap-tight min-h-6 text-xs text-text-secondary">
-            <input
-              type="checkbox"
-              checked={filter.unacknowledgedOnly}
-              onChange={(e): void => setFilter({ ...filter, unacknowledgedOnly: e.target.checked })}
-            />
-            {t('alerts.unacknowledgedOnly')}
-          </label>
-          <label className="flex items-center gap-tight min-h-6 text-xs text-text-secondary">
-            <input
-              type="checkbox"
-              checked={filter.unresolvedOnly}
-              onChange={(e): void => setFilter({ ...filter, unresolvedOnly: e.target.checked })}
-            />
-            {t('alerts.unresolvedOnly')}
-          </label>
+        <div className="flex flex-wrap items-center gap-4">
+          <Checkbox
+            checked={filter.unacknowledgedOnly}
+            onChange={(checked): void => setFilter({ ...filter, unacknowledgedOnly: checked })}
+            label={t('alerts.unacknowledgedOnly')}
+          />
+          <Checkbox
+            checked={filter.unresolvedOnly}
+            onChange={(checked): void => setFilter({ ...filter, unresolvedOnly: checked })}
+            label={t('alerts.unresolvedOnly')}
+          />
         </div>
       </div>
 
@@ -152,7 +149,7 @@ export function AlertsPage(): JSX.Element {
               ))}
             </>
           }
-          empty={t('alerts.noAlerts')}
+          empty={<EmptyState title={t('alerts.noAlerts')} hint={t('alerts.noAlertsHint')} />}
         >
           {alerts.map((a) => (
             <RecordRow
@@ -177,36 +174,30 @@ export function AlertsPage(): JSX.Element {
             actions={
               <>
                 {!selected.acknowledged ? (
-                  <Tooltip text={readOnlyReason}>
-                    <button
-                      type="button"
-                      onClick={(): void => {
-                        void acknowledge(selected.id);
-                      }}
-                      disabled={!canWrite}
-                      data-testid="alert-acknowledge"
-                      className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:control-disabled"
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                      {t('alerts.acknowledge')}
-                    </button>
-                  </Tooltip>
+                  <Button
+                    disabled={Boolean(readOnlyReason)}
+                    disabledReason={readOnlyReason}
+                    icon={<Check className="h-3.5 w-3.5" />}
+                    onClick={(): void => {
+                      void acknowledge(selected.id);
+                    }}
+                    data-testid="alert-acknowledge"
+                  >
+                    {t('alerts.acknowledge')}
+                  </Button>
                 ) : null}
                 {!selected.resolved ? (
-                  <Tooltip text={readOnlyReason}>
-                    <button
-                      type="button"
-                      onClick={(): void => {
-                        void resolve(selected.id);
-                      }}
-                      disabled={!canWrite}
-                      data-testid="alert-resolve"
-                      className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:control-disabled"
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      {t('alerts.resolve')}
-                    </button>
-                  </Tooltip>
+                  <Button
+                    disabled={Boolean(readOnlyReason)}
+                    disabledReason={readOnlyReason}
+                    icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+                    onClick={(): void => {
+                      void resolve(selected.id);
+                    }}
+                    data-testid="alert-resolve"
+                  >
+                    {t('alerts.resolve')}
+                  </Button>
                 ) : null}
               </>
             }
@@ -223,7 +214,11 @@ export function AlertsPage(): JSX.Element {
                 },
                 // Type and source are the rule author's own identifiers, so
                 // they stay exactly as the rule wrote them.
-                { label: t('alerts.labelType'), value: selected.type || '—' },
+                {
+                  label: t('alerts.labelType'),
+                  value: selected.type ? <CategoryChip label={selected.type} /> : '—',
+                  prose: true,
+                },
                 { label: t('alerts.labelSource'), value: selected.source || '—' },
                 { label: t('alerts.labelRaised'), value: fmtTime(selected.createdAt) },
                 {
@@ -315,46 +310,57 @@ function deliveryText(t: AlertsT, delivery: AlertDelivery): string {
 function AlertState({ alert }: { alert: Alert }): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
   if (alert.resolved) {
-    return (
-      <span className="rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold text-text-secondary">
-        {t('alerts.stateResolved')}
-      </span>
-    );
+    return <StatusPill tone="unknown" label={t('alerts.stateResolved')} />;
   }
-  if (alert.acknowledged) {
-    return (
-      <span className="rounded-lg border border-status-info/40 bg-status-info/10 px-3 py-1.5 text-xs font-semibold text-status-info-strong">
-        {t('alerts.stateAcknowledged')}
-      </span>
-    );
-  }
+  const tone: StatusTone = alert.acknowledged ? 'info' : 'warning';
   return (
-    <span className="rounded-lg border border-status-warning/40 bg-status-warning/10 px-3 py-1.5 text-xs font-semibold text-status-warning-strong">
-      {t('alerts.stateOpen')}
-    </span>
+    <StatusPill
+      tone={tone}
+      label={alert.acknowledged ? t('alerts.stateAcknowledged') : t('alerts.stateOpen')}
+    />
   );
+}
+
+interface PayloadEntry {
+  key: string;
+  value: string;
 }
 
 /** The rule's own payload — the sub-table the archetype calls for. */
 function AlertMetadata({ metadata }: { metadata: Record<string, unknown> }): JSX.Element | null {
   const { t } = useTranslation(['pages', 'common']);
-  const entries = Object.entries(metadata ?? {});
+  const labels = useTableLabels<PayloadEntry>({ loading: t('common:status.loading') });
+  const entries = Object.entries(metadata ?? {}).map(([key, value]) => ({
+    key,
+    value: typeof value === 'string' ? value : JSON.stringify(value),
+  }));
   if (entries.length === 0) {
     return null;
   }
+  const columns: DataTableColumn<PayloadEntry>[] = [
+    {
+      key: 'field',
+      header: t('alerts.columnField'),
+      cell: (entry) => <span className="figure text-text-secondary">{entry.key}</span>,
+      sortValue: (entry) => entry.key,
+    },
+    {
+      key: 'value',
+      header: t('alerts.columnValue'),
+      cell: (entry) => <span className="figure break-words">{entry.value}</span>,
+    },
+  ];
   return (
-    <div className="stack-xs">
-      <p className="caption">{t('alerts.payload')}</p>
-      <dl className="divide-y divide-surface-border overflow-hidden rounded-lg border border-surface-border">
-        {entries.map(([key, value]) => (
-          <div key={key} className="flex items-start gap-default px-cell py-2">
-            <dt className="caption w-40 shrink-0">{key}</dt>
-            <dd className="figure min-w-0 flex-1 break-words text-sm text-text-primary">
-              {typeof value === 'string' ? value : JSON.stringify(value)}
-            </dd>
-          </div>
-        ))}
-      </dl>
+    <div className="space-y-1">
+      <p className="kicker">{t('alerts.payload')}</p>
+      <DataTable
+        rows={entries}
+        columns={columns}
+        getRowKey={(entry) => entry.key}
+        caption={t('alerts.payloadCaption')}
+        labels={labels}
+        empty={null}
+      />
     </div>
   );
 }

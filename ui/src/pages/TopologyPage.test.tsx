@@ -144,6 +144,11 @@ vi.mock('../hooks/useTopology', () => ({
 
 const { TopologyPage } = await import('./TopologyPage');
 
+/** The list row for a node, found by what it shows. */
+function nodeRow(name: string): HTMLElement {
+  return screen.getByRole('row', { name: new RegExp(name) });
+}
+
 function reset(): void {
   state.nodes = nodes;
   state.links = [link({ id: 'l1', sourceNodeId: 'core', targetNodeId: 'bare' })];
@@ -160,28 +165,29 @@ describe('TopologyPage — honest state', () => {
 
   it('does not colour an interface green unless it is genuinely up', async () => {
     render(<TopologyPage />);
-    await userEvent.click(screen.getByTestId('node-row-core'));
+    await userEvent.click(nodeRow('core-01'));
 
-    const rows = screen.getAllByRole('row').filter((r) => within(r).queryByText(/^Gi0\//));
-    const operOf = (name: string): Element => {
-      const row = rows.find((r) => within(r).queryByText(name));
+    const operOf = (name: string): HTMLElement => {
+      const row = screen
+        .getAllByRole('row')
+        .find((r) => within(r).queryByText(name) && within(r).queryByText(/^Oper /));
       if (!row) throw new Error(`no row for ${name}`);
-      const oper = within(row).getByText('oper');
-      return oper;
+      return within(row).getByText(/^Oper /);
     };
 
+    expect(operOf('Gi0/1')).toHaveTextContent('Oper up');
     expect(operOf('Gi0/1').className).toContain('text-status-success');
     expect(operOf('Gi0/2').className).toContain('text-status-error');
-    // The whole point: 'unknown' is muted, not green and not red.
-    const unknown = operOf('Gi0/3').className;
-    expect(unknown).toContain('text-text-muted');
-    expect(unknown).not.toContain('text-status-success');
-    expect(unknown).not.toContain('text-status-error');
+    // The whole point: 'unknown' is neutral, not green and not red.
+    const unknown = operOf('Gi0/3');
+    expect(unknown).toHaveTextContent('Oper unknown');
+    expect(unknown.className).not.toContain('text-status-success');
+    expect(unknown.className).not.toContain('text-status-error');
   });
 
   it('prints an em dash for a speed it does not know, not a zero', async () => {
     render(<TopologyPage />);
-    await userEvent.click(screen.getByTestId('node-row-core'));
+    await userEvent.click(nodeRow('core-01'));
 
     expect(screen.getByText('1.0 Gbps')).toBeTruthy();
     expect(screen.getByText('100 Mbps')).toBeTruthy();
@@ -191,12 +197,13 @@ describe('TopologyPage — honest state', () => {
 
   it("says 'Never' for an absent timestamp rather than inventing an epoch date", async () => {
     render(<TopologyPage />);
-    await userEvent.click(screen.getByTestId('node-row-core'));
+    await userEvent.click(nodeRow('core-01'));
 
     // firstSeen and lastSeen are both empty on this fixture.
     // The word comes from common:status.never (#1942/S1-14), so it is
     // capitalised and it moves with the locale.
-    expect(screen.getAllByText('Never')).toHaveLength(2);
+    // Two facts and the two neighbor links' last-seen cells.
+    expect(screen.getAllByText('Never')).toHaveLength(4);
     expect(screen.queryByText(/1970/)).toBeNull();
   });
 });
@@ -212,7 +219,7 @@ describe('TopologyPage — list and selection', () => {
 
   it('falls back to sysName and an n/a badge when a node has no display name', () => {
     render(<TopologyPage />);
-    const row = within(screen.getByTestId('node-row-bare'));
+    const row = within(nodeRow('sw-bare'));
 
     expect(row.getByText('sw-bare')).toBeTruthy();
     expect(row.getByText('n/a')).toBeTruthy();
@@ -227,7 +234,7 @@ describe('TopologyPage — list and selection', () => {
 
   it('shows the role and the vendor as separate facts', async () => {
     render(<TopologyPage />);
-    await userEvent.click(screen.getByTestId('node-row-core'));
+    await userEvent.click(nodeRow('core-01'));
 
     expect(factValue('Device type')).toBe('Device typeswitch');
     expect(factValue('Vendor')).toBe('Vendorcisco');
@@ -236,14 +243,14 @@ describe('TopologyPage — list and selection', () => {
   it('shows n/a for a vendor the poll never derived', async () => {
     state.detail = { ...detail, node: { ...detail.node, metadata: {} } };
     render(<TopologyPage />);
-    await userEvent.click(screen.getByTestId('node-row-core'));
+    await userEvent.click(nodeRow('core-01'));
 
     expect(factValue('Vendor')).toBe('Vendorn/a');
   });
 
   it('clears the selection back to the empty state', async () => {
     render(<TopologyPage />);
-    await userEvent.click(screen.getByTestId('node-row-core'));
+    await userEvent.click(nodeRow('core-01'));
     expect(screen.getByRole('heading', { name: 'core-01' })).toBeTruthy();
 
     await userEvent.click(screen.getByRole('button', { name: 'Clear' }));
@@ -253,7 +260,7 @@ describe('TopologyPage — list and selection', () => {
 
   it('names the far end of a link regardless of which way it was recorded', async () => {
     render(<TopologyPage />);
-    await userEvent.click(screen.getByTestId('node-row-core'));
+    await userEvent.click(nodeRow('core-01'));
 
     expect(screen.getByText('↔ edge-77')).toBeTruthy();
     expect(screen.getByText('↔ spine-9')).toBeTruthy();
@@ -274,12 +281,11 @@ describe('TopologyPage — archetype rules', () => {
   // The shared parts enforce that a record's colour comes from its state and
   // never its category. The old page coloured a vendor badge from a cat-* ramp,
   // which read as status to anyone scanning the column.
-  it('does not colour a row by vendor', () => {
+  it('shows the device type as a neutral chip, not a status colour', () => {
     render(<TopologyPage />);
 
-    const row = screen.getByTestId('node-row-core');
-    expect(row.className).not.toMatch(/cat-/);
-    expect(row.innerHTML).not.toMatch(/cat-/);
+    const chip = within(nodeRow('core-01')).getByText('switch');
+    expect(chip.className).not.toMatch(/status-|cat-/);
   });
 
   // Green only while the node is polled on schedule (seed#2525). Every dated
@@ -287,25 +293,51 @@ describe('TopologyPage — archetype rules', () => {
   // and a node never dated is unmeasured, not healthy.
   it('marks a node by the age of its last poll, not by having one', () => {
     state.nodes = [
-      node({ id: 'fresh', lastSeen: '2026-08-19T11:58:00Z', pollIntervalSeconds: 300 }),
-      node({ id: 'late', lastSeen: '2026-08-19T11:00:00Z', pollIntervalSeconds: 600 }),
-      node({ id: 'gone', lastSeen: '2026-08-12T12:00:00Z', pollIntervalSeconds: 300 }),
-      node({ id: 'unpolled', lastSeen: '2026-08-19T11:59:00Z' }),
-      node({ id: 'unseen', lastSeen: '', pollIntervalSeconds: 300 }),
+      node({
+        id: 'fresh',
+        displayName: 'fresh',
+        lastSeen: '2026-08-19T11:58:00Z',
+        pollIntervalSeconds: 300,
+      }),
+      node({
+        id: 'late',
+        displayName: 'late',
+        lastSeen: '2026-08-19T11:00:00Z',
+        pollIntervalSeconds: 600,
+      }),
+      node({
+        id: 'gone',
+        displayName: 'gone',
+        lastSeen: '2026-08-12T12:00:00Z',
+        pollIntervalSeconds: 300,
+      }),
+      node({ id: 'unpolled', displayName: 'unpolled', lastSeen: '2026-08-19T11:59:00Z' }),
+      node({
+        id: 'unseen',
+        displayName: 'unseen',
+        lastSeen: '',
+        pollIntervalSeconds: 300,
+      }),
     ];
     render(<TopologyPage />);
 
-    const row = (id: string) => screen.getByTestId(`node-row-${id}`);
-    expect(row('fresh').dataset.state).toBe('ok');
-    expect(row('late').dataset.state).toBe('unknown');
-    expect(row('gone').dataset.state).toBe('unknown');
-    expect(row('unpolled').dataset.state).toBe('unknown');
-    expect(row('unseen').dataset.state).toBe('unknown');
-    // Stale is neutral and named; only a node within ten intervals is stale.
-    expect(within(row('late')).getByText('Missed polls')).toBeInTheDocument();
-    for (const id of ['fresh', 'gone', 'unpolled', 'unseen']) {
-      expect(within(row(id)).queryByText('Missed polls')).not.toBeInTheDocument();
-    }
+    const statusOf = (name: string): string =>
+      (within(nodeRow(name)).getAllByRole('cell').at(-1) as HTMLElement).textContent ?? '';
+    expect(statusOf('fresh')).toBe('On schedule');
+    // Stale is a warning and named; only a node within ten intervals is stale.
+    expect(statusOf('late')).toBe('Missed polls');
+    expect(statusOf('gone')).toBe('Not measured');
+    expect(statusOf('unpolled')).toBe('Not measured');
+    expect(statusOf('unseen')).toBe('Not measured');
+  });
+
+  it('sorts the list by a column header', async () => {
+    render(<TopologyPage />);
+    await userEvent.click(screen.getByRole('button', { name: 'Address' }));
+
+    const first = screen.getAllByRole('row')[1] as HTMLElement;
+    // A node with no address sorts first ascending; the cell reads as an em dash.
+    expect(first).toHaveTextContent('sw-bare');
   });
 });
 
@@ -318,21 +350,22 @@ describe('TopologyPage — degraded backends', () => {
     render(<TopologyPage />);
 
     expect(screen.getByText('topology store unavailable')).toBeTruthy();
-    expect(screen.queryByText(/No nodes yet/)).toBeNull();
+    expect(screen.queryByText('No nodes yet')).toBeNull();
   });
 
   it('distinguishes an empty topology from a broken one', () => {
     state.nodes = [];
     render(<TopologyPage />);
 
-    expect(screen.getByText(/No nodes yet/)).toBeTruthy();
+    expect(screen.getByText('No nodes yet')).toBeTruthy();
+    expect(screen.getByText('Add a polling target and wait a poll cycle.')).toBeTruthy();
   });
 
   it('surfaces a detail error rather than rendering a blank panel', async () => {
     render(<TopologyPage />);
     state.detail = null;
     state.detailError = 'node fetch failed';
-    await userEvent.click(screen.getByTestId('node-row-core'));
+    await userEvent.click(nodeRow('core-01'));
 
     expect(screen.getByText('node fetch failed')).toBeTruthy();
   });
@@ -340,7 +373,7 @@ describe('TopologyPage — degraded backends', () => {
   it('says a node was not found when the detail comes back empty', async () => {
     render(<TopologyPage />);
     state.detail = null;
-    await userEvent.click(screen.getByTestId('node-row-core'));
+    await userEvent.click(nodeRow('core-01'));
 
     expect(screen.getByText('Node not found.')).toBeTruthy();
   });
@@ -370,7 +403,7 @@ describe('TopologyPage — the map', () => {
 
   it('keeps the map and the list on one selection', async () => {
     render(<TopologyPage />);
-    await userEvent.click(screen.getByTestId('node-row-core'));
+    await userEvent.click(nodeRow('core-01'));
 
     expect(screen.getByTestId('topology-graph-node-core').getAttribute('aria-pressed')).toBe(
       'true',

@@ -6,9 +6,8 @@
  * node's interfaces and links from /topology/nodes/{id}.
  *
  * The map is the page's primary answer and the list is the index into it — 200
- * discovered nodes as a scrollbar was the defect (seed#2700). The list half
- * stays on the shared List + detail parts in ui/ListDetail.tsx rather than a
- * second hand-rolled two-pane layout.
+ * discovered nodes as a scrollbar was the defect (seed#2700). The list is a
+ * sortable, paged table beside the selected node's detail pane.
  *
  * Selection is in-page state, not router state: the rest of the app navigates
  * by path, and pushing a route per click would put node ids in history for a
@@ -16,25 +15,25 @@
  */
 
 import type { TFunction } from 'i18next';
-import { Activity, Cable, RefreshCw } from 'lucide-react';
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Activity, Cable, Network, RefreshCw } from '../components/ui/Icons';
+import { useTableLabels } from '../hooks/useTableLabels';
 import { useTopologyLinks, useTopologyNode, useTopologyNodes } from '../hooks/useTopology';
+import { Alert } from '../shared/Alert';
+import { Button } from '../shared/Button';
+import { CategoryChip } from '../shared/CategoryChip';
+import { DataTable, type DataTableColumn } from '../shared/DataTable';
+import { EmptyState } from '../shared/EmptyState';
+import { StatusPill, type StatusTone } from '../shared/StatusPill';
 import type {
   TopologyInterface,
   TopologyLink,
   TopologyNode,
 } from '../types/generated/topology-node-detail-response';
-import {
-  DetailEmpty,
-  DetailFacts,
-  DetailPane,
-  ListDetail,
-  RecordPane,
-  RecordRow,
-} from '../ui/ListDetail';
+import { DetailEmpty, DetailFacts, DetailPane } from '../ui/ListDetail';
 import { TopologyGraph } from '../ui/TopologyGraph';
-import { nodeFreshness } from './topologyFreshness';
+import { type NodeFreshness, nodeFreshness } from './topologyFreshness';
 
 export function TopologyPage(): JSX.Element {
   const [selectedID, setSelectedID] = useState<string>('');
@@ -44,7 +43,7 @@ export function TopologyPage(): JSX.Element {
   const { links, error: linksError } = useTopologyLinks();
 
   return (
-    <div className="space-y-default">
+    <div className="space-y-4">
       <TopologyGraph
         nodes={nodes}
         links={links}
@@ -52,7 +51,7 @@ export function TopologyPage(): JSX.Element {
         selectedId={selectedID}
         onSelect={setSelectedID}
       />
-      <ListDetail>
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <NodeList
           nodes={nodes}
           fetchedAt={fetchedAt}
@@ -63,7 +62,7 @@ export function TopologyPage(): JSX.Element {
           onSelect={setSelectedID}
         />
         <NodeDetail id={selectedID} onClear={(): void => setSelectedID('')} />
-      </ListDetail>
+      </div>
     </div>
   );
 }
@@ -78,6 +77,15 @@ interface NodeListProps {
   onSelect: (id: string) => void;
 }
 
+// Green only while the node is polled on schedule. A node that missed polls
+// is a warning; one never measured is neutral, not healthy.
+const FRESHNESS_TONE: Record<NodeFreshness, StatusTone> = {
+  current: 'success',
+  stale: 'warning',
+  unknown: 'unknown',
+};
+const FRESHNESS_RANK: Record<NodeFreshness, number> = { current: 0, stale: 1, unknown: 2 };
+
 function NodeList({
   nodes,
   fetchedAt,
@@ -88,58 +96,101 @@ function NodeList({
   onSelect,
 }: NodeListProps): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
+  const labels = useTableLabels<TopologyNode>({ loading: t('common:status.loading') });
+  const freshnessOf = (n: TopologyNode): NodeFreshness =>
+    nodeFreshness(n.lastSeen, n.pollIntervalSeconds, fetchedAt);
+  const freshnessLabel = (f: NodeFreshness): string => {
+    switch (f) {
+      case 'current':
+        return t('topology.freshness.current');
+      case 'stale':
+        return t('topology.freshness.stale');
+      case 'unknown':
+        return t('topology.freshness.unknown');
+    }
+  };
+
+  const columns: DataTableColumn<TopologyNode>[] = [
+    {
+      key: 'node',
+      header: t('topology.colNode'),
+      sortValue: (n) => n.displayName || n.sysName,
+      cell: (n) => <span className="figure text-text-primary">{n.displayName || n.sysName}</span>,
+    },
+    {
+      key: 'address',
+      header: t('topology.colAddress'),
+      sortValue: (n) => n.primaryIp,
+      cell: (n) => <span className="figure">{n.primaryIp || '—'}</span>,
+    },
+    {
+      key: 'type',
+      header: t('topology.colType'),
+      sortValue: (n) => n.deviceType,
+      cell: (n) => <CategoryChip label={n.deviceType || t('common:status.notApplicable')} />,
+    },
+    {
+      key: 'status',
+      header: t('topology.colStatus'),
+      sortValue: (n) => FRESHNESS_RANK[freshnessOf(n)],
+      cell: (n) => {
+        const f = freshnessOf(n);
+        return <StatusPill tone={FRESHNESS_TONE[f]} label={freshnessLabel(f)} />;
+      },
+    },
+  ];
+
+  let body: JSX.Element;
+  if (error) {
+    body = <Alert tone="error">{error}</Alert>;
+  } else {
+    body = (
+      <DataTable
+        rows={nodes}
+        columns={columns}
+        getRowKey={(n) => n.id}
+        caption={t('topology.nodesCaption')}
+        labels={labels}
+        loading={loading}
+        pageSize={25}
+        search={{
+          label: t('topology.searchNodes'),
+          clearLabel: t('topology.clearSearch'),
+          text: (n) => [n.displayName, n.sysName, n.id, n.primaryIp].filter(Boolean).join(' '),
+          noResults: <EmptyState title={t('topology.noMatchTitle')} />,
+        }}
+        defaultSort={{ key: 'node', direction: 'asc' }}
+        onRowClick={(n): void => onSelect(n.id)}
+        selectedRowKey={selectedID}
+        empty={
+          <EmptyState
+            icon={<Network className="h-6 w-6" aria-hidden="true" />}
+            title={t('topology.noNodesTitle')}
+            hint={t('topology.noNodesHint')}
+          />
+        }
+      />
+    );
+  }
 
   return (
-    <RecordPane
-      filter={
-        <div className="flex-between">
-          <span className="kicker">
-            {loading
-              ? t('common:status.loading')
-              : t('topology.nodeCount', { count: nodes.length })}
-          </span>
-          <button
-            type="button"
-            onClick={(): void => {
-              void refresh();
-            }}
-            // Icon-only, so the icon's 16px was the whole target (#244).
-            className="target flex-center text-text-muted hover:text-text-primary"
-            aria-label={t('common:buttons.refresh')}
-          >
-            <RefreshCw className="h-4 w-4" />
-          </button>
-        </div>
-      }
-      empty={error ? <span className="text-status-error">{error}</span> : t('topology.noNodes')}
-    >
-      {error || nodes.length === 0
-        ? null
-        : nodes.map((n) => {
-            const freshness = nodeFreshness(n.lastSeen, n.pollIntervalSeconds, fetchedAt);
-            return (
-              <RecordRow
-                key={n.id}
-                data-testid={`node-row-${n.id}`}
-                // A hostname is a figure, not prose — it is an identifier the
-                // operator matches against other screens character by character.
-                name={n.displayName || n.sysName}
-                meta={
-                  [n.primaryIp, freshness === 'stale' ? t('topology.missedPolls') : '']
-                    .filter(Boolean)
-                    .join(' · ') || undefined
-                }
-                value={n.deviceType || t('common:status.notApplicable')}
-                // Green only while the node is polled on schedule. A stale
-                // node is neutral and says so in its meta line; the fleet
-                // state vocabulary has no stale member.
-                state={freshness === 'current' ? 'ok' : 'unknown'}
-                selected={selectedID === n.id}
-                onSelect={(): void => onSelect(n.id)}
-              />
-            );
-          })}
-    </RecordPane>
+    <section className="min-w-0 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="kicker">
+          {loading ? t('common:status.loading') : t('topology.nodeCount', { count: nodes.length })}
+        </span>
+        <Button
+          variant="ghost"
+          iconOnly
+          icon={<RefreshCw className="h-4 w-4" aria-hidden="true" />}
+          aria-label={t('common:buttons.refresh')}
+          onClick={(): void => {
+            void refresh();
+          }}
+        />
+      </div>
+      {body}
+    </section>
   );
 }
 
@@ -168,11 +219,7 @@ function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
     return <DetailEmpty>{t('topology.loadingNode')}</DetailEmpty>;
   }
   if (error) {
-    return (
-      <div className="rounded-2xl border border-status-error/40 bg-status-error/10 pad-lg text-sm text-status-error-strong">
-        {error}
-      </div>
-    );
+    return <Alert tone="error">{error}</Alert>;
   }
   if (!detail) {
     return <DetailEmpty>{t('topology.nodeNotFound')}</DetailEmpty>;
@@ -186,13 +233,9 @@ function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
       title={node.displayName || node.sysName}
       meta={node.id}
       actions={
-        <button
-          type="button"
-          onClick={onClear}
-          className="text-xs text-text-muted hover:text-text-primary"
-        >
+        <Button variant="secondary" size="sm" onClick={onClear}>
           {t('common:buttons.clear')}
-        </button>
+        </Button>
       }
     >
       <DetailFacts
@@ -217,95 +260,133 @@ function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
   );
 }
 
-function InterfacesPanel({ interfaces }: { interfaces: TopologyInterface[] }): JSX.Element {
-  const { t } = useTranslation(['pages', 'common']);
+function IfStatusPair({ admin, oper }: { admin: number; oper: number }): JSX.Element {
+  const { t } = useTranslation('pages');
+  // RFC 2233 values: 1 is up and 2 is down; testing, dormant and the rest say
+  // nothing about the port, so they are neutral, never green.
+  const state = (value: number): { tone: StatusTone; word: string } => {
+    if (value === 1) return { tone: 'success', word: t('topology.ifState.up') };
+    if (value === 2) return { tone: 'error', word: t('topology.ifState.down') };
+    return { tone: 'unknown', word: t('topology.ifState.other') };
+  };
+  const a = state(admin);
+  const o = state(oper);
   return (
-    <div className="rounded-lg border border-surface-border bg-surface-raised">
-      <div className="flex items-center gap-compact border-b border-surface-border px-4 py-2">
-        <Activity className="h-4 w-4 text-status-success" />
-        <span className="text-sm font-medium text-text-primary">
-          {t('topology.interfacesCount', { count: interfaces.length })}
-        </span>
-      </div>
-      {interfaces.length === 0 ? (
-        <div className="pad text-sm text-text-muted">{t('topology.noInterfaceData')}</div>
-      ) : (
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-text-muted">
-            <tr>
-              <th className="px-4 py-2">{t('topology.colIndex')}</th>
-              <th className="px-4 py-2">{t('common:labels.name')}</th>
-              <th className="px-4 py-2">{t('topology.adminOper')}</th>
-              <th className="px-4 py-2">{t('topology.colSpeed')}</th>
-              <th className="px-4 py-2">MAC</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-surface-border">
-            {interfaces.map((i) => (
-              <tr key={i.id}>
-                <td className="px-4 py-2 text-text-muted">{i.ifIndex}</td>
-                <td className="px-4 py-2 text-text-primary">{i.ifName || i.ifDescr}</td>
-                <td className="px-4 py-2">
-                  <IfStatusPair admin={i.ifAdminStatus} oper={i.ifOperStatus} />
-                </td>
-                <td className="px-4 py-2 text-text-secondary">{fmtSpeed(i.speedBps)}</td>
-                <td className="px-4 py-2 font-mono text-xs text-text-muted">
-                  {i.ifPhysAddr || '—'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+    <span className="flex flex-wrap items-center gap-1">
+      <StatusPill
+        tone={a.tone === 'error' ? 'unknown' : a.tone}
+        label={t('topology.adminState', { state: a.word })}
+      />
+      <StatusPill tone={o.tone} label={t('topology.operState', { state: o.word })} />
+    </span>
   );
 }
 
-function IfStatusPair({ admin, oper }: { admin: number; oper: number }): JSX.Element {
-  // RFC 2233 values — 1=up, 2=down, anything else lands in the
-  // catch-all dim color.
+function InterfacesPanel({ interfaces }: { interfaces: TopologyInterface[] }): JSX.Element {
+  const { t } = useTranslation(['pages', 'common']);
+  const labels = useTableLabels<TopologyInterface>({ loading: t('common:status.loading') });
+  const columns: DataTableColumn<TopologyInterface>[] = [
+    {
+      key: 'index',
+      header: t('topology.colIndex'),
+      sortValue: (i) => i.ifIndex,
+      cell: (i) => <span className="text-text-muted">{i.ifIndex}</span>,
+    },
+    {
+      key: 'name',
+      header: t('common:labels.name'),
+      sortValue: (i) => i.ifName || i.ifDescr,
+      cell: (i) => <span className="text-text-primary">{i.ifName || i.ifDescr}</span>,
+    },
+    {
+      key: 'status',
+      header: t('topology.adminOper'),
+      cell: (i) => <IfStatusPair admin={i.ifAdminStatus} oper={i.ifOperStatus} />,
+    },
+    {
+      key: 'speed',
+      header: t('topology.colSpeed'),
+      sortValue: (i) => i.speedBps,
+      cell: (i) => fmtSpeed(i.speedBps),
+    },
+    {
+      key: 'mac',
+      header: 'MAC',
+      cell: (i) => <span className="font-mono text-xs text-text-muted">{i.ifPhysAddr || '—'}</span>,
+    },
+  ];
   return (
-    <span className="flex items-center gap-tight text-xs">
-      <span className={admin === 1 ? 'text-status-success' : 'text-text-muted'}>admin</span>
-      <span className="text-text-muted">/</span>
-      <span
-        className={
-          oper === 1 ? 'text-status-success' : oper === 2 ? 'text-status-error' : 'text-text-muted'
+    <div className="space-y-2">
+      <h3 className="flex items-center gap-2 text-sm font-medium text-text-primary">
+        <Activity className="h-4 w-4 text-text-muted" aria-hidden="true" />
+        {t('topology.interfacesCount', { count: interfaces.length })}
+      </h3>
+      <DataTable
+        rows={interfaces}
+        columns={columns}
+        getRowKey={(i) => String(i.id)}
+        caption={t('topology.interfacesCaption')}
+        labels={labels}
+        pageSize={25}
+        empty={
+          <EmptyState
+            icon={<Activity className="h-6 w-6" aria-hidden="true" />}
+            title={t('topology.noInterfaceDataTitle')}
+            hint={t('topology.noInterfaceDataHint')}
+          />
         }
-      >
-        oper
-      </span>
-    </span>
+      />
+    </div>
   );
 }
 
 function LinksPanel({ links, nodeID }: { links: TopologyLink[]; nodeID: string }): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
-  return (
-    <div className="rounded-lg border border-surface-border bg-surface-raised">
-      <div className="flex items-center gap-compact border-b border-surface-border px-4 py-2">
-        <Cable className="h-4 w-4 text-status-info" />
-        <span className="text-sm font-medium text-text-primary">
-          {t('topology.neighborLinksCount', { count: links.length })}
+  const labels = useTableLabels<TopologyLink>({ loading: t('common:status.loading') });
+  const columns: DataTableColumn<TopologyLink>[] = [
+    {
+      key: 'neighbor',
+      header: t('topology.colNeighbor'),
+      sortValue: (l) => (l.sourceNodeId === nodeID ? l.targetNodeId : l.sourceNodeId),
+      cell: (l) => (
+        <span className="text-text-primary">
+          ↔ {l.sourceNodeId === nodeID ? l.targetNodeId : l.sourceNodeId}
         </span>
-      </div>
-      {links.length === 0 ? (
-        <div className="pad text-sm text-text-muted">{t('topology.noEdges')}</div>
-      ) : (
-        <ul className="divide-y divide-surface-border">
-          {links.map((l) => {
-            const otherEnd = l.sourceNodeId === nodeID ? l.targetNodeId : l.sourceNodeId;
-            return (
-              <li key={l.id} className="flex-between px-4 py-2 text-sm">
-                <span className="text-text-primary">↔ {otherEnd}</span>
-                <span className="text-xs text-text-muted">
-                  {l.linkType} · {fmtTime(l.lastSeen, t)}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      ),
+    },
+    {
+      key: 'type',
+      header: t('topology.colLinkType'),
+      sortValue: (l) => l.linkType,
+      cell: (l) => <CategoryChip label={l.linkType} />,
+    },
+    {
+      key: 'lastSeen',
+      header: t('topology.colSeen'),
+      cell: (l) => fmtTime(l.lastSeen, t),
+    },
+  ];
+  return (
+    <div className="space-y-2">
+      <h3 className="flex items-center gap-2 text-sm font-medium text-text-primary">
+        <Cable className="h-4 w-4 text-text-muted" aria-hidden="true" />
+        {t('topology.neighborLinksCount', { count: links.length })}
+      </h3>
+      <DataTable
+        rows={links}
+        columns={columns}
+        getRowKey={(l) => l.id}
+        caption={t('topology.linksCaption')}
+        labels={labels}
+        pageSize={25}
+        empty={
+          <EmptyState
+            icon={<Cable className="h-6 w-6" aria-hidden="true" />}
+            title={t('topology.noEdgesTitle')}
+            hint={t('topology.noEdgesHint')}
+          />
+        }
+      />
     </div>
   );
 }

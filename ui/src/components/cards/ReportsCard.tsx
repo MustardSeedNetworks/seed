@@ -6,11 +6,11 @@
  * The fetching lives in useReports.
  */
 import { useTranslation } from 'react-i18next';
+import { type CardStatus, useCardStatusLabel } from '../../hooks/useCardStatusLabel';
+import { Button } from '../../shared/Button';
+import { Card, CardDivider, CardRow } from '../../shared/Card';
 import { cn, spacing } from '../../styles/theme';
 import type { ReportInfo } from '../../types/generated/reports-response';
-import { Button } from '../ui/Button';
-import { Card, CardDivider, CardRow } from '../ui/Card';
-import type { Status } from '../ui/StatusBadge';
 
 export interface ReportsCardProps {
   reports: ReportInfo[];
@@ -25,7 +25,7 @@ export interface ReportsCardProps {
 /** Report statuses the backend can report. */
 const terminalStatuses = new Set(['complete', 'failed']);
 
-function cardStatus(reports: ReportInfo[], loading: boolean, error: string | null): Status {
+function cardStatus(reports: ReportInfo[], loading: boolean, error: string | null): CardStatus {
   if (loading) {
     return 'loading';
   }
@@ -47,14 +47,18 @@ export function ReportsCard({
   generating = false,
 }: ReportsCardProps): React.ReactElement {
   const { t } = useTranslation('cards');
+  const statusLabel = useCardStatusLabel();
+  const status = cardStatus(reports, loading, error);
 
   return (
     <Card
       title={t('reports.title')}
-      status={cardStatus(reports, loading, error)}
+      status={status}
+      statusLabel={statusLabel(status)}
       headerAction={
         onGenerate ? (
           <Button
+            variant="primary"
             size="sm"
             onClick={onGenerate}
             loading={generating}
