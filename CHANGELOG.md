@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.285.4](https://github.com/MustardSeedNetworks/seed/compare/v0.285.3...v0.285.4) (2026-11-26)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next-browser-languagedetector to v8.3.1 ([#3890](https://github.com/MustardSeedNetworks/seed/issues/3890)) ([931ce93](https://github.com/MustardSeedNetworks/seed/commit/931ce93597a951ff0965bc9b2895fb2db3a77613))
+
+
+### Miscellaneous
+
+* **deps:** update dependency msw to v3.0.7 ([#3888](https://github.com/MustardSeedNetworks/seed/issues/3888)) ([34b0a79](https://github.com/MustardSeedNetworks/seed/commit/34b0a7943c6ef6bd70e44eba2e1a8ab4306bd1d9))
+* **deps:** update npm to v12.2.3 ([#3889](https://github.com/MustardSeedNetworks/seed/issues/3889)) ([2423ba5](https://github.com/MustardSeedNetworks/seed/commit/2423ba51960fb052bed488fd8e22352e97054d90))
+
 ## [0.285.3](https://github.com/MustardSeedNetworks/seed/compare/v0.285.2...v0.285.3) (2026-11-25)
 
 
