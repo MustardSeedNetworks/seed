@@ -46,3 +46,6 @@ ui/src/types/settings.ts:FingerprintingConfig # settings-drawer view model
 ui/src/types/settings.ts:PassiveProtocolConfig # settings-drawer view model
 ui/src/types/settings.ts:PortScanConfig # settings-drawer view model: `preset` narrowed to the PortPreset union the form offers
 ui/src/types/settings.ts:SubnetConfig # settings-drawer view model
+
+# --- The fleet's shared DataTable test fixture (copied byte-for-byte from MustardSeedNetworks/.github).
+ui/src/shared/test/DataTableTestUtils.tsx:Device # a three-field row for the shared DataTable's own tests, not a daemon wire type; the file is a fleet-owned copy and cannot be edited here
