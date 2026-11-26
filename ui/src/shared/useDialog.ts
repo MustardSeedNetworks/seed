@@ -11,16 +11,20 @@
  *
  * The opener is the element that had focus when the dialog opened. Safari and
  * Firefox on macOS do not focus a button on click, so `document.activeElement`
- * is the body there; the hook then falls back to the target of the click that
- * opened the dialog (recorded in the capture phase, one task long), and a caller
- * that opens from somewhere else (a timer, a route change) passes
+ * is the body there; the hook then falls back to the target of the click or
+ * Enter/Space press that opened the dialog. That target comes from one
+ * module-level capture-phase document listener, installed when this module is
+ * imported and alive for the page's life, so a dialog that mounts in the click
+ * handler (Help or Settings rendered on demand) still finds its opener: a
+ * listener owned by the dialog would not exist yet. The record lasts one task.
+ * A caller that opens from somewhere else (a timer, a route change) passes
  * `returnFocusRef`, which wins over both.
  *
  * "Tabbable" excludes `tabindex="-1"`, so a roving-tabindex tab list as the
  * last stop does not hide the real last stop from the wrap, and a panel with
  * nothing tabbable still traps: focus stays on the panel.
  */
-import { type KeyboardEvent, type RefObject, useEffect, useLayoutEffect, useRef } from 'react';
+import { type KeyboardEvent, type RefObject, useLayoutEffect, useRef } from 'react';
 
 const TABBABLE = [
   'a[href]',
@@ -35,6 +39,25 @@ const TABBABLE = [
 
 const FOCUSABLE_ANCESTOR =
   'button, a[href], input, select, textarea, summary, [role="button"], [tabindex]';
+
+let activation: Element | null = null;
+let activationReset: ReturnType<typeof setTimeout> | undefined;
+
+function rememberActivation(event: Event) {
+  if (event instanceof KeyboardEvent && event.key !== 'Enter' && event.key !== ' ') {
+    return;
+  }
+  activation = event.target instanceof Element ? event.target : null;
+  clearTimeout(activationReset);
+  activationReset = setTimeout(() => {
+    activation = null;
+  }, 0);
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', rememberActivation, true);
+  document.addEventListener('keydown', rememberActivation, true);
+}
 
 /** Elements Tab can reach inside `root`, in document order; hidden subtrees do not count. */
 export function tabbables(root: HTMLElement): HTMLElement[] {
@@ -81,24 +104,6 @@ export function useDialog(
   { returnFocusRef }: DialogOptions = {},
 ): Dialog {
   const panelRef = useRef<HTMLDivElement>(null);
-  const clicked = useRef<Element | null>(null);
-
-  useEffect(() => {
-    let reset: ReturnType<typeof setTimeout> | undefined;
-    const remember = (event: Event) => {
-      clicked.current = event.target instanceof Element ? event.target : null;
-      clearTimeout(reset);
-      reset = setTimeout(() => {
-        clicked.current = null;
-      }, 0);
-    };
-    document.addEventListener('click', remember, true);
-    return () => {
-      clearTimeout(reset);
-      document.removeEventListener('click', remember, true);
-    };
-  }, []);
-
   useLayoutEffect(() => {
     if (!open) {
       return;
@@ -109,9 +114,7 @@ export function useDialog(
         ? activeElement
         : null;
     const opener =
-      returnFocusRef?.current ??
-      focused ??
-      clicked.current?.closest<HTMLElement>(FOCUSABLE_ANCESTOR);
+      returnFocusRef?.current ?? focused ?? activation?.closest<HTMLElement>(FOCUSABLE_ANCESTOR);
     const { overflow } = document.body.style;
     document.body.style.overflow = 'hidden';
     const { current: panel } = panelRef;

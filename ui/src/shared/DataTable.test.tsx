@@ -9,7 +9,7 @@ import {
   names,
   ordered,
   table,
-} from './DataTableTestUtils';
+} from './test/DataTableTestUtils';
 
 afterEach(cleanup);
 

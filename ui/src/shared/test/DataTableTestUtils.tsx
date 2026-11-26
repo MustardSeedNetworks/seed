@@ -6,7 +6,7 @@ import {
   type DataTableLabels,
   type DataTableProps,
   type DataTableSelection,
-} from './DataTable';
+} from '../DataTable';
 
 export interface Device {
   id: string;

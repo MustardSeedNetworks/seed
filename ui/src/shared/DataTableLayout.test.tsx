@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { frameOf, table } from './DataTableTestUtils';
+import { frameOf, table } from './test/DataTableTestUtils';
 
 afterEach(cleanup);
 

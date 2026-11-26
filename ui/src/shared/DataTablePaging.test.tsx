@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { type Device, many, names, table } from './DataTableTestUtils';
+import { type Device, many, names, table } from './test/DataTableTestUtils';
 
 afterEach(cleanup);
 

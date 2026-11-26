@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { many, ordered, Selectable, SelectableTable, table } from './DataTableTestUtils';
+import { many, ordered, Selectable, SelectableTable, table } from './test/DataTableTestUtils';
 
 afterEach(cleanup);
 

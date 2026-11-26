@@ -12,6 +12,11 @@
  *   | (e) mark      ◆ Mustard Seed Networks   ‹ |  (f) collapse, same row
  *   +------------------------------+
  *
+ * - Actions are 40px icon buttons in every variant (WCAG 2.5.8 asks 24px).
+ *   They `grow` rather than `flex-1`: in the collapsed column `flex-1` sets a
+ *   zero flex-basis that overrides `h-10` and leaves the icon's 20px, and
+ *   `min-h-10 shrink-0` keep them 40px even when the rail is short, so no
+ *   product wraps the footer to protect them.
  * - Actions are icon-only buttons with an aria-label and a Tooltip, never text
  *   links, in this order in every product. Sign out renders only when the
  *   product has auth (`signOut` passed). Theme is the quick toggle on the same
@@ -70,7 +75,7 @@ export interface RailFooterProps {
 }
 
 const iconButton =
-  'inline-flex h-10 min-w-10 flex-1 items-center justify-center rounded-lg text-text-secondary hover:bg-surface-hover hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary';
+  'inline-flex h-10 min-h-10 min-w-10 shrink-0 grow items-center justify-center rounded-lg text-text-secondary hover:bg-surface-hover hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary';
 
 function ActionButton({
   action,

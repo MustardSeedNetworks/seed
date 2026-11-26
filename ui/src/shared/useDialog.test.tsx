@@ -351,3 +351,71 @@ describe('useDialog keyboard', () => {
     });
   });
 });
+
+function Panel({ onClose }: { onClose: () => void }) {
+  const dialog = useDialog(true, onClose);
+  return (
+    <div
+      ref={dialog.panelRef}
+      role="dialog"
+      aria-label="d"
+      tabIndex={-1}
+      onKeyDown={dialog.onKeyDown}
+    >
+      <button type="button">in</button>
+    </div>
+  );
+}
+
+/** The dialog component, and so its useDialog, mounts inside the click handler. */
+function MountOnClick() {
+  const [shown, setShown] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setShown(true)}>
+        <svg data-testid="icon" aria-hidden="true" />
+      </button>
+      {shown ? <Panel onClose={() => setShown(false)} /> : null}
+    </>
+  );
+}
+
+function Timed() {
+  const [shown, setShown] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setTimeout(() => setShown(true), 10)}>
+        later
+      </button>
+      {shown ? <Panel onClose={() => setShown(false)} /> : null}
+    </>
+  );
+}
+
+describe('useDialog opener for a dialog that mounts on click', () => {
+  it('returns focus to the opener when the click did not focus it (WebKit)', () => {
+    render(<MountOnClick />);
+    const opener = screen.getByRole('button');
+    expect(document.activeElement).toBe(document.body);
+    fireEvent.click(screen.getByTestId('icon'));
+    expect(document.activeElement).toBe(panel().querySelector('button'));
+    fireEvent.keyDown(panel(), { key: 'Escape' });
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it('forgets the click after its task, so a timer-driven open has no opener to return to', () => {
+    vi.useFakeTimers();
+    try {
+      render(<Timed />);
+      const opener = screen.getByRole('button', { name: 'later' });
+      fireEvent.click(opener);
+      act(() => {
+        vi.advanceTimersByTime(10);
+      });
+      fireEvent.keyDown(panel(), { key: 'Escape' });
+      expect(document.activeElement).not.toBe(opener);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

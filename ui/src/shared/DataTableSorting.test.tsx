@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DataTableColumn } from './DataTable';
-import { columns, type Device, names, table } from './DataTableTestUtils';
+import { columns, type Device, names, table } from './test/DataTableTestUtils';
 
 afterEach(cleanup);
 

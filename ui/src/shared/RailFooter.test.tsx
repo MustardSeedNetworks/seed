@@ -236,7 +236,7 @@ describe('RailFooter in the 390px drawer', () => {
   it('cannot widen the drawer: every row is min-w-0, the actions share the row, long text truncates', () => {
     render(<RailFooter {...full()} variant="drawer" />);
     expect(screen.getByTestId('rail-footer').className).toContain('min-w-0');
-    expect(screen.getByTestId('rail-help').className).toContain('flex-1');
+    expect(screen.getByTestId('rail-help').className).toContain('grow');
     expect(screen.getByTestId('rail-help').className).toContain('min-w-10');
     expect(screen.getByTestId('rail-product-slot').className).toContain('min-w-0');
     expect(screen.getByText('Mustard Seed Networks').className).toContain('truncate');
@@ -352,5 +352,43 @@ describe('RailFooter product slot as a menu', () => {
       vi.runAllTimers();
     });
     expect(screen.getByRole('menu')).toBeTruthy();
+  });
+});
+
+describe('RailFooter touch targets', () => {
+  const px = (classes: string[], prefix: string) => {
+    const token = classes.find((name) => name.startsWith(`${prefix}-`));
+    return token ? Number(token.slice(prefix.length + 1)) * 4 : 0;
+  };
+  const actionIds = ['rail-help', 'rail-settings', 'rail-theme', 'rail-sign-out', 'rail-collapse'];
+
+  it.each([
+    ['collapsed rail', { collapsed: true }],
+    ['expanded rail', { collapsed: false }],
+    ['drawer', { collapsed: false, variant: 'drawer' as const }],
+  ])('keeps every action at least 24px high and 40px for the icon buttons: %s', (_, props) => {
+    render(<RailFooter {...full()} {...props} />);
+    for (const id of actionIds) {
+      const button = screen.queryByTestId(id);
+      if (!button) {
+        expect(id).toBe('rail-collapse');
+        continue;
+      }
+      const classes = [...button.classList];
+      expect(px(classes, 'h'), id).toBeGreaterThanOrEqual(24);
+      if (id !== 'rail-collapse') {
+        expect(px(classes, 'h'), id).toBe(40);
+        expect(px(classes, 'min-h'), id).toBe(40);
+        expect(px(classes, 'min-w'), id).toBe(40);
+        expect(classes, id).toContain('shrink-0');
+      }
+    }
+  });
+
+  it('does not use flex-1, whose zero basis collapses h-10 in the collapsed column', () => {
+    render(<RailFooter {...full()} collapsed />);
+    for (const id of actionIds) {
+      expect([...screen.getByTestId(id).classList], id).not.toContain('flex-1');
+    }
   });
 });
