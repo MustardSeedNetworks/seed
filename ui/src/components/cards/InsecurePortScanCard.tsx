@@ -136,6 +136,7 @@ export function InsecurePortScanCard(): JSX.Element {
 
   return (
     <Card
+      data-testid="card"
       title={t('insecurePorts.title')}
       icon={<ShieldAlert className="w-4 h-4" />}
       status={cardStatus}

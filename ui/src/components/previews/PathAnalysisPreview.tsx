@@ -63,7 +63,12 @@ export function PathAnalysisPreview(): React.ReactElement {
   const statusLabel = useCardStatusLabel();
 
   return (
-    <Card title={t('pathDiscovery.title')} status="success" statusLabel={statusLabel('success')}>
+    <Card
+      data-testid="card"
+      title={t('pathDiscovery.title')}
+      status="success"
+      statusLabel={statusLabel('success')}
+    >
       <PathTimeline
         result={SAMPLE_PATH}
         maxRtt={SAMPLE_MAX_RTT}

@@ -29,7 +29,7 @@ export function TftpSession(): JSX.Element {
 
   return (
     <div data-testid="tftp-session">
-      <Card title={t('deviceConfigs.tftp.title')}>
+      <Card data-testid="card" title={t('deviceConfigs.tftp.title')}>
         <div className="space-y-3">
           {error ? <Alert tone="error">{error}</Alert> : null}
           {!isAdmin ? (
@@ -156,6 +156,7 @@ function StartForm({
         )}
       </FormField>
       <Checkbox
+        data-testid="tftp-allow-upload"
         checked={allowUpload}
         onChange={setAllowUpload}
         label={t('deviceConfigs.tftp.allowUpload')}

@@ -105,6 +105,7 @@ export function PathMonitorCard({
 
   return (
     <Card
+      data-testid="card"
       title={t('pathMonitor.title')}
       icon={<Activity className="w-4 h-4" />}
       status={status}

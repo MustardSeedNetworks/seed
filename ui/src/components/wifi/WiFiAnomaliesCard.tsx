@@ -34,6 +34,7 @@ export function WiFiAnomaliesCard() {
 
   return (
     <Card
+      data-testid="card"
       title={t('wifi.anomaliesTitle')}
       subtitle={t('wifi.anomaliesSubtitle')}
       status={status}

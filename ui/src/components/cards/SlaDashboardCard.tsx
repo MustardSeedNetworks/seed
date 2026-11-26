@@ -92,6 +92,7 @@ export function SLADashboardCard({ className }: SLADashboardCardProps): React.Re
 
   return (
     <Card
+      data-testid="card"
       title={t('slaDashboard.title')}
       subtitle={t('slaDashboard.subtitle')}
       icon={<Shield className={iconTokens.size.md} />}

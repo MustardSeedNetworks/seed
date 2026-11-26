@@ -301,6 +301,7 @@ export function PathDiscoveryCard({
 
   return (
     <Card
+      data-testid="card"
       title={t('pathDiscovery.title')}
       icon={<Route className={iconTokens.size.md} />}
       status={cardStatus}

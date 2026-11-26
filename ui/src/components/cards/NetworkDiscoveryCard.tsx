@@ -118,6 +118,7 @@ export function NetworkDiscoveryCard({
   if (loading) {
     return (
       <Card
+        data-testid="card"
         title={t('discovery.title')}
         icon={<ScanSearch className={iconTokens.size.md} />}
         status="loading"
@@ -133,6 +134,7 @@ export function NetworkDiscoveryCard({
   if (!(data && status)) {
     return (
       <Card
+        data-testid="card"
         title={t('discovery.title')}
         icon={<ScanSearch className={iconTokens.size.md} />}
         status={scanError ? 'error' : 'unknown'}

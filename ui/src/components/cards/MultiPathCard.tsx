@@ -47,6 +47,7 @@ export function MultiPathCard(): JSX.Element {
 
   return (
     <Card
+      data-testid="card"
       title={t('multiPath.title')}
       icon={<Network className="w-4 h-4" />}
       status={status}

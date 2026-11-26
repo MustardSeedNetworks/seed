@@ -420,6 +420,7 @@ export function PerformanceCard({
   };
   return (
     <Card
+      data-testid="card"
       title={t('performance.title')}
       subtitle={t('performance.subtitle')}
       icon={<Gauge className={iconTokens.size.md} />}

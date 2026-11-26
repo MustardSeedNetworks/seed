@@ -92,6 +92,7 @@ export function NeighbourCacheCard(): JSX.Element {
 
   return (
     <Card
+      data-testid="card"
       title={t('neighbours.title')}
       icon={<Network className="w-4 h-4" />}
       status={cardStatus}

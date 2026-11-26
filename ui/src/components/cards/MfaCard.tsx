@@ -178,6 +178,7 @@ export function MfaCard(): JSX.Element {
 
   return (
     <Card
+      data-testid="card"
       title={t('mfa.title')}
       icon={<Shield className={iconTokens.size.md} />}
       status={cardStatus}

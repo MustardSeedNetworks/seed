@@ -67,6 +67,7 @@ export function PathMTUCard(): JSX.Element {
 
   return (
     <Card
+      data-testid="card"
       title={t('pathMtu.title')}
       icon={<Maximize2 className="w-4 h-4" />}
       status={status}

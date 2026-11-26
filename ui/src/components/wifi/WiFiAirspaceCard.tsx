@@ -21,6 +21,7 @@ export function WiFiAirspaceCard() {
 
   return (
     <Card
+      data-testid="card"
       title={t('wifi.airspaceTitle')}
       subtitle={t('wifi.airspaceSubtitle')}
       status={status}

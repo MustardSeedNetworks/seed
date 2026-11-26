@@ -69,6 +69,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
   if (isLoading) {
     return (
       <Card
+        data-testid="card"
         title={t('logs.title')}
         icon={<FileText className={iconTokens.size.md} />}
         status="loading"
@@ -83,6 +84,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
   if (error) {
     return (
       <Card
+        data-testid="card"
         title={t('logs.title')}
         icon={<FileText className={iconTokens.size.md} />}
         status="error"

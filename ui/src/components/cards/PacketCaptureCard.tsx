@@ -107,6 +107,7 @@ export function PacketCaptureCard({
 
   return (
     <Card
+      data-testid="card"
       title={t('packetCapture.title')}
       icon={<Activity className="w-4 h-4" />}
       status={status}

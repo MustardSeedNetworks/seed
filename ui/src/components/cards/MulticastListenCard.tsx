@@ -100,6 +100,7 @@ export function MulticastListenCard({
 
   return (
     <Card
+      data-testid="card"
       title={t('multicastListen.title')}
       icon={<Tv className="w-4 h-4" />}
       status={status}
