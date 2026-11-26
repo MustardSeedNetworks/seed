@@ -196,3 +196,22 @@ describe('Modal, covering seed and niac usage', () => {
     height.mockRestore();
   });
 });
+
+describe('Modal full size', () => {
+  it('fills the available height as well as 56rem of width, with the body scrolling inside', () => {
+    render(modal({ size: 'full' }));
+    const { className } = screen.getByTestId('modal');
+    expect(className.split(' ')).toContain('h-full');
+    expect(className).toContain('max-w-4xl');
+    expect(className).toContain('flex-col');
+    expect(screen.getByTestId('modal').querySelector('.flex-1.overflow-y-auto')).toBeTruthy();
+  });
+
+  it('other sizes size to their content', () => {
+    for (const size of ['sm', 'md', 'lg', '3xl'] as const) {
+      cleanup();
+      render(modal({ size }));
+      expect(screen.getByTestId('modal').className.split(' ')).not.toContain('h-full');
+    }
+  });
+});

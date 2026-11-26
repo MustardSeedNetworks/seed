@@ -28,6 +28,15 @@
  * Textarea (they pass `ref`, `name`, `onChange` and `onBlur` through); put the
  * message from `formState.errors` in `error`.
  *
+ * - `group` renders a `<fieldset>` with the label as its `<legend>`, for a set of
+ *   checkboxes or radios that share one question and one error. The hint and
+ *   error are linked with `aria-describedby` on the fieldset, so a screen reader
+ *   announces them on entering the group, and the error is `role="alert"`.
+ *   `children` is the group's controls as a plain node (see RadioGroup); there
+ *   is no single control to carry `aria-invalid`, so give each control its own.
+ *   `labelAccessory` is ignored: a help button inside a legend would become part
+ *   of the group's name.
+ *
  * The width is capped. stem's fields stretched to 1000px, which puts the label
  * and its input a screen apart. `md` is 28rem; `lg` is 42rem for a path or a
  * URL. There is no full-width option; a control that needs the page's width
@@ -55,6 +64,8 @@ export interface FormFieldProps {
   /** The control's id. Generated when omitted; needed with a plain-node child. */
   id?: string;
   className?: string;
+  /** A fieldset and legend around a group of controls; `children` must be a node. */
+  group?: boolean;
   children: ReactNode | ((control: FormControlProps) => ReactNode);
 }
 
@@ -69,6 +80,7 @@ export function FormField({
   size = 'md',
   id: requestedId,
   className,
+  group = false,
   children,
 }: FormFieldProps) {
   const generatedId = useId();
@@ -85,20 +97,8 @@ export function FormField({
           'aria-required': required ? true : undefined,
         })
       : children;
-  return (
-    <div className={cx('w-full', widths[size], className)}>
-      <div className="mb-1.5 flex items-center gap-1.5">
-        <label htmlFor={id} className="text-sm font-medium text-text-secondary">
-          {label}
-          {required ? (
-            <span className="ml-0.5 text-status-error-strong" aria-hidden="true">
-              *
-            </span>
-          ) : null}
-        </label>
-        {labelAccessory}
-      </div>
-      {control}
+  const message = (
+    <>
       {hint ? (
         <p id={hintId} className="mt-1.5 text-xs text-text-muted">
           {hint}
@@ -113,6 +113,43 @@ export function FormField({
           {error}
         </p>
       ) : null}
+    </>
+  );
+  if (group) {
+    return (
+      <fieldset
+        id={id}
+        aria-describedby={describedBy || undefined}
+        className={cx('m-0 w-full min-w-0 border-0 p-0', widths[size], className)}
+      >
+        <legend className="mb-1.5 p-0 text-sm font-medium text-text-secondary">
+          {label}
+          {required ? (
+            <span className="ml-0.5 text-status-error-strong" aria-hidden="true">
+              *
+            </span>
+          ) : null}
+        </legend>
+        {control}
+        {message}
+      </fieldset>
+    );
+  }
+  return (
+    <div className={cx('w-full', widths[size], className)}>
+      <div className="mb-1.5 flex items-center gap-1.5">
+        <label htmlFor={id} className="text-sm font-medium text-text-secondary">
+          {label}
+          {required ? (
+            <span className="ml-0.5 text-status-error-strong" aria-hidden="true">
+              *
+            </span>
+          ) : null}
+        </label>
+        {labelAccessory}
+      </div>
+      {control}
+      {message}
     </div>
   );
 }

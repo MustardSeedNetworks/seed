@@ -11,14 +11,17 @@
  * the text toggles it and a screen reader announces "<label>, switch, on".
  * The track is 24px tall (WCAG 2.5.8). `id`, `name`, `data-testid` and any
  * `aria-*` land on the switch button, so a spec's `getByTestId` reaches the
- * control and a plain `<label htmlFor>` elsewhere can name it.
+ * control and a plain `<label htmlFor>` elsewhere can name it. `onClick` runs
+ * before the toggle, for analytics or a spec's spy; `onChange` still decides.
+ *
+ * `hideLabel` hides the label visually and keeps it as the switch's name.
  */
 import { type ButtonHTMLAttributes, type ReactNode, useId } from 'react';
 import { cx } from './cx';
 
 type NativeProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
-  'onChange' | 'onClick' | 'role' | 'type' | 'className' | 'children' | 'aria-checked' | 'disabled'
+  'onChange' | 'role' | 'type' | 'className' | 'children' | 'aria-checked' | 'disabled'
 >;
 
 export interface ToggleProps extends NativeProps {
@@ -27,6 +30,8 @@ export interface ToggleProps extends NativeProps {
   label: ReactNode;
   /** One line under the label, linked as the switch's description. */
   description?: string;
+  /** Visually hidden label: still the switch's accessible name. */
+  hideLabel?: boolean;
   disabled?: boolean;
   /** Classes for the wrapper. */
   className?: string;
@@ -37,9 +42,11 @@ export function Toggle({
   onChange,
   label,
   description,
+  hideLabel = false,
   disabled,
   className,
   id: requestedId,
+  onClick,
   ...rest
 }: ToggleProps) {
   const generatedId = useId();
@@ -51,7 +58,7 @@ export function Toggle({
         <label
           htmlFor={id}
           className={cx(
-            'text-sm font-medium',
+            hideLabel ? 'sr-only' : 'text-sm font-medium',
             disabled ? 'cursor-not-allowed text-text-disabled' : 'cursor-pointer text-text-primary',
           )}
         >
@@ -75,7 +82,10 @@ export function Toggle({
             .join(' ') || undefined
         }
         disabled={disabled}
-        onClick={() => onChange(!checked)}
+        onClick={(event) => {
+          onClick?.(event);
+          onChange(!checked);
+        }}
         data-state={checked ? 'on' : 'off'}
         className={cx(
           'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary disabled:cursor-not-allowed disabled:opacity-60',

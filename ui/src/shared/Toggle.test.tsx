@@ -84,3 +84,25 @@ describe('Toggle, pass-through and target size', () => {
     expect(screen.getByTestId('rich')).toBeTruthy();
   });
 });
+
+describe('Toggle onClick and hidden label', () => {
+  it('calls onClick, then onChange with the new value', () => {
+    const calls: string[] = [];
+    render(
+      <Toggle
+        checked={false}
+        onChange={(value) => calls.push(`change:${String(value)}`)}
+        onClick={() => calls.push('click')}
+        label="Wi-Fi"
+      />,
+    );
+    fireEvent.click(screen.getByRole('switch', { name: 'Wi-Fi' }));
+    expect(calls).toEqual(['click', 'change:true']);
+  });
+
+  it('hideLabel hides the label visually and keeps it as the switch name', () => {
+    render(<Toggle checked onChange={() => {}} label="Enable polling" hideLabel />);
+    expect(screen.getByRole('switch', { name: 'Enable polling' })).toBeTruthy();
+    expect(screen.getByText('Enable polling').className).toContain('sr-only');
+  });
+});

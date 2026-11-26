@@ -9,7 +9,8 @@
  * (the id of a heading the body renders) or `ariaLabel`.
  *
  * - `size`: `sm` 24rem, `md` 28rem, `lg` 32rem (default), `3xl`
- *   48rem, `full` 56rem. All are capped by the viewport with a 16px gutter.
+ *   48rem, `full` 56rem wide and as tall as the
+ * viewport allows (the body scrolls inside it). All are capped by the viewport with a 16px gutter.
  * - `footer`: the actions, right-aligned under the body, pinned while the body
  *   scrolls. `header`: extra header content beside the title (a badge, a step).
  * - `closeOnBackdrop` (default true): a click on the scrim closes it. A form
@@ -68,7 +69,7 @@ const sizes: Record<ModalSize, string> = {
   md: 'max-w-md',
   lg: 'max-w-lg',
   '3xl': 'max-w-3xl',
-  full: 'max-w-4xl',
+  full: 'h-full max-w-4xl',
 };
 
 export function Modal({

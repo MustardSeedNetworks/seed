@@ -205,20 +205,49 @@ describe('Card body states', () => {
 });
 
 describe('Card interaction and live region', () => {
-  it('becomes a button on onClick, activated by click, Enter and Space', () => {
+  it('becomes clickable through a real button, not a role on a section', () => {
     const onClick = vi.fn();
     render(
-      <Card onClick={onClick} title="Open me">
+      <Card onClick={onClick} title="Open me" data-testid="c">
         x
       </Card>,
     );
-    const card = screen.getByRole('button');
-    expect(card.getAttribute('tabindex')).toBe('0');
-    fireEvent.click(card);
-    fireEvent.keyDown(card, { key: 'Enter' });
-    fireEvent.keyDown(card, { key: ' ' });
-    fireEvent.keyDown(card, { key: 'a' });
-    expect(onClick).toHaveBeenCalledTimes(3);
+    const button = screen.getByRole('button', { name: 'Open me' });
+    expect(button.tagName).toBe('BUTTON');
+    expect(button.getAttribute('type')).toBe('button');
+    fireEvent.click(button);
+    expect(onClick).toHaveBeenCalledOnce();
+    const card = screen.getByTestId('c');
+    expect(card.tagName).toBe('DIV');
+    expect(card.hasAttribute('role')).toBe(false);
+    expect(card.hasAttribute('tabindex')).toBe(false);
+    expect(card.querySelector('[role="button"]')).toBeNull();
+  });
+
+  it('names the button by aria-label when given, else by the title', () => {
+    const { rerender } = render(
+      <Card onClick={() => {}} title="Title" aria-label="Open the device">
+        x
+      </Card>,
+    );
+    expect(screen.getByRole('button', { name: 'Open the device' })).toBeTruthy();
+    rerender(
+      <Card onClick={() => {}} title="Title">
+        x
+      </Card>,
+    );
+    expect(screen.getByRole('button', { name: 'Title' })).toBeTruthy();
+  });
+
+  it('keeps headings and rows valid: nothing is nested inside the button', () => {
+    render(
+      <Card onClick={() => {}} title="Open me">
+        <CardRow label="A" value="1" />
+      </Card>,
+    );
+    const button = screen.getByRole('button', { name: 'Open me' });
+    expect(button.children).toHaveLength(0);
+    expect(screen.getByRole('heading', { name: 'Open me' })).toBeTruthy();
   });
 
   it('does not steal Enter from a control inside it', () => {

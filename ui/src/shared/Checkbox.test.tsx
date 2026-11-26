@@ -78,3 +78,24 @@ describe('Checkbox, target size and pass-through', () => {
     expect((node as HTMLInputElement | null)?.type).toBe('checkbox');
   });
 });
+
+describe('Checkbox onClick and hidden label', () => {
+  it('passes onClick through to the input', () => {
+    const onClick = vi.fn();
+    render(<Checkbox checked={false} onChange={() => {}} label="Enable" onClick={onClick} />);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable' }));
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  it('hideLabel hides the label visually and keeps it as the accessible name', () => {
+    render(<Checkbox checked={false} onChange={() => {}} label="Select row 3" hideLabel />);
+    const box = screen.getByRole('checkbox', { name: 'Select row 3' });
+    expect(box).toBeTruthy();
+    expect(screen.getByText('Select row 3').className).toContain('sr-only');
+  });
+
+  it('shows the label by default', () => {
+    render(<Checkbox checked={false} onChange={() => {}} label="Enable" />);
+    expect(screen.getByText('Enable').className).not.toContain('sr-only');
+  });
+});

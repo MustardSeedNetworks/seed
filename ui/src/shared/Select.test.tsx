@@ -93,3 +93,44 @@ describe('Select pass-through', () => {
     expect(onValueChange).toHaveBeenCalledExactlyOnceWith('b');
   });
 });
+
+describe('Select option children', () => {
+  it('renders JSX options, with groups, and reports the value', () => {
+    const onValueChange = vi.fn();
+    render(
+      <Select aria-label="Pick" onValueChange={onValueChange} defaultValue="b">
+        <optgroup label="Letters">
+          <option value="a">A</option>
+          <option value="b">B</option>
+        </optgroup>
+      </Select>,
+    );
+    const select = screen.getByRole('combobox', { name: 'Pick' }) as HTMLSelectElement;
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['A', 'B']);
+    expect(select.value).toBe('b');
+    fireEvent.change(select, { target: { value: 'a' } });
+    expect(onValueChange).toHaveBeenCalledWith('a');
+  });
+
+  it('renders the options array first, then the children', () => {
+    render(
+      <Select aria-label="Pick" options={[{ value: 'x', label: 'From array' }]}>
+        {['one', 'two'].map((value) => (
+          <option key={value} value={value}>
+            {value}
+          </option>
+        ))}
+      </Select>,
+    );
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'From array',
+      'one',
+      'two',
+    ]);
+  });
+
+  it('needs neither options nor children to render', () => {
+    render(<Select aria-label="Empty" />);
+    expect(screen.queryAllByRole('option')).toHaveLength(0);
+  });
+});

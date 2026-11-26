@@ -13,9 +13,14 @@
  * reads `event.target`; use one or the other. `ref`, `name`, `id`, `data-testid`
  * and `aria-*` land on the `<select>`. Pair it with a FormField, which supplies
  * `id` and the aria props.
+ *
+ * Options come from the `options` array, from JSX children (`<option>`,
+ * `<optgroup>`, or a fragment that maps them), or both: the array first. Use
+ * children when the list is built in JSX (grouped, or with per-option
+ * attributes the array does not carry).
  */
 import { ChevronDown } from 'lucide-react';
-import type { Ref, SelectHTMLAttributes } from 'react';
+import type { ReactNode, Ref, SelectHTMLAttributes } from 'react';
 import { cx } from './cx';
 
 export interface SelectOption {
@@ -24,8 +29,10 @@ export interface SelectOption {
   disabled?: boolean;
 }
 
-export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'children'> {
-  options: readonly SelectOption[];
+export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  options?: readonly SelectOption[];
+  /** `<option>` and `<optgroup>` elements, after any `options`. */
+  children?: ReactNode;
   /** The chosen option's value, as seed's callers pass it. */
   onValueChange?: (value: string) => void;
   /** A disabled first option shown while nothing is chosen. */
@@ -34,7 +41,8 @@ export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement
 }
 
 export function Select({
-  options,
+  options = [],
+  children,
   placeholder,
   onValueChange,
   onChange,
@@ -66,6 +74,7 @@ export function Select({
             {option.label}
           </option>
         ))}
+        {children}
       </select>
       <ChevronDown
         className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"

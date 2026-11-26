@@ -122,3 +122,42 @@ describe('FormField, covering niac and seed forms', () => {
     expect(screen.getByText('*').className).toContain('text-status-error-strong');
   });
 });
+
+describe('FormField group', () => {
+  it('is a fieldset named by its legend', () => {
+    render(
+      <FormField group label="Protocols">
+        <input type="checkbox" aria-label="TCP" />
+        <input type="checkbox" aria-label="UDP" />
+      </FormField>,
+    );
+    const group = screen.getByRole('group', { name: 'Protocols' });
+    expect(group.tagName).toBe('FIELDSET');
+    expect(group.querySelector('legend')?.textContent).toBe('Protocols');
+    expect(screen.queryByRole('textbox')).toBeNull();
+  });
+
+  it('attaches a group error and hint to the fieldset, announced as an alert', () => {
+    render(
+      <FormField group label="Protocols" hint="Pick at least one" error="Choose a protocol" id="p">
+        <input type="checkbox" aria-label="TCP" />
+      </FormField>,
+    );
+    const group = screen.getByRole('group', { name: 'Protocols' });
+    expect(group.getAttribute('aria-describedby')).toBe('p-hint p-error');
+    expect(screen.getByRole('alert').textContent).toBe('Choose a protocol');
+    expect(screen.getByRole('alert').id).toBe('p-error');
+    expect(group.getAttribute('aria-invalid')).toBeNull();
+  });
+
+  it('has no description when there is neither hint nor error, and marks required in the legend', () => {
+    render(
+      <FormField group required label="Protocols">
+        <input type="checkbox" aria-label="TCP" />
+      </FormField>,
+    );
+    const group = screen.getByRole('group', { name: /Protocols/ });
+    expect(group.hasAttribute('aria-describedby')).toBe(false);
+    expect(group.querySelector('legend [aria-hidden="true"]')?.textContent).toBe('*');
+  });
+});

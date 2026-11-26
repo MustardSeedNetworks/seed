@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Button, ButtonLink } from './Button';
 
@@ -248,5 +248,89 @@ describe('ButtonLink', () => {
     expect(link.getAttribute('target')).toBe('_blank');
     fireEvent.click(link);
     expect(onClick).toHaveBeenCalledOnce();
+  });
+});
+
+describe('Button disabledReason', () => {
+  const reasoned = (onClick = vi.fn()) => (
+    <Button disabled disabledReason="Needs the operator role" onClick={onClick}>
+      Save
+    </Button>
+  );
+
+  it('stays focusable: aria-disabled, not disabled, and in the tab order', () => {
+    render(reasoned());
+    const button = screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
+    expect(button.getAttribute('aria-disabled')).toBe('true');
+    act(() => button.focus());
+    expect(document.activeElement).toBe(button);
+  });
+
+  it('describes itself with the reason in a tooltip on focus', () => {
+    render(reasoned());
+    const button = screen.getByRole('button', { name: 'Save' });
+    fireEvent.focus(button);
+    const tip = screen.getByRole('tooltip', { name: 'Needs the operator role' });
+    expect(button.getAttribute('aria-describedby')).toBe(tip.id);
+    expect(tip.className).not.toContain('invisible');
+  });
+
+  it('swallows the click and does not submit a form', () => {
+    const onClick = vi.fn();
+    const onSubmit = vi.fn((event: { preventDefault: () => void }) => event.preventDefault());
+    render(
+      <form onSubmit={onSubmit}>
+        <Button type="submit" disabled disabledReason="Not yet" onClick={onClick}>
+          Save
+        </Button>
+      </form>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(onClick).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('looks disabled', () => {
+    render(reasoned());
+    expect(screen.getByRole('button', { name: 'Save' }).className).toContain(
+      'aria-disabled:bg-surface-sunken',
+    );
+  });
+
+  it('is an ordinary enabled button when not disabled', () => {
+    const onClick = vi.fn();
+    render(
+      <Button disabledReason="unused" onClick={onClick}>
+        Save
+      </Button>,
+    );
+    const button = screen.getByRole('button', { name: 'Save' });
+    expect(button.hasAttribute('aria-disabled')).toBe(false);
+    expect(button.hasAttribute('aria-describedby')).toBe(false);
+    fireEvent.click(button);
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  it('is a plain disabled button when loading', () => {
+    render(
+      <Button loading disabled disabledReason="why" data-testid="b">
+        Save
+      </Button>,
+    );
+    const button = screen.getByTestId('b') as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(button.hasAttribute('aria-disabled')).toBe(false);
+  });
+
+  it('plain disabled without a reason is unchanged', () => {
+    render(<Button disabled>Save</Button>);
+    expect((screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('works icon-only', () => {
+    render(<Button iconOnly icon={<svg />} aria-label="Delete" disabled disabledReason="In use" />);
+    const button = screen.getByRole('button', { name: 'Delete' });
+    expect(button.getAttribute('aria-disabled')).toBe('true');
   });
 });

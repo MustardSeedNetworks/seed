@@ -105,8 +105,13 @@ export function Tooltip({ text, side = 'top', children }: TooltipProps) {
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const bubbleRef = useRef<HTMLSpanElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const dismissedRef = useRef(false);
   const present = hasContent(text);
   const open = present && (hovered || focused) && !dismissed;
+  const dismiss = () => {
+    dismissedRef.current = true;
+    setDismissed(true);
+  };
 
   useEffect(() => () => clearTimeout(closeTimer.current), []);
 
@@ -134,40 +139,59 @@ export function Tooltip({ text, side = 'top', children }: TooltipProps) {
     };
   }, [open, side, id]);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const onKey = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== 'Escape') {
-        return;
-      }
-      setDismissed(true);
-      // WebKit sends no mouseleave when a drawer opens under a still pointer, so
-      // a hovered bubble can sit beneath a modal; that Escape is the dialog's.
-      const dialog =
-        event.target instanceof Element ? event.target.closest('[aria-modal="true"]') : null;
-      if (!dialog || dialog.contains(wrapperRef.current)) {
-        event.stopPropagation();
-      }
-    };
-    document.addEventListener('keydown', onKey, true);
-    return () => document.removeEventListener('keydown', onKey, true);
-  }, [open]);
-
   // Native listeners, not React props: the wrapper is a static element, and the
   // bubble is outside it in the DOM (a portal), so the pointer going from one to
   // the other has to be tracked on both.
+  //
+  // Whether the bubble is active lives in refs, written by the same native
+  // events that set the state, and the Escape listener is attached and removed
+  // in those handlers. Gating it on the rendered `open` state raced: React
+  // renders a hover (a continuous event) later than the pointer, so an Escape
+  // that arrived first found no listener and the bubble opened after it. And
+  // `dismissed` is cleared only when pointer and focus have both left: clearing
+  // it when the pointer's grace period ended reopened a bubble that Escape had
+  // closed while focus was still on the trigger.
   useEffect(() => {
     const { current: wrapper } = wrapperRef;
     const bubble = present ? bubbleRef.current : null;
     if (!wrapper) {
       return;
     }
+    const pointer = { over: false, focus: false };
+    let listening = false;
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape' || dismissedRef.current) {
+        return;
+      }
+      dismissedRef.current = true;
+      setDismissed(true);
+      // WebKit sends no mouseleave when a drawer opens under a still pointer, so
+      // a hovered bubble can sit beneath a modal; that Escape is the dialog's.
+      const dialog =
+        event.target instanceof Element ? event.target.closest('[aria-modal="true"]') : null;
+      if (!dialog || dialog.contains(wrapper)) {
+        event.stopPropagation();
+      }
+    };
+    const sync = () => {
+      const active = pointer.over || pointer.focus;
+      if (active && !listening) {
+        document.addEventListener('keydown', onKey, true);
+      } else if (!active && listening) {
+        document.removeEventListener('keydown', onKey, true);
+      }
+      listening = active;
+      if (!active) {
+        dismissedRef.current = false;
+        setDismissed(false);
+      }
+    };
     const inside = (node: EventTarget | null) =>
       node instanceof Node && (wrapper.contains(node) || Boolean(bubble?.contains(node)));
     const over = () => {
       clearTimeout(closeTimer.current);
+      pointer.over = true;
+      sync();
       setHovered(true);
     };
     const out = (event: globalThis.MouseEvent) => {
@@ -176,15 +200,21 @@ export function Tooltip({ text, side = 'top', children }: TooltipProps) {
       }
       clearTimeout(closeTimer.current);
       closeTimer.current = setTimeout(() => {
+        pointer.over = false;
+        sync();
         setHovered(false);
-        setDismissed(false);
       }, CLOSE_DELAY_MS);
     };
-    const focusIn = () => setFocused(true);
+    const focusIn = () => {
+      pointer.focus = true;
+      sync();
+      setFocused(true);
+    };
     const focusOut = (event: globalThis.FocusEvent) => {
       if (!inside(event.relatedTarget)) {
+        pointer.focus = false;
+        sync();
         setFocused(false);
-        setDismissed(false);
       }
     };
     wrapper.addEventListener('focusin', focusIn);
@@ -194,6 +224,7 @@ export function Tooltip({ text, side = 'top', children }: TooltipProps) {
       element?.addEventListener('mouseout', out);
     }
     return () => {
+      document.removeEventListener('keydown', onKey, true);
       wrapper.removeEventListener('focusin', focusIn);
       wrapper.removeEventListener('focusout', focusOut);
       for (const element of [wrapper, bubble]) {
@@ -202,8 +233,6 @@ export function Tooltip({ text, side = 'top', children }: TooltipProps) {
       }
     };
   }, [present]);
-
-  const dismiss = () => setDismissed(true);
 
   let content: ReactNode = null;
   if (typeof children === 'function') {

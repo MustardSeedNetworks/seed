@@ -20,6 +20,16 @@
  * `data-variant` is rendered so "one primary per page" is a queryable fact
  * (`[data-variant="primary"]`) rather than a source grep.
  *
+ * `disabledReason` is a disabled button that explains itself, replacing seed's
+ * GatedButton. With `disabled` and a reason the button is `aria-disabled`, not
+ * `disabled`: it stays in the tab order, its click and its Enter/Space
+ * activation are swallowed (so a submit button does not submit), it looks
+ * disabled, and a Tooltip carries the reason on hover and focus, linked by
+ * `aria-describedby`. The reason is also what a keyboard or screen-reader user
+ * can reach; touch has no hover, so put it in the surrounding copy too when the
+ * button gates a primary flow. Without `disabled` the reason is ignored; with
+ * `loading` the button is a plain disabled one.
+ *
  * Disabled is visibly disabled: a flat sunken face with disabled-text colour
  * and a not-allowed cursor, not just a fade. A fade makes a primary button
  * read as a secondary one. Say why in a `title` or the surrounding copy.
@@ -45,6 +55,7 @@ import type {
   Ref,
 } from 'react';
 import { cx } from './cx';
+import { Tooltip } from './Tooltip';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 export type ButtonSize = 'xs' | 'sm' | 'md';
@@ -59,6 +70,8 @@ interface CommonProps extends NativeProps {
   size?: ButtonSize;
   /** Spinner, disabled and `aria-busy`. */
   loading?: boolean;
+  /** With `disabled`: stays focusable (`aria-disabled`) and a Tooltip says why. */
+  disabledReason?: string;
   className?: string;
   ref?: Ref<HTMLButtonElement>;
 }
@@ -127,18 +140,23 @@ export function Button(props: ButtonProps) {
     className,
     type = 'button',
     disabled,
+    disabledReason,
+    onClick,
     children: _children,
     ref,
     ...rest
   } = props;
-  return (
+  const explained = disabled === true && !loading && Boolean(disabledReason);
+  const button = (
     <button
       ref={ref}
       type={type}
       data-variant={variant}
-      disabled={disabled || loading}
+      disabled={explained ? false : disabled || loading}
+      aria-disabled={explained ? true : undefined}
       aria-busy={loading || undefined}
       className={buttonClass(variant, size, iconOnly === true, className)}
+      onClick={explained ? (event) => event.preventDefault() : onClick}
       {...rest}
     >
       {loading ? (
@@ -149,6 +167,7 @@ export function Button(props: ButtonProps) {
       {props.iconOnly ? undefined : props.children}
     </button>
   );
+  return explained ? <Tooltip text={disabledReason}>{button}</Tooltip> : button;
 }
 
 /** What `renderLink` receives: spread it onto the router's link component. */

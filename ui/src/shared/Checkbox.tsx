@@ -7,7 +7,11 @@
  * the target. `id`, `name`, `data-testid` and any `aria-*` land on the input, so
  * a spec's `getByTestId` and a form's `name` reach the control; `ref` is the
  * input's. For react-hook-form use `Controller` (`checked={field.value}`,
- * `onChange={field.onChange}`), whose `onChange` takes the boolean.
+ * `onChange={field.onChange}`), whose `onChange` takes the boolean. `onClick`
+ * and the other native handlers reach the input too.
+ *
+ * `hideLabel` keeps the label as the control's accessible name but hides it
+ * visually, for a box in a table cell or a row whose text sits beside it.
  */
 import type { InputHTMLAttributes, ReactNode, Ref } from 'react';
 import { useId } from 'react';
@@ -27,6 +31,8 @@ export interface CheckboxProps extends NativeProps {
   onChange: (checked: boolean) => void;
   label: ReactNode;
   description?: string;
+  /** Visually hidden label: still the accessible name, and still the click target's name. */
+  hideLabel?: boolean;
   /** Classes for the wrapper; the input has none to override. */
   className?: string;
   ref?: Ref<HTMLInputElement>;
@@ -37,6 +43,7 @@ export function Checkbox({
   onChange,
   label,
   description,
+  hideLabel = false,
   disabled,
   className,
   id: requestedId,
@@ -67,7 +74,7 @@ export function Checkbox({
         <label
           htmlFor={id}
           className={cx(
-            'block min-h-6 text-sm font-medium leading-6',
+            hideLabel ? 'sr-only' : 'block min-h-6 text-sm font-medium leading-6',
             disabled ? 'cursor-not-allowed text-text-disabled' : 'cursor-pointer text-text-primary',
           )}
         >

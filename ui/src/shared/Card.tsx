@@ -25,15 +25,19 @@
  *   yourself ("loading", "error", "unknown") to match.
  * - `padding`: `md` (default), `sm`, `lg`, or `none` for a body that brings its
  *   own inset (the header keeps its own).
- * - `onClick` makes the whole card a button (Enter and Space too) with a hover
- *   border and focus ring; keep interactive controls out of such a card, or
- *   leave `onClick` off and put a button in `headerAction`.
+ * - `onClick` makes the whole card clickable. The card stays a plain `div`
+ *   (its headings and rows are not valid inside a `<button>`, and
+ *   `role="button"` on a `section` fails axe's aria-allowed-role), and a real
+ *   `<button>` is laid over it: native Enter and Space, a focus ring, a hover
+ *   border. The button is named by the title (`aria-labelledby`) or by
+ *   `aria-label`; one of the two is required. `headerAction` stays above the
+ *   overlay and clickable; keep other interactive controls out of the body.
  * - `liveRegion` announces changes politely, for a card that refreshes in place.
  *
  * CardRow (label and value), CardValue (a prominent figure) and CardDivider
  * fill the body.
  */
-import type { KeyboardEvent, ReactNode } from 'react';
+import { type ReactNode, useId } from 'react';
 import { cx } from './cx';
 import { Skeleton } from './Skeleton';
 import {
@@ -123,21 +127,12 @@ export function Card({
   className,
   'data-testid': testId,
 }: CardProps) {
+  const titleId = useId();
   const Heading = headings[headingLevel];
   const interactive = onClick !== undefined;
+  const Root = interactive ? 'div' : 'section';
   const inset = padding === 'none';
   const hasHeader = title !== undefined || subtitle !== undefined || icon || headerAction || status;
-
-  const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (
-      interactive &&
-      event.target === event.currentTarget &&
-      (event.key === 'Enter' || event.key === ' ')
-    ) {
-      event.preventDefault();
-      onClick();
-    }
-  };
 
   let body: ReactNode = children;
   if (loading) {
@@ -153,23 +148,30 @@ export function Card({
   }
 
   return (
-    <section
+    <Root
       id={id}
       data-testid={testId}
-      aria-label={ariaLabel}
+      aria-label={interactive ? undefined : ariaLabel}
       aria-busy={loading || undefined}
       aria-live={liveRegion ? 'polite' : undefined}
       aria-atomic={liveRegion ? true : undefined}
-      {...(interactive ? { role: 'button', tabIndex: 0, onClick, onKeyDown } : {})}
       className={cx(
         'panel min-w-0',
         paddings[padding],
         tone && toneBars[tone],
-        interactive &&
-          'panel-hover cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary',
+        interactive && 'panel-hover relative',
         className,
       )}
     >
+      {interactive ? (
+        <button
+          type="button"
+          onClick={onClick}
+          aria-label={ariaLabel}
+          aria-labelledby={ariaLabel === undefined && title !== undefined ? titleId : undefined}
+          className="absolute inset-0 z-0 h-full w-full cursor-pointer rounded-[inherit] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+        />
+      ) : null}
       {hasHeader ? (
         <div
           className={cx(
@@ -185,7 +187,10 @@ export function Card({
             ) : null}
             <div className="min-w-0">
               {title === undefined ? null : (
-                <Heading className="text-base font-semibold leading-snug text-text-primary">
+                <Heading
+                  id={titleId}
+                  className="text-base font-semibold leading-snug text-text-primary"
+                >
                   {title}
                 </Heading>
               )}
@@ -195,7 +200,7 @@ export function Card({
             </div>
           </div>
           {headerAction || status ? (
-            <div className="flex items-center gap-2">
+            <div className="relative z-10 flex items-center gap-2">
               {headerAction}
               {status === undefined ? null : (
                 <StatusIndicator tone={status} label={statusLabel} size="md" />
@@ -205,7 +210,7 @@ export function Card({
         </div>
       ) : null}
       {body}
-    </section>
+    </Root>
   );
 }
 

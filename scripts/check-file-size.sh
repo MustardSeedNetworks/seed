@@ -73,7 +73,7 @@ if [ -d "ui/src" ]; then
     while IFS= read -r -d '' file; do
         file=${file#./}
         check "$file" "$(wc -l < "$file" | tr -d ' ')" "$MAX_TS_LINES"
-    done < <(find ui/src -path ui/src/shared -prune -o \( -name "*.ts" -o -name "*.tsx" \) -print0 2>/dev/null || true)
+    done < <(find ui/src \( -name "*.ts" -o -name "*.tsx" \) -print0 2>/dev/null || true)
 fi
 
 echo "==========================================================================="

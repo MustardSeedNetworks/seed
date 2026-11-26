@@ -384,4 +384,52 @@ describe('Tooltip', () => {
       expect(onClick).toHaveBeenCalledOnce();
     });
   });
+
+  describe('Escape under load (the niac "Escape dismisses tooltip" flake)', () => {
+    it('stays dismissed when the pointer grace period ends while focus is still on the trigger', () => {
+      render(tip());
+      const button = screen.getByRole('button');
+      hover(button);
+      fireEvent.focus(button);
+      fireEvent.mouseOut(button);
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(shown()).toBe(false);
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(shown()).toBe(false);
+      fireEvent.blur(button);
+      fireEvent.focus(button);
+      expect(shown()).toBe(true);
+    });
+
+    it('is dismissed by an Escape that arrives before React has rendered the hover', async () => {
+      const environment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
+      render(tip());
+      const button = screen.getByRole('button');
+      environment.IS_REACT_ACT_ENVIRONMENT = false;
+      try {
+        // Native events with no act(): the hover is queued, not yet committed,
+        // as when a parallel worker's renderer is behind the pointer.
+        button.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        await vi.advanceTimersByTimeAsync(500);
+        expect(shown()).toBe(false);
+      } finally {
+        environment.IS_REACT_ACT_ENVIRONMENT = true;
+      }
+    });
+
+    it('lets a second Escape through to the dialog once the bubble is closed', () => {
+      const onKey = vi.fn();
+      document.addEventListener('keydown', onKey);
+      render(tip());
+      fireEvent.focus(screen.getByRole('button'));
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(onKey).not.toHaveBeenCalled();
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(onKey).toHaveBeenCalledOnce();
+      document.removeEventListener('keydown', onKey);
+    });
+  });
 });
