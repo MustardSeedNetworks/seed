@@ -48,7 +48,8 @@ export function useScrollable<T extends HTMLElement>({
           : { scrolls, needsFocus },
       );
     };
-    const resize = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(measure);
+    const resize =
+      typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(() => measure());
     const watchChildren = () => {
       resize?.disconnect();
       resize?.observe(element);

@@ -24,7 +24,12 @@
  * last stop does not hide the real last stop from the wrap, and a panel with
  * nothing tabbable still traps: focus stays on the panel.
  */
-import { type KeyboardEvent, type RefObject, useLayoutEffect, useRef } from 'react';
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  type RefObject,
+  useLayoutEffect,
+  useRef,
+} from 'react';
 
 const TABBABLE = [
   'a[href]',
@@ -44,8 +49,11 @@ let activation: Element | null = null;
 let activationReset: ReturnType<typeof setTimeout> | undefined;
 
 function rememberActivation(event: Event) {
-  if (event instanceof KeyboardEvent && event.key !== 'Enter' && event.key !== ' ') {
-    return;
+  if (event instanceof KeyboardEvent) {
+    const activates = event.key === 'Enter' || event.key === ' ';
+    if (!activates) {
+      return;
+    }
   }
   activation = event.target instanceof Element ? event.target : null;
   clearTimeout(activationReset);
@@ -73,7 +81,7 @@ export interface DialogOptions {
 
 export interface Dialog {
   panelRef: RefObject<HTMLDivElement | null>;
-  onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => void;
+  onKeyDown: (event: ReactKeyboardEvent<HTMLDivElement>) => void;
 }
 
 function leavesPanel(
@@ -131,7 +139,7 @@ export function useDialog(
     };
   }, [open, returnFocusRef]);
 
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
       event.stopPropagation();
       onClose();
