@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.285.5](https://github.com/MustardSeedNetworks/seed/compare/v0.285.4...v0.285.5) (2026-11-26)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.108.0 ([#3892](https://github.com/MustardSeedNetworks/seed/issues/3892)) ([eea5f06](https://github.com/MustardSeedNetworks/seed/commit/eea5f06198913c9c62d3f1fd67c3144b955065e6))
+* **deps:** update dependency lucide-react to v1.75.0 ([#3893](https://github.com/MustardSeedNetworks/seed/issues/3893)) ([2a9e345](https://github.com/MustardSeedNetworks/seed/commit/2a9e3453eea7dd35d963e42626ea74e46798e2ba))
+
 ## [0.285.4](https://github.com/MustardSeedNetworks/seed/compare/v0.285.3...v0.285.4) (2026-11-26)
 
 
