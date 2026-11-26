@@ -111,11 +111,20 @@ Object.defineProperty(window, 'matchMedia', {
 // discovery table's virtualiser. A class, because callers construct it with
 // `new`, and Vitest 4 refuses to construct a mock whose implementation is an
 // arrow function.
-global.ResizeObserver = class {
+class ResizeObserverStub implements ResizeObserver {
+  /** Kept so a test can read the callback it was constructed with. */
+  readonly callback: ResizeObserverCallback;
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+  }
+
   observe(): void {}
   unobserve(): void {}
   disconnect(): void {}
-} as unknown as typeof ResizeObserver;
+}
+
+global.ResizeObserver = ResizeObserverStub;
 
 // IntersectionObserver: used by lazy loading, infinite scroll
 global.IntersectionObserver = vi.fn().mockImplementation(() => ({
