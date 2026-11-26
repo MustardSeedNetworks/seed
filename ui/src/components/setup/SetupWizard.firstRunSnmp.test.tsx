@@ -47,9 +47,9 @@ async function fill(user: User, field: HTMLElement, value: string): Promise<void
 
 /** Fills the password step and submits it; leaves the wizard wherever it lands. */
 async function completePasswordStep(user: User): Promise<void> {
-  await fill(user, screen.getByLabelText('Setup token'), 't-1');
-  await fill(user, screen.getByLabelText('Password'), PASSWORD);
-  await fill(user, screen.getByLabelText('Confirm Password'), PASSWORD);
+  await fill(user, screen.getByLabelText('Setup token*'), 't-1');
+  await fill(user, screen.getByLabelText('Password*'), PASSWORD);
+  await fill(user, screen.getByLabelText('Confirm Password*'), PASSWORD);
   await user.click(screen.getByRole('button', { name: 'Complete Setup' }));
 }
 
@@ -133,9 +133,9 @@ describe('SetupWizard — first-run SNMP community', () => {
     const user = userEvent.setup();
     renderWizard();
 
-    await fill(user, screen.getByLabelText('Token de configuración'), 't-1');
-    await fill(user, screen.getByLabelText('Contraseña'), PASSWORD);
-    await fill(user, screen.getByLabelText('Confirmar Contraseña'), PASSWORD);
+    await fill(user, screen.getByLabelText('Token de configuración*'), 't-1');
+    await fill(user, screen.getByLabelText('Contraseña*'), PASSWORD);
+    await fill(user, screen.getByLabelText('Confirmar Contraseña*'), PASSWORD);
     await user.click(screen.getByRole('button', { name: 'Completar Configuración' }));
 
     expect(await screen.findByLabelText('Cadena de comunidad SNMP')).toBeInTheDocument();

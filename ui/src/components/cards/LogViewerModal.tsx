@@ -1,4 +1,5 @@
 import { Modal } from '../../shared/Modal';
+import { SearchInput } from '../../shared/SearchInput';
 import { Tooltip } from '../../shared/Tooltip';
 /** Full-screen log filtering, streaming and export. */
 
@@ -299,21 +300,15 @@ function LogFiltersBar({
     <div className={cn('stack', 'pad', 'bg-surface-base', radius.lg)}>
       {/* Search bar - larger */}
       <div className={cn(layout.inline.default)}>
-        <input
-          type="text"
-          placeholder={t('logs.searchPlaceholder')}
-          value={filters.search}
-          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-            onFilterChange({ search: e.target.value })
-          }
-          className={cn(
-            'flex-1',
-            'px-4 py-2.5 text-base',
-            radius.lg,
-            'border border-surface-border bg-surface-raised text-text-primary',
-            'focus:outline-none focus:ring-2 focus:ring-brand-primary',
-          )}
-        />
+        <div className="flex-1">
+          <SearchInput
+            value={filters.search}
+            onValueChange={(search): void => onFilterChange({ search })}
+            label={t('logs.searchPlaceholder')}
+            clearLabel={t('logs.clearSearch')}
+            placeholder={t('logs.searchPlaceholder')}
+          />
+        </div>
         {hasActiveFilters ? (
           <button
             type="button"

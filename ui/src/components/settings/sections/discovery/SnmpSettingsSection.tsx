@@ -1,6 +1,8 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
-import { cn, input as inputTokens, layout, spacing } from '../../../../styles/theme';
+import { FormField } from '../../../../shared/FormField';
+import { Input } from '../../../../shared/Input';
+import { cn, layout, spacing } from '../../../../styles/theme';
 import type { SaveStatus, SnmpSettings } from '../../../../types/settings';
 import { AutoSaveIndicator } from '../AutoSaveIndicator';
 
@@ -33,59 +35,45 @@ export function SnmpSettingsSection({
       <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
         {t('snmp.description')}
       </p>
-      {/* SNMP Port */}
-      <div className={spacing.margin.bottom.inline}>
-        <label className="caption text-text-muted" htmlFor="snmp-port">
-          {t('snmp.port')}
-        </label>
-        <input
-          id="snmp-port"
-          type="number"
-          value={snmpSettings.port}
-          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-            setSnmpSettings((prev) => ({
-              ...prev,
-              port: Number.parseInt(e.target.value, 10) || 161,
-            }))
-          }
-          min="1"
-          max="65535"
-          className={cn(
-            inputTokens.base,
-            inputTokens.state.default,
-            inputTokens.size.md,
-            spacing.margin.top.tight,
-            'body-small',
-          )}
-        />
-      </div>
-      {/* Timeout */}
-      <div className={spacing.margin.bottom.inline}>
-        <label className="caption text-text-muted" htmlFor="snmp-timeout">
-          {t('snmp.timeout')}
-        </label>
-        <input
-          id="snmp-timeout"
-          type="number"
-          value={snmpSettings.timeout / 1000}
-          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-            setSnmpSettings((prev) => ({
-              ...prev,
-              timeout: (Number.parseFloat(e.target.value) || 5) * 1000,
-            }))
-          }
-          min="1"
-          max="30"
-          step="1"
-          className={cn(
-            inputTokens.base,
-            inputTokens.state.default,
-            inputTokens.size.md,
-            spacing.margin.top.tight,
-            'body-small',
-          )}
-        />
-      </div>
+      <FormField id="snmp-port" label={t('snmp.port')} className={spacing.margin.bottom.inline}>
+        {(control) => (
+          <Input
+            {...control}
+            type="number"
+            value={snmpSettings.port}
+            onChange={(e): void =>
+              setSnmpSettings((prev) => ({
+                ...prev,
+                port: Number.parseInt(e.target.value, 10) || 161,
+              }))
+            }
+            min="1"
+            max="65535"
+          />
+        )}
+      </FormField>
+      <FormField
+        id="snmp-timeout"
+        label={t('snmp.timeout')}
+        className={spacing.margin.bottom.inline}
+      >
+        {(control) => (
+          <Input
+            {...control}
+            type="number"
+            value={snmpSettings.timeout / 1000}
+            onChange={(e): void =>
+              setSnmpSettings((prev) => ({
+                ...prev,
+                timeout: (Number.parseFloat(e.target.value) || 5) * 1000,
+              }))
+            }
+            min="1"
+            max="30"
+            step="1"
+          />
+        )}
+      </FormField>
     </div>
   );
 }

@@ -22,13 +22,9 @@ import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { useAlertWebhookSettings } from '../../../hooks/useAlertWebhookSettings';
 import { CollapsibleSection } from '../../../shared/CollapsibleSection';
-import {
-  button as buttonTokens,
-  cn,
-  icon as iconTokens,
-  input as inputTokens,
-  layout,
-} from '../../../styles/theme';
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
+import { button as buttonTokens, cn, icon as iconTokens, layout } from '../../../styles/theme';
 import { Bell } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
@@ -52,82 +48,96 @@ export function AlertDeliverySettings() {
       <div className="stack">
         <p className="body-small text-text-muted">{t('alertDelivery.description')}</p>
 
-        <label className="stack-xs" htmlFor="alert-webhook-url">
-          <span className="body-small font-medium text-text-primary">{t('alertDelivery.url')}</span>
-          <Tooltip text={readOnlyReason}>
-            {(description) => (
-              <span className="contents">
-                <input
-                  {...description}
-                  id="alert-webhook-url"
-                  data-testid="alert-webhook-url"
-                  type="url"
-                  value={webhook.url}
-                  disabled={!canWrite}
-                  placeholder={t('alertDelivery.urlPlaceholder')}
-                  onChange={(e): void => {
-                    setWebhook((current) => ({ ...current, url: e.target.value }));
-                  }}
-                  className={cn(inputTokens.base, 'w-full')}
-                />
-                {!canWrite && readOnlyReason ? (
-                  <button
-                    type="button"
-                    {...description}
-                    aria-label={readOnlyReason}
-                    onClick={(event) => event.preventDefault()}
-                    className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
-                  >
-                    <Info className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                ) : null}
-              </span>
-            )}
-          </Tooltip>
-          <span className="caption text-text-muted">{t('alertDelivery.urlHelp')}</span>
-        </label>
+        <FormField
+          id="alert-webhook-url"
+          label={t('alertDelivery.url')}
+          hint={t('alertDelivery.urlHelp')}
+        >
+          {(control) => (
+            <Tooltip text={readOnlyReason}>
+              {(description) => (
+                <span className="flex items-center gap-2">
+                  <Input
+                    {...control}
+                    aria-describedby={
+                      [control['aria-describedby'], description['aria-describedby']]
+                        .filter(Boolean)
+                        .join(' ') || undefined
+                    }
+                    onClick={description.onClick}
+                    data-testid="alert-webhook-url"
+                    type="url"
+                    value={webhook.url}
+                    disabled={!canWrite}
+                    placeholder={t('alertDelivery.urlPlaceholder')}
+                    onChange={(e): void => {
+                      setWebhook((current) => ({ ...current, url: e.target.value }));
+                    }}
+                  />
+                  {!canWrite && readOnlyReason ? (
+                    <button
+                      type="button"
+                      {...description}
+                      aria-label={readOnlyReason}
+                      onClick={(event) => event.preventDefault()}
+                      className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                    >
+                      <Info className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </span>
+              )}
+            </Tooltip>
+          )}
+        </FormField>
 
-        <label className="stack-xs" htmlFor="alert-webhook-secret">
-          <span className="body-small font-medium text-text-primary">
-            {t('alertDelivery.secret')}
-          </span>
-          <Tooltip text={readOnlyReason}>
-            {(description) => (
-              <span className="contents">
-                <input
-                  {...description}
-                  id="alert-webhook-secret"
-                  data-testid="alert-webhook-secret"
-                  type="password"
-                  autoComplete="off"
-                  value={webhook.secret}
-                  disabled={!canWrite}
-                  placeholder={
-                    webhook.secretSet
-                      ? t('alertDelivery.secretStored')
-                      : t('alertDelivery.secretPlaceholder')
-                  }
-                  onChange={(e): void => {
-                    setWebhook((current) => ({ ...current, secret: e.target.value }));
-                  }}
-                  className={cn(inputTokens.base, 'w-full')}
-                />
-                {!canWrite && readOnlyReason ? (
-                  <button
-                    type="button"
-                    {...description}
-                    aria-label={readOnlyReason}
-                    onClick={(event) => event.preventDefault()}
-                    className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
-                  >
-                    <Info className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                ) : null}
-              </span>
-            )}
-          </Tooltip>
-          <span className="caption text-text-muted">{t('alertDelivery.secretHelp')}</span>
-        </label>
+        <FormField
+          id="alert-webhook-secret"
+          label={t('alertDelivery.secret')}
+          hint={t('alertDelivery.secretHelp')}
+        >
+          {(control) => (
+            <Tooltip text={readOnlyReason}>
+              {(description) => (
+                <span className="flex items-center gap-2">
+                  <Input
+                    {...control}
+                    aria-describedby={
+                      [control['aria-describedby'], description['aria-describedby']]
+                        .filter(Boolean)
+                        .join(' ') || undefined
+                    }
+                    onClick={description.onClick}
+                    data-testid="alert-webhook-secret"
+                    type="password"
+                    autoComplete="off"
+                    value={webhook.secret}
+                    disabled={!canWrite}
+                    placeholder={
+                      webhook.secretSet
+                        ? t('alertDelivery.secretStored')
+                        : t('alertDelivery.secretPlaceholder')
+                    }
+                    onChange={(e): void => {
+                      setWebhook((current) => ({ ...current, secret: e.target.value }));
+                    }}
+                  />
+                  {!canWrite && readOnlyReason ? (
+                    <button
+                      type="button"
+                      {...description}
+                      aria-label={readOnlyReason}
+                      onClick={(event) => event.preventDefault()}
+                      className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                    >
+                      <Info className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </span>
+              )}
+            </Tooltip>
+          )}
+        </FormField>
 
         {error === '' ? null : (
           <p data-testid="alert-webhook-error" className="body-small text-status-error">

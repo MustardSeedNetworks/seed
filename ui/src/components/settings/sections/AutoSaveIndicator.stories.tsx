@@ -12,8 +12,11 @@
  */
 
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
+import { Toggle } from '../../../shared/Toggle';
 import { cn, radius, spacing } from '../../../styles/theme';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
+
+const noop = (): void => undefined;
 
 const meta: Meta<typeof AutoSaveIndicator> = {
   title: 'Settings/AutoSaveIndicator',
@@ -119,48 +122,39 @@ export const InContext: Story = {
   render: () => (
     <div className={cn('w-[400px]', spacing.pad.default, 'bg-surface-raised')}>
       <div className="stack">
-        <label
-          className={cn(
-            'flex items-center justify-between',
-            spacing.pad.sm,
-            'bg-surface-base border border-surface-border',
-            radius.lg,
-          )}
-        >
-          <div className={cn('flex items-center', spacing.gap.compact)}>
-            <span className="body-small text-text-primary font-medium">Enable Feature</span>
-            <AutoSaveIndicator status="saved" />
-          </div>
-          <input type="checkbox" checked={true} readOnly={true} className="w-4 h-4" />
-        </label>
-        <label
-          className={cn(
-            'flex items-center justify-between',
-            spacing.pad.sm,
-            'bg-surface-base border border-surface-border',
-            radius.lg,
-          )}
-        >
-          <div className={cn('flex items-center', spacing.gap.compact)}>
-            <span className="body-small text-text-primary font-medium">Auto-refresh</span>
-            <AutoSaveIndicator status="saving" />
-          </div>
-          <input type="checkbox" checked={true} readOnly={true} className="w-4 h-4" />
-        </label>
-        <label
-          className={cn(
-            'flex items-center justify-between',
-            spacing.pad.sm,
-            'bg-surface-base border border-surface-border',
-            radius.lg,
-          )}
-        >
-          <div className={cn('flex items-center', spacing.gap.compact)}>
-            <span className="body-small text-text-primary font-medium">Failed Setting</span>
-            <AutoSaveIndicator status="error" />
-          </div>
-          <input type="checkbox" checked={true} readOnly={true} className="w-4 h-4" />
-        </label>
+        <Toggle
+          label={
+            <span className={cn('flex items-center', spacing.gap.compact)}>
+              Enable Feature
+              <AutoSaveIndicator status="saved" />
+            </span>
+          }
+          checked={true}
+          onChange={noop}
+          className={cn(spacing.pad.sm, 'bg-surface-base border border-surface-border', radius.lg)}
+        />
+        <Toggle
+          label={
+            <span className={cn('flex items-center', spacing.gap.compact)}>
+              Auto-refresh
+              <AutoSaveIndicator status="saving" />
+            </span>
+          }
+          checked={true}
+          onChange={noop}
+          className={cn(spacing.pad.sm, 'bg-surface-base border border-surface-border', radius.lg)}
+        />
+        <Toggle
+          label={
+            <span className={cn('flex items-center', spacing.gap.compact)}>
+              Failed Setting
+              <AutoSaveIndicator status="error" />
+            </span>
+          }
+          checked={true}
+          onChange={noop}
+          className={cn(spacing.pad.sm, 'bg-surface-base border border-surface-border', radius.lg)}
+        />
       </div>
     </div>
   ),

@@ -24,6 +24,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
 import { useRole } from '../../../contexts/RoleContext';
+import { Checkbox } from '../../../shared/Checkbox';
 import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import {
   cn,
@@ -189,38 +190,28 @@ export function CableTestSettings({
         </div>
 
         {/* Enable Cable Test Card */}
-        <label
-          htmlFor="cable-test-card-enabled"
+        <div
           className={cn(
-            layout.flex.between,
             spacing.pad.sm,
             'bg-surface-base',
             radius.default,
             'border border-surface-border',
           )}
         >
-          <div>
-            <span className="body-small text-text-primary font-medium">
-              {t('cableTest.enableCard')}
-            </span>
-            <p className="caption text-text-muted">{t('cableTest.enableCardDesc')}</p>
-          </div>
           <Tooltip text={canWrite ? undefined : t('common.readOnly')}>
             {(description) => (
-              <span className="contents">
-                <input
-                  {...description}
+              <span className="flex items-start gap-2">
+                <Checkbox
                   id="cable-test-card-enabled"
-                  type="checkbox"
+                  label={t('cableTest.enableCard')}
+                  description={t('cableTest.enableCardDesc')}
+                  aria-describedby={description['aria-describedby']}
+                  onClick={description.onClick}
                   checked={cableTestSettings.enabled}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    setCableTestSettings((prev) => ({
-                      ...prev,
-                      enabled: e.target.checked,
-                    }))
+                  onChange={(enabled): void =>
+                    setCableTestSettings((prev) => ({ ...prev, enabled }))
                   }
                   disabled={!canWrite}
-                  className={iconTokens.size.sm}
                 />
                 {!canWrite ? (
                   <button
@@ -236,7 +227,7 @@ export function CableTestSettings({
               </span>
             )}
           </Tooltip>
-        </label>
+        </div>
 
         {/* Auto-Run on Link Down */}
         {/* Note: Auto-run is automatic when link down + PHY supports TDR - no toggle needed */}

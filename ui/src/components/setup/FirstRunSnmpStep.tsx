@@ -19,11 +19,12 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { LogComponents, logger } from '../../lib/logger';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
 import {
   button,
   card,
   cn,
-  input,
   layout,
   radius,
   spacing,
@@ -84,27 +85,18 @@ export function FirstRunSnmpStep({ onDone }: FirstRunSnmpStepProps): React.JSX.E
 
         <div className={cn(card.base, card.variant.default, card.padding.lg)}>
           <div className={spacing.margin.bottom.content}>
-            <label
-              htmlFor="setup-snmp-community"
-              className={cn(
-                'block body-small font-medium text-text-primary',
-                spacing.margin.bottom.inline,
+            <FormField id="setup-snmp-community" label={t('snmp.label')} hint={t('snmp.help')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  type="password"
+                  autoComplete="off"
+                  value={community}
+                  onChange={(e): void => setCommunity(e.target.value)}
+                  placeholder={t('snmp.placeholder')}
+                />
               )}
-            >
-              {t('snmp.label')}
-            </label>
-            <input
-              id="setup-snmp-community"
-              type="password"
-              autoComplete="off"
-              value={community}
-              onChange={(e): void => setCommunity(e.target.value)}
-              className={cn(input.base, input.state.default, input.size.md)}
-              placeholder={t('snmp.placeholder')}
-            />
-            <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
-              {t('snmp.help')}
-            </p>
+            </FormField>
           </div>
 
           {saveError ? (

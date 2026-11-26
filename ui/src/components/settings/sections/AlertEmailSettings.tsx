@@ -9,46 +9,25 @@
  * The password is write-only; an empty field on save keeps the stored one.
  */
 
-import type { JSX, ReactNode } from 'react';
+import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { type AlertEmailTLS, useAlertEmailSettings } from '../../../hooks/useAlertEmailSettings';
 import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
 import { Select } from '../../../shared/Select';
+import { Textarea } from '../../../shared/Textarea';
 import { Tooltip } from '../../../shared/Tooltip';
-import {
-  button as buttonTokens,
-  cn,
-  icon as iconTokens,
-  input as inputTokens,
-  layout,
-} from '../../../styles/theme';
+import { button as buttonTokens, cn, icon as iconTokens, layout } from '../../../styles/theme';
 import { Mail } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
-
-interface FieldProps {
-  id: string;
-  label: string;
-  help?: string;
-  children: ReactNode;
-}
-
-function Field({ id, label, help, children }: FieldProps): JSX.Element {
-  return (
-    <label className="stack-xs" htmlFor={id}>
-      <span className="body-small font-medium text-text-primary">{label}</span>
-      {children}
-      {help === undefined ? null : <span className="caption text-text-muted">{help}</span>}
-    </label>
-  );
-}
 
 export function AlertEmailSettings(): JSX.Element {
   const { email, setEmail, status, error, save } = useAlertEmailSettings();
   const { t } = useTranslation('settings');
   const { canWrite } = useRole();
   const readOnlyReason = canWrite ? undefined : t('common.readOnly');
-  const inputClass = cn(inputTokens.base, 'w-full');
 
   return (
     <CollapsibleSection
@@ -66,127 +45,138 @@ export function AlertEmailSettings(): JSX.Element {
         <p className="body-small text-text-muted">{t('alertEmail.description')}</p>
 
         <fieldset disabled={!canWrite} className="stack">
-          <Field id="alert-email-host" label={t('alertEmail.host')} help={t('alertEmail.hostHelp')}>
-            <input
-              id="alert-email-host"
-              data-testid="alert-email-host"
-              type="text"
-              autoComplete="off"
-              value={email.host}
-              placeholder={t('alertEmail.hostPlaceholder')}
-              onChange={(e): void => {
-                const host = e.target.value;
-                setEmail((current) => ({ ...current, host }));
-              }}
-              className={inputClass}
-            />
-          </Field>
+          <FormField
+            id="alert-email-host"
+            label={t('alertEmail.host')}
+            hint={t('alertEmail.hostHelp')}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                data-testid="alert-email-host"
+                autoComplete="off"
+                value={email.host}
+                placeholder={t('alertEmail.hostPlaceholder')}
+                onChange={(e): void => {
+                  const host = e.target.value;
+                  setEmail((current) => ({ ...current, host }));
+                }}
+              />
+            )}
+          </FormField>
 
           <div className="flex flex-wrap gap-default">
-            <Field id="alert-email-tls" label={t('alertEmail.tls')}>
-              <Select
-                id="alert-email-tls"
-                data-testid="alert-email-tls"
-                value={email.tls}
-                onValueChange={(value): void => {
-                  const tls: AlertEmailTLS = value === 'tls' ? 'tls' : 'starttls';
-                  setEmail((current) => ({ ...current, tls }));
-                }}
-                options={[
-                  { value: 'starttls', label: t('alertEmail.tlsStartTls') },
-                  { value: 'tls', label: t('alertEmail.tlsImplicit') },
-                ]}
-              />
-            </Field>
-            <Field id="alert-email-port" label={t('alertEmail.port')}>
-              <input
-                id="alert-email-port"
-                data-testid="alert-email-port"
-                type="number"
-                min={1}
-                max={65535}
-                step={1}
-                inputMode="numeric"
-                value={email.port === 0 ? '' : email.port}
-                placeholder={email.tls === 'tls' ? '465' : '587'}
-                onChange={(e): void => {
-                  const port = Number(e.target.value);
-                  setEmail((current) => ({ ...current, port }));
-                }}
-                className={cn(inputTokens.base, 'w-24')}
-              />
-            </Field>
+            <FormField id="alert-email-tls" label={t('alertEmail.tls')}>
+              {(control) => (
+                <Select
+                  {...control}
+                  data-testid="alert-email-tls"
+                  value={email.tls}
+                  onValueChange={(value): void => {
+                    const tls: AlertEmailTLS = value === 'tls' ? 'tls' : 'starttls';
+                    setEmail((current) => ({ ...current, tls }));
+                  }}
+                  options={[
+                    { value: 'starttls', label: t('alertEmail.tlsStartTls') },
+                    { value: 'tls', label: t('alertEmail.tlsImplicit') },
+                  ]}
+                />
+              )}
+            </FormField>
+            <div className="w-28">
+              <FormField id="alert-email-port" label={t('alertEmail.port')}>
+                {(control) => (
+                  <Input
+                    {...control}
+                    data-testid="alert-email-port"
+                    type="number"
+                    min={1}
+                    max={65535}
+                    step={1}
+                    inputMode="numeric"
+                    value={email.port === 0 ? '' : email.port}
+                    placeholder={email.tls === 'tls' ? '465' : '587'}
+                    onChange={(e): void => {
+                      const port = Number(e.target.value);
+                      setEmail((current) => ({ ...current, port }));
+                    }}
+                  />
+                )}
+              </FormField>
+            </div>
           </div>
 
-          <Field
+          <FormField
             id="alert-email-username"
             label={t('alertEmail.username')}
-            help={t('alertEmail.usernameHelp')}
+            hint={t('alertEmail.usernameHelp')}
           >
-            <input
-              id="alert-email-username"
-              data-testid="alert-email-username"
-              type="text"
-              autoComplete="off"
-              value={email.username}
-              onChange={(e): void => {
-                const username = e.target.value;
-                setEmail((current) => ({ ...current, username }));
-              }}
-              className={inputClass}
-            />
-          </Field>
+            {(control) => (
+              <Input
+                {...control}
+                data-testid="alert-email-username"
+                autoComplete="off"
+                value={email.username}
+                onChange={(e): void => {
+                  const username = e.target.value;
+                  setEmail((current) => ({ ...current, username }));
+                }}
+              />
+            )}
+          </FormField>
 
-          <Field
+          <FormField
             id="alert-email-password"
             label={t('alertEmail.password')}
-            help={t('alertEmail.passwordHelp')}
+            hint={t('alertEmail.passwordHelp')}
           >
-            <input
-              id="alert-email-password"
-              data-testid="alert-email-password"
-              type="password"
-              autoComplete="off"
-              value={email.password}
-              placeholder={email.passwordSet ? t('alertEmail.passwordStored') : ''}
-              onChange={(e): void => {
-                const password = e.target.value;
-                setEmail((current) => ({ ...current, password }));
-              }}
-              className={inputClass}
-            />
-          </Field>
+            {(control) => (
+              <Input
+                {...control}
+                data-testid="alert-email-password"
+                type="password"
+                autoComplete="off"
+                value={email.password}
+                placeholder={email.passwordSet ? t('alertEmail.passwordStored') : ''}
+                onChange={(e): void => {
+                  const password = e.target.value;
+                  setEmail((current) => ({ ...current, password }));
+                }}
+              />
+            )}
+          </FormField>
 
-          <Field id="alert-email-from" label={t('alertEmail.from')}>
-            <input
-              id="alert-email-from"
-              data-testid="alert-email-from"
-              type="text"
-              autoComplete="off"
-              value={email.from}
-              placeholder={t('alertEmail.fromPlaceholder')}
-              onChange={(e): void => {
-                const from = e.target.value;
-                setEmail((current) => ({ ...current, from }));
-              }}
-              className={inputClass}
-            />
-          </Field>
+          <FormField id="alert-email-from" label={t('alertEmail.from')}>
+            {(control) => (
+              <Input
+                {...control}
+                data-testid="alert-email-from"
+                autoComplete="off"
+                value={email.from}
+                placeholder={t('alertEmail.fromPlaceholder')}
+                onChange={(e): void => {
+                  const from = e.target.value;
+                  setEmail((current) => ({ ...current, from }));
+                }}
+              />
+            )}
+          </FormField>
 
-          <Field id="alert-email-to" label={t('alertEmail.to')} help={t('alertEmail.toHelp')}>
-            <textarea
-              id="alert-email-to"
-              data-testid="alert-email-to"
-              rows={2}
-              value={email.to}
-              placeholder={t('alertEmail.toPlaceholder')}
-              onChange={(e): void => {
-                const to = e.target.value;
-                setEmail((current) => ({ ...current, to }));
-              }}
-              className={inputClass}
-            />
-          </Field>
+          <FormField id="alert-email-to" label={t('alertEmail.to')} hint={t('alertEmail.toHelp')}>
+            {(control) => (
+              <Textarea
+                {...control}
+                data-testid="alert-email-to"
+                rows={2}
+                value={email.to}
+                placeholder={t('alertEmail.toPlaceholder')}
+                onChange={(e): void => {
+                  const to = e.target.value;
+                  setEmail((current) => ({ ...current, to }));
+                }}
+              />
+            )}
+          </FormField>
         </fieldset>
 
         {error === '' ? null : (

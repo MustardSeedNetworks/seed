@@ -37,7 +37,7 @@ import { Button } from '../../shared/Button';
 import { Card, type CardStatus } from '../../shared/Card';
 import { FormField } from '../../shared/FormField';
 import { Input } from '../../shared/Input';
-import { cn, radius, spacing } from '../../styles/theme';
+import { RadioGroup } from '../../shared/RadioGroup';
 import { Gauge } from '../ui/Icons';
 import { DscpCheckResult, verdictOf } from './DscpCheckResult';
 
@@ -390,43 +390,24 @@ function ModePicker({
   const copy = useModeCopy();
 
   return (
-    <div
-      className={cn('flex flex-wrap', spacing.gap.compact)}
-      role="radiogroup"
-      aria-label={t('dscpCheck.modeLabel')}
-    >
-      {MODES.map((option) => {
-        const checked = mode === option;
-        return (
-          <label
-            key={option}
-            className={cn(
-              spacing.chip.md,
-              radius.full,
-              'border body-small font-medium transition-colors',
-              checked
-                ? 'bg-brand-primary text-on-brand border-brand-primary'
-                : 'bg-surface-base border-surface-border',
-              !checked &&
-                (disabled ? 'text-text-muted' : 'text-text-primary hover:bg-surface-hover'),
-              disabled ? 'cursor-not-allowed' : 'cursor-pointer',
-            )}
-            data-testid={`dscp-check-mode-${option}`}
-          >
-            <input
-              type="radio"
-              name="dscp-check-mode"
-              value={option}
-              checked={checked}
-              disabled={disabled}
-              onChange={() => onChange(option)}
-              className="sr-only"
-            />
-            {copy[option].label}
-          </label>
-        );
-      })}
-    </div>
+    <RadioGroup
+      label={t('dscpCheck.modeLabel')}
+      name="dscp-check-mode"
+      orientation="horizontal"
+      value={mode}
+      disabled={disabled}
+      onValueChange={(value): void => {
+        const next = MODES.find((option) => option === value);
+        if (next) {
+          onChange(next);
+        }
+      }}
+      options={MODES.map((option) => ({
+        value: option,
+        label: copy[option].label,
+        'data-testid': `dscp-check-mode-${option}`,
+      }))}
+    />
   );
 }
 

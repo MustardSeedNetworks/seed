@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { useDefaults } from '../../../../hooks/useDefaults';
 import { useLocale } from '../../../../hooks/useLocale';
 import { CollapsibleSection } from '../../../../shared/CollapsibleSection';
-import { cn, radius, spacing } from '../../../../styles/theme';
+import { FormField } from '../../../../shared/FormField';
+import { Input } from '../../../../shared/Input';
+import { cn, spacing } from '../../../../styles/theme';
 import type { NetworkDiscoverySettings } from '../../../../types/settings';
 
 const MS_PER_UNIT = { minute: 60_000, second: 1000 } as const;
@@ -48,42 +50,39 @@ function DurationField({
 
   return (
     <div className={spacing.margin.top.content}>
-      <label className="caption text-text-muted" htmlFor={id}>
-        {label}
-      </label>
-      <input
+      <FormField
         id={id}
-        data-testid={testId}
-        type="number"
-        inputMode="numeric"
-        min={min}
-        max={max}
-        step={1}
-        value={draft ?? String(valueMs / perUnit)}
-        aria-describedby={`${id}-desc`}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
-          setDraft(e.target.value);
-          const units = e.target.valueAsNumber;
-          if (Number.isInteger(units) && units >= min && units <= max) {
-            onChange(units * perUnit);
-          }
-        }}
-        onBlur={(): void => setDraft(null)}
-        className={cn(
-          'w-full',
-          spacing.margin.top.tight,
-          spacing.chip.lg,
-          'bg-surface-base border border-surface-border',
-          radius.default,
-          'body-small text-text-primary',
+        label={label}
+        hint={
+          <>
+            {description}
+            {recommendedMs === undefined
+              ? null
+              : ` ${t('discovery.recommended', { value: formatted.format(recommendedMs / perUnit) })}`}
+          </>
+        }
+      >
+        {(control) => (
+          <Input
+            {...control}
+            data-testid={testId}
+            type="number"
+            inputMode="numeric"
+            min={min}
+            max={max}
+            step={1}
+            value={draft ?? String(valueMs / perUnit)}
+            onChange={(e): void => {
+              setDraft(e.target.value);
+              const units = e.target.valueAsNumber;
+              if (Number.isInteger(units) && units >= min && units <= max) {
+                onChange(units * perUnit);
+              }
+            }}
+            onBlur={(): void => setDraft(null)}
+          />
         )}
-      />
-      <p id={`${id}-desc`} className={cn('caption text-text-muted', spacing.margin.top.tight)}>
-        {description}
-        {recommendedMs === undefined
-          ? null
-          : ` ${t('discovery.recommended', { value: formatted.format(recommendedMs / perUnit) })}`}
-      </p>
+      </FormField>
     </div>
   );
 }

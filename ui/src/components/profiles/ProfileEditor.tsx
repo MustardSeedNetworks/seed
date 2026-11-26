@@ -9,8 +9,11 @@ import { type SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { ProfileEditorSchema } from '../../schemas/auth';
 import { Button } from '../../shared/Button';
+import { Checkbox } from '../../shared/Checkbox';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
 import { Modal } from '../../shared/Modal';
-import { cn, radius, spacing } from '../../styles/theme';
+import { Textarea } from '../../shared/Textarea';
 import type { Profile, ProfileRequest } from '../../types/profile';
 
 interface ProfileEditorProps {
@@ -106,88 +109,47 @@ export function ProfileEditor({
     >
       <form id="profile-editor-form" onSubmit={handleSubmit(onSubmit)}>
         <div className="stack-lg">
-          {/* Name */}
-          <div>
-            <label
-              htmlFor="profile-name"
-              className="block body-small font-medium text-text-primary mb-tight"
-            >
-              {t('profile.name')} *
-            </label>
-            <input
-              id="profile-name"
-              type="text"
-              {...register('name')}
-              className={cn(
-                'w-full',
-                spacing.pad.sm,
-                radius.md,
-                'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary',
-              )}
-              placeholder={t('profile.namePlaceholder')}
-            />
-            {errors.name ? (
-              <p className="caption mt-tight text-status-error">{errors.name.message}</p>
-            ) : null}
-          </div>
+          <FormField
+            id="profile-name"
+            label={t('profile.name')}
+            required
+            {...(errors.name ? { error: errors.name.message } : {})}
+          >
+            {(field) => (
+              <Input {...field} {...register('name')} placeholder={t('profile.namePlaceholder')} />
+            )}
+          </FormField>
 
-          {/* Description */}
-          <div>
-            <label
-              htmlFor="profile-description"
-              className="block body-small font-medium text-text-primary mb-tight"
-            >
-              {t('profile.description')}
-            </label>
-            <input
-              id="profile-description"
-              type="text"
-              {...register('description')}
-              className={cn(
-                'w-full',
-                spacing.pad.sm,
-                radius.md,
-                'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary',
-              )}
-              placeholder={t('profile.descriptionPlaceholder')}
-            />
-            {errors.description ? (
-              <p className="caption mt-tight text-status-error">{errors.description.message}</p>
-            ) : null}
-          </div>
+          <FormField
+            id="profile-description"
+            label={t('profile.description')}
+            {...(errors.description ? { error: errors.description.message } : {})}
+          >
+            {(field) => (
+              <Input
+                {...field}
+                {...register('description')}
+                placeholder={t('profile.descriptionPlaceholder')}
+              />
+            )}
+          </FormField>
 
-          {/* Notes */}
-          <div>
-            <label
-              htmlFor="profile-notes"
-              className="block body-small font-medium text-text-primary mb-tight"
-            >
-              {t('profile.notes')}
-            </label>
-            <textarea
-              id="profile-notes"
-              {...register('notes')}
-              rows={3}
-              className={cn(
-                'w-full',
-                spacing.pad.sm,
-                radius.md,
-                'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none',
-              )}
-              placeholder={t('profile.notesPlaceholder')}
-            />
-          </div>
+          <FormField id="profile-notes" label={t('profile.notes')}>
+            {(field) => (
+              <Textarea
+                {...field}
+                {...register('notes')}
+                rows={3}
+                placeholder={t('profile.notesPlaceholder')}
+              />
+            )}
+          </FormField>
 
-          {/* Default checkbox */}
-          <label className="flex items-center gap-compact cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isDefault}
-              onChange={(e) => setValue('isDefault', e.target.checked, { shouldDirty: true })}
-              className="w-4 h-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary"
-            />
-            <span className="body-small text-text-primary">{t('profile.setAsDefault')}</span>
-          </label>
+          <Checkbox
+            label={t('profile.setAsDefault')}
+            checked={isDefault}
+            onChange={(checked): void => setValue('isDefault', checked, { shouldDirty: true })}
+          />
         </div>
       </form>
     </Modal>

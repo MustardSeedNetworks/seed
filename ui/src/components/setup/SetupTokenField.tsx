@@ -1,7 +1,9 @@
 import type React from 'react';
 import type { UseFormRegisterReturn } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { cn, input, spacing, status as statusColor } from '../../styles/theme';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
+import { spacing } from '../../styles/theme';
 
 interface SetupTokenFieldProps {
   registration: UseFormRegisterReturn<'setupToken'>;
@@ -22,31 +24,25 @@ export function SetupTokenField({
   const { t } = useTranslation('setup');
   return (
     <div className={spacing.margin.bottom.content}>
-      <label
-        htmlFor="setup-token"
-        className={cn(
-          'block body-small font-medium text-text-primary',
-          spacing.margin.bottom.inline,
-        )}
-      >
-        {t('setupToken.label')}
-      </label>
-      <input
+      <FormField
         id="setup-token"
-        data-testid="setup-token"
-        type="password"
-        autoComplete="off"
-        required={true}
-        {...registration}
-        className={cn(input.base, input.state.default, input.size.md)}
-        placeholder={t('setupToken.placeholder')}
-      />
-      {tokenFile ? (
-        <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
-          {t('setupToken.help', { path: tokenFile })}
-        </p>
-      ) : null}
-      {error ? <p className={cn('caption mt-tight', statusColor.text.error)}>{error}</p> : null}
+        label={t('setupToken.label')}
+        required
+        {...(tokenFile ? { hint: t('setupToken.help', { path: tokenFile }) } : {})}
+        {...(error ? { error } : {})}
+      >
+        {(control) => (
+          <Input
+            {...control}
+            data-testid="setup-token"
+            type="password"
+            autoComplete="off"
+            required={true}
+            {...registration}
+            placeholder={t('setupToken.placeholder')}
+          />
+        )}
+      </FormField>
     </div>
   );
 }

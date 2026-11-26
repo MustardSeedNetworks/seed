@@ -1,4 +1,8 @@
+import type { JSX } from 'react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal } from '../../shared/Modal';
+import { SearchInput } from '../../shared/SearchInput';
 import { Tooltip } from '../../shared/Tooltip';
 /**
  * DiscoveryModal - Full-screen modal for network device discovery.
@@ -17,12 +21,8 @@ import { Tooltip } from '../../shared/Tooltip';
  * - Keyboard support (Escape to close)
  */
 
-import type React from 'react';
-import type { JSX } from 'react';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { button, cn, icon as iconTokens, radius } from '../../styles/theme';
-import { ArrowUpDown, ChevronDown, ChevronUp, Download, RefreshCw, Search, X } from '../ui/Icons';
+import { ArrowUpDown, ChevronDown, ChevronUp, Download, RefreshCw } from '../ui/Icons';
 import { column } from './DiscoveryModalCells';
 import { DeviceRow } from './DiscoveryModalDeviceRow';
 import type { DiscoveredDevice, NetworkDiscoveryData } from './NetworkDiscoveryCard';
@@ -404,40 +404,14 @@ export function DiscoveryModal({
         {/* Search and filters */}
         <div className="flex items-center gap-comfortable mb-content">
           {/* Search input */}
-          <div className="relative flex-1 max-w-md">
-            <Search
-              className={cn(
-                'absolute left-3 top-1/2 -translate-y-1/2',
-                iconTokens.size.sm,
-                'text-text-muted',
-              )}
-            />
-            <input
-              type="text"
+          <div className="flex-1">
+            <SearchInput
               value={searchQuery}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                setSearchQuery(e.target.value)
-              }
+              onValueChange={setSearchQuery}
+              label={t('discovery.searchPlaceholder')}
+              clearLabel={t('discovery.clearSearch')}
               placeholder={t('discovery.searchPlaceholder')}
-              className={cn(
-                'w-full pl-10 pr-4 py-row',
-                'text-sm bg-surface-base border border-surface-border',
-                radius.md,
-                'focus:outline-none focus:ring-1 focus:ring-brand-primary text-text-primary placeholder:text-text-muted',
-              )}
             />
-            {searchQuery ? (
-              <Tooltip text={t('discovery.clearSearch')}>
-                <button
-                  type="button"
-                  onClick={(): void => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-                  aria-label={t('discovery.clearSearch')}
-                >
-                  <X className={iconTokens.size.sm} />
-                </button>
-              </Tooltip>
-            ) : null}
           </div>
 
           {/* Filter toggles */}

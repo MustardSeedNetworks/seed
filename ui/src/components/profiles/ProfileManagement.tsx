@@ -1,5 +1,6 @@
 import { ConfirmDialog } from '../../shared/ConfirmDialog';
 import { Modal } from '../../shared/Modal';
+import { SearchInput } from '../../shared/SearchInput';
 import { Tooltip } from '../../shared/Tooltip';
 /** Create, edit, switch and transfer saved profiles. */
 
@@ -172,33 +173,13 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
           </Tooltip>
 
           {/* Search bar */}
-          <div className="relative flex-1 ml-content">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder={t('profile.searchPlaceholder')}
+          <div className="flex-1 ml-content">
+            <SearchInput
               value={searchQuery}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                setSearchQuery(e.target.value)
-              }
-              className={cn(
-                'w-full pl-9 pr-4 py-row',
-                radius.md,
-                'border border-surface-border bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary body-small',
-              )}
+              onValueChange={setSearchQuery}
+              label={t('profile.searchPlaceholder')}
+              clearLabel={t('profile.clearSearch')}
+              placeholder={t('profile.searchPlaceholder')}
             />
           </div>
         </div>

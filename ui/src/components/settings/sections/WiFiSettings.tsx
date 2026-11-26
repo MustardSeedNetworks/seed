@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
 import { useRole } from '../../../contexts/RoleContext';
 import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
 import { Select } from '../../../shared/Select';
 import {
   cn,
@@ -280,44 +282,38 @@ export function WiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFi
       <div className="stack-md">
         {/* Interface Selection */}
         <div>
-          <label className="caption text-text-muted" htmlFor="wifi-interface">
-            {t('wifi.title')}
-          </label>
-          {wifiSettings.availableWifi.length > 0 ? (
-            <Select
-              id="wifi-interface"
-              className="mt-1"
-              value={wifiSettings.interface}
-              onValueChange={(value): void =>
-                setWifiSettings((prev) => ({
-                  ...prev,
-                  interface: value,
-                }))
-              }
-              options={wifiSettings.availableWifi.map((iface) => ({ value: iface, label: iface }))}
-            />
-          ) : (
-            <input
-              id="wifi-interface-input"
-              type="text"
-              value={wifiSettings.interface}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                setWifiSettings((prev) => ({
-                  ...prev,
-                  interface: e.target.value,
-                }))
-              }
-              placeholder="wlan0 or en0"
-              className={cn(
-                'w-full',
-                spacing.margin.top.tight,
-                spacing.chip.lg,
-                'bg-surface-base border border-surface-border',
-                radius.default,
-                'body-small text-text-primary',
-              )}
-            />
-          )}
+          <FormField id="wifi-interface" label={t('wifi.title')}>
+            {(control) =>
+              wifiSettings.availableWifi.length > 0 ? (
+                <Select
+                  {...control}
+                  value={wifiSettings.interface}
+                  onValueChange={(value): void =>
+                    setWifiSettings((prev) => ({
+                      ...prev,
+                      interface: value,
+                    }))
+                  }
+                  options={wifiSettings.availableWifi.map((iface) => ({
+                    value: iface,
+                    label: iface,
+                  }))}
+                />
+              ) : (
+                <Input
+                  {...control}
+                  value={wifiSettings.interface}
+                  onChange={(e): void =>
+                    setWifiSettings((prev) => ({
+                      ...prev,
+                      interface: e.target.value,
+                    }))
+                  }
+                  placeholder="wlan0 or en0"
+                />
+              )
+            }
+          </FormField>
           <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
             {wifiSettings.isWireless ? t('wifi.wirelessMonitoring') : t('wifi.noWireless')}
           </p>
@@ -438,20 +434,13 @@ export function WiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFi
 
                   {selectedNetwork.security !== 'Open' ? (
                     <div className="relative mb-2">
-                      <input
+                      <Input
                         type={showPassword ? 'text' : 'password'}
                         value={password}
-                        onChange={(
-                          e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                        ): void => setPassword(e.target.value)}
+                        onChange={(e): void => setPassword(e.target.value)}
                         placeholder={t('wifi.password')}
-                        className={cn(
-                          'w-full pr-16',
-                          spacing.chip.lg,
-                          'bg-surface-base border border-surface-border',
-                          radius.default,
-                          'body-small text-text-primary',
-                        )}
+                        aria-label={t('wifi.password')}
+                        className="pr-16"
                         onKeyDown={(e: React.KeyboardEvent): void => {
                           if (e.key === 'Enter' && password) {
                             connectToNetwork().catch(() => undefined);

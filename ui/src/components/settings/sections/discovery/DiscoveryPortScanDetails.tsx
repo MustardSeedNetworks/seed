@@ -1,8 +1,9 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FormField } from '../../../../shared/FormField';
+import { Input } from '../../../../shared/Input';
 import { Select } from '../../../../shared/Select';
-import { cn, input as inputTokens, radius, spacing } from '../../../../styles/theme';
+import { cn, radius, spacing } from '../../../../styles/theme';
 import type { NetworkDiscoverySettings, PortPreset } from '../../../../types/settings';
 import { PORT_PRESETS } from './DiscoveryCustomOptions.constants';
 
@@ -71,48 +72,43 @@ export function DiscoveryPortScanDetails({
           />
         )}
       </FormField>
-      <div>
-        <label className="caption text-text-muted" htmlFor="port-scan-tcp">
-          {t('discovery.portScanTcpPorts')}
-          {(settings.options?.portScan?.preset ?? 'common') !== 'custom' && (
-            <span className="ml-inline text-text-muted italic">
-              {t('discovery.portPresetReadOnly')}
-            </span>
-          )}
-        </label>
-        <input
-          id="port-scan-tcp"
-          type="text"
-          value={settings.options?.portScan?.tcpPorts ?? '22,80,443'}
-          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-            onSettingsChange((prev) => ({
-              ...prev,
-              options: {
-                ...prev.options,
-                portScan: {
-                  ...prev.options?.portScan,
-                  enabled: prev.options?.portScan?.enabled ?? false,
-                  preset: prev.options?.portScan?.preset ?? 'common',
-                  tcpPorts: e.target.value,
+      <FormField
+        id="port-scan-tcp"
+        label={
+          <>
+            {t('discovery.portScanTcpPorts')}
+            {(settings.options?.portScan?.preset ?? 'common') !== 'custom' && (
+              <span className="ml-inline text-text-muted italic">
+                {t('discovery.portPresetReadOnly')}
+              </span>
+            )}
+          </>
+        }
+      >
+        {(control) => (
+          <Input
+            {...control}
+            value={settings.options?.portScan?.tcpPorts ?? '22,80,443'}
+            onChange={(e): void =>
+              onSettingsChange((prev) => ({
+                ...prev,
+                options: {
+                  ...prev.options,
+                  portScan: {
+                    ...prev.options?.portScan,
+                    enabled: prev.options?.portScan?.enabled ?? false,
+                    preset: prev.options?.portScan?.preset ?? 'common',
+                    tcpPorts: e.target.value,
+                  },
                 },
-              },
-            }))
-          }
-          placeholder="22,80,443,8080-8100"
-          readOnly={(settings.options?.portScan?.preset ?? 'common') !== 'custom'}
-          disabled={(settings.options?.portScan?.preset ?? 'common') !== 'custom'}
-          className={cn(
-            'w-full',
-            spacing.margin.top.tight,
-            inputTokens.base,
-            (settings.options?.portScan?.preset ?? 'common') !== 'custom'
-              ? 'disabled:control-disabled cursor-not-allowed'
-              : inputTokens.state.default,
-            inputTokens.size.sm,
-            'body-small',
-          )}
-        />
-      </div>
+              }))
+            }
+            placeholder="22,80,443,8080-8100"
+            readOnly={(settings.options?.portScan?.preset ?? 'common') !== 'custom'}
+            disabled={(settings.options?.portScan?.preset ?? 'common') !== 'custom'}
+          />
+        )}
+      </FormField>
     </div>
   );
 }

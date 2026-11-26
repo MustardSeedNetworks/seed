@@ -25,14 +25,10 @@ import {
 } from '../../../hooks/useAlertEscalationSettings';
 import { Checkbox } from '../../../shared/Checkbox';
 import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
 import { Tooltip } from '../../../shared/Tooltip';
-import {
-  button as buttonTokens,
-  cn,
-  icon as iconTokens,
-  input as inputTokens,
-  layout,
-} from '../../../styles/theme';
+import { button as buttonTokens, cn, icon as iconTokens, layout } from '../../../styles/theme';
 import { Bell } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
@@ -101,25 +97,25 @@ export function AlertEscalationSettings(): JSX.Element {
             disabled={!canWrite}
             className="stack-sm rounded-md border border-surface-border pad-sm"
           >
-            <label className="stack-xs" htmlFor={`escalation-rule-${ladder.id}`}>
-              <span className="body-small font-medium text-text-primary">
-                {t('alertEscalation.rule')}
-              </span>
-              <input
-                id={`escalation-rule-${ladder.id}`}
-                data-testid={`escalation-rule-${li}`}
-                type="text"
-                list={RULE_OPTIONS_ID}
-                autoComplete="off"
-                value={ladder.rule}
-                onChange={(e): void => {
-                  const rule = e.target.value;
-                  editLadder(ladder.id, (l) => ({ ...l, rule }));
-                }}
-                className={cn(inputTokens.base, 'w-full')}
-              />
-              <span className="caption text-text-muted">{t('alertEscalation.ruleHelp')}</span>
-            </label>
+            <FormField
+              id={`escalation-rule-${ladder.id}`}
+              label={t('alertEscalation.rule')}
+              hint={t('alertEscalation.ruleHelp')}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  data-testid={`escalation-rule-${li}`}
+                  list={RULE_OPTIONS_ID}
+                  autoComplete="off"
+                  value={ladder.rule}
+                  onChange={(e): void => {
+                    const rule = e.target.value;
+                    editLadder(ladder.id, (l) => ({ ...l, rule }));
+                  }}
+                />
+              )}
+            </FormField>
 
             {ladder.stages.map((stage, si) => (
               <div
@@ -127,58 +123,60 @@ export function AlertEscalationSettings(): JSX.Element {
                 data-testid={`escalation-stage-${li}-${si}`}
                 className="flex flex-wrap items-end gap-default"
               >
-                <label className="stack-xs" htmlFor={`escalation-after-${stage.id}`}>
-                  <span className="body-small font-medium text-text-primary">
-                    {t('alertEscalation.stageAfter', { stage: si + 1 })}
-                  </span>
-                  <input
+                <div className="w-28">
+                  <FormField
                     id={`escalation-after-${stage.id}`}
-                    data-testid={`escalation-after-${li}-${si}`}
-                    type="number"
-                    min={1}
-                    step={1}
-                    inputMode="numeric"
-                    value={toMinutes(stage.afterSeconds)}
-                    onChange={(e): void => {
-                      const afterSeconds = toSeconds(e.target.value);
-                      editLadder(ladder.id, (l) => ({
-                        ...l,
-                        stages: l.stages.map((s, i) => (i === si ? { ...s, afterSeconds } : s)),
-                      }));
-                    }}
-                    className={cn(inputTokens.base, 'w-24')}
-                  />
-                </label>
-                <fieldset className="flex flex-wrap items-center gap-default min-h-9">
-                  <legend className="sr-only">
-                    {t('alertEscalation.stageChannels', { stage: si + 1 })}
-                  </legend>
-                  {ESCALATION_CHANNELS.map((channel) => (
-                    <Checkbox
-                      key={channel}
-                      label={channelLabel[channel]}
-                      data-testid={`escalation-channel-${li}-${si}-${channel}`}
-                      checked={stage.channels.includes(channel)}
-                      onChange={(on: boolean): void => {
-                        editLadder(ladder.id, (l) => ({
-                          ...l,
-                          stages: l.stages.map((s, i) =>
-                            i === si
-                              ? {
-                                  ...s,
-                                  channels: on
-                                    ? ESCALATION_CHANNELS.filter(
-                                        (c) => c === channel || s.channels.includes(c),
-                                      )
-                                    : s.channels.filter((c) => c !== channel),
-                                }
-                              : s,
-                          ),
-                        }));
-                      }}
-                    />
-                  ))}
-                </fieldset>
+                    label={t('alertEscalation.stageAfter', { stage: si + 1 })}
+                  >
+                    {(control) => (
+                      <Input
+                        {...control}
+                        data-testid={`escalation-after-${li}-${si}`}
+                        type="number"
+                        min={1}
+                        step={1}
+                        inputMode="numeric"
+                        value={toMinutes(stage.afterSeconds)}
+                        onChange={(e): void => {
+                          const afterSeconds = toSeconds(e.target.value);
+                          editLadder(ladder.id, (l) => ({
+                            ...l,
+                            stages: l.stages.map((s, i) => (i === si ? { ...s, afterSeconds } : s)),
+                          }));
+                        }}
+                      />
+                    )}
+                  </FormField>
+                </div>
+                <FormField group label={t('alertEscalation.stageChannels', { stage: si + 1 })}>
+                  <div className="flex flex-wrap items-center gap-default min-h-9">
+                    {ESCALATION_CHANNELS.map((channel) => (
+                      <Checkbox
+                        key={channel}
+                        label={channelLabel[channel]}
+                        data-testid={`escalation-channel-${li}-${si}-${channel}`}
+                        checked={stage.channels.includes(channel)}
+                        onChange={(on: boolean): void => {
+                          editLadder(ladder.id, (l) => ({
+                            ...l,
+                            stages: l.stages.map((s, i) =>
+                              i === si
+                                ? {
+                                    ...s,
+                                    channels: on
+                                      ? ESCALATION_CHANNELS.filter(
+                                          (c) => c === channel || s.channels.includes(c),
+                                        )
+                                      : s.channels.filter((c) => c !== channel),
+                                  }
+                                : s,
+                            ),
+                          }));
+                        }}
+                      />
+                    ))}
+                  </div>
+                </FormField>
                 <button
                   type="button"
                   data-testid={`escalation-remove-stage-${li}-${si}`}
@@ -237,26 +235,27 @@ export function AlertEscalationSettings(): JSX.Element {
               </button>
             </div>
 
-            <label className="stack-xs" htmlFor={`escalation-repeat-${ladder.id}`}>
-              <span className="body-small font-medium text-text-primary">
-                {t('alertEscalation.repeat')}
-              </span>
-              <input
-                id={`escalation-repeat-${ladder.id}`}
-                data-testid={`escalation-repeat-${li}`}
-                type="number"
-                min={1}
-                step={1}
-                inputMode="numeric"
-                value={toMinutes(ladder.repeatSeconds)}
-                onChange={(e): void => {
-                  const repeatSeconds = toSeconds(e.target.value);
-                  editLadder(ladder.id, (l) => ({ ...l, repeatSeconds }));
-                }}
-                className={cn(inputTokens.base, 'w-24')}
-              />
-              <span className="caption text-text-muted">{t('alertEscalation.repeatHelp')}</span>
-            </label>
+            <FormField
+              id={`escalation-repeat-${ladder.id}`}
+              label={t('alertEscalation.repeat')}
+              hint={t('alertEscalation.repeatHelp')}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  data-testid={`escalation-repeat-${li}`}
+                  type="number"
+                  min={1}
+                  step={1}
+                  inputMode="numeric"
+                  value={toMinutes(ladder.repeatSeconds)}
+                  onChange={(e): void => {
+                    const repeatSeconds = toSeconds(e.target.value);
+                    editLadder(ladder.id, (l) => ({ ...l, repeatSeconds }));
+                  }}
+                />
+              )}
+            </FormField>
           </fieldset>
         ))}
 

@@ -179,9 +179,9 @@ describe('SetupWizard — EoX question after the SNMP step', () => {
     );
 
     for (const [label, value] of [
-      ['Setup token', 't-1'],
-      ['Password', password],
-      ['Confirm Password', password],
+      ['Setup token*', 't-1'],
+      ['Password*', password],
+      ['Confirm Password*', password],
     ] as const) {
       await user.click(screen.getByLabelText(label));
       await user.paste(value);
