@@ -18,13 +18,13 @@ import { useRole } from '../contexts/RoleContext';
 import { useAlerts } from '../hooks/useAlerts';
 import { useTableLabels } from '../hooks/useTableLabels';
 import { Alert as InlineAlert } from '../shared/Alert';
+import { Button } from '../shared/Button';
 import { CategoryChip } from '../shared/CategoryChip';
 import { Checkbox } from '../shared/Checkbox';
 import { DataTable, type DataTableColumn } from '../shared/DataTable';
 import { EmptyState } from '../shared/EmptyState';
 import { StatusPill, type StatusTone } from '../shared/StatusPill';
 import type { Alert, AlertDelivery } from '../types/generated/alert-list-response';
-import { GatedButton } from '../ui/GatedButton';
 import {
   DetailEmpty,
   DetailFacts,
@@ -174,8 +174,9 @@ export function AlertsPage(): JSX.Element {
             actions={
               <>
                 {!selected.acknowledged ? (
-                  <GatedButton
-                    reason={readOnlyReason}
+                  <Button
+                    disabled={Boolean(readOnlyReason)}
+                    disabledReason={readOnlyReason}
                     icon={<Check className="h-3.5 w-3.5" />}
                     onClick={(): void => {
                       void acknowledge(selected.id);
@@ -183,11 +184,12 @@ export function AlertsPage(): JSX.Element {
                     data-testid="alert-acknowledge"
                   >
                     {t('alerts.acknowledge')}
-                  </GatedButton>
+                  </Button>
                 ) : null}
                 {!selected.resolved ? (
-                  <GatedButton
-                    reason={readOnlyReason}
+                  <Button
+                    disabled={Boolean(readOnlyReason)}
+                    disabledReason={readOnlyReason}
                     icon={<CheckCircle2 className="h-3.5 w-3.5" />}
                     onClick={(): void => {
                       void resolve(selected.id);
@@ -195,7 +197,7 @@ export function AlertsPage(): JSX.Element {
                     data-testid="alert-resolve"
                   >
                     {t('alerts.resolve')}
-                  </GatedButton>
+                  </Button>
                 ) : null}
               </>
             }

@@ -157,16 +157,13 @@ test.describe('Complete Authentication Lifecycle', () => {
 
     test('should logout successfully on desktop', async ({ page }) => {
       // Find and click logout button
-      // Open the account menu — rail-logout lives inside the panel
-      // (RailControls.tsx), not on the rail itself.
-      await page.getByTestId('rail-account').click();
       // PR-1.2: explicit visibility settle. Playwright's .click()
       // auto-wait races React's re-render that mounts the dropdown —
       // the locator resolves but its retried actionability check
       // times out on stability before the action fires. Awaiting
       // toBeVisible() forces the auto-wait to land on the same
       // settled render pass that mounted the button.
-      const logoutButton = page.getByTestId('rail-logout');
+      const logoutButton = page.getByTestId('rail-sign-out');
       await expect(logoutButton).toBeVisible({ timeout: 5000 });
 
       await logoutButton.click();
@@ -193,16 +190,13 @@ test.describe('Complete Authentication Lifecycle', () => {
       });
 
       // Click logout
-      // Open the account menu — rail-logout lives inside the panel
-      // (RailControls.tsx), not on the rail itself.
-      await page.getByTestId('rail-account').click();
       // PR-1.2: explicit visibility settle. Playwright's .click()
       // auto-wait races React's re-render that mounts the dropdown —
       // the locator resolves but its retried actionability check
       // times out on stability before the action fires. Awaiting
       // toBeVisible() forces the auto-wait to land on the same
       // settled render pass that mounted the button.
-      const logoutButton = page.getByTestId('rail-logout');
+      const logoutButton = page.getByTestId('rail-sign-out');
       await expect(logoutButton).toBeVisible({ timeout: 5000 });
 
       await logoutButton.click();
@@ -219,16 +213,13 @@ test.describe('Complete Authentication Lifecycle', () => {
 
     test('should display empty login form after logout', async ({ page }) => {
       // Logout
-      // Open the account menu — rail-logout lives inside the panel
-      // (RailControls.tsx), not on the rail itself.
-      await page.getByTestId('rail-account').click();
       // PR-1.2: explicit visibility settle. Playwright's .click()
       // auto-wait races React's re-render that mounts the dropdown —
       // the locator resolves but its retried actionability check
       // times out on stability before the action fires. Awaiting
       // toBeVisible() forces the auto-wait to land on the same
       // settled render pass that mounted the button.
-      const logoutButton = page.getByTestId('rail-logout');
+      const logoutButton = page.getByTestId('rail-sign-out');
       await expect(logoutButton).toBeVisible({ timeout: 5000 });
 
       await logoutButton.click();
@@ -296,16 +287,13 @@ test.describe('Complete Authentication Lifecycle', () => {
       await loginAndAwaitDashboard(page);
 
       // Logout to simulate session expiry
-      // Open the account menu — rail-logout lives inside the panel
-      // (RailControls.tsx), not on the rail itself.
-      await page.getByTestId('rail-account').click();
       // PR-1.2: explicit visibility settle. Playwright's .click()
       // auto-wait races React's re-render that mounts the dropdown —
       // the locator resolves but its retried actionability check
       // times out on stability before the action fires. Awaiting
       // toBeVisible() forces the auto-wait to land on the same
       // settled render pass that mounted the button.
-      const logoutButton = page.getByTestId('rail-logout');
+      const logoutButton = page.getByTestId('rail-sign-out');
       await expect(logoutButton).toBeVisible({ timeout: 5000 });
 
       await logoutButton.click();
@@ -377,9 +365,8 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.getByTestId('mobile-menu-toggle').click();
       // `:visible` because both rails are in the document — the phone drawer
       // and the `hidden lg:flex` desktop rail — and only one is on screen.
-      await page.locator('[data-testid="rail-account"]:visible').click();
       // PR-1.2: explicit visibility settle (see Logout Flow describe).
-      const logoutButton = page.locator('[data-testid="rail-logout"]:visible');
+      const logoutButton = page.locator('[data-testid="rail-sign-out"]:visible');
       await expect(logoutButton).toBeVisible({ timeout: 5000 });
 
       await logoutButton.click();

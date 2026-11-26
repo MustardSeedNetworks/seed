@@ -128,7 +128,12 @@ describe('SettingsDrawer probe settings', () => {
       <QueryClientProvider client={queryClient}>
         <ProfileProvider>
           <RoleProvider isAuthenticated={true}>
-            <SettingsDrawer isOpen={true} onClose={(): void => undefined} version="1.0.0" />
+            <SettingsDrawer
+              onManageProfiles={() => undefined}
+              isOpen={true}
+              onClose={(): void => undefined}
+              version="1.0.0"
+            />
           </RoleProvider>
         </ProfileProvider>
       </QueryClientProvider>

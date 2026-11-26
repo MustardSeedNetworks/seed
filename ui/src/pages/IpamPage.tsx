@@ -15,11 +15,11 @@ import { Plus } from '../components/ui/Icons';
 import { useRole } from '../contexts/RoleContext';
 import { useIpam } from '../hooks/useIpam';
 import { Alert } from '../shared/Alert';
+import { Button } from '../shared/Button';
 import { ConfirmDialog } from '../shared/ConfirmDialog';
 import { EmptyState } from '../shared/EmptyState';
 import { StatusPill } from '../shared/StatusPill';
 import type { IPAMScope, IPAMSubnet } from '../types/generated/ipam-subnets-response';
-import { GatedButton } from '../ui/GatedButton';
 import {
   DetailEmpty,
   DetailFacts,
@@ -82,15 +82,16 @@ export function IpamPage(): JSX.Element {
             ? `${t('ipam.networkCount', { count: subnets.length })} · ${t('ipam.scopeCount', { count: scopes.length })}`
             : t('common:status.loading')}
         </p>
-        <GatedButton
+        <Button
           variant="primary"
           icon={<Plus className="h-4 w-4" />}
-          reason={readOnlyReason}
+          disabled={Boolean(readOnlyReason)}
+          disabledReason={readOnlyReason}
           onClick={(): void => setShowAdd(true)}
           data-testid="scope-add"
         >
           {t('ipam.addScope')}
-        </GatedButton>
+        </Button>
       </div>
 
       <ListDetail>
@@ -153,14 +154,15 @@ export function IpamPage(): JSX.Element {
             }
             actions={
               selected.kind === 'scope' ? (
-                <GatedButton
+                <Button
                   variant="destructive"
-                  reason={readOnlyReason}
+                  disabled={Boolean(readOnlyReason)}
+                  disabledReason={readOnlyReason}
                   onClick={(): void => setDeleting(selected.record)}
                   data-testid="scope-delete"
                 >
                   {t('common:buttons.delete')}
-                </GatedButton>
+                </Button>
               ) : undefined
             }
           >

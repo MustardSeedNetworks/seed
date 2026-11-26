@@ -21,13 +21,13 @@ import { useRole } from '../contexts/RoleContext';
 import { usePollingTargets } from '../hooks/usePollingTargets';
 import { useTableLabels } from '../hooks/useTableLabels';
 import { Alert } from '../shared/Alert';
+import { Button } from '../shared/Button';
 import { ConfirmDialog } from '../shared/ConfirmDialog';
 import { DataTable, type DataTableColumn } from '../shared/DataTable';
 import { EmptyState } from '../shared/EmptyState';
 import { SearchInput } from '../shared/SearchInput';
 import { StatusPill } from '../shared/StatusPill';
 import type { PollingTargetResponse } from '../types/generated/polling-target-response';
-import { GatedButton } from '../ui/GatedButton';
 import {
   DetailEmpty,
   DetailFacts,
@@ -124,15 +124,16 @@ export function PollingTargetsPage(): JSX.Element {
             ? t('common:status.loading')
             : t('pollingTargets.targetCount', { count: targets.length })}
         </p>
-        <GatedButton
+        <Button
           variant="primary"
           icon={<Plus className="h-4 w-4" />}
-          reason={readOnlyReason}
+          disabled={Boolean(readOnlyReason)}
+          disabledReason={readOnlyReason}
           onClick={(): void => setShowCreate(true)}
           data-testid="target-add"
         >
           {t('pollingTargets.addTarget')}
-        </GatedButton>
+        </Button>
       </div>
 
       <ListDetail>
@@ -193,32 +194,34 @@ export function PollingTargetsPage(): JSX.Element {
             status={<TargetStatus target={selected} />}
             actions={
               <>
-                <GatedButton
-                  reason={readOnlyReason}
-                  hint={t('pollingTargets.testTargetHint')}
+                <Button
+                  disabled={Boolean(readOnlyReason) || testing}
+                  disabledReason={readOnlyReason}
+                  title={t('pollingTargets.testTargetHint')}
                   onClick={(): void => {
                     void testTarget(selected.id);
                   }}
-                  disabled={testing}
                   data-testid="target-test"
                 >
                   {testing ? t('pollingTargets.testTargetRunning') : t('pollingTargets.testTarget')}
-                </GatedButton>
-                <GatedButton
-                  reason={readOnlyReason}
+                </Button>
+                <Button
+                  disabled={Boolean(readOnlyReason)}
+                  disabledReason={readOnlyReason}
                   onClick={(): void => setEditing(selected)}
                   data-testid="target-edit"
                 >
                   {t('common:buttons.edit')}
-                </GatedButton>
-                <GatedButton
+                </Button>
+                <Button
                   variant="destructive"
-                  reason={readOnlyReason}
+                  disabled={Boolean(readOnlyReason)}
+                  disabledReason={readOnlyReason}
                   onClick={(): void => setDeleting(selected)}
                   data-testid="target-delete"
                 >
                   {t('common:buttons.delete')}
-                </GatedButton>
+                </Button>
               </>
             }
           >

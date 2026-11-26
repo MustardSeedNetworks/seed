@@ -16,6 +16,7 @@ import { useDeviceGroupSummary, useDeviceGroups } from '../hooks/useDeviceGroups
 import { usePollingTargets } from '../hooks/usePollingTargets';
 import { useTableLabels } from '../hooks/useTableLabels';
 import { Alert } from '../shared/Alert';
+import { Button } from '../shared/Button';
 import { ConfirmDialog } from '../shared/ConfirmDialog';
 import { DataTable, type DataTableColumn } from '../shared/DataTable';
 import { EmptyState } from '../shared/EmptyState';
@@ -26,7 +27,6 @@ import type {
   DeviceGroupAlertCounts,
   DeviceGroupMemberResponse,
 } from '../types/generated/device-group-summary-response';
-import { GatedButton } from '../ui/GatedButton';
 import {
   DetailEmpty,
   DetailFacts,
@@ -79,15 +79,16 @@ export function DeviceGroupsPage(): JSX.Element {
             ? t('common:status.loading')
             : t('deviceGroups.groupCount', { count: groups.length })}
         </p>
-        <GatedButton
+        <Button
           variant="primary"
           icon={<Plus className="h-4 w-4" />}
-          reason={readOnlyReason}
+          disabled={Boolean(readOnlyReason)}
+          disabledReason={readOnlyReason}
           onClick={(): void => setShowCreate(true)}
           data-testid="group-add"
         >
           {t('deviceGroups.addGroup')}
-        </GatedButton>
+        </Button>
       </div>
 
       <ListDetail>
@@ -128,21 +129,23 @@ export function DeviceGroupsPage(): JSX.Element {
             meta={selected.description || undefined}
             actions={
               <>
-                <GatedButton
-                  reason={readOnlyReason}
+                <Button
+                  disabled={Boolean(readOnlyReason)}
+                  disabledReason={readOnlyReason}
                   onClick={(): void => setEditing(selected)}
                   data-testid="group-edit"
                 >
                   {t('common:buttons.edit')}
-                </GatedButton>
-                <GatedButton
+                </Button>
+                <Button
                   variant="destructive"
-                  reason={readOnlyReason}
+                  disabled={Boolean(readOnlyReason)}
+                  disabledReason={readOnlyReason}
                   onClick={(): void => setDeleting(selected)}
                   data-testid="group-delete"
                 >
                   {t('common:buttons.delete')}
-                </GatedButton>
+                </Button>
               </>
             }
           >

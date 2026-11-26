@@ -133,11 +133,11 @@ export async function loginAndAwaitDashboard(
  * drawer behind the hamburger — call revealSidebar() first there.
  */
 export function sidebarSettingsButton(page: Page): Locator {
-  return page.getByTestId('sidebar-settings-button').filter({ visible: true });
+  return page.getByTestId('rail-settings').filter({ visible: true });
 }
 
 export function sidebarHelpButton(page: Page): Locator {
-  return page.getByTestId('sidebar-help-button').filter({ visible: true });
+  return page.getByTestId('rail-help').filter({ visible: true });
 }
 
 /**

@@ -1,3 +1,4 @@
+import { Button } from '../../shared/Button';
 import { Tooltip } from '../../shared/Tooltip';
 import { Info } from '../ui/Icons';
 /**
@@ -29,7 +30,6 @@ import { FormField } from '../../shared/FormField';
 import { Input } from '../../shared/Input';
 import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
 import type { ServiceInfo } from '../../types/generated/port-scan-response';
-import { GatedButton } from '../../ui/GatedButton';
 import { AlertTriangle, CheckCircle, ShieldAlert } from '../ui/Icons';
 
 /**
@@ -180,16 +180,16 @@ export function InsecurePortScanCard(): JSX.Element {
             </Tooltip>
           )}
         </FormField>
-        <GatedButton
+        <Button
           variant="primary"
           onClick={run}
-          disabled={canWrite && target.trim() === ''}
-          reason={canWrite ? undefined : readOnlyReason}
+          disabled={!canWrite || target.trim() === ''}
+          disabledReason={canWrite ? undefined : readOnlyReason}
           loading={scanning}
           className="w-full"
         >
           {scanning ? t('insecurePorts.scanning') : t('insecurePorts.scan')}
-        </GatedButton>
+        </Button>
 
         {error ? <p className="caption text-status-error">{error}</p> : null}
         {result?.error ? <p className="caption text-status-error">{result.error}</p> : null}

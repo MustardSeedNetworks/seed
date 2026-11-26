@@ -16,7 +16,7 @@ import { AppFooter } from '../components/app/AppFooter';
 import { CapabilityWarnings } from '../components/app/CapabilityWarnings';
 import { ConnectionNotice } from '../components/app/ConnectionNotice';
 import { DaemonBanner } from '../components/app/DaemonBanner';
-import { RailControls } from '../components/app/RailControls';
+import { useInterfaceSlot } from '../components/app/useInterfaceSlot';
 import { CommandPalette } from '../components/ui/CommandPalette';
 import { Fab } from '../components/ui/Fab';
 import { AppContext, type AppContextValue } from '../contexts/AppContext';
@@ -32,7 +32,7 @@ import { PageHeader } from '../shared/PageHeader';
 import { cn, section } from '../styles/theme';
 import { PageLoader } from '../ui/PageLoader';
 import { renderBreadcrumbLink } from '../ui/renderBreadcrumbLink';
-import { type RailStatus, SidebarLayout } from '../ui/Sidebar';
+import { type SidebarFooterConfig, SidebarLayout } from '../ui/Sidebar';
 import type { AppOrchestration } from './useAppOrchestration';
 
 // The drawers and the profile manager are most of the shell's code and open
@@ -79,10 +79,6 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
     capabilities,
     sseStatus,
     reconnect,
-    profiles,
-    activeProfile,
-    profilesLoading,
-    switchProfile,
     interfaces,
     hasWifiInterface,
     changeInterface,
@@ -154,45 +150,36 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
     disconnected: t('status.disconnected'),
     error: t('status.error'),
   };
-  const railStatus: RailStatus = {
-    tone: sseStatus === 'connected' ? 'success' : sseStatus === 'connecting' ? 'warning' : 'error',
-    state: sseStatus,
-    label: statusLabel[sseStatus],
-    hint: sseStatus === 'connected' ? undefined : t('status.clickToReconnect'),
-    onActivate: sseStatus === 'connected' ? undefined : reconnect,
+  const interfaceSlot = useInterfaceSlot({
+    interfaces,
+    currentInterface,
+    isWifi,
+    hasWifiInterface,
+    onInterfaceChange: changeInterface,
+    switchToInterfaceType,
+    ...(recommendedEthernet ? { recommendedEthernet } : {}),
+  });
+  const footer: SidebarFooterConfig = {
+    status: {
+      tone:
+        sseStatus === 'connected' ? 'success' : sseStatus === 'connecting' ? 'warning' : 'error',
+      label: statusLabel[sseStatus],
+    },
+    productSlot: interfaceSlot,
+    help: { label: t('accessibility.openHelp'), onClick: openPageHelp },
+    settings: { label: t('accessibility.openSettings'), onClick: openSettings },
+    theme: {
+      label: isDark ? t('accessibility.switchToLightMode') : t('accessibility.switchToDarkMode'),
+      onClick: toggleTheme,
+      isDark,
+    },
+    signOut: { label: t('buttons.logout'), onClick: logout },
+    ...(appVersion ? { version: { value: appVersion, label: t('labels.version') } } : {}),
   };
 
   return (
     <AppContext.Provider value={appContextValue}>
-      <SidebarLayout
-        groups={navGroups}
-        version={appVersion}
-        onOpenHelp={openPageHelp}
-        onOpenSettings={openSettings}
-        onOpenProfiles={openProfiles}
-        status={railStatus}
-        deviceName={deviceName}
-        railControls={(collapsed) => (
-          <RailControls
-            collapsed={collapsed}
-            profiles={profiles}
-            activeProfile={activeProfile}
-            profilesLoading={profilesLoading}
-            onProfileSwitch={switchProfile}
-            onProfileManage={openProfiles}
-            logout={logout}
-            interfaces={interfaces}
-            currentInterface={currentInterface}
-            isWifi={isWifi}
-            hasWifiInterface={hasWifiInterface}
-            onInterfaceChange={changeInterface}
-            switchToInterfaceType={switchToInterfaceType}
-            recommendedEthernet={recommendedEthernet}
-            toggleTheme={toggleTheme}
-            isDark={isDark}
-          />
-        )}
-      >
+      <SidebarLayout groups={navGroups} deviceName={deviceName} footer={footer}>
         <div className={cn(section.width.xl, 'mx-auto')}>
           {daemonStatus === 'disconnected' ? (
             <DaemonBanner />
@@ -232,6 +219,7 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
             onClose={closeSettings}
             version={appVersion}
             isWifi={isWifi}
+            onManageProfiles={openProfiles}
           />
         ) : null}
       </Suspense>

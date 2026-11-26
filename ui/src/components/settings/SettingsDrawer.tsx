@@ -26,7 +26,16 @@
  * State: All settings state, save status, validation errors, iperf3 suggestions
  */
 
-import { Bell, Gauge, Info, KeyRound, Network, Radar, SlidersHorizontal } from 'lucide-react';
+import {
+  Bell,
+  Gauge,
+  Info,
+  KeyRound,
+  Network,
+  Radar,
+  SlidersHorizontal,
+  Users,
+} from 'lucide-react';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -72,6 +81,7 @@ import { HealthChecksSettings } from './sections/HealthChecksSettings';
 import { InterfacesSettings } from './sections/InterfacesSettings';
 import { LinkSettings } from './sections/LinkSettings';
 import { PerformanceSettings } from './sections/PerformanceSettings';
+import { ProfilesSettings } from './sections/ProfilesSettings';
 import { SsoSettings } from './sections/SsoSettings';
 import { ThresholdsSettings } from './sections/ThresholdsSettings';
 import { UsersSettings } from './sections/UsersSettings';
@@ -82,7 +92,15 @@ import {
   INLINE_DEFAULT_LINK_SETTINGS,
 } from './settingsDrawerNormalizer';
 
-type SettingsTabId = 'general' | 'network' | 'tests' | 'discovery' | 'alerts' | 'access' | 'about';
+type SettingsTabId =
+  | 'general'
+  | 'profiles'
+  | 'network'
+  | 'tests'
+  | 'discovery'
+  | 'alerts'
+  | 'access'
+  | 'about';
 
 const TAB_ICON = 'h-4 w-4';
 
@@ -92,6 +110,8 @@ interface SettingsDrawerProps {
   version?: string;
   /** Whether currently viewing WiFi mode (shows WiFi settings instead of Link/Cable). */
   isWifi?: boolean;
+  /** Opens the profile manager from the Profiles tab. */
+  onManageProfiles: () => void;
 }
 
 export function SettingsDrawer({
@@ -99,6 +119,7 @@ export function SettingsDrawer({
   onClose,
   version = 'dev',
   isWifi = false,
+  onManageProfiles,
 }: SettingsDrawerProps): React.ReactElement | null {
   const { t } = useTranslation(['settings', 'errors']);
   const { canWrite } = useRole();
@@ -106,6 +127,7 @@ export function SettingsDrawer({
   const [activeTab, setActiveTab] = useState<SettingsTabId>('general');
   const tabs = [
     { id: 'general', label: t('tabs.general'), icon: <SlidersHorizontal className={TAB_ICON} /> },
+    { id: 'profiles', label: t('tabs.profiles'), icon: <Users className={TAB_ICON} /> },
     { id: 'network', label: t('tabs.network'), icon: <Network className={TAB_ICON} /> },
     { id: 'tests', label: t('tabs.tests'), icon: <Gauge className={TAB_ICON} /> },
     { id: 'discovery', label: t('tabs.discovery'), icon: <Radar className={TAB_ICON} /> },
@@ -418,6 +440,8 @@ export function SettingsDrawer({
             <ConfigBackupsSection />
           </>
         );
+      case 'profiles':
+        return <ProfilesSettings onManage={onManageProfiles} />;
       case 'network':
         return (
           <>

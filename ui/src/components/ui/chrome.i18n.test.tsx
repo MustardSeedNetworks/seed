@@ -139,7 +139,14 @@ describe('shared chrome — Spanish, with no English left behind', () => {
 
   it('names the phone drawer scrim', () => {
     render(
-      <SidebarLayout groups={[{ label: 'g', items: [{ path: '/', label: 'x', icon: Server }] }]}>
+      <SidebarLayout
+        groups={[{ label: 'g', items: [{ path: '/', label: 'x', icon: Server }] }]}
+        footer={{
+          help: { label: 'h', onClick: () => undefined },
+          settings: { label: 's', onClick: () => undefined },
+          theme: { label: 't', onClick: () => undefined, isDark: true },
+        }}
+      >
         <div />
       </SidebarLayout>,
     );

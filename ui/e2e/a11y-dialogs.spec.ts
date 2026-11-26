@@ -57,15 +57,16 @@ const DIALOGS: Dialog[] = [
     dialog: byTestId('log-viewer-modal'),
   },
   {
-    // "Manage profiles" lives in the account menu, which closes as the dialog
-    // opens, so the control focus can return to is the account button.
+    // "Manage profiles" is a button on Settings' Profiles tab; the drawer stays
+    // open under the manager, so focus returns to that button.
     name: 'profile manager',
     route: '/link',
     prepare: async (page) => {
-      await page.getByTestId('rail-account').click();
-      return page.getByTestId('rail-profile-manage');
+      await page.getByTestId('rail-settings').click();
+      await page.getByRole('tab', { name: 'Profiles' }).click();
+      return page.getByTestId('settings-profile-manage');
     },
-    returnTo: (page) => page.getByTestId('rail-account'),
+    returnTo: (page) => page.getByTestId('settings-profile-manage'),
     dialog: byTestId('profile-modal'),
   },
 ];
@@ -130,8 +131,9 @@ for (const { name, route, prepare, returnTo, dialog } of DIALOGS) {
 test('the profile editor passes axe and returns focus to the profile manager', async ({ page }) => {
   await page.goto('/link');
   await expect(page.getByTestId('page-header-title')).toBeVisible();
-  await page.getByTestId('rail-account').click();
-  await page.getByTestId('rail-profile-manage').click();
+  await page.getByTestId('rail-settings').click();
+  await page.getByRole('tab', { name: 'Profiles' }).click();
+  await page.getByTestId('settings-profile-manage').click();
   const create = page.getByTestId('profile-create');
   await create.focus();
   await page.keyboard.press('Enter');

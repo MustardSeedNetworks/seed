@@ -184,7 +184,7 @@ test.describe('overlays keep and return keyboard focus', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/network');
     await expect(page.getByTestId('page-header-title')).toBeVisible();
-    await page.getByTestId('rail-interface').hover();
+    await page.getByTestId('rail-product-slot').hover();
     await expect(page.getByRole('tooltip')).toBeVisible();
     const trigger = page.getByTestId('page-header-help-button');
     await trigger.focus();

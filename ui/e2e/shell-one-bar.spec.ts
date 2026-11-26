@@ -119,18 +119,12 @@ test.describe('the rail carries the shell controls', () => {
   test('carries the connection status, and it reads the live state', async ({ page }) => {
     const status = railControl(page, 'rail-status');
     await expect(status).toBeVisible();
-    // The rail's dot was hard-coded to the success colour, so it said
-    // "connected" on a dead socket. The accessible name has to carry the
-    // actual state for that to be fixed rather than merely relocated.
-    await expect(status).toHaveAttribute('data-status', /connected|connecting|disconnected|error/);
-    // The dot is `aria-hidden` decoration, so the state has to reach a screen
-    // reader through the lockup's own name — which is the half of "reachable
-    // by keyboard and screen reader" a visibility check cannot see.
-    await expect(status).toHaveAccessibleName(/connected|connecting|disconnected|error/i);
+    // The state has to reach the operator in words, not only as a colour.
+    await expect(status).toContainText(/connected|connecting|disconnected|error/i);
   });
 
   test('carries the theme toggle, and it is keyboard reachable', async ({ page }) => {
-    const toggle = railControl(page, 'rail-theme-toggle');
+    const toggle = railControl(page, 'rail-theme');
     await expect(toggle).toBeVisible();
     await toggle.focus();
     await expectFocused(toggle);
@@ -142,29 +136,31 @@ test.describe('the rail carries the shell controls', () => {
       .toBe(!before);
   });
 
-  test('carries the account menu, with logout inside it', async ({ page }) => {
-    const account = railControl(page, 'rail-account');
-    await expect(account).toBeVisible();
-    await expect(page.getByTestId('rail-logout')).toHaveCount(0);
-    await account.click();
-    await expect(railControl(page, 'rail-logout')).toBeVisible();
+  test('carries sign out, Help and Settings as icon buttons', async ({ page }) => {
+    for (const id of ['rail-sign-out', 'rail-help', 'rail-settings']) {
+      await expect(railControl(page, id)).toBeVisible();
+    }
   });
 
-  test('carries the interface selector', async ({ page }) => {
-    await expect(railControl(page, 'rail-interface')).toBeVisible();
+  test('carries the interface switch as its one product control', async ({ page }) => {
+    const slot = railControl(page, 'rail-product-slot');
+    await expect(slot).toBeVisible();
+    await slot.click();
+    await expect(page.getByRole('menu')).toBeVisible();
+    await expect(page.getByRole('menuitemradio', { name: /Wi-?Fi/ })).toBeVisible();
   });
 
-  test('opens its panels beside the rail when the rail is collapsed', async ({ page }) => {
-    await page.getByRole('button', { name: /collapse sidebar/i }).click();
-    await railControl(page, 'rail-account').click();
+  test('opens its menu beside the rail when the rail is collapsed', async ({ page }) => {
+    await railControl(page, 'rail-collapse').click();
+    await railControl(page, 'rail-product-slot').click();
 
-    const logout = railControl(page, 'rail-logout');
-    await expect(logout).toBeVisible();
+    const item = page.getByRole('menuitemradio').first();
+    await expect(item).toBeVisible();
 
-    // The collapsed rail is 64px wide and the panel is anchored to it; a panel
-    // that opened to the left would be clipped against the viewport edge.
-    const box = await logout.boundingBox();
-    expect(box, 'the logout row should have a box').not.toBeNull();
+    // The collapsed rail is 64px wide and the menu is anchored beside it; one
+    // that opened over the rail would hide the controls it hangs off.
+    const box = await item.boundingBox();
+    expect(box, 'the menu item should have a box').not.toBeNull();
     expect(box?.x ?? -1).toBeGreaterThanOrEqual(64);
   });
 });

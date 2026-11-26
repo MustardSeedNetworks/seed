@@ -127,7 +127,12 @@ export const Interactive: Story = {
         >
           Open Settings
         </button>
-        <SettingsDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} version="1.0.0" />
+        <SettingsDrawer
+          onManageProfiles={() => undefined}
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          version="1.0.0"
+        />
       </div>
     );
   },
@@ -219,7 +224,12 @@ export const WithBackdrop: Story = {
             Backdrop clicks: {clickCount}
           </p>
         </div>
-        <SettingsDrawer isOpen={isOpen} onClose={handleClose} version="1.0.0" />
+        <SettingsDrawer
+          onManageProfiles={() => undefined}
+          isOpen={isOpen}
+          onClose={handleClose}
+          version="1.0.0"
+        />
       </div>
     );
   },
@@ -279,7 +289,12 @@ export const WithContent: Story = {
             Open Settings
           </button>
         </div>
-        <SettingsDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} version="1.0.0" />
+        <SettingsDrawer
+          onManageProfiles={() => undefined}
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          version="1.0.0"
+        />
       </div>
     );
   },

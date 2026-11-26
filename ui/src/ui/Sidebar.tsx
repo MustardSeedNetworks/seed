@@ -11,26 +11,19 @@
  * AppShell level alongside the existing test/state plumbing.
  */
 
-import {
-  ChevronLeft,
-  ChevronRight,
-  HelpCircle,
-  History,
-  type LucideIcon,
-  Settings,
-  Users,
-} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { createElement, type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
+import msnLogo from '../assets/msn-logo.svg';
 import { SeedLogo } from '../components/app/SeedLogo';
 import { iconSizes } from '../constants/sizes';
 import { accessibleNameIncluding } from '../lib/accessibleName';
+import { RailFooter, type RailFooterProps } from '../shared/RailFooter';
 import { Tooltip } from '../shared/Tooltip';
 import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';
 import { MobileTopBar } from './MobileTopBar';
-import { MsnMark } from './MsnMark';
 import { ProductTitle } from './ProductTitle';
 
 export interface SidebarNavItem {
@@ -53,50 +46,27 @@ export interface SidebarNavGroup {
   items: SidebarNavItem[];
 }
 
+/** What the rail footer needs from the product; the layout adds collapse, mark and variant. */
+export interface SidebarFooterConfig {
+  status?: RailFooterProps['status'];
+  productSlot?: RailFooterProps['productSlot'];
+  help: RailFooterProps['help'];
+  settings: RailFooterProps['settings'];
+  theme: RailFooterProps['theme'];
+  signOut?: RailFooterProps['signOut'];
+  version?: RailFooterProps['version'];
+}
+
 interface SidebarLayoutProps {
   groups: SidebarNavGroup[];
-  version?: string;
   children: ReactNode;
-  /**
-   * Drawer callbacks — all optional. Pass only the ones your product uses;
-   * the corresponding footer button only renders when its callback is provided.
-   * Stem typically uses help/settings/history; seed uses help/settings/profiles;
-   * niac uses help/settings. Add more here if a new product needs another drawer.
-   */
-  onOpenHelp?: () => void;
-  onOpenSettings?: () => void;
-  onOpenHistory?: () => void;
-  onOpenProfiles?: () => void;
-  /**
-   * Connection state for the rail's product mark. The dot used to be a
-   * hard-coded success green, so it reported "connected" on a dead socket;
-   * it now reads the live state and, when that state is not `connected`,
-   * reconnects on click.
-   */
-  status?: RailStatus;
-  /**
-   * Product-specific shell controls for the rail footer (account, interface,
-   * theme). A render prop rather than a node: the panels have to open beside
-   * the rail when it is collapsed, and only the rail knows that it is.
-   */
-  railControls?: (collapsed: boolean) => ReactNode;
+  footer: SidebarFooterConfig;
   /**
    * The operator's name for this device (#195), shown under the product
    * name so several open tabs can be told apart. Empty or absent shows
    * nothing.
    */
   deviceName?: string;
-}
-
-export interface RailStatus {
-  tone: 'success' | 'warning' | 'error';
-  /** Machine-readable state, for the accessible name and the E2E assertion. */
-  state: string;
-  /** The state, in words — the accessible name of the rail's lockup. */
-  label: string;
-  /** What clicking does, when there is something to do. */
-  hint?: string;
-  onActivate?: () => void;
 }
 
 const STORAGE_KEY = 'seed-sidebar-collapsed';
@@ -167,246 +137,31 @@ function NavItemButton({ item, active, collapsed, onNavigate }: NavItemButtonPro
   );
 }
 
-interface FooterIconButtonProps {
-  collapsed: boolean;
-  onClick: () => void;
-  icon: LucideIcon;
-  label: string;
-  title: string;
-  /** E2E hook. The accessible name is no longer unique — the page header's
-   *  (?) reads "Open help for <page>", which contains "Open help". */
-  testId: string;
-}
-
-function FooterIconButton({
-  collapsed,
-  onClick,
-  icon,
-  label,
-  title,
-  testId,
-}: FooterIconButtonProps) {
-  return (
-    <Tooltip text={title}>
-      <button
-        type="button"
-        onClick={onClick}
-        data-testid={testId}
-        className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
-          collapsed ? 'justify-center' : 'gap-compact'
-        } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
-        aria-label={accessibleNameIncluding(title, collapsed ? '' : label)}
-      >
-        {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
-        {!collapsed ? <span>{label}</span> : null}
-      </button>
-    </Tooltip>
-  );
-}
-
 interface SidebarHeaderProps {
   collapsed: boolean;
-  onCollapse: () => void;
-  status?: RailStatus;
   deviceName?: string;
 }
 
-const STATUS_DOT: Record<RailStatus['tone'], string> = {
-  success: 'bg-status-success',
-  warning: 'bg-status-warning',
-  error: 'bg-status-error',
-};
-
-function SidebarHeader({ collapsed, onCollapse, status, deviceName }: SidebarHeaderProps) {
-  const { t } = useTranslation();
-  const lockupClass = `flex items-center gap-compact rounded-lg ${
-    collapsed ? 'justify-center' : ''
-  }`;
-  const lockup = (
-    <>
-      {/* 2px of overhang with nothing to scroll: declared, not tolerated. */}
-      <div className="relative flex-shrink-0" data-phone-width-exempt="badge-overhang">
-        <SeedLogo badge badgeClassName="h-9 w-9 shadow-lg" glyphClassName={iconSizes.lg} />
-        <span
-          aria-hidden="true"
-          className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface-raised ${
-            STATUS_DOT[status?.tone ?? 'success']
-          } ${status?.state === 'connecting' ? 'animate-pulse' : ''}`}
-        />
-      </div>
-      {!collapsed ? (
-        <ProductTitle
-          bar="rail"
-          deviceName={deviceName}
-          className="font-display font-bold text-lg text-text-primary tracking-tight"
-        />
-      ) : null}
-      {status ? (
-        <span className="sr-only">{[status.label, status.hint].filter(Boolean).join(' — ')}</span>
-      ) : null}
-    </>
-  );
+/** The product mark: which tool this is. Status, collapse and the rest live in the footer. */
+function SidebarHeader({ collapsed, deviceName }: SidebarHeaderProps) {
   return (
     <div
       className={`flex items-center ${
-        collapsed ? 'justify-center' : 'justify-between'
+        collapsed ? 'justify-center' : ''
       } px-3 py-4 border-b border-surface-border`}
     >
-      {/* The dot is decoration; the state has to be readable. When there is
-          something to do about it the lockup is a button that does it, and
-          when there is not it stays a live region rather than becoming a
-          disabled button — Tab skips those, and hover never fires, so the
-          tooltip would not open either. */}
-      <Tooltip text={status ? [status.label, status.hint].filter(Boolean).join(' — ') : undefined}>
-        {status?.onActivate ? (
-          <button
-            type="button"
-            data-testid="rail-status"
-            data-status={status.state}
-            onClick={status.onActivate}
-            className={`${lockupClass} hover:opacity-80`}
-          >
-            {lockup}
-          </button>
-        ) : (
-          <div
-            data-testid="rail-status"
-            data-status={status?.state ?? 'connected'}
-            role="status"
-            className={lockupClass}
-          >
-            {lockup}
-          </div>
-        )}
-      </Tooltip>
-      {!collapsed ? (
-        <Tooltip text={t('accessibility.collapseSidebar')}>
-          <button
-            type="button"
-            onClick={onCollapse}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors lg:flex hidden"
-            aria-label={t('accessibility.collapseSidebar')}
-          >
-            <ChevronLeft className={iconSizes.md} />
-          </button>
-        </Tooltip>
-      ) : null}
-    </div>
-  );
-}
-
-interface SidebarFooterProps {
-  collapsed: boolean;
-  version?: string;
-  railControls?: ReactNode;
-  onOpenHelp?: () => void;
-  onOpenSettings?: () => void;
-  onOpenHistory?: () => void;
-  onOpenProfiles?: () => void;
-  onExpand: () => void;
-}
-
-interface FullWidthDrawerButtonProps {
-  onClick: () => void;
-  icon: LucideIcon;
-  label: string;
-  title: string;
-}
-
-function FullWidthDrawerButton({ onClick, icon, label, title }: FullWidthDrawerButtonProps) {
-  return (
-    <Tooltip text={title}>
-      <button
-        type="button"
-        onClick={onClick}
-        className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
-        aria-label={accessibleNameIncluding(title, label)}
+      <div
+        className={`flex items-center gap-compact rounded-lg ${collapsed ? 'justify-center' : ''}`}
       >
-        {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
-        <span>{label}</span>
-      </button>
-    </Tooltip>
-  );
-}
-
-function SidebarFooter({
-  collapsed,
-  version,
-  railControls,
-  onOpenHelp,
-  onOpenSettings,
-  onOpenHistory,
-  onOpenProfiles,
-  onExpand,
-}: SidebarFooterProps) {
-  const { t } = useTranslation();
-  return (
-    <div className={`px-3 py-4 border-t border-surface-border ${collapsed ? 'text-center' : ''}`}>
-      {railControls ? (
-        <div className={`mb-heading ${collapsed ? '' : 'flex justify-start'}`}>{railControls}</div>
-      ) : null}
-      <div className={`${collapsed ? 'stack-sm' : 'flex items-center gap-compact'} mb-heading`}>
-        {onOpenHelp ? (
-          <FooterIconButton
-            collapsed={collapsed}
-            onClick={() => onOpenHelp()}
-            icon={HelpCircle}
-            label={t('labels.help')}
-            testId="sidebar-help-button"
-            title={t('accessibility.openHelp')}
-          />
-        ) : null}
-        {onOpenSettings ? (
-          <FooterIconButton
-            collapsed={collapsed}
-            onClick={onOpenSettings}
-            icon={Settings}
-            label={t('labels.settings')}
-            testId="sidebar-settings-button"
-            title={t('accessibility.openSettings')}
+        <SeedLogo badge badgeClassName="h-9 w-9 shadow-lg" glyphClassName={iconSizes.lg} />
+        {!collapsed ? (
+          <ProductTitle
+            bar="rail"
+            deviceName={deviceName}
+            className="font-display font-bold text-lg text-text-primary tracking-tight"
           />
         ) : null}
       </div>
-
-      {onOpenHistory && !collapsed ? (
-        <FullWidthDrawerButton
-          onClick={onOpenHistory}
-          icon={History}
-          label={t('labels.history')}
-          title={t('accessibility.openHistory')}
-        />
-      ) : null}
-
-      {onOpenProfiles && !collapsed ? (
-        <FullWidthDrawerButton
-          onClick={onOpenProfiles}
-          icon={Users}
-          label={t('labels.manageProfiles')}
-          title={t('accessibility.manageProfiles')}
-        />
-      ) : null}
-
-      {version ? (
-        <div className={`text-xs font-mono text-text-muted ${collapsed ? '' : 'flex-between'}`}>
-          {!collapsed ? <span>{t('labels.version')}</span> : null}
-          <span>{version}</span>
-        </div>
-      ) : null}
-      {/* Whose tool this is, under what it is. Quiet by design: the product mark
-        at the top of the rail is the one that has to be recognised. */}
-      <MsnMark collapsed={collapsed} className="mt-heading" />
-      {collapsed ? (
-        <Tooltip text={t('accessibility.expandSidebar')}>
-          <button
-            type="button"
-            onClick={onExpand}
-            className="mt-inline p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
-            aria-label={t('accessibility.expandSidebar')}
-          >
-            <ChevronRight className={iconSizes.md} />
-          </button>
-        </Tooltip>
-      ) : null}
     </div>
   );
 }
@@ -414,35 +169,19 @@ function SidebarFooter({
 interface SidebarBodyProps {
   groups: SidebarNavGroup[];
   collapsed: boolean;
-  version?: string;
-  status?: RailStatus;
-  railControls?: ReactNode;
   deviceName?: string;
-  onCollapse: () => void;
-  onExpand: () => void;
+  footer: ReactNode;
   onNavigate: (path: string) => void;
   isActive: (path: string) => boolean;
-  onOpenHelp?: () => void;
-  onOpenSettings?: () => void;
-  onOpenHistory?: () => void;
-  onOpenProfiles?: () => void;
 }
 
 function SidebarBody({
   groups,
   collapsed,
-  version,
-  status,
-  railControls,
   deviceName,
-  onCollapse,
-  onExpand,
+  footer,
   onNavigate,
   isActive,
-  onOpenHelp,
-  onOpenSettings,
-  onOpenHistory,
-  onOpenProfiles,
 }: SidebarBodyProps) {
   const { t } = useTranslation();
   // group.label is either a plain display string ("Account") or an
@@ -452,12 +191,7 @@ function SidebarBody({
     label ? t(label, { defaultValue: label }) : '';
   return (
     <>
-      <SidebarHeader
-        collapsed={collapsed}
-        onCollapse={onCollapse}
-        status={status}
-        deviceName={deviceName}
-      />
+      <SidebarHeader collapsed={collapsed} deviceName={deviceName} />
       <nav className="flex-1 overflow-y-auto py-4 px-cell stack-xl">
         {groups.map((group, groupIndex) => (
           <div key={group.label || `nav-group-${String(groupIndex)}`}>
@@ -481,32 +215,12 @@ function SidebarBody({
           </div>
         ))}
       </nav>
-      <SidebarFooter
-        collapsed={collapsed}
-        version={version}
-        railControls={railControls}
-        onOpenHelp={onOpenHelp}
-        onOpenSettings={onOpenSettings}
-        onOpenHistory={onOpenHistory}
-        onOpenProfiles={onOpenProfiles}
-        onExpand={onExpand}
-      />
+      {footer}
     </>
   );
 }
 
-export function SidebarLayout({
-  groups,
-  version,
-  children,
-  onOpenHelp,
-  onOpenSettings,
-  onOpenHistory,
-  onOpenProfiles,
-  status,
-  railControls,
-  deviceName,
-}: SidebarLayoutProps) {
+export function SidebarLayout({ groups, children, footer, deviceName }: SidebarLayoutProps) {
   const { t } = useTranslation();
   const [location, navigate] = useLocation();
   const [collapsed, setCollapsed] = useState(() => safeGetItem(STORAGE_KEY) === 'true');
@@ -523,22 +237,28 @@ export function SidebarLayout({
   const isActive = (path: string) =>
     location === path || (path !== '/' && location.startsWith(path));
 
-  const body = (
+  const railFooter = (variant: 'rail' | 'drawer'): ReactNode => (
+    <RailFooter
+      {...footer}
+      collapsed={collapsed}
+      variant={variant}
+      mark={{ src: msnLogo, name: t('footer.company') }}
+      collapse={{
+        collapseLabel: t('accessibility.collapseSidebar'),
+        expandLabel: t('accessibility.expandSidebar'),
+        onToggle: () => setCollapsed(!collapsed),
+      }}
+    />
+  );
+
+  const body = (variant: 'rail' | 'drawer') => (
     <SidebarBody
       groups={groups}
-      collapsed={collapsed}
-      version={version}
-      status={status}
-      railControls={railControls?.(collapsed)}
+      collapsed={variant === 'rail' && collapsed}
+      footer={railFooter(variant)}
       deviceName={deviceName}
-      onCollapse={() => setCollapsed(true)}
-      onExpand={() => setCollapsed(false)}
       onNavigate={(p) => navigate(p)}
       isActive={isActive}
-      onOpenHelp={onOpenHelp}
-      onOpenSettings={onOpenSettings}
-      onOpenHistory={onOpenHistory}
-      onOpenProfiles={onOpenProfiles}
     />
   );
 
@@ -575,7 +295,7 @@ export function SidebarLayout({
           mobileOpen ? 'translate-x-0' : '-translate-x-full invisible'
         }`}
       >
-        {mobileOpen ? <div className="flex flex-col h-full">{body}</div> : null}
+        {mobileOpen ? <div className="flex flex-col h-full">{body('drawer')}</div> : null}
       </aside>
 
       <aside
@@ -584,7 +304,7 @@ export function SidebarLayout({
           collapsed ? 'w-16' : 'w-56' // one step with lg:pl-56 below; was 252 vs 256
         }`}
       >
-        {body}
+        {body('rail')}
       </aside>
 
       <main

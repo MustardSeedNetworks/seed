@@ -653,11 +653,9 @@ describe('App', () => {
         expect(seedElements.length).toBeGreaterThan(0);
       });
 
-      // Logout lives inside the rail's account menu (UI-SEED-10), so the
-      // button only renders once that menu is opened. Verify the trigger
-      // exists — the round-trip is covered end-to-end by e2e tests.
-      const profileTriggers = screen.getAllByRole('button', { name: /select profile|profile/i });
-      expect(profileTriggers.length).toBeGreaterThan(0);
+      // Sign out is an icon button in the rail footer; the round-trip is
+      // covered end-to-end by the auth specs.
+      expect(screen.getAllByTestId('rail-sign-out').length).toBeGreaterThan(0);
     });
 
     it('renders interface selector', async () => {
@@ -709,11 +707,9 @@ describe('App', () => {
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        // The rail carries separate Ethernet and Wi-Fi interface controls.
-        const ethernetButton = screen.getByRole('button', {
-          name: /select ethernet interface/i,
-        });
-        expect(ethernetButton).toBeInTheDocument();
+        // The rail's one product control switches the interface (Ethernet or Wi-Fi).
+        const slot = screen.getByTestId('rail-product-slot');
+        expect(slot).toBeInTheDocument();
       });
     });
 

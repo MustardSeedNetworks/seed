@@ -646,6 +646,7 @@
     "discovery": "Discovery",
     "alerts": "Alerts",
     "access": "Access",
-    "about": "About"
+    "about": "About",
+    "profiles": "Profiles"
   }
 }
