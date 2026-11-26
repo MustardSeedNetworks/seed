@@ -189,9 +189,7 @@
     "enableServer": "Habilitar servidor iperf3",
     "serverPort": "Puerto del servidor",
     "serverAutoStart": "Cuando está habilitado, inicia el servidor iperf3 automáticamente",
-    "autoRunOnLinkDesc": "Volver a ejecutar las pruebas de rendimiento cuando cambie el estado del enlace.",
-    "directionSelection": "Selección de dirección",
-    "protocolSelection": "Selección de protocolo"
+    "autoRunOnLinkDesc": "Volver a ejecutar las pruebas de rendimiento cuando cambie el estado del enlace."
   },
   "health": {
     "title": "Verificaciones de salud",
@@ -246,6 +244,12 @@
     "modbusDescription": "Probar conectividad de dispositivos industriales Modbus",
     "unitId": "Unit ID",
     "testRegister": "Registro de prueba",
+    "httpUrl": "URL del endpoint",
+    "calledAe": "Título AE llamado",
+    "fhirBaseUrl": "URL base de FHIR",
+    "opcuaEndpointUrl": "URL del endpoint OPC-UA",
+    "streamUrl": "URL de la transmisión",
+    "ltiLaunchUrl": "URL de inicio LTI",
     "fhirAuthNone": "Ninguna",
     "fhirAuthBasic": "Basic",
     "fhirAuthOauth2": "OAuth2",

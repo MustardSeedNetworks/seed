@@ -15,14 +15,10 @@ import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
 import { Toggle } from '../../../shared/Toggle';
-import {
-  cn,
-  icon as iconTokens,
-  input as inputTokens,
-  layout,
-  spacing,
-} from '../../../styles/theme';
+import { cn, icon as iconTokens, layout, spacing } from '../../../styles/theme';
 import type { IperfSuggestion } from '../../../types/generated/iperf-suggestion';
 import type {
   CardSettings,
@@ -186,52 +182,44 @@ export function PerformanceSettings({
                 </h4>
                 <div className="stack">
                   <div>
-                    <label
-                      htmlFor="speedtest-server-id"
-                      className="caption text-text-muted font-medium"
-                    >
-                      {t('performance.serverId')}
-                    </label>
-                    <input
+                    <FormField
                       id="speedtest-server-id"
-                      type="text"
-                      value={testsSettings.speedtest.serverId}
-                      onChange={(
-                        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                      ): void =>
+                      label={t('performance.serverId')}
+                      hint={t('performance.autoSelectDesc')}
+                    >
+                      {(control) => (
+                        <Input
+                          {...control}
+                          type="text"
+                          value={testsSettings.speedtest.serverId}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                            setTestsSettings((prev) => ({
+                              ...prev,
+                              speedtest: {
+                                ...prev.speedtest,
+                                serverId: e.target.value,
+                              },
+                            }))
+                          }
+                          placeholder={t('performance.autoClosestServer')}
+                        />
+                      )}
+                    </FormField>
+                    <button
+                      type="button"
+                      onClick={(): void =>
                         setTestsSettings((prev) => ({
                           ...prev,
-                          speedtest: {
-                            ...prev.speedtest,
-                            serverId: e.target.value,
-                          },
+                          speedtest: { ...prev.speedtest, serverId: '' },
                         }))
                       }
-                      placeholder={t('performance.autoClosestServer')}
                       className={cn(
-                        inputTokens.base,
-                        inputTokens.state.default,
-                        inputTokens.size.md,
-                        'w-full',
+                        'caption text-brand-primary hover:underline',
                         spacing.margin.top.tight,
-                        'body-small',
                       )}
-                    />
-                    <div className={cn(layout.flex.between, spacing.margin.top.tight)}>
-                      <p className="caption text-text-muted">{t('performance.autoSelectDesc')}</p>
-                      <button
-                        type="button"
-                        onClick={(): void =>
-                          setTestsSettings((prev) => ({
-                            ...prev,
-                            speedtest: { ...prev.speedtest, serverId: '' },
-                          }))
-                        }
-                        className="caption text-brand-primary hover:underline"
-                      >
-                        {t('performance.resetToAuto')}
-                      </button>
-                    </div>
+                    >
+                      {t('performance.resetToAuto')}
+                    </button>
                   </div>
                 </div>
               </div>

@@ -9,15 +9,10 @@
 
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
 import { Tooltip } from '../../../shared/Tooltip';
-import {
-  cn,
-  icon as iconTokens,
-  input as inputTokens,
-  layout,
-  radius,
-  spacing,
-} from '../../../styles/theme';
+import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import type { ThresholdSettings } from '../../../types/generated/settings-response';
 import { Info } from '../../ui/Icons';
 
@@ -109,46 +104,30 @@ export function ThresholdsHttpSection({
           </Tooltip>
         </div>
         <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
-          <div>
-            <label className="caption text-text-muted" htmlFor="http-total-good">
-              {t('thresholds.goodLess')}
-            </label>
-            <input
-              id="http-total-good"
-              type="number"
-              value={thresholds.customHttp.good}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateThreshold('customHttp', 'good', Number(e.target.value))
-              }
-              className={cn(
-                inputTokens.base,
-                inputTokens.state.default,
-                inputTokens.size.sm,
-                spacing.margin.top.tight,
-                'body-small',
-              )}
-            />
-          </div>
-          <div>
-            <label className="caption text-text-muted" htmlFor="http-total-warning">
-              {t('thresholds.warningLess')}
-            </label>
-            <input
-              id="http-total-warning"
-              type="number"
-              value={thresholds.customHttp.warning}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateThreshold('customHttp', 'warning', Number(e.target.value))
-              }
-              className={cn(
-                inputTokens.base,
-                inputTokens.state.default,
-                inputTokens.size.sm,
-                spacing.margin.top.tight,
-                'body-small',
-              )}
-            />
-          </div>
+          <FormField id="http-total-good" label={t('thresholds.goodLess')}>
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                value={thresholds.customHttp.good}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateThreshold('customHttp', 'good', Number(e.target.value))
+                }
+              />
+            )}
+          </FormField>
+          <FormField id="http-total-warning" label={t('thresholds.warningLess')}>
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                value={thresholds.customHttp.warning}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateThreshold('customHttp', 'warning', Number(e.target.value))
+                }
+              />
+            )}
+          </FormField>
         </div>
       </div>
 
@@ -185,46 +164,30 @@ export function ThresholdsHttpSection({
           </Tooltip>
         </div>
         <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
-          <div>
-            <label className="caption text-text-muted" htmlFor="http-dns-good">
-              {t('thresholds.goodLess')}
-            </label>
-            <input
-              id="http-dns-good"
-              type="number"
-              value={thresholds.httpTimings.dns.good}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateHttpTimingThreshold('dns', 'good', Number(e.target.value))
-              }
-              className={cn(
-                inputTokens.base,
-                inputTokens.state.default,
-                inputTokens.size.sm,
-                spacing.margin.top.tight,
-                'body-small',
-              )}
-            />
-          </div>
-          <div>
-            <label className="caption text-text-muted" htmlFor="http-dns-warning">
-              {t('thresholds.warningLess')}
-            </label>
-            <input
-              id="http-dns-warning"
-              type="number"
-              value={thresholds.httpTimings.dns.warning}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateHttpTimingThreshold('dns', 'warning', Number(e.target.value))
-              }
-              className={cn(
-                inputTokens.base,
-                inputTokens.state.default,
-                inputTokens.size.sm,
-                spacing.margin.top.tight,
-                'body-small',
-              )}
-            />
-          </div>
+          <FormField id="http-dns-good" label={t('thresholds.goodLess')}>
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                value={thresholds.httpTimings.dns.good}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateHttpTimingThreshold('dns', 'good', Number(e.target.value))
+                }
+              />
+            )}
+          </FormField>
+          <FormField id="http-dns-warning" label={t('thresholds.warningLess')}>
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                value={thresholds.httpTimings.dns.warning}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateHttpTimingThreshold('dns', 'warning', Number(e.target.value))
+                }
+              />
+            )}
+          </FormField>
         </div>
       </div>
 
@@ -250,46 +213,30 @@ export function ThresholdsHttpSection({
           </Tooltip>
         </div>
         <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
-          <div>
-            <label className="caption text-text-muted" htmlFor="http-tcp-good">
-              {t('thresholds.goodLess')}
-            </label>
-            <input
-              id="http-tcp-good"
-              type="number"
-              value={thresholds.httpTimings.tcp.good}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateHttpTimingThreshold('tcp', 'good', Number(e.target.value))
-              }
-              className={cn(
-                inputTokens.base,
-                inputTokens.state.default,
-                inputTokens.size.sm,
-                spacing.margin.top.tight,
-                'body-small',
-              )}
-            />
-          </div>
-          <div>
-            <label className="caption text-text-muted" htmlFor="http-tcp-warning">
-              {t('thresholds.warningLess')}
-            </label>
-            <input
-              id="http-tcp-warning"
-              type="number"
-              value={thresholds.httpTimings.tcp.warning}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateHttpTimingThreshold('tcp', 'warning', Number(e.target.value))
-              }
-              className={cn(
-                inputTokens.base,
-                inputTokens.state.default,
-                inputTokens.size.sm,
-                spacing.margin.top.tight,
-                'body-small',
-              )}
-            />
-          </div>
+          <FormField id="http-tcp-good" label={t('thresholds.goodLess')}>
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                value={thresholds.httpTimings.tcp.good}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateHttpTimingThreshold('tcp', 'good', Number(e.target.value))
+                }
+              />
+            )}
+          </FormField>
+          <FormField id="http-tcp-warning" label={t('thresholds.warningLess')}>
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                value={thresholds.httpTimings.tcp.warning}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateHttpTimingThreshold('tcp', 'warning', Number(e.target.value))
+                }
+              />
+            )}
+          </FormField>
         </div>
       </div>
 
@@ -315,46 +262,30 @@ export function ThresholdsHttpSection({
           </Tooltip>
         </div>
         <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
-          <div>
-            <label className="caption text-text-muted" htmlFor="http-tls-good">
-              {t('thresholds.goodLess')}
-            </label>
-            <input
-              id="http-tls-good"
-              type="number"
-              value={thresholds.httpTimings.tls.good}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateHttpTimingThreshold('tls', 'good', Number(e.target.value))
-              }
-              className={cn(
-                inputTokens.base,
-                inputTokens.state.default,
-                inputTokens.size.sm,
-                spacing.margin.top.tight,
-                'body-small',
-              )}
-            />
-          </div>
-          <div>
-            <label className="caption text-text-muted" htmlFor="http-tls-warning">
-              {t('thresholds.warningLess')}
-            </label>
-            <input
-              id="http-tls-warning"
-              type="number"
-              value={thresholds.httpTimings.tls.warning}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateHttpTimingThreshold('tls', 'warning', Number(e.target.value))
-              }
-              className={cn(
-                inputTokens.base,
-                inputTokens.state.default,
-                inputTokens.size.sm,
-                spacing.margin.top.tight,
-                'body-small',
-              )}
-            />
-          </div>
+          <FormField id="http-tls-good" label={t('thresholds.goodLess')}>
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                value={thresholds.httpTimings.tls.good}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateHttpTimingThreshold('tls', 'good', Number(e.target.value))
+                }
+              />
+            )}
+          </FormField>
+          <FormField id="http-tls-warning" label={t('thresholds.warningLess')}>
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                value={thresholds.httpTimings.tls.warning}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateHttpTimingThreshold('tls', 'warning', Number(e.target.value))
+                }
+              />
+            )}
+          </FormField>
         </div>
       </div>
 
@@ -378,46 +309,30 @@ export function ThresholdsHttpSection({
           </Tooltip>
         </div>
         <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
-          <div>
-            <label className="caption text-text-muted" htmlFor="http-ttfb-good">
-              {t('thresholds.goodLess')}
-            </label>
-            <input
-              id="http-ttfb-good"
-              type="number"
-              value={thresholds.httpTimings.ttfb.good}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateHttpTimingThreshold('ttfb', 'good', Number(e.target.value))
-              }
-              className={cn(
-                inputTokens.base,
-                inputTokens.state.default,
-                inputTokens.size.sm,
-                spacing.margin.top.tight,
-                'body-small',
-              )}
-            />
-          </div>
-          <div>
-            <label className="caption text-text-muted" htmlFor="http-ttfb-warning">
-              {t('thresholds.warningLess')}
-            </label>
-            <input
-              id="http-ttfb-warning"
-              type="number"
-              value={thresholds.httpTimings.ttfb.warning}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateHttpTimingThreshold('ttfb', 'warning', Number(e.target.value))
-              }
-              className={cn(
-                inputTokens.base,
-                inputTokens.state.default,
-                inputTokens.size.sm,
-                spacing.margin.top.tight,
-                'body-small',
-              )}
-            />
-          </div>
+          <FormField id="http-ttfb-good" label={t('thresholds.goodLess')}>
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                value={thresholds.httpTimings.ttfb.good}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateHttpTimingThreshold('ttfb', 'good', Number(e.target.value))
+                }
+              />
+            )}
+          </FormField>
+          <FormField id="http-ttfb-warning" label={t('thresholds.warningLess')}>
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                value={thresholds.httpTimings.ttfb.warning}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateHttpTimingThreshold('ttfb', 'warning', Number(e.target.value))
+                }
+              />
+            )}
+          </FormField>
         </div>
       </div>
     </div>

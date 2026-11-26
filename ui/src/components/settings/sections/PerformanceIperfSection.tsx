@@ -1,3 +1,6 @@
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
+import { RadioGroup } from '../../../shared/RadioGroup';
 import { Toggle } from '../../../shared/Toggle';
 import { Tooltip } from '../../../shared/Tooltip';
 import { Info } from '../../ui/Icons';
@@ -17,16 +20,11 @@ import { Info } from '../../ui/Icons';
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
-import {
-  cn,
-  icon as iconTokens,
-  input as inputTokens,
-  layout,
-  radius,
-  spacing,
-} from '../../../styles/theme';
+import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import type { IperfSuggestion } from '../../../types/generated/iperf-suggestion';
 import type { IperfSettings } from '../../../types/settings';
+
+const DIRECTIONS = ['download', 'upload', 'bidirectional'] as const;
 
 interface PerformanceIperfSectionProps {
   iperfSettings: IperfSettings;
@@ -93,32 +91,22 @@ export function PerformanceIperfSection({
                     </button>
                   </legend>
                 ) : null}
-                <label
-                  htmlFor="iperf-server-address"
-                  className="caption text-text-muted font-medium"
-                >
-                  {t('performance.serverAddress')}
-                </label>
-                <input
-                  id="iperf-server-address"
-                  type="text"
-                  value={iperfSettings.server}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    setIperfSettings((prev) => ({
-                      ...prev,
-                      server: e.target.value,
-                    }))
-                  }
-                  placeholder="192.168.1.100"
-                  className={cn(
-                    inputTokens.base,
-                    inputTokens.state.default,
-                    inputTokens.size.md,
-                    'w-full',
-                    spacing.margin.top.tight,
-                    'body-small disabled:control-disabled',
+                <FormField id="iperf-server-address" label={t('performance.serverAddress')}>
+                  {(control) => (
+                    <Input
+                      {...control}
+                      type="text"
+                      value={iperfSettings.server}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                        setIperfSettings((prev) => ({
+                          ...prev,
+                          server: e.target.value,
+                        }))
+                      }
+                      placeholder="192.168.1.100"
+                    />
                   )}
-                />
+                </FormField>
               </fieldset>
             )}
           </Tooltip>
@@ -218,160 +206,76 @@ export function PerformanceIperfSection({
                 </legend>
               ) : null}
               {/* Port */}
-              <div>
-                <label className="caption text-text-muted font-medium" htmlFor="iperf-port">
-                  {t('performance.port')}
-                </label>
-                <input
-                  id="iperf-port"
-                  type="number"
-                  value={iperfSettings.port}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    setIperfSettings((prev) => ({
-                      ...prev,
-                      port: Number.parseInt(e.target.value, 10) || 5201,
-                    }))
-                  }
-                  className={cn(
-                    inputTokens.base,
-                    inputTokens.state.default,
-                    inputTokens.size.md,
-                    'w-full',
-                    spacing.margin.top.tight,
-                    'body-small disabled:control-disabled',
-                  )}
-                />
-              </div>
+              <FormField id="iperf-port" label={t('performance.port')}>
+                {(control) => (
+                  <Input
+                    {...control}
+                    type="number"
+                    value={iperfSettings.port}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      setIperfSettings((prev) => ({
+                        ...prev,
+                        port: Number.parseInt(e.target.value, 10) || 5201,
+                      }))
+                    }
+                  />
+                )}
+              </FormField>
 
               {/* Protocol Toggle */}
-              <div>
-                <span
-                  className={cn(
-                    'caption text-text-muted font-medium block',
-                    spacing.margin.bottom.inline,
-                  )}
-                >
-                  {t('performance.protocol')}
-                </span>
-                <div
-                  className={cn('flex flex-wrap', spacing.gap.compact)}
-                  role="radiogroup"
-                  aria-label={t('performance.protocolSelection')}
-                >
-                  {(['tcp', 'udp'] as const).map((proto) => {
-                    const checked = iperfSettings.protocol === proto;
-                    return (
-                      <label
-                        key={proto}
-                        className={cn(
-                          'cursor-pointer',
-                          spacing.chip.md,
-                          radius.full,
-                          'border body-small font-medium transition-colors',
-                          checked
-                            ? 'bg-brand-primary text-on-brand border-brand-primary'
-                            : 'bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover',
-                        )}
-                      >
-                        <input
-                          type="radio"
-                          name="iperf-protocol"
-                          value={proto}
-                          checked={checked}
-                          onChange={(): void =>
-                            setIperfSettings((prev) => ({
-                              ...prev,
-                              protocol: proto,
-                            }))
-                          }
-                          className="sr-only"
-                          aria-label={`${proto.toUpperCase()} protocol`}
-                        />
-                        {proto.toUpperCase()}
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
+              <RadioGroup
+                label={t('performance.protocol')}
+                name="iperf-protocol"
+                orientation="horizontal"
+                value={iperfSettings.protocol}
+                onValueChange={(value): void =>
+                  setIperfSettings((prev) => ({
+                    ...prev,
+                    protocol: value === 'udp' ? 'udp' : 'tcp',
+                  }))
+                }
+                options={[
+                  { value: 'tcp', label: 'TCP' },
+                  { value: 'udp', label: 'UDP' },
+                ]}
+              />
 
               {/* Direction Toggle */}
-              <div>
-                <span
-                  className={cn(
-                    'caption text-text-muted font-medium block',
-                    spacing.margin.bottom.inline,
-                  )}
-                >
-                  {t('performance.direction')}
-                </span>
-                <div
-                  className={cn('flex flex-wrap', spacing.gap.compact)}
-                  role="radiogroup"
-                  aria-label={t('performance.directionSelection')}
-                >
-                  {(['download', 'upload', 'bidirectional'] as const).map((direction) => {
-                    const checked = iperfSettings.direction === direction;
-                    return (
-                      <label
-                        key={direction}
-                        className={cn(
-                          'cursor-pointer',
-                          spacing.chip.md,
-                          radius.full,
-                          'border body-small font-medium transition-colors',
-                          checked
-                            ? 'bg-brand-primary text-on-brand border-brand-primary'
-                            : 'bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover',
-                        )}
-                      >
-                        <input
-                          type="radio"
-                          name="iperf-direction"
-                          value={direction}
-                          checked={checked}
-                          onChange={(): void =>
-                            setIperfSettings((prev) => ({
-                              ...prev,
-                              direction: direction,
-                            }))
-                          }
-                          className="sr-only"
-                          aria-label={`${getDirectionLabel(direction)} direction`}
-                        />
-                        {getDirectionLabel(direction)}
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
+              <RadioGroup
+                label={t('performance.direction')}
+                name="iperf-direction"
+                orientation="horizontal"
+                value={iperfSettings.direction}
+                onValueChange={(value): void => {
+                  const next = DIRECTIONS.find((direction) => direction === value);
+                  if (next) {
+                    setIperfSettings((prev) => ({ ...prev, direction: next }));
+                  }
+                }}
+                options={DIRECTIONS.map((direction) => ({
+                  value: direction,
+                  label: getDirectionLabel(direction),
+                }))}
+              />
 
               {/* Duration */}
-              <div>
-                <label className="caption text-text-muted font-medium" htmlFor="iperf-duration">
-                  {t('performance.duration')}
-                </label>
-                <input
-                  id="iperf-duration"
-                  type="number"
-                  value={iperfSettings.duration}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    setIperfSettings((prev) => ({
-                      ...prev,
-                      duration: Number.parseInt(e.target.value, 10) || 10,
-                    }))
-                  }
-                  min={1}
-                  max={60}
-                  className={cn(
-                    inputTokens.base,
-                    inputTokens.state.default,
-                    inputTokens.size.md,
-                    'w-full',
-                    spacing.margin.top.tight,
-                    'body-small disabled:control-disabled',
-                  )}
-                />
-              </div>
+              <FormField id="iperf-duration" label={t('performance.duration')}>
+                {(control) => (
+                  <Input
+                    {...control}
+                    type="number"
+                    value={iperfSettings.duration}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      setIperfSettings((prev) => ({
+                        ...prev,
+                        duration: Number.parseInt(e.target.value, 10) || 10,
+                      }))
+                    }
+                    min={1}
+                    max={60}
+                  />
+                )}
+              </FormField>
 
               {/* Server Mode */}
               <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
@@ -386,33 +290,21 @@ export function PerformanceIperfSection({
                   }
                   className="rounded-lg border border-surface-border bg-surface-base p-3"
                 />
-                <div>
-                  <label
-                    className="caption text-text-muted font-medium"
-                    htmlFor="iperf-server-port"
-                  >
-                    {t('performance.serverPort')}
-                  </label>
-                  <input
-                    id="iperf-server-port"
-                    type="number"
-                    value={iperfSettings.serverPort}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      setIperfSettings((prev) => ({
-                        ...prev,
-                        serverPort: Number.parseInt(e.target.value, 10) || 5201,
-                      }))
-                    }
-                    className={cn(
-                      inputTokens.base,
-                      inputTokens.state.default,
-                      inputTokens.size.md,
-                      'w-full',
-                      spacing.margin.top.tight,
-                      'body-small disabled:control-disabled',
-                    )}
-                  />
-                </div>
+                <FormField id="iperf-server-port" label={t('performance.serverPort')}>
+                  {(control) => (
+                    <Input
+                      {...control}
+                      type="number"
+                      value={iperfSettings.serverPort}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                        setIperfSettings((prev) => ({
+                          ...prev,
+                          serverPort: Number.parseInt(e.target.value, 10) || 5201,
+                        }))
+                      }
+                    />
+                  )}
+                </FormField>
                 <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
                   {t('performance.serverAutoStart')}
                 </p>

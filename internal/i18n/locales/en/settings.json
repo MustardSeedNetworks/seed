@@ -189,9 +189,7 @@
     "enableServer": "Enable iperf3 Server",
     "serverPort": "Server Port",
     "serverAutoStart": "When enabled, starts iperf3 server automatically",
-    "autoRunOnLinkDesc": "Re-run performance tests whenever the link state changes.",
-    "directionSelection": "Direction selection",
-    "protocolSelection": "Protocol selection"
+    "autoRunOnLinkDesc": "Re-run performance tests whenever the link state changes."
   },
   "health": {
     "title": "Health Checks",
@@ -246,6 +244,12 @@
     "modbusDescription": "Test Modbus industrial device connectivity",
     "unitId": "Unit ID",
     "testRegister": "Test Register",
+    "httpUrl": "Endpoint URL",
+    "calledAe": "Called AE title",
+    "fhirBaseUrl": "FHIR base URL",
+    "opcuaEndpointUrl": "OPC-UA endpoint URL",
+    "streamUrl": "Stream URL",
+    "ltiLaunchUrl": "LTI launch URL",
     "fhirAuthNone": "None",
     "fhirAuthBasic": "Basic",
     "fhirAuthOauth2": "OAuth2",

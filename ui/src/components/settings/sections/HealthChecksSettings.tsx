@@ -36,8 +36,9 @@ import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { useArrayItem } from '../../../hooks/useArrayItem';
 import { CollapsibleSection } from '../../../shared/CollapsibleSection';
+import { Input } from '../../../shared/Input';
 import { Toggle } from '../../../shared/Toggle';
-import { cn, icon as iconTokens, input, layout, radius, spacing } from '../../../styles/theme';
+import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import type { CardSettings, SaveStatus, TestsSettings } from '../../../types/settings';
 import { HeartPulse } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
@@ -190,24 +191,28 @@ export function HealthChecksSettings({
               key={target.id || target.host}
               className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
             >
-              <input
-                type="text"
-                value={target.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updatePingTarget(target.id ?? '', 'name', e.target.value)
-                }
-                placeholder={t('common.name')}
-                className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-              />
-              <input
-                type="text"
-                value={target.host}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updatePingTarget(target.id ?? '', 'host', e.target.value)
-                }
-                placeholder={t('common.hostIp')}
-                className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-              />
+              <div className="w-24 shrink-0">
+                <Input
+                  type="text"
+                  aria-label={t('common.name')}
+                  value={target.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updatePingTarget(target.id ?? '', 'name', e.target.value)
+                  }
+                  placeholder={t('common.name')}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('common.hostIp')}
+                  value={target.host}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updatePingTarget(target.id ?? '', 'host', e.target.value)
+                  }
+                  placeholder={t('common.hostIp')}
+                />
+              </div>
               <button
                 type="button"
                 onClick={(): void => removePingTarget(target.id ?? '')}
@@ -237,33 +242,39 @@ export function HealthChecksSettings({
               key={port.id || `${port.host}:${port.port}`}
               className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
             >
-              <input
-                type="text"
-                value={port.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateTcpPort(port.id ?? '', 'name', e.target.value)
-                }
-                placeholder={t('common.name')}
-                className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-              />
-              <input
-                type="text"
-                value={port.host}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateTcpPort(port.id ?? '', 'host', e.target.value)
-                }
-                placeholder={t('common.host')}
-                className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-              />
-              <input
-                type="number"
-                value={port.port}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateTcpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 80)
-                }
-                placeholder={t('common.port')}
-                className={cn(input.base, input.state.default, input.size.md, 'w-20')}
-              />
+              <div className="w-24 shrink-0">
+                <Input
+                  type="text"
+                  aria-label={t('common.name')}
+                  value={port.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateTcpPort(port.id ?? '', 'name', e.target.value)
+                  }
+                  placeholder={t('common.name')}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('common.host')}
+                  value={port.host}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateTcpPort(port.id ?? '', 'host', e.target.value)
+                  }
+                  placeholder={t('common.host')}
+                />
+              </div>
+              <div className="w-20 shrink-0">
+                <Input
+                  type="number"
+                  aria-label={t('common.port')}
+                  value={port.port}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateTcpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 80)
+                  }
+                  placeholder={t('common.port')}
+                />
+              </div>
               <button
                 type="button"
                 onClick={(): void => removeTcpPort(port.id ?? '')}
@@ -296,33 +307,39 @@ export function HealthChecksSettings({
               key={port.id || `${port.host}:${port.port}`}
               className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
             >
-              <input
-                type="text"
-                value={port.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateUdpPort(port.id ?? '', 'name', e.target.value)
-                }
-                placeholder={t('common.name')}
-                className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-              />
-              <input
-                type="text"
-                value={port.host}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateUdpPort(port.id ?? '', 'host', e.target.value)
-                }
-                placeholder={t('common.host')}
-                className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-              />
-              <input
-                type="number"
-                value={port.port}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateUdpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 53)
-                }
-                placeholder={t('common.port')}
-                className={cn(input.base, input.state.default, input.size.md, 'w-20')}
-              />
+              <div className="w-24 shrink-0">
+                <Input
+                  type="text"
+                  aria-label={t('common.name')}
+                  value={port.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateUdpPort(port.id ?? '', 'name', e.target.value)
+                  }
+                  placeholder={t('common.name')}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('common.host')}
+                  value={port.host}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateUdpPort(port.id ?? '', 'host', e.target.value)
+                  }
+                  placeholder={t('common.host')}
+                />
+              </div>
+              <div className="w-20 shrink-0">
+                <Input
+                  type="number"
+                  aria-label={t('common.port')}
+                  value={port.port}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateUdpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 53)
+                  }
+                  placeholder={t('common.port')}
+                />
+              </div>
               <button
                 type="button"
                 onClick={(): void => removeUdpPort(port.id ?? '')}
@@ -359,38 +376,32 @@ export function HealthChecksSettings({
               )}
             >
               <div className={cn('flex', spacing.gap.compact)}>
-                <input
-                  type="text"
-                  value={endpoint.name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateHttpEndpoint(endpoint.id ?? '', 'name', e.target.value)
-                  }
-                  placeholder={t('common.name')}
-                  className={cn(
-                    input.base,
-                    input.state.default,
-                    input.size.md,
-                    'flex-1 bg-surface-raised',
-                  )}
-                />
-                <input
-                  type="number"
-                  value={endpoint.expectedStatus}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateHttpEndpoint(
-                      endpoint.id ?? '',
-                      'expectedStatus',
-                      Number.parseInt(e.target.value, 10) || 200,
-                    )
-                  }
-                  placeholder={t('health.status')}
-                  className={cn(
-                    input.base,
-                    input.state.default,
-                    input.size.md,
-                    'w-20 bg-surface-raised',
-                  )}
-                />
+                <div className="min-w-0 flex-1">
+                  <Input
+                    type="text"
+                    aria-label={t('common.name')}
+                    value={endpoint.name}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      updateHttpEndpoint(endpoint.id ?? '', 'name', e.target.value)
+                    }
+                    placeholder={t('common.name')}
+                  />
+                </div>
+                <div className="w-20 shrink-0">
+                  <Input
+                    type="number"
+                    aria-label={t('health.status')}
+                    value={endpoint.expectedStatus}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      updateHttpEndpoint(
+                        endpoint.id ?? '',
+                        'expectedStatus',
+                        Number.parseInt(e.target.value, 10) || 200,
+                      )
+                    }
+                    placeholder={t('health.status')}
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={(): void => removeHttpEndpoint(endpoint.id ?? '')}
@@ -400,14 +411,14 @@ export function HealthChecksSettings({
                   {t('common.remove')}
                 </button>
               </div>
-              <input
+              <Input
                 type="text"
+                aria-label={t('health.httpUrl')}
                 value={endpoint.url}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                   updateHttpEndpoint(endpoint.id ?? '', 'url', e.target.value)
                 }
                 placeholder="https://example.com/health"
-                className={cn(input.base, input.state.default, input.size.md, 'bg-surface-raised')}
               />
             </div>
           ))}

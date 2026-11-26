@@ -10,8 +10,9 @@ import type React from 'react';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useArrayItem } from '../../../../hooks/useArrayItem';
+import { Input } from '../../../../shared/Input';
 import { Select } from '../../../../shared/Select';
-import { cn, input, layout, radius, spacing } from '../../../../styles/theme';
+import { cn, layout, radius, spacing } from '../../../../styles/theme';
 import type { TestsSettings } from '../../../../types/settings';
 
 interface ClinicalEndpointsProps {
@@ -86,42 +87,54 @@ export function ClinicalEndpoints({
             key={endpoint.id}
             className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
           >
-            <input
-              type="text"
-              value={endpoint.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateDicomEndpoint(endpoint.id ?? '', 'name', e.target.value)
-              }
-              placeholder={t('common.name')}
-              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-            />
-            <input
-              type="text"
-              value={endpoint.host}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateDicomEndpoint(endpoint.id ?? '', 'host', e.target.value)
-              }
-              placeholder={t('common.host')}
-              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-            />
-            <input
-              type="number"
-              value={endpoint.port}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateDicomEndpoint(endpoint.id ?? '', 'port', Number.parseInt(e.target.value, 10))
-              }
-              placeholder="104"
-              className={cn(input.base, input.state.default, input.size.md, 'w-20')}
-            />
-            <input
-              type="text"
-              value={endpoint.calledAe}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateDicomEndpoint(endpoint.id ?? '', 'calledAe', e.target.value)
-              }
-              placeholder="AE Title"
-              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-            />
+            <div className="w-24 shrink-0">
+              <Input
+                type="text"
+                aria-label={t('common.name')}
+                value={endpoint.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateDicomEndpoint(endpoint.id ?? '', 'name', e.target.value)
+                }
+                placeholder={t('common.name')}
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <Input
+                type="text"
+                aria-label={t('common.host')}
+                value={endpoint.host}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateDicomEndpoint(endpoint.id ?? '', 'host', e.target.value)
+                }
+                placeholder={t('common.host')}
+              />
+            </div>
+            <div className="w-20 shrink-0">
+              <Input
+                type="number"
+                aria-label={t('common.port')}
+                value={endpoint.port}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateDicomEndpoint(
+                    endpoint.id ?? '',
+                    'port',
+                    Number.parseInt(e.target.value, 10),
+                  )
+                }
+                placeholder="104"
+              />
+            </div>
+            <div className="w-24 shrink-0">
+              <Input
+                type="text"
+                aria-label={t('health.calledAe')}
+                value={endpoint.calledAe}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateDicomEndpoint(endpoint.id ?? '', 'calledAe', e.target.value)
+                }
+                placeholder="AE Title"
+              />
+            </div>
             <button
               type="button"
               onClick={(): void => removeDicomEndpoint(endpoint.id ?? '')}
@@ -159,48 +172,43 @@ export function ClinicalEndpoints({
             )}
           >
             <div className={cn('flex', spacing.gap.compact)}>
-              <input
-                type="text"
-                value={endpoint.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateHl7Endpoint(endpoint.id ?? '', 'name', e.target.value)
-                }
-                placeholder={t('common.name')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'w-32 bg-surface-raised',
-                )}
-              />
-              <input
-                type="text"
-                value={endpoint.host}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateHl7Endpoint(endpoint.id ?? '', 'host', e.target.value)
-                }
-                placeholder={t('common.host')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'flex-1 bg-surface-raised',
-                )}
-              />
-              <input
-                type="number"
-                value={endpoint.port}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateHl7Endpoint(endpoint.id ?? '', 'port', Number.parseInt(e.target.value, 10))
-                }
-                placeholder="2575"
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'w-20 bg-surface-raised',
-                )}
-              />
+              <div className="w-32 shrink-0">
+                <Input
+                  type="text"
+                  aria-label={t('common.name')}
+                  value={endpoint.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateHl7Endpoint(endpoint.id ?? '', 'name', e.target.value)
+                  }
+                  placeholder={t('common.name')}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('common.host')}
+                  value={endpoint.host}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateHl7Endpoint(endpoint.id ?? '', 'host', e.target.value)
+                  }
+                  placeholder={t('common.host')}
+                />
+              </div>
+              <div className="w-20 shrink-0">
+                <Input
+                  type="number"
+                  aria-label={t('common.port')}
+                  value={endpoint.port}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateHl7Endpoint(
+                      endpoint.id ?? '',
+                      'port',
+                      Number.parseInt(e.target.value, 10),
+                    )
+                  }
+                  placeholder="2575"
+                />
+              </div>
               <button
                 type="button"
                 onClick={(): void => removeHl7Endpoint(endpoint.id ?? '')}
@@ -210,64 +218,52 @@ export function ClinicalEndpoints({
               </button>
             </div>
             <div className={cn('flex', spacing.gap.compact)}>
-              <input
-                type="text"
-                value={endpoint.sendingApp}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateHl7Endpoint(endpoint.id ?? '', 'sendingApp', e.target.value)
-                }
-                placeholder={t('health.sendingApp')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'flex-1 bg-surface-raised',
-                )}
-              />
-              <input
-                type="text"
-                value={endpoint.sendingFacility}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateHl7Endpoint(endpoint.id ?? '', 'sendingFacility', e.target.value)
-                }
-                placeholder={t('health.sendingFacility')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'flex-1 bg-surface-raised',
-                )}
-              />
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('health.sendingApp')}
+                  value={endpoint.sendingApp}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateHl7Endpoint(endpoint.id ?? '', 'sendingApp', e.target.value)
+                  }
+                  placeholder={t('health.sendingApp')}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('health.sendingFacility')}
+                  value={endpoint.sendingFacility}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateHl7Endpoint(endpoint.id ?? '', 'sendingFacility', e.target.value)
+                  }
+                  placeholder={t('health.sendingFacility')}
+                />
+              </div>
             </div>
             <div className={cn('flex', spacing.gap.compact)}>
-              <input
-                type="text"
-                value={endpoint.receivingApp}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateHl7Endpoint(endpoint.id ?? '', 'receivingApp', e.target.value)
-                }
-                placeholder={t('health.receivingApp')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'flex-1 bg-surface-raised',
-                )}
-              />
-              <input
-                type="text"
-                value={endpoint.receivingFacility}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateHl7Endpoint(endpoint.id ?? '', 'receivingFacility', e.target.value)
-                }
-                placeholder={t('health.receivingFacility')}
-                className={cn(
-                  input.base,
-                  input.state.default,
-                  input.size.md,
-                  'flex-1 bg-surface-raised',
-                )}
-              />
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('health.receivingApp')}
+                  value={endpoint.receivingApp}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateHl7Endpoint(endpoint.id ?? '', 'receivingApp', e.target.value)
+                  }
+                  placeholder={t('health.receivingApp')}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <Input
+                  type="text"
+                  aria-label={t('health.receivingFacility')}
+                  value={endpoint.receivingFacility}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateHl7Endpoint(endpoint.id ?? '', 'receivingFacility', e.target.value)
+                  }
+                  placeholder={t('health.receivingFacility')}
+                />
+              </div>
             </div>
           </div>
         ))}
@@ -292,24 +288,28 @@ export function ClinicalEndpoints({
             key={endpoint.id}
             className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
           >
-            <input
-              type="text"
-              value={endpoint.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateFhirEndpoint(endpoint.id ?? '', 'name', e.target.value)
-              }
-              placeholder={t('common.name')}
-              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-            />
-            <input
-              type="text"
-              value={endpoint.baseUrl}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateFhirEndpoint(endpoint.id ?? '', 'baseUrl', e.target.value)
-              }
-              placeholder="https://fhir.example.com/r4"
-              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-            />
+            <div className="w-24 shrink-0">
+              <Input
+                type="text"
+                aria-label={t('common.name')}
+                value={endpoint.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateFhirEndpoint(endpoint.id ?? '', 'name', e.target.value)
+                }
+                placeholder={t('common.name')}
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <Input
+                type="text"
+                aria-label={t('health.fhirBaseUrl')}
+                value={endpoint.baseUrl}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateFhirEndpoint(endpoint.id ?? '', 'baseUrl', e.target.value)
+                }
+                placeholder="https://fhir.example.com/r4"
+              />
+            </div>
             <div className="w-28 shrink-0">
               <Select
                 aria-label={t('health.fhirAuthType')}
