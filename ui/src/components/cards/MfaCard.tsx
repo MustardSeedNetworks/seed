@@ -327,9 +327,9 @@ export function MfaCard(): JSX.Element {
             variant="secondary"
             size="sm"
             // A browser without WebAuthn cannot enrol, and an enabled button that
-            // silently does nothing is what this card shipped with: the title
-            // says why it is unavailable.
-            title={isPasskeySupported() ? undefined : t('mfa.passkeyUnsupported')}
+            // silently does nothing is what this card shipped with: the reason
+            // is read on focus and hover.
+            disabledReason={isPasskeySupported() ? undefined : t('mfa.passkeyUnsupported')}
             disabled={busy || !isPasskeySupported()}
             data-testid="mfa-add-passkey"
             onClick={() => {
