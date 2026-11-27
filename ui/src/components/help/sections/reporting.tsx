@@ -244,7 +244,19 @@ export const reportingSections: HelpSection[] = [
     id: 'pollingTargets',
     titleKey: 'sections.pollingTargets',
     icon: <Server className={ICON} />,
-    keywords: ['polling', 'targets', 'snmp', 'monitor', 'device', 'collector', 'add', 'edit'],
+    keywords: [
+      'polling',
+      'targets',
+      'snmp',
+      'monitor',
+      'device',
+      'collector',
+      'add',
+      'edit',
+      'mib',
+      'walk',
+      'oid',
+    ],
     blocks: [
       {
         kind: 'paragraph',
@@ -265,6 +277,10 @@ export const reportingSections: HelpSection[] = [
           {
             term: 'content.pollingTargets.terms.snmp.term',
             description: 'content.pollingTargets.terms.snmp.description',
+          },
+          {
+            term: 'content.pollingTargets.terms.walk.term',
+            description: 'content.pollingTargets.terms.walk.description',
           },
         ],
       },

@@ -388,7 +388,19 @@
     "saveChanges": "Save changes",
     "deleteMessage": "The target stops being polled.",
     "columnOrder": "Order",
-    "columnCollector": "Collector"
+    "columnCollector": "Collector",
+    "mibBrowser": "Browse MIB",
+    "mibBrowserHint": "Walk one subtree of this device with its polling credential.",
+    "mibOidLabel": "OID or object name",
+    "mibOidPlaceholder": "ifTable, sysDescr.0 or 1.3.6.1.2.1.2",
+    "mibWalk": "Walk",
+    "mibWalking": "Walking…",
+    "mibReadOnly": "Read-only — operator role required to walk a device",
+    "mibWalkFailed": "The walk failed: {{reason}}",
+    "mibRowCount_one": "{{count}} object under {{oid}}",
+    "mibRowCount_other": "{{count}} objects under {{oid}}",
+    "mibTruncated": "Stopped at {{count}} objects. Walk a narrower subtree to see the rest.",
+    "mibNoRows": "The device returned nothing under {{oid}}."
   },
   "deviceGroups": {
     "description": "Named sets of polling targets, to scope alert rules and reports.",
