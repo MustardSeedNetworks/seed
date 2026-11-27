@@ -29,6 +29,7 @@ import { type PageConfig, usePages } from '../pageRegistry';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { documentTitle } from '../shared/documentTitle';
 import { PageHeader } from '../shared/PageHeader';
+import type { RailState, RailStatus } from '../shared/RailFooter';
 import { cn, section } from '../styles/theme';
 import { PageLoader } from '../ui/PageLoader';
 import { renderBreadcrumbLink } from '../ui/renderBreadcrumbLink';
@@ -141,15 +142,40 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
   };
 
   const { t } = useTranslation();
-  // Literal keys rather than `t(`status.${sseStatus}`)`: the fleet key checker
-  // cannot resolve a computed key, so an interpolated one reads as four
-  // orphaned translations.
-  const statusLabel: Record<typeof sseStatus, string> = {
-    connected: t('status.connected'),
-    connecting: t('status.connecting'),
-    disconnected: t('status.disconnected'),
-    error: t('status.error'),
+  // Literal keys rather than `t(`railDetail.${state}`)`: the fleet key checker
+  // cannot resolve a computed key, so an interpolated one reads as orphaned
+  // translations.
+  const railStatuses: Record<RailState, RailStatus> = {
+    connected: {
+      state: 'connected',
+      label: t('status.connected'),
+      detail: t('railDetail.connected'),
+    },
+    reconnecting: {
+      state: 'reconnecting',
+      label: t('status.reconnecting'),
+      detail: t('railDetail.reconnecting'),
+    },
+    disconnected: {
+      state: 'disconnected',
+      label: t('status.disconnected'),
+      detail: t('railDetail.disconnected'),
+    },
+    degraded: {
+      state: 'degraded',
+      label: t('status.degraded'),
+      detail: t('railDetail.degraded'),
+    },
   };
+  // A failed event stream with a reachable daemon is a part failing; with an
+  // unreachable one it is the whole product.
+  const railStateOf: Record<typeof sseStatus, RailState> = {
+    connected: 'connected',
+    connecting: 'reconnecting',
+    disconnected: 'disconnected',
+    error: daemonStatus === 'disconnected' ? 'disconnected' : 'degraded',
+  };
+  const railState = railStateOf[sseStatus];
   const interfaceSlot = useInterfaceSlot({
     interfaces,
     currentInterface,
@@ -160,11 +186,7 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
     ...(recommendedEthernet ? { recommendedEthernet } : {}),
   });
   const footer: SidebarFooterConfig = {
-    status: {
-      tone:
-        sseStatus === 'connected' ? 'success' : sseStatus === 'connecting' ? 'warning' : 'error',
-      label: statusLabel[sseStatus],
-    },
+    status: railStatuses[railState],
     productSlot: interfaceSlot,
     help: { label: t('accessibility.openHelp'), onClick: openPageHelp },
     settings: { label: t('accessibility.openSettings'), onClick: openSettings },

@@ -1,61 +1,18 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { Button } from './Button';
 import { Tooltip } from './Tooltip';
+import {
+  bubble,
+  hover,
+  installTooltipHarness,
+  leave,
+  moveTrigger,
+  shown,
+  tip,
+} from './test/tooltipTestUtils';
 
-const BUBBLE = { width: 100, height: 20 };
-let trigger = { top: 200, left: 300, width: 40, height: 30 };
-
-function rect({ top, left, width, height }: typeof trigger): DOMRect {
-  return {
-    top,
-    left,
-    width,
-    height,
-    bottom: top + height,
-    right: left + width,
-    x: left,
-    y: top,
-    toJSON: () => ({}),
-  };
-}
-
-beforeEach(() => {
-  vi.useFakeTimers();
-  trigger = { top: 200, left: 300, width: 40, height: 30 };
-  window.innerWidth = 1000;
-  window.innerHeight = 800;
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
-    this: HTMLElement,
-  ) {
-    return this.getAttribute('role') === 'tooltip'
-      ? rect({ top: 0, left: 0, ...BUBBLE })
-      : rect(trigger);
-  });
-});
-
-afterEach(() => {
-  cleanup();
-  vi.useRealTimers();
-  vi.restoreAllMocks();
-});
-
-const tip = () => (
-  <Tooltip text="Delete device">
-    <button type="button">x</button>
-  </Tooltip>
-);
-
-const bubble = () => screen.getByRole('tooltip', { hidden: true });
-const shown = () => !bubble().className.includes('invisible');
-const hover = (element: Element) => fireEvent.mouseOver(element);
-/** The pointer leaves for the page; the bubble closes after its short grace period. */
-const leave = (element: Element) => {
-  fireEvent.mouseOut(element);
-  act(() => {
-    vi.advanceTimersByTime(300);
-  });
-};
+installTooltipHarness();
 
 describe('Tooltip', () => {
   it('describes its child with the bubble, which is in the DOM from the start', () => {
@@ -292,14 +249,14 @@ describe('Tooltip', () => {
     });
 
     it('flips below when there is no room above', () => {
-      trigger = { ...trigger, top: 4 };
+      moveTrigger({ top: 4 });
       render(tip());
       hover(screen.getByRole('button'));
       expect(position().top).toBe(`${4 + 30 + 6}px`);
     });
 
     it('flips above when it prefers below and there is no room under', () => {
-      trigger = { ...trigger, top: 780 };
+      moveTrigger({ top: 780 });
       render(
         <Tooltip text="Tip" side="bottom">
           <button type="button">x</button>
@@ -310,7 +267,7 @@ describe('Tooltip', () => {
     });
 
     it('stays inside the viewport horizontally', () => {
-      trigger = { ...trigger, left: 0, width: 10 };
+      moveTrigger({ left: 0, width: 10 });
       render(tip());
       hover(screen.getByRole('button'));
       expect(position().left).toBe('8px');
@@ -319,12 +276,12 @@ describe('Tooltip', () => {
     it('follows the trigger when an ancestor scrolls or the window resizes while open', () => {
       render(tip());
       hover(screen.getByRole('button'));
-      trigger = { ...trigger, top: 400 };
+      moveTrigger({ top: 400 });
       act(() => {
         fireEvent.scroll(document.body);
       });
       expect(position().top).toBe(`${400 - 20 - 6}px`);
-      trigger = { ...trigger, top: 500 };
+      moveTrigger({ top: 500 });
       act(() => {
         fireEvent(window, new Event('resize'));
       });
@@ -382,54 +339,6 @@ describe('Tooltip', () => {
       expect(button.getAttribute('aria-disabled')).toBeNull();
       fireEvent.click(button);
       expect(onClick).toHaveBeenCalledOnce();
-    });
-  });
-
-  describe('Escape under load (the niac "Escape dismisses tooltip" flake)', () => {
-    it('stays dismissed when the pointer grace period ends while focus is still on the trigger', () => {
-      render(tip());
-      const button = screen.getByRole('button');
-      hover(button);
-      fireEvent.focus(button);
-      fireEvent.mouseOut(button);
-      fireEvent.keyDown(document, { key: 'Escape' });
-      expect(shown()).toBe(false);
-      act(() => {
-        vi.advanceTimersByTime(300);
-      });
-      expect(shown()).toBe(false);
-      fireEvent.blur(button);
-      fireEvent.focus(button);
-      expect(shown()).toBe(true);
-    });
-
-    it('is dismissed by an Escape that arrives before React has rendered the hover', async () => {
-      const environment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
-      render(tip());
-      const button = screen.getByRole('button');
-      environment.IS_REACT_ACT_ENVIRONMENT = false;
-      try {
-        // Native events with no act(): the hover is queued, not yet committed,
-        // as when a parallel worker's renderer is behind the pointer.
-        button.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-        await vi.advanceTimersByTimeAsync(500);
-        expect(shown()).toBe(false);
-      } finally {
-        environment.IS_REACT_ACT_ENVIRONMENT = true;
-      }
-    });
-
-    it('lets a second Escape through to the dialog once the bubble is closed', () => {
-      const onKey = vi.fn();
-      document.addEventListener('keydown', onKey);
-      render(tip());
-      fireEvent.focus(screen.getByRole('button'));
-      fireEvent.keyDown(document, { key: 'Escape' });
-      expect(onKey).not.toHaveBeenCalled();
-      fireEvent.keyDown(document, { key: 'Escape' });
-      expect(onKey).toHaveBeenCalledOnce();
-      document.removeEventListener('keydown', onKey);
     });
   });
 });

@@ -70,7 +70,9 @@
     "rollupOk": "Todo correcto",
     "rollupWarn": "Degradado",
     "rollupCrit": "Crítico",
-    "rollupNoData": "Sin datos"
+    "rollupNoData": "Sin datos",
+    "reconnecting": "Reconectando…",
+    "degraded": "Degradado"
   },
   "labels": {
     "username": "Usuario",
@@ -407,5 +409,11 @@
       "7d": "Últimos 7 días"
     },
     "peak": "Pico {{series}} {{value}}"
+  },
+  "railDetail": {
+    "connected": "El daemon de seed está accesible y en buen estado.",
+    "reconnecting": "Conexión perdida; reintentando.",
+    "disconnected": "No se puede acceder al daemon de seed.",
+    "degraded": "Accesible, pero una parte falla o va lenta."
   }
 }

@@ -10,7 +10,8 @@
  *
  * - `size`: `sm` 24rem, `md` 28rem, `lg` 32rem (default), `3xl`
  *   48rem, `full` 56rem wide and as tall as the
- * viewport allows (the body scrolls inside it). All are capped by the viewport with a 16px gutter.
+ * viewport allows (the body scrolls inside it), `wide` up to 96rem and as tall
+ * as the viewport allows, for a table or a two-pane view. All are capped by the viewport with a 16px gutter.
  * - `footer`: the actions, right-aligned under the body, pinned while the body
  *   scrolls. `header`: extra header content beside the title (a badge, a step).
  * - `closeOnBackdrop` (default true): a click on the scrim closes it. A form
@@ -30,7 +31,7 @@ import { cx } from './cx';
 import { useDialog } from './useDialog';
 import { useScrollable } from './useScrollable';
 
-export type ModalSize = 'sm' | 'md' | 'lg' | '3xl' | 'full';
+export type ModalSize = 'sm' | 'md' | 'lg' | '3xl' | 'full' | 'wide';
 
 interface ModalBaseProps {
   open: boolean;
@@ -70,6 +71,7 @@ const sizes: Record<ModalSize, string> = {
   lg: 'max-w-lg',
   '3xl': 'max-w-3xl',
   full: 'h-full max-w-4xl',
+  wide: 'h-full max-w-[96rem]',
 };
 
 export function Modal({

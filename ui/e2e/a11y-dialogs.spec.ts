@@ -77,6 +77,20 @@ const DIALOGS: Dialog[] = [
  * a second one. Both steps are asserted, not just the end state.
  */
 async function closeWithEscape(page: Page, dialog: Locator): Promise<void> {
+  // A bubble whose trigger has lost focus is still on screen until React
+  // renders its close, which under load is a few keypresses late. An Escape
+  // sent then belongs to the dialog, not the bubble, so wait until the only
+  // bubble shown is the focused control's, or none.
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const described = document.activeElement?.getAttribute('aria-describedby')?.split(' ');
+        return [...document.querySelectorAll('[role="tooltip"]')]
+          .filter((bubble) => getComputedStyle(bubble).visibility === 'visible')
+          .every((bubble) => described?.includes(bubble.id));
+      }),
+    )
+    .toBe(true);
   const tooltip = page.getByRole('tooltip');
   if ((await tooltip.count()) > 0) {
     await page.keyboard.press('Escape');

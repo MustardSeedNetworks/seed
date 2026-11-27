@@ -120,7 +120,7 @@ test.describe('the rail carries the shell controls', () => {
     const status = railControl(page, 'rail-status');
     await expect(status).toBeVisible();
     // The state has to reach the operator in words, not only as a colour.
-    await expect(status).toContainText(/connected|connecting|disconnected|error/i);
+    await expect(status).toContainText(/connected|reconnecting|disconnected|degraded/i);
   });
 
   test('carries the theme toggle, and it is keyboard reachable', async ({ page }) => {
