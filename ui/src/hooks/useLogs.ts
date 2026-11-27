@@ -324,19 +324,3 @@ export function formatLogTimestamp(timestamp: string): string {
     fractionalSecondDigits: 3,
   });
 }
-
-/**
- * Format a full timestamp with date.
- */
-export function formatLogDateTime(timestamp: string): string {
-  const date = new Date(timestamp);
-  return date.toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
-}

@@ -27,7 +27,6 @@ import type { ProfileImportResponse } from '../types/generated/profile-import-re
 import type { ProfileSwitchRequest } from '../types/generated/profile-switch-request';
 import type {
   Profile,
-  ProfileExportResponse,
   ProfileImportRequest,
   ProfileListResponse,
   ProfileRequest,
@@ -367,23 +366,6 @@ export function useImportProfilesMutation(): UseMutationResult<
     onError: (err: Error) => {
       logger.error(LogComponents.PROFILES, 'Failed to import profiles', err);
     },
-  });
-}
-
-/**
- * Export all profiles to JSON.
- */
-export function useExportProfilesQuery(
-  enabled: boolean = false,
-): UseQueryResult<ProfileExportResponse, Error> {
-  return useQuery({
-    queryKey: [...profileKeys.all, 'export'],
-    queryFn: async () => {
-      const data = await api.get<ProfileExportResponse>('/api/v1/profiles/export');
-      return data;
-    },
-    enabled,
-    staleTime: 0, // Always fetch fresh data for export
   });
 }
 

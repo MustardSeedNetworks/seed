@@ -275,13 +275,4 @@ export function useProfileContext(): ProfileContextValue {
   return context;
 }
 
-/**
- * Hook to optionally access the profile context.
- * Returns null if used outside ProfileProvider (for non-critical usage).
- */
-export function useProfileContextOptional(): ProfileContextValue | null {
-  const context = useContext(PROFILE_CONTEXT);
-  return context === undefined ? null : context;
-}
-
 // Note: ProfileContext is intentionally not exported to keep fast-refresh happy.

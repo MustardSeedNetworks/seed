@@ -10,11 +10,7 @@
 
 import type { ThresholdSettings } from '../types/generated/settings-response';
 import type { CardSettings, DisplayOptions, IperfSettings, SaveStatus } from '../types/settings';
-import {
-  type SettingsSaveStatus,
-  useProfileContext,
-  useProfileContextOptional,
-} from './profileContext';
+import { type SettingsSaveStatus, useProfileContext } from './profileContext';
 
 /**
  * Context value type for settings management (backward compatibility)
@@ -104,39 +100,5 @@ export function useSettings(): SettingsContextValue {
     updateThresholds: updateThresholds as (updates: Partial<ThresholdSettings>) => void,
     refreshSettings,
     isLoaded: isSettingsLoaded,
-  };
-}
-
-/**
- * Hook to optionally access settings context.
- * Returns null if used outside ProfileProvider (for non-critical usage).
- *
- * @returns Settings context value or null
- */
-export function useSettingsOptional(): SettingsContextValue | null {
-  const context = useProfileContextOptional();
-  if (!context) {
-    return null;
-  }
-  const saveStatus = convertSaveStatus(context.settingsStatus);
-  return {
-    cardSettings: context.cardSettings as CardSettings,
-    displayOptions: context.displayOptions as DisplayOptions,
-    iperfSettings: context.iperfSettings as IperfSettings,
-    thresholds: context.thresholds as ThresholdSettings,
-    status: {
-      cards: saveStatus,
-      display: saveStatus,
-      iperf: saveStatus,
-      thresholds: saveStatus,
-    },
-    updateCardSettings: context.updateCardSettings as (updates: Partial<CardSettings>) => void,
-    updateDisplayOptions: context.updateDisplayOptions as (
-      updates: Partial<DisplayOptions>,
-    ) => void,
-    updateIperfSettings: context.updateIperfSettings as (updates: Partial<IperfSettings>) => void,
-    updateThresholds: context.updateThresholds as (updates: Partial<ThresholdSettings>) => void,
-    refreshSettings: context.refreshSettings,
-    isLoaded: context.isSettingsLoaded,
   };
 }

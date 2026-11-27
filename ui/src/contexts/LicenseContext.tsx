@@ -3,8 +3,7 @@
  *
  * Fetches GET /api/v1/license once at app boot, caches the result, and
  * exposes it via `useLicense()`. UI components use this to decide
- * whether to render a feature (`<RequireFeature>`) or disable it with
- * an upgrade hint (`<TierGate>`).
+ * whether to render a feature (`<RequireFeature>`).
  *
  * Server returns FeatureGateResponse-shaped JSON; on a 402 from any
  * gated API call the relevant component can additionally refresh
