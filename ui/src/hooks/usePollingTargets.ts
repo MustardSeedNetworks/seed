@@ -1,8 +1,8 @@
 /**
  * Data hook for the /api/v1/polling-targets surface.
  *
- * Exposes the read-list, the three CRUD mutations and the one-shot poll
- * ("Test target") as a single
+ * Exposes the read-list, the three CRUD mutations, the one-shot poll
+ * ("Test target") and the MIB browser's subtree walk as a single
  * object so the page component doesn't have to weave together
  * useEffect, fetch state, and refresh-on-mutate logic itself.
  *
@@ -18,6 +18,7 @@ import { api } from '../api/client';
 import type { PollingTargetListResponse } from '../types/generated/polling-target-list-response';
 import type { PollingTargetRequest } from '../types/generated/polling-target-request';
 import type { PollingTargetResponse } from '../types/generated/polling-target-response';
+import type { SNMPWalkResponse } from '../types/generated/snmp-walk-response';
 
 const ENDPOINT = '/api/v1/polling-targets';
 
@@ -31,6 +32,8 @@ export interface UsePollingTargetsResult {
   remove: (id: string) => Promise<void>;
   /** Polls the target once now and answers it with that poll's outcome. */
   poll: (id: string) => Promise<PollingTargetResponse>;
+  /** Walks one subtree of the target, by numeric OID or MIB object name. */
+  walk: (id: string, oid: string) => Promise<SNMPWalkResponse>;
 }
 
 export function usePollingTargets(): UsePollingTargetsResult {
@@ -88,5 +91,8 @@ export function usePollingTargets(): UsePollingTargetsResult {
     return polled;
   };
 
-  return { targets, loading, error, refresh, create, update, remove, poll };
+  const walk = (id: string, oid: string): Promise<SNMPWalkResponse> =>
+    api.post<SNMPWalkResponse>(`${ENDPOINT}/${id}/walk`, { oid });
+
+  return { targets, loading, error, refresh, create, update, remove, poll, walk };
 }
