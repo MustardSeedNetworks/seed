@@ -1289,7 +1289,7 @@ jobs:
     # toolchain. It ships the arm64 cross compiler, which this job used to
     # apt-install from the mirror on every run (#3496). Keep the two pins equal.
     container:
-      image: goreleaser/goreleaser-cross:v1.27.3-3-v2.20.2@sha256:74447bcb1afe2472293568c1226ba3460f0e2db9f023d288d60cc72ffa92ee1b
+      image: goreleaser/goreleaser-cross:v1.27.3-4-v2.20.3@sha256:0acd8827de9901bd99082eaa846304e74e1d3c60f05c09739feabcc8aa8fdbd8
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
