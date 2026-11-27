@@ -16,6 +16,10 @@
  * before the fetch resolves. The report describes the OS, which cannot change
  * under us; guessing "unavailable" first would be wrong more often than right.
  *
+ * A child that calls its own endpoint on mount would make that call during the
+ * wait, and on a platform that cannot serve it the call answers 501. Such a
+ * surface sets `deferUntilKnown` and renders nothing until the report says.
+ *
  * Example:
  * ```tsx
  * <FeatureUnavailable capability="cable_diagnostics">
@@ -35,16 +39,22 @@ interface FeatureUnavailableProps {
   children: ReactNode;
   /** Rendered instead of the default notice, for surfaces with their own empty state. */
   fallback?: ReactNode;
+  /** Render nothing, not the children, while the capability report is in flight. */
+  deferUntilKnown?: boolean;
 }
 
 export function FeatureUnavailable({
   capability,
   children,
   fallback,
-}: FeatureUnavailableProps): ReactElement {
+  deferUntilKnown = false,
+}: FeatureUnavailableProps): ReactElement | null {
   const { levelOf, all, loading } = usePlatformCapabilities();
   const { t } = useTranslation('errors');
 
+  if (loading && deferUntilKnown) {
+    return null;
+  }
   if (loading || levelOf(capability) !== 'none') {
     return <>{children}</>;
   }
