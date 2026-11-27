@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.286.0](https://github.com/MustardSeedNetworks/seed/compare/v0.285.8...v0.286.0) (2026-11-27)
+
+
+### Features
+
+* **ui:** adopt the shared page components (UI-SEED-50) ([#3887](https://github.com/MustardSeedNetworks/seed/issues/3887)) ([b7691f0](https://github.com/MustardSeedNetworks/seed/commit/b7691f085ef9cb404a10262dbc0fd8d87381bdc8))
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.108.1 ([#3904](https://github.com/MustardSeedNetworks/seed/issues/3904)) ([1f0e73f](https://github.com/MustardSeedNetworks/seed/commit/1f0e73f19f405055fa644931b870cfa3299a1f8d))
+* **deps:** update dependency tailwind-merge to v3.7.1 ([#3905](https://github.com/MustardSeedNetworks/seed/issues/3905)) ([a1ea84d](https://github.com/MustardSeedNetworks/seed/commit/a1ea84d8c9ae563574555598a55dc99c462e8a02))
+
+
+### Miscellaneous
+
+* **deps:** update goreleaser/goreleaser-cross docker tag to v1.27.3-4-v2.20.3 ([#3907](https://github.com/MustardSeedNetworks/seed/issues/3907)) ([f38c4f4](https://github.com/MustardSeedNetworks/seed/commit/f38c4f41d1512804cb10e4d13d0108c4efab95b9))
+
 ## [0.285.8](https://github.com/MustardSeedNetworks/seed/compare/v0.285.7...v0.285.8) (2026-11-26)
 
 
