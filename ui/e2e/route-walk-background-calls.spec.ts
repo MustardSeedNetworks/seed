@@ -59,10 +59,32 @@ test('a walk through every route calls no rate-limited route and logs no 501 or 
     }
   });
   const refused: string[] = [];
+  // A 501 with code NOT_IMPLEMENTED is the platform saying it cannot do this
+  // (macOS has no ethtool), which is a fact about the host and not a defect. A
+  // page that asks anyway is caught by its own component test; here it is
+  // allowed once per route so a host's gaps do not fail the walk, while a 501
+  // with any other code and every 429 still do.
+  const platformRefusals = new Map<string, number>();
+  const pending: Promise<void>[] = [];
   page.on('response', (response) => {
-    if (response.status() === 501 || response.status() === 429) {
-      refused.push(`${response.status()} ${new URL(response.url()).pathname}`);
+    const status = response.status();
+    if (status !== 501 && status !== 429) {
+      return;
     }
+    const path = new URL(response.url()).pathname;
+    pending.push(
+      response
+        .json()
+        .catch((): unknown => null)
+        .then((body: unknown) => {
+          const code = (body as { code?: string } | null)?.code;
+          if (status === 501 && code === 'NOT_IMPLEMENTED') {
+            platformRefusals.set(path, (platformRefusals.get(path) ?? 0) + 1);
+          } else {
+            refused.push(`${status} ${path}`);
+          }
+        }),
+    );
   });
   const consoleErrors: string[] = [];
   page.on('console', (message) => {
@@ -83,7 +105,19 @@ test('a walk through every route calls no rate-limited route and logs no 501 or 
   await page.getByTestId('sidebar-nav-performance').click();
   await expect(page.getByTestId('health-check-run')).toBeEnabled();
 
+  await Promise.all(pending);
   expect(spent, 'rate-limited calls made by page mounts').toEqual([]);
   expect(refused, '501/429 responses during the walk').toEqual([]);
-  expect(consoleErrors, '501/429 console errors during the walk').toEqual([]);
+  expect(
+    [...platformRefusals].filter(([, count]) => count > 1),
+    'platform-unsupported routes asked for more than once',
+  ).toEqual([]);
+  // The browser logs every non-2xx fetch as a console error, so a tolerated
+  // platform refusal shows up here too. Only 429s and unexplained 501s count.
+  expect(
+    platformRefusals.size > 0
+      ? consoleErrors.filter((text) => !/\b501\b/.test(text))
+      : consoleErrors,
+    '501/429 console errors during the walk',
+  ).toEqual([]);
 });

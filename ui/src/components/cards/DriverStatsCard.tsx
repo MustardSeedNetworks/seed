@@ -31,6 +31,16 @@ interface DriverStatsCardProps {
 }
 
 export function DriverStatsCard({ interfaceName }: DriverStatsCardProps): JSX.Element {
+  // The counters are read by a child of the gate, not by this component, so an
+  // unsupported platform never requests a route that answers 501.
+  return (
+    <FeatureUnavailable capability="driver_statistics" deferUntilKnown>
+      <DriverStatsBody interfaceName={interfaceName} />
+    </FeatureUnavailable>
+  );
+}
+
+function DriverStatsBody({ interfaceName }: DriverStatsCardProps): JSX.Element {
   const { t } = useTranslation('cards');
   const labelFor = useCardStatusLabel();
   const { counters, total, loading, error, refresh } = useDriverStats(interfaceName);
@@ -49,75 +59,73 @@ export function DriverStatsCard({ interfaceName }: DriverStatsCardProps): JSX.El
   }
 
   return (
-    <FeatureUnavailable capability="driver_statistics">
-      <Card
-        title={t('driverStats.title')}
-        icon={<Activity className="w-4 h-4" />}
-        status={cardStatus}
-        statusLabel={labelFor(cardStatus)}
-        aria-label={t('driverStats.title')}
-        data-testid="card"
-      >
-        <div className="stack-sm">
-          <p className="caption text-text-muted">{t('driverStats.description')}</p>
+    <Card
+      title={t('driverStats.title')}
+      icon={<Activity className="w-4 h-4" />}
+      status={cardStatus}
+      statusLabel={labelFor(cardStatus)}
+      aria-label={t('driverStats.title')}
+      data-testid="card"
+    >
+      <div className="stack-sm">
+        <p className="caption text-text-muted">{t('driverStats.description')}</p>
 
-          {error ? (
-            <Alert tone="error" size="sm">
-              {error}
-            </Alert>
-          ) : null}
+        {error ? (
+          <Alert tone="error" size="sm">
+            {error}
+          </Alert>
+        ) : null}
 
-          {!loading && !error && counters.length === 0 ? (
-            <p className="caption text-text-muted">{t('driverStats.noCounters')}</p>
-          ) : null}
+        {!loading && !error && counters.length === 0 ? (
+          <p className="caption text-text-muted">{t('driverStats.noCounters')}</p>
+        ) : null}
 
-          {counters.map((counter) => (
-            <div
-              key={counter.key}
-              className={cn(
-                spacing.pad.xs,
-                'bg-surface-base',
-                radius.default,
-                'border border-surface-border',
-              )}
-            >
-              <div className="flex-between">
-                <span className="body-small text-text-primary">{counter.label}</span>
-                <span
-                  className={cn(
-                    'body-small font-mono',
-                    counter.value > 0 ? statusColor.text.warning : 'text-text-muted',
-                  )}
-                >
-                  {counter.value}
-                </span>
-              </div>
-              <div className="caption text-text-secondary">{counter.meaning}</div>
-              {/* The driver's own name, so an operator can correlate with
-                  `ethtool -S` output rather than guessing which counter this is. */}
-              <div className="caption text-text-muted font-mono">{counter.key}</div>
-            </div>
-          ))}
-
-          {total > counters.length ? (
-            <p className="caption text-text-muted">
-              {t('driverStats.curated', { shown: counters.length, total })}
-            </p>
-          ) : null}
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(): void => {
-              refresh().catch(() => undefined);
-            }}
-            loading={loading}
-            className="self-start"
+        {counters.map((counter) => (
+          <div
+            key={counter.key}
+            className={cn(
+              spacing.pad.xs,
+              'bg-surface-base',
+              radius.default,
+              'border border-surface-border',
+            )}
           >
-            {t('driverStats.refresh')}
-          </Button>
-        </div>
-      </Card>
-    </FeatureUnavailable>
+            <div className="flex-between">
+              <span className="body-small text-text-primary">{counter.label}</span>
+              <span
+                className={cn(
+                  'body-small font-mono',
+                  counter.value > 0 ? statusColor.text.warning : 'text-text-muted',
+                )}
+              >
+                {counter.value}
+              </span>
+            </div>
+            <div className="caption text-text-secondary">{counter.meaning}</div>
+            {/* The driver's own name, so an operator can correlate with
+                  `ethtool -S` output rather than guessing which counter this is. */}
+            <div className="caption text-text-muted font-mono">{counter.key}</div>
+          </div>
+        ))}
+
+        {total > counters.length ? (
+          <p className="caption text-text-muted">
+            {t('driverStats.curated', { shown: counters.length, total })}
+          </p>
+        ) : null}
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(): void => {
+            refresh().catch(() => undefined);
+          }}
+          loading={loading}
+          className="self-start"
+        >
+          {t('driverStats.refresh')}
+        </Button>
+      </div>
+    </Card>
   );
 }

@@ -96,6 +96,10 @@ describe('DriverStatsCard', () => {
     // An empty counter table would read as "this link is clean", which is the
     // most reassuring possible wrong answer.
     expect(screen.queryByText('Driver Error Counters')).not.toBeInTheDocument();
+    // The route answers 501 here, so the card must not have asked for it.
+    expect(
+      mockGet.mock.calls.map(([path]) => path).filter((p) => p.includes('driver-stats')),
+    ).toEqual([]);
   });
 
   it('does not claim a clean link when the driver exposes no curated counters', async () => {
