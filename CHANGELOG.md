@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.287.0](https://github.com/MustardSeedNetworks/seed/compare/v0.286.2...v0.287.0) (2026-11-27)
+
+
+### Features
+
+* **ui:** browse a polling target's MIB from its detail pane ([#3646](https://github.com/MustardSeedNetworks/seed/issues/3646)) ([d4f3732](https://github.com/MustardSeedNetworks/seed/commit/d4f373253e19cd0101a0ba204aa5906c61e542a3)), closes [#3546](https://github.com/MustardSeedNetworks/seed/issues/3546)
+
+
+### Bug Fixes
+
+* **ui:** do not request driver stats where the platform cannot serve them ([#3918](https://github.com/MustardSeedNetworks/seed/issues/3918)) ([3619bb0](https://github.com/MustardSeedNetworks/seed/commit/3619bb0e523f142015bef313092960d6664fd851)), closes [#3914](https://github.com/MustardSeedNetworks/seed/issues/3914)
+* **ui:** size the command palette input to the shared target height ([#3917](https://github.com/MustardSeedNetworks/seed/issues/3917)) ([ec361bf](https://github.com/MustardSeedNetworks/seed/commit/ec361bf25aa1939d9ee727fe238fe9092474406a)), closes [#3915](https://github.com/MustardSeedNetworks/seed/issues/3915)
+
+
+### Miscellaneous
+
+* **deps:** update storybook monorepo to v10.6.8 ([#3912](https://github.com/MustardSeedNetworks/seed/issues/3912)) ([6ac82a1](https://github.com/MustardSeedNetworks/seed/commit/6ac82a157e9af02f20b17a019327ad3ef9ff2cd1))
+* **ui:** remove modules and exports nothing references ([#3919](https://github.com/MustardSeedNetworks/seed/issues/3919)) ([08838ed](https://github.com/MustardSeedNetworks/seed/commit/08838edd1549ab4ed9512e87732e715ff8f0acba)), closes [#3916](https://github.com/MustardSeedNetworks/seed/issues/3916)
+
 ## [0.286.2](https://github.com/MustardSeedNetworks/seed/compare/v0.286.1...v0.286.2) (2026-11-27)
 
 
