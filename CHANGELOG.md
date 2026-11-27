@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.288.0](https://github.com/MustardSeedNetworks/seed/compare/v0.287.0...v0.288.0) (2026-11-27)
+
+
+### Features
+
+* **ui:** adopt the shared rail status vocabulary and wide modal ([#3921](https://github.com/MustardSeedNetworks/seed/issues/3921)) ([3c0d76f](https://github.com/MustardSeedNetworks/seed/commit/3c0d76f704c9c8fc9dce94881722f556f78ad21f))
+
 ## [0.287.0](https://github.com/MustardSeedNetworks/seed/compare/v0.286.2...v0.287.0) (2026-11-27)
 
 
