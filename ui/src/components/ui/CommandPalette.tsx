@@ -94,14 +94,14 @@ export function CommandPalette({
         aria-label={t('accessibility.closeCommandPalette')}
       />
       <div className="relative mx-4 w-full max-w-xl rounded-2xl border border-surface-border bg-bg-surface/95 shadow-2xl">
-        <div className="flex items-center gap-compact border-b border-surface-border px-4 py-row-lg">
+        <div className="flex items-center gap-compact border-b border-surface-border px-4 py-1">
           <Search className="h-4 w-4 text-text-muted" aria-hidden="true" />
           <Command.Input
             autoFocus={true}
             value={value}
             onValueChange={setValue}
             placeholder={t('commandPalette.placeholder')}
-            className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
+            className="target flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
           />
           <kbd className="hidden sm:inline-flex items-center rounded border border-surface-border px-1.5 py-0.5 text-[11px] text-text-muted">
             esc
