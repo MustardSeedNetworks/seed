@@ -38,6 +38,7 @@ import {
   useEffect,
   useId,
   useLayoutEffect,
+  useReducer,
   useRef,
   useState,
 } from 'react';
@@ -106,6 +107,8 @@ export function Tooltip({ text, side = 'top', children }: TooltipProps) {
   const bubbleRef = useRef<HTMLSpanElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const dismissedRef = useRef(false);
+  const releaseKey = useRef<(() => void) | undefined>(undefined);
+  const [, markInactive] = useReducer((count: number) => count + 1, 0);
   const present = hasContent(text);
   const open = present && (hovered || focused) && !dismissed;
   const dismiss = () => {
@@ -114,6 +117,15 @@ export function Tooltip({ text, side = 'top', children }: TooltipProps) {
   };
 
   useEffect(() => () => clearTimeout(closeTimer.current), []);
+
+  // Runs in the commit that follows the pointer and focus leaving, so the bubble
+  // is already hidden when the Escape listener goes. `markInactive` makes that
+  // commit certain: the state the same event sets can net out unchanged (focus in
+  // and out in one batch, or leaving after Escape had already hidden it) and
+  // React would then render nothing.
+  useLayoutEffect(() => {
+    releaseKey.current?.();
+  });
 
   useLayoutEffect(() => {
     if (!open) {
@@ -144,13 +156,19 @@ export function Tooltip({ text, side = 'top', children }: TooltipProps) {
   // the other has to be tracked on both.
   //
   // Whether the bubble is active lives in refs, written by the same native
-  // events that set the state, and the Escape listener is attached and removed
-  // in those handlers. Gating it on the rendered `open` state raced: React
+  // events that set the state, and the Escape listener is attached in those
+  // handlers. Gating it on the rendered `open` state raced: React
   // renders a hover (a continuous event) later than the pointer, so an Escape
   // that arrived first found no listener and the bubble opened after it. And
   // `dismissed` is cleared only when pointer and focus have both left: clearing
   // it when the pointer's grace period ended reopened a bubble that Escape had
   // closed while focus was still on the trigger.
+  //
+  // The listener is removed the other way round: when the pointer and focus have
+  // left, the bubble is still on screen until React renders the state those same
+  // events set. Removing the listener at once let an Escape in that window reach
+  // the dialog behind it, so it is kept and released by a layout effect once the
+  // hiding render has committed (`releaseKey`).
   useEffect(() => {
     const { current: wrapper } = wrapperRef;
     const bubble = present ? bubbleRef.current : null;
@@ -163,8 +181,14 @@ export function Tooltip({ text, side = 'top', children }: TooltipProps) {
       if (event.key !== 'Escape' || dismissedRef.current) {
         return;
       }
-      dismissedRef.current = true;
-      setDismissed(true);
+      // After the pointer and focus have left, the bubble is on screen only until
+      // the render that hides it: this Escape is still its, but there is nothing
+      // to dismiss, and marking it would outlive that render and keep the next
+      // hover from showing.
+      if (pointer.over || pointer.focus) {
+        dismissedRef.current = true;
+        setDismissed(true);
+      }
       // WebKit sends no mouseleave when a drawer opens under a still pointer, so
       // a hovered bubble can sit beneath a modal; that Escape is the dialog's.
       const dialog =
@@ -175,16 +199,24 @@ export function Tooltip({ text, side = 'top', children }: TooltipProps) {
     };
     const sync = () => {
       const active = pointer.over || pointer.focus;
-      if (active && !listening) {
-        document.addEventListener('keydown', onKey, true);
-      } else if (!active && listening) {
-        document.removeEventListener('keydown', onKey, true);
+      if (active) {
+        releaseKey.current = undefined;
+        if (!listening) {
+          document.addEventListener('keydown', onKey, true);
+          listening = true;
+        }
+        return;
       }
-      listening = active;
-      if (!active) {
-        dismissedRef.current = false;
-        setDismissed(false);
+      dismissedRef.current = false;
+      setDismissed(false);
+      if (listening) {
+        releaseKey.current = () => {
+          releaseKey.current = undefined;
+          document.removeEventListener('keydown', onKey, true);
+          listening = false;
+        };
       }
+      markInactive();
     };
     const inside = (node: EventTarget | null) =>
       node instanceof Node && (wrapper.contains(node) || Boolean(bubble?.contains(node)));
@@ -224,6 +256,7 @@ export function Tooltip({ text, side = 'top', children }: TooltipProps) {
       element?.addEventListener('mouseout', out);
     }
     return () => {
+      releaseKey.current = undefined;
       document.removeEventListener('keydown', onKey, true);
       wrapper.removeEventListener('focusin', focusIn);
       wrapper.removeEventListener('focusout', focusOut);
