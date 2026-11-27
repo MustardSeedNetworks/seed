@@ -25,6 +25,11 @@
  * - The version is `formatVersion(raw)`: "v0.285.3", never "-dirty" or a commit
  *   in the visible line. When the raw string says more, it is the Tooltip, and
  *   the version is keyboard-focusable so the tooltip is reachable.
+ * - `status` is a typed state, not a colour and a word: `connected`,
+ *   `reconnecting`, `disconnected` or `degraded`, each with the product's
+ *   translated `label` and a `detail` (tooltip, and read by a screen reader
+ *   after the label). The tone follows the state (`railStateTone`), so a
+ *   product cannot show "Online" in red. The English vocabulary is in the README.
  * - `collapsed`: icons only (the status is a dot, the slot its icon, the
  *   wordmark is gone), every button keeps its aria-label and Tooltip.
  * - `variant="drawer"` is the same footer inside the 390px mobile drawer: always
@@ -45,6 +50,25 @@ import { buildDetail, formatVersion } from './railVersion';
 import { StatusIndicator, StatusPill, type StatusTone } from './StatusPill';
 import { Tooltip } from './Tooltip';
 
+/** What the rail's connection or daemon verdict can be. */
+export type RailState = 'connected' | 'reconnecting' | 'disconnected' | 'degraded';
+
+/** One tone per state, so the colour never disagrees with the wording. */
+export const railStateTone: Record<RailState, StatusTone> = {
+  connected: 'success',
+  reconnecting: 'info',
+  disconnected: 'error',
+  degraded: 'warning',
+};
+
+export interface RailStatus {
+  state: RailState;
+  /** The state's name, already translated. */
+  label: string;
+  /** What the state means right now, already translated: the tooltip. */
+  detail: string;
+}
+
 interface RailAction {
   /** Accessible name and tooltip, already translated. */
   label: string;
@@ -56,7 +80,7 @@ export interface RailFooterProps {
   /** `rail` is the desktop rail; `drawer` the mobile drawer (expanded, no collapse). */
   variant?: 'rail' | 'drawer';
   /** The connection or daemon verdict. Omit when the product has none. */
-  status?: { tone: StatusTone; label: string };
+  status?: RailStatus;
   productSlot?: RailProductSlotProps;
   help: RailAction;
   settings: RailAction;
@@ -131,22 +155,28 @@ export function RailFooter({
           <div
             role="status"
             data-testid="rail-status"
+            data-state={status.state}
             className={cx('flex min-w-0', collapsed && 'justify-center')}
           >
-            {collapsed ? (
-              <Tooltip text={status.label}>
+            <Tooltip text={status.detail}>
+              {collapsed ? (
                 <span className="inline-flex h-6 items-center">
                   <StatusIndicator
-                    tone={status.tone}
+                    tone={railStateTone[status.state]}
                     label={status.label}
                     variant="dot"
                     size="md"
                   />
                 </span>
-              </Tooltip>
-            ) : (
-              <StatusPill tone={status.tone} label={status.label} className="max-w-full truncate" />
-            )}
+              ) : (
+                <StatusPill
+                  tone={railStateTone[status.state]}
+                  label={status.label}
+                  className="max-w-full truncate"
+                />
+              )}
+            </Tooltip>
+            <span className="sr-only">{status.detail}</span>
           </div>
         ) : null}
 

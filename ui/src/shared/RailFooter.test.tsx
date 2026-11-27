@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { RailFooter, type RailFooterProps } from './RailFooter';
+import { RailFooter, type RailFooterProps, type RailState, railStateTone } from './RailFooter';
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -29,7 +29,7 @@ function footer(overrides: Partial<RailFooterProps> = {}): RailFooterProps {
 
 const full = (): RailFooterProps =>
   footer({
-    status: { tone: 'success', label: 'Online' },
+    status: { state: 'connected', label: 'Connected', detail: 'Reaching the daemon' },
     productSlot: {
       label: 'Profile',
       value: 'Lab',
@@ -165,7 +165,31 @@ describe('RailFooter status, mark and collapse', () => {
   it('shows the status as a pill with its label', () => {
     render(<RailFooter {...full()} />);
     const status = screen.getByRole('status');
-    expect(within(status).getByText('Online')).toBeTruthy();
+    expect(within(status).getByText('Connected')).toBeTruthy();
+  });
+
+  it.each([
+    ['connected', 'success'],
+    ['reconnecting', 'info'],
+    ['disconnected', 'error'],
+    ['degraded', 'warning'],
+  ] as const satisfies readonly (readonly [RailState, string])[])(
+    'state %s is drawn in the %s tone, collapsed or not',
+    (state, tone) => {
+      expect(railStateTone[state]).toBe(tone);
+      const status = { state, label: state, detail: `${state} detail` };
+      const { rerender } = render(<RailFooter {...full()} status={status} />);
+      expect(screen.getByTestId('rail-status').getAttribute('data-state')).toBe(state);
+      rerender(<RailFooter {...full()} status={status} collapsed />);
+      expect(screen.getByRole('img', { name: state }).getAttribute('data-tone')).toBe(tone);
+    },
+  );
+
+  it('gives the status a tooltip and a screen-reader line with its detail', () => {
+    render(<RailFooter {...full()} />);
+    expect(within(screen.getByRole('status')).getByText('Reaching the daemon')).toBeTruthy();
+    fireEvent.mouseEnter(screen.getByText('Connected'));
+    expect(screen.getByRole('tooltip', { name: 'Reaching the daemon' })).toBeTruthy();
   });
 
   it('shows the wordmark when expanded', () => {
@@ -195,7 +219,9 @@ describe('RailFooter collapsed', () => {
     const slot = screen.getByTestId('rail-product-slot');
     expect(slot.textContent).toBe('');
     expect(slot.getAttribute('aria-label')).toBe('Profile: Lab');
-    expect(screen.getByRole('img', { name: 'Online' }).getAttribute('data-tone')).toBe('success');
+    expect(screen.getByRole('img', { name: 'Connected' }).getAttribute('data-tone')).toBe(
+      'success',
+    );
   });
 
   it('keeps every action reachable by name and stacks them in a column', () => {

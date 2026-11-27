@@ -70,7 +70,9 @@
     "rollupOk": "All clear",
     "rollupWarn": "Degraded",
     "rollupCrit": "Critical",
-    "rollupNoData": "No data"
+    "rollupNoData": "No data",
+    "reconnecting": "Reconnecting…",
+    "degraded": "Degraded"
   },
   "labels": {
     "username": "Username",
@@ -407,5 +409,11 @@
       "7d": "Last 7 days"
     },
     "peak": "Peak {{series}} {{value}}"
+  },
+  "railDetail": {
+    "connected": "The seed daemon is reachable and healthy.",
+    "reconnecting": "Connection lost; trying again.",
+    "disconnected": "The seed daemon cannot be reached.",
+    "degraded": "Reachable, but part of it is failing or slow."
   }
 }

@@ -130,12 +130,18 @@ describe('Modal, covering seed and niac usage', () => {
     ['lg', 'max-w-lg'],
     ['3xl', 'max-w-3xl'],
     ['full', 'max-w-4xl'],
+    ['wide', 'max-w-[96rem]'],
   ] as const)('size %s is %s, always full width up to the cap', (size, cap) => {
     render(modal({ size }));
     const { className } = screen.getByTestId('modal');
     expect(className).toContain(cap);
     expect(className).toContain('w-full');
     expect(className).toContain('max-h-full');
+  });
+
+  it('wide fills the height like full, so a table gets the room', () => {
+    render(modal({ size: 'wide' }));
+    expect(screen.getByTestId('modal').className).toContain('h-full');
   });
 
   it('pins the footer outside the scrolling body, and renders header content beside the title', () => {
