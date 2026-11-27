@@ -123,14 +123,6 @@ export function useDefaults(): UseDefaultsResult {
 }
 
 /**
- * Get cached defaults synchronously.
- * Returns null if not yet loaded.
- */
-export function getDefaultsSync(): DefaultSettings | null {
-  return cachedDefaults;
-}
-
-/**
  * Clear the defaults cache (useful for testing).
  */
 export function clearDefaultsCache(): void {

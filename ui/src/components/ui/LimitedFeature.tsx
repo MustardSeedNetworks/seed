@@ -1,7 +1,7 @@
 /**
  * LimitedFeature — it works here, but not fully, so say what is missing.
  *
- * The platform-axis sibling of <TierGate>: renders children regardless and adds
+ * The platform-axis counterpart of the licence gates: renders children regardless and adds
  * a note about what is reduced. Where <FeatureUnavailable> replaces a surface
  * the OS cannot support, this annotates one it supports partially — "reports
  * negotiated speed; duplex is not exposed" is more useful than a blank field

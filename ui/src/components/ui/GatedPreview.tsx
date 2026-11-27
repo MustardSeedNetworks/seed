@@ -1,9 +1,8 @@
 /**
  * GatedPreview — a Pro-gated page on a lower tier shows what it does.
  *
- * The third variant of licence gating, for whole pages. <RequireFeature>
- * hides a surface and <TierGate> disables a control; a page rendered through
- * either is a banner over an empty body, which reads as "failed to load"
+ * The licence gate for whole pages. <RequireFeature> hides a surface, and a
+ * page rendered through it is a banner over an empty body, which reads as "failed to load"
  * (#2669). This renders the pitch first, then a non-interactive sample of the
  * feature, so the customer can see what the tier buys before buying it.
  *

@@ -45,8 +45,3 @@ export function evaluatePassword(password: string): PasswordPolicyResult {
     rules,
   };
 }
-
-/** Convenience: returns true only if every rule passes. */
-export function isPasswordValid(password: string): boolean {
-  return evaluatePassword(password).valid;
-}

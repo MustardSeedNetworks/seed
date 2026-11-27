@@ -14,7 +14,7 @@
 // This is a *platform* question, deliberately distinct from two neighbours:
 //
 //   - licence tier — "your tier does not include this" (internal/license,
-//     requireFeature, the UI's RequireFeature/TierGate)
+//     requireFeature, the UI's RequireFeature)
 //   - privilege — "this process cannot open a raw socket" (the existing
 //     icmpAvailable check)
 //

@@ -33,6 +33,4 @@ src/components/ui/useToast.ts                       # story + i18n test only
 src/hooks/useDiscoveredDevices.ts                   # imported only by DeviceSelector.tsx
 
 # Nothing imports these at all.
-src/components/ui/TierGate.tsx
-src/styles/inputPresets.ts
 src/styles/tokens.ts
