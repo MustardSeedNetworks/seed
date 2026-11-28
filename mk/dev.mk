@@ -15,7 +15,7 @@
 # caps stick.
 # =============================================================================
 
-.PHONY: dev-run dev-start dev-stop dev-status dev-restart
+.PHONY: dev-run dev-start dev-stop dev-status dev-restart pr-check
 
 DEV_BINARY ?= ./seed
 DEV_ARGS   ?=
@@ -69,3 +69,15 @@ dev-status: ## Show whether the backgrounded process is running
 	fi
 
 dev-restart: dev-stop dev-start ## Stop + start
+
+# Lint a PR title and body with the shared checker before `gh pr create`.
+# PR_CHECK_REF is the MustardSeedNetworks/.github ref the script is read from.
+PR_CHECK_REF ?= main
+
+pr-check: ## Lint a PR title and body: make pr-check TITLE='fix: subject' BODY=body.md
+	@if [ -z "$(TITLE)" ] || [ ! -f "$(BODY)" ]; then \
+		echo "usage: make pr-check TITLE='type(scope): subject' BODY=path/to/body.md" >&2; exit 2; \
+	fi
+	@gh api -H 'Accept: application/vnd.github.raw' \
+		'repos/MustardSeedNetworks/.github/contents/scripts/check-pr-body.py?ref=$(PR_CHECK_REF)' | \
+		python3 - --title "$(TITLE)" --body-file "$(BODY)"
