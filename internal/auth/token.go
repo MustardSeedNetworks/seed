@@ -30,7 +30,7 @@ type Claims struct {
 // GenerateToken creates a new JWT token for the given username.
 // This is primarily used for testing. For production use, use Authenticate().
 func (m *Manager) GenerateToken(ctx context.Context, username string) (string, error) {
-	return m.generateTokenWithType(ctx, username, "access", m.sessionTimeout)
+	return m.generateTokenWithType(ctx, username, "access", AccessTokenDuration)
 }
 
 // GenerateAccessToken creates a short-lived access token (fixes #478).

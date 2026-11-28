@@ -1736,7 +1736,7 @@
     "AuthConfig": {
       "type": "object",
       "description": "Authentication settings",
-      "required": ["default_username", "default_password_hash", "session_timeout"],
+      "required": ["default_username", "default_password_hash"],
       "additionalProperties": false,
       "properties": {
         "default_username": {
@@ -1749,11 +1749,6 @@
           "type": "string",
           "description": "Bcrypt password hash (empty = requires first-boot setup)",
           "default": ""
-        },
-        "session_timeout": {
-          "$ref": "#/$defs/Duration",
-          "description": "Session timeout duration",
-          "default": "24h"
         },
         "jwt_secret": {
           "type": "string",

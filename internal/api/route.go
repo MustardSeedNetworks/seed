@@ -12,7 +12,6 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
@@ -51,7 +50,7 @@ func (s *Server) newRegistrar() *route.Registrar {
 // registers the full set. It is what cmd/seed-openapi documents.
 func RouteManifest() []route.Policy {
 	s := &Server{
-		authMgr:         auth.NewManager("", time.Hour, "", ""),
+		authMgr:         auth.NewManager("", "", ""),
 		csrf:            csrf.NewManager(),
 		endpointLimiter: NewEndpointRateLimiter(DefaultEndpointRateLimitConfig()),
 	}

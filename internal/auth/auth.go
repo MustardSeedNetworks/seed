@@ -60,20 +60,18 @@ type UserStore interface {
 
 // Manager handles authentication operations.
 type Manager struct {
-	mu             sync.RWMutex // Protects passwordHash and username (fixes #520)
-	jwtSecret      []byte
-	sessionTimeout time.Duration
-	passwordHash   string
-	username       string
-	tokenVersion   int             // Token version for revocation support (fixes #525)
-	userStore      UserStore       // Optional database-backed user store
-	blacklist      *TokenBlacklist // Token blacklist for immediate revocation
+	mu           sync.RWMutex // Protects passwordHash and username (fixes #520)
+	jwtSecret    []byte
+	passwordHash string
+	username     string
+	tokenVersion int             // Token version for revocation support (fixes #525)
+	userStore    UserStore       // Optional database-backed user store
+	blacklist    *TokenBlacklist // Token blacklist for immediate revocation
 }
 
 // NewManager creates a new authentication manager.
 func NewManager(
 	jwtSecret string,
-	sessionTimeout time.Duration,
 	username, passwordHash string,
 ) *Manager {
 	secret := jwtSecret
@@ -83,11 +81,10 @@ func NewManager(
 	}
 
 	return &Manager{
-		jwtSecret:      []byte(secret),
-		sessionTimeout: sessionTimeout,
-		passwordHash:   passwordHash,
-		username:       username,
-		blacklist:      NewTokenBlacklist(),
+		jwtSecret:    []byte(secret),
+		passwordHash: passwordHash,
+		username:     username,
+		blacklist:    NewTokenBlacklist(),
 	}
 }
 

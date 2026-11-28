@@ -265,7 +265,6 @@
   "auth": {
     "default_username": "admin",
     "default_password_hash": "",
-    "session_timeout": 86400000000000,
     "sso": {
       "providers": [
         {

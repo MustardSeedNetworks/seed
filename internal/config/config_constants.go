@@ -114,9 +114,6 @@ const (
 	// defaultScanTimeoutSec is the total timeout in seconds for network scans.
 	defaultScanTimeoutSec = 30
 
-	// defaultSessionTimeoutHours is the default session timeout in hours.
-	defaultSessionTimeoutHours = 24
-
 	// defaultVulnUpdateIntervalSec is the interval in seconds for vulnerability database updates (24 hours).
 	defaultVulnUpdateIntervalSec = 86400
 )

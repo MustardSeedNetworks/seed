@@ -269,7 +269,6 @@ func defaultAuthConfig() AuthConfig {
 	return AuthConfig{
 		DefaultUsername:     "admin",
 		DefaultPasswordHash: "",
-		SessionTimeout:      defaultSessionTimeoutHours * time.Hour,
 		JWTSecret:           "",
 		SSO: SSOConfig{
 			Providers: []SSOProviderConfig{

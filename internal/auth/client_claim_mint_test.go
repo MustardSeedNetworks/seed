@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
@@ -22,7 +21,7 @@ func mintManager(t *testing.T, store auth.UserStore) *auth.Manager {
 
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
-		defaults.Auth.JWTSecret, time.Hour,
+		defaults.Auth.JWTSecret,
 		defaults.Auth.Username, defaults.Auth.PasswordHash,
 	)
 	if store != nil {

@@ -7,11 +7,10 @@ import "time"
 
 // AuthConfig contains authentication settings.
 type AuthConfig struct {
-	DefaultUsername     string        `json:"default_username"`
-	DefaultPasswordHash string        `json:"default_password_hash"`
-	SessionTimeout      time.Duration `json:"session_timeout"`
-	JWTSecret           string        `json:"jwt_secret,omitempty"`
-	SSO                 SSOConfig     `json:"sso,omitzero"`
+	DefaultUsername     string    `json:"default_username"`
+	DefaultPasswordHash string    `json:"default_password_hash"`
+	JWTSecret           string    `json:"jwt_secret,omitempty"`
+	SSO                 SSOConfig `json:"sso,omitzero"`
 }
 
 // SSOConfig contains settings for all SSO providers.

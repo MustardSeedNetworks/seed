@@ -343,7 +343,6 @@ export interface CertExpiryThreshold {
 export interface AuthConfig {
   default_username: string;
   default_password_hash: string;
-  session_timeout: number;
   jwt_secret?: string;
   sso?: SSOConfig;
 }

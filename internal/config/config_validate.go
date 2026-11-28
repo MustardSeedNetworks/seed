@@ -181,9 +181,6 @@ func (c *Config) validateTimeouts() []string {
 // validateAuthConfig checks authentication configuration.
 func (c *Config) validateAuthConfig() []string {
 	var errs []string
-	if c.Auth.SessionTimeout <= 0 {
-		errs = append(errs, "auth.session_timeout must be positive")
-	}
 	if c.Auth.DefaultUsername == "" {
 		errs = append(errs, "auth.default_username is required")
 	}

@@ -128,7 +128,6 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 
 	s.authMgr = auth.NewManager(
 		cfg.Auth.JWTSecret,
-		cfg.Auth.SessionTimeout,
 		cfg.Auth.DefaultUsername,
 		cfg.Auth.DefaultPasswordHash,
 	)

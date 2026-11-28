@@ -566,14 +566,11 @@ components:
                     type: string
                 jwt_secret:
                     type: string
-                session_timeout:
-                    type: integer
                 sso:
                     $ref: '#/components/schemas/SSOConfig'
             required:
                 - default_username
                 - default_password_hash
-                - session_timeout
             type: object
         AutotestResultListResponse:
             additionalProperties: false

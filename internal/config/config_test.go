@@ -59,9 +59,6 @@ func TestDefaultConfig(t *testing.T) {
 	if cfg.Auth.DefaultUsername != "admin" {
 		t.Errorf("expected default username admin, got %s", cfg.Auth.DefaultUsername)
 	}
-	if cfg.Auth.SessionTimeout != 24*time.Hour {
-		t.Errorf("expected session timeout 24h, got %v", cfg.Auth.SessionTimeout)
-	}
 }
 
 func TestLoadNonExistentFile(t *testing.T) {
@@ -653,17 +650,6 @@ func TestValidateZeroTimeout(t *testing.T) {
 				t.Error("expected validation error for zero timeout")
 			}
 		})
-	}
-}
-
-func TestValidateInvalidSessionTimeout(t *testing.T) {
-	cfg := config.DefaultConfig()
-	cfg.Auth.DefaultPasswordHash = "hash"
-	cfg.Auth.SessionTimeout = 0
-
-	err := cfg.Validate()
-	if err == nil {
-		t.Error("expected validation error for zero session timeout")
 	}
 }
 

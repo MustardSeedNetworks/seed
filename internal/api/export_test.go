@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
 
@@ -245,7 +244,7 @@ func (s *Server) Mux() http.Handler {
 // sessions, the CSRF manager and the endpoint limiter.
 func (s *Server) withRouteDeps(t *testing.T) {
 	t.Helper()
-	s.authMgr = auth.NewManager("", time.Hour, "", "")
+	s.authMgr = auth.NewManager("", "", "")
 	s.csrf = csrf.NewManager()
 	s.endpointLimiter = NewEndpointRateLimiter(DefaultEndpointRateLimitConfig())
 	t.Cleanup(func() {

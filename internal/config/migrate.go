@@ -85,6 +85,12 @@ func removedKeys() []removedKey {
 				"(options, timing) and snmp; re-apply them there",
 		},
 		{
+			path: []string{"auth"},
+			key:  "session_timeout",
+			replacement: "access tokens last 15 minutes and the refresh cookie " +
+				"carries the session; neither is configurable",
+		},
+		{
 			path: []string{"snmp"},
 			key:  "communities",
 			replacement: "SNMP credentials live in the encrypted device-credential " +
