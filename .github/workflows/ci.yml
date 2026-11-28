@@ -772,7 +772,7 @@ jobs:
       # The scan above still ran; skipping the upload does not weaken the
       # gate. Same condition as the shared Semgrep upload (.github#174).
       - name: Upload gosec results
-        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        uses: github/codeql-action/upload-sarif@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
         if: always() && github.event_name != 'merge_group' && !startsWith(github.ref, 'refs/heads/gh-readonly-queue/') && hashFiles('gosec-results.sarif') != ''
         with:
           sarif_file: gosec-results.sarif
@@ -827,7 +827,7 @@ jobs:
       # and CI Complete. The CRITICAL/HIGH gate below still reads the local
       # SARIF and still fails the job.
       - name: Upload Trivy results
-        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        uses: github/codeql-action/upload-sarif@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
         if: always() && github.event_name != 'merge_group' && !startsWith(github.ref, 'refs/heads/gh-readonly-queue/') && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: trivy-results.sarif
