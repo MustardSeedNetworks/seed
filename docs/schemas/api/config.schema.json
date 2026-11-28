@@ -176,9 +176,6 @@
         "default_password_hash": {
           "type": "string"
         },
-        "session_timeout": {
-          "type": "integer"
-        },
         "jwt_secret": {
           "type": "string"
         },
@@ -190,8 +187,7 @@
       "type": "object",
       "required": [
         "default_username",
-        "default_password_hash",
-        "session_timeout"
+        "default_password_hash"
       ]
     },
     "CableTestConfig": {

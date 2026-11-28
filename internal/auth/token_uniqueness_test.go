@@ -3,7 +3,6 @@ package auth_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
@@ -22,7 +21,7 @@ import (
 // tokens the logout tests minted.
 func TestTokensAreUniquePerMint(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := auth.NewManager("", time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager("", defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	first, err := m.GenerateToken(ctx, defaults.Auth.Username)
@@ -43,7 +42,7 @@ func TestTokensAreUniquePerMint(t *testing.T) {
 // Revoking one session must not revoke another session for the same user.
 func TestRevokingOneSessionLeavesTheOtherValid(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := auth.NewManager("", time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager("", defaults.Auth.Username, defaults.Auth.PasswordHash)
 	ctx := context.Background()
 
 	keep, err := m.GenerateToken(ctx, defaults.Auth.Username)

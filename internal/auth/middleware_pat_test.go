@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 )
@@ -16,7 +15,7 @@ import (
 // looks like a PAT is not enough — the prefix is caller-controlled.
 func TestMiddlewareTrustsOnlyTheResolvedPATMarker(t *testing.T) {
 	t.Parallel()
-	m := auth.NewManager("", time.Hour, "", "")
+	m := auth.NewManager("", "", "")
 	t.Cleanup(m.Stop)
 
 	reached := false
@@ -47,7 +46,7 @@ func TestMiddlewareTrustsOnlyTheResolvedPATMarker(t *testing.T) {
 // access token is not accepted in its place.
 func TestMFAPendingTokenIsSinglePurpose(t *testing.T) {
 	t.Parallel()
-	m := auth.NewManager("", time.Hour, "", "")
+	m := auth.NewManager("", "", "")
 	t.Cleanup(m.Stop)
 
 	pending, err := m.GenerateMFAPendingToken(t.Context(), "alice")

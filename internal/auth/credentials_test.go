@@ -42,12 +42,12 @@ func TestAuthenticateCredentials(t *testing.T) {
 		t.Run(tt.name+"/store", func(t *testing.T) {
 			store := newMockUserStore()
 			store.passwords[credentialsUser] = tt.stored
-			m := auth.NewManager("test-secret-please-change", 0, credentialsUser, "")
+			m := auth.NewManager("test-secret-please-change", credentialsUser, "")
 			m.SetUserStore(store)
 			assertLogin(t, m, tt.password, tt.wantOK)
 		})
 		t.Run(tt.name+"/memory", func(t *testing.T) {
-			m := auth.NewManager("test-secret-please-change", 0, credentialsUser, tt.stored)
+			m := auth.NewManager("test-secret-please-change", credentialsUser, tt.stored)
 			assertLogin(t, m, tt.password, tt.wantOK)
 		})
 	}

@@ -44,7 +44,6 @@ func TestNewManager(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
@@ -55,14 +54,11 @@ func TestNewManager(t *testing.T) {
 	if m.ManagerUsername() != defaults.Auth.Username {
 		t.Errorf("expected username %s, got %s", defaults.Auth.Username, m.ManagerUsername())
 	}
-	if m.ManagerSessionTimeout() != time.Hour {
-		t.Errorf("expected timeout 1h, got %v", m.ManagerSessionTimeout())
-	}
 }
 
 func TestNewManagerWithEmptySecret(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	m := auth.NewManager("", time.Hour, defaults.Auth.Username, defaults.Auth.PasswordHash)
+	m := auth.NewManager("", defaults.Auth.Username, defaults.Auth.PasswordHash)
 	if m == nil {
 		t.Fatal("NewManager returned nil")
 	}
@@ -76,7 +72,6 @@ func TestAuthenticate(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
@@ -140,7 +135,6 @@ func TestValidateToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
@@ -167,7 +161,6 @@ func TestValidateInvalidToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
@@ -211,22 +204,17 @@ func TestValidateInvalidToken(t *testing.T) {
 
 func TestValidateExpiredToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
-	// Create manager with very short timeout
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Millisecond,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
 	ctx := context.Background()
 
-	token, err := m.Authenticate(ctx, defaults.Auth.Username, defaults.Auth.Password)
+	token, err := m.MintTokenForTest(ctx, defaults.Auth.Username, "access", -time.Minute)
 	if err != nil {
-		t.Fatalf("failed to authenticate: %v", err)
+		t.Fatalf("failed to mint expired token: %v", err)
 	}
-
-	// Wait for token to expire
-	time.Sleep(10 * time.Millisecond)
 
 	_, err = m.ValidateToken(ctx, token)
 	if !errors.Is(err, auth.ErrTokenExpired) {
@@ -238,7 +226,6 @@ func TestMiddleware(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
@@ -494,7 +481,6 @@ func TestUpdatePasswordHash(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
@@ -527,7 +513,6 @@ func TestGenerateAccessToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
@@ -556,7 +541,6 @@ func TestGenerateRefreshToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
@@ -585,7 +569,6 @@ func TestValidateRefreshToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
@@ -622,7 +605,6 @@ func TestRefreshAccessToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
@@ -724,7 +706,6 @@ func TestMiddlewareWithCookie(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
@@ -762,19 +743,15 @@ func TestMiddlewareExpiredToken(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Millisecond,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
 	ctx := context.Background()
 
-	token, err := m.Authenticate(ctx, defaults.Auth.Username, defaults.Auth.Password)
+	token, err := m.MintTokenForTest(ctx, defaults.Auth.Username, "access", -time.Minute)
 	if err != nil {
-		t.Fatalf("failed to authenticate: %v", err)
+		t.Fatalf("failed to mint expired token: %v", err)
 	}
-
-	// Wait for token to expire
-	time.Sleep(10 * time.Millisecond)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -803,7 +780,6 @@ func TestMiddlewareWebSocketAuth(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
@@ -1185,7 +1161,6 @@ func TestAuthenticateWithUserStore(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
@@ -1213,7 +1188,6 @@ func TestAuthenticateWithLockedUser(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)
@@ -1237,7 +1211,6 @@ func TestUpdatePasswordHashForUser(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(
 		defaults.Auth.JWTSecret,
-		time.Hour,
 		defaults.Auth.Username,
 		defaults.Auth.PasswordHash,
 	)

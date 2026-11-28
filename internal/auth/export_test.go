@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"context"
 	"os"
+	"time"
 )
 
 // ExportRandomChar exports randomChar for testing.
@@ -48,9 +50,14 @@ func (m *Manager) ManagerUsername() string {
 	return m.username
 }
 
-// ManagerSessionTimeout returns the sessionTimeout from a Manager for testing.
-func (m *Manager) ManagerSessionTimeout() any {
-	return m.sessionTimeout
+// MintTokenForTest mints a token of the given type and lifetime. A negative
+// duration yields an already-expired token.
+func (m *Manager) MintTokenForTest(
+	ctx context.Context,
+	username, tokenType string,
+	duration time.Duration,
+) (string, error) {
+	return m.generateTokenWithType(ctx, username, tokenType, duration)
 }
 
 // ManagerJWTSecret returns the jwtSecret from a Manager for testing.

@@ -46,7 +46,6 @@ import (
 func (s *Server) initAuthSecurity(cfg *config.Config, trustedProxies *TrustedProxies) {
 	s.authMgr = auth.NewManager(
 		cfg.Auth.JWTSecret,
-		cfg.Auth.SessionTimeout,
 		cfg.Auth.DefaultUsername,
 		cfg.Auth.DefaultPasswordHash,
 	)
