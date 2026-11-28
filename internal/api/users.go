@@ -21,6 +21,7 @@ import (
 	fndpw "github.com/MustardSeedNetworks/foundation/pkg/password"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
+	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -168,8 +169,7 @@ func (s *Server) handleUserCreate(w http.ResponseWriter, r *http.Request) {
 			"role must be one of: admin, operator, viewer")
 		return
 	}
-	if err := auth.ValidatePasswordStrength(req.Password); err != nil {
-		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
+	if !s.enforcePasswordPolicy(w, r, "user_create", req.Username, req.Password) {
 		return
 	}
 
@@ -289,13 +289,36 @@ func (s *Server) checkUserUpdateAuthorization(
 	return true
 }
 
+// passwordSource labels a password update for the audit log: a user changing
+// their own password versus an administrator resetting someone else's.
+func passwordSource(r *http.Request, target string) string {
+	if usernameFromContext(r) == target {
+		return "user_change"
+	}
+	return "admin_reset"
+}
+
+// enforcePasswordPolicy runs the shared password policy (class rule, zxcvbn,
+// opt-in HIBP) that setup and recovery also use. Returns false after writing
+// the rejection response.
+func (s *Server) enforcePasswordPolicy(
+	w http.ResponseWriter, r *http.Request, source, username, password string,
+) bool {
+	result, err := auth.EnforcePasswordPolicy(r.Context(), password, []string{username})
+	if err == nil {
+		return true
+	}
+	s.respondPolicyRejection(w, logging.FromContext(r.Context()), i18n.FromRequest(r),
+		s.getClientIP(r), source, result)
+	return false
+}
+
 // applyPasswordUpdate validates strength, hashes, and persists via the
 // use-case. Returns false (and writes the error response) on any failure.
 func (s *Server) applyPasswordUpdate(
 	w http.ResponseWriter, r *http.Request, target, password string,
 ) bool {
-	if err := auth.ValidatePasswordStrength(password); err != nil {
-		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
+	if !s.enforcePasswordPolicy(w, r, passwordSource(r, target), target, password) {
 		return false
 	}
 	hash, err := fndpw.Hash(password)

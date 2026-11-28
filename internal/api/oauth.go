@@ -328,6 +328,17 @@ func (s *Server) completeOAuthLogin(
 	providerName string,
 	logger *slog.Logger,
 ) bool {
+	// SSO never bootstraps the first admin: until setup has created the local
+	// admin, a login here would create a user before any administrator exists.
+	if s.setupRequired() {
+		logger.WarnContext(r.Context(), "SSO login refused: setup not complete",
+			"provider", providerName,
+			"client_ip", s.getClientIP(r),
+			"event", "auth.sso.setup_required")
+		s.redirectWithError(w, r, "Complete setup first: create the local admin account before signing in with SSO.")
+		return false
+	}
+
 	user, err := s.identityOAuth.SyncUser(r.Context(), ssosync.Identity{
 		Provider:    providerName,
 		ExternalID:  userInfo.ID,

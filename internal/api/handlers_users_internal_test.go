@@ -238,7 +238,7 @@ func TestCurrentUser_ReturnsCallerOwnRecord(t *testing.T) {
 	}
 }
 
-func TestUpsertSSOUser_FirstEverBecomesAdmin(t *testing.T) {
+func TestUpsertSSOUser_FirstEverIsViewerNeverAdmin(t *testing.T) {
 	t.Parallel()
 	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
@@ -257,8 +257,8 @@ func TestUpsertSSOUser_FirstEverBecomesAdmin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("upsert: %v", err)
 	}
-	if u.Role != roles.Admin {
-		t.Errorf("first SSO user role = %q, want admin", u.Role)
+	if u.Role != roles.Viewer {
+		t.Errorf("first SSO user role = %q, want viewer: SSO must never bootstrap an admin", u.Role)
 	}
 	if u.AuthProvider != database.AuthProviderGoogle || u.ExternalID != "google-sub-12345" {
 		t.Errorf("unexpected SSO fields: provider=%q external=%q", u.AuthProvider, u.ExternalID)
@@ -447,6 +447,78 @@ func TestUserHandlers_DomainErrorStatus(t *testing.T) {
 			}
 			if got.Code != tc.wantErr {
 				t.Errorf("error code = %q, want %q", got.Code, tc.wantErr)
+			}
+		})
+	}
+}
+
+// weakPassword passes the length-and-class rule but is a zxcvbn dictionary
+// pattern, so only the full policy rejects it.
+const weakPassword = "Password1234!"
+
+func TestUserCreate_RejectsWeakPassword(t *testing.T) {
+	t.Parallel()
+	s, mgr, _ := usersTestSetup(t)
+	if r := mgr.StartTrial(); !r.Success {
+		t.Fatalf("StartTrial: %s", r.Message)
+	}
+
+	body, _ := json.Marshal(CreateUserRequest{Username: "operator1", Password: weakPassword, Role: roles.Operator})
+	w := httptest.NewRecorder()
+	s.handleUsers(w, newAuthedRequest(http.MethodPost, APIVersionPrefix+"/users", body, "admin"))
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400; body=%s", w.Code, w.Body.String())
+	}
+	if _, err := s.identityUsers.Get(t.Context(), "operator1"); err == nil {
+		t.Error("weak-password create persisted the user")
+	}
+}
+
+func TestUserPasswordChange_PolicyApplies(t *testing.T) {
+	t.Parallel()
+	const strong = "tractor-lantern-quarry-9Wd!"
+	cases := []struct {
+		name     string
+		caller   string
+		password string
+		want     int
+	}{
+		{"self change rejects weak", "operator1", weakPassword, http.StatusBadRequest},
+		{"admin reset rejects weak", "admin", weakPassword, http.StatusBadRequest},
+		{"self change rejects class-rule failure", "operator1", "short", http.StatusBadRequest},
+		{"self change accepts strong", "operator1", strong, http.StatusOK},
+		{"admin reset accepts strong", "admin", strong, http.StatusOK},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			s, mgr, db := usersTestSetup(t)
+			if r := mgr.StartTrial(); !r.Success {
+				t.Fatalf("StartTrial: %s", r.Message)
+			}
+			if _, err := db.CreateUser(t.Context(), "operator1", "$2a$10$x", roles.Operator); err != nil {
+				t.Fatalf("seed operator1: %v", err)
+			}
+			before, err := s.identityUsers.Get(t.Context(), "operator1")
+			if err != nil {
+				t.Fatalf("get operator1: %v", err)
+			}
+
+			body, _ := json.Marshal(UpdateUserRequest{Password: tc.password})
+			w := httptest.NewRecorder()
+			req := newAuthedRequest(http.MethodPatch, APIVersionPrefix+"/users/operator1", body, tc.caller)
+			s.handleUserUpdate(w, req, "operator1")
+
+			if w.Code != tc.want {
+				t.Fatalf("status = %d, want %d; body=%s", w.Code, tc.want, w.Body.String())
+			}
+			after, err := s.identityUsers.Get(t.Context(), "operator1")
+			if err != nil {
+				t.Fatalf("reload operator1: %v", err)
+			}
+			if changed := after.PasswordHash != before.PasswordHash; changed != (tc.want == http.StatusOK) {
+				t.Errorf("hash changed = %v with status %d", changed, w.Code)
 			}
 		})
 	}

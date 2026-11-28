@@ -47,9 +47,9 @@ func TestIdentityOAuthSyncUserUpserts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("first sync: %v", err)
 	}
-	if first.Username != "google:sub-1" || first.Role != roles.Admin || first.AuthProvider != "google" ||
+	if first.Username != "google:sub-1" || first.Role != roles.Viewer || first.AuthProvider != "google" ||
 		first.ExternalID != "sub-1" || first.TokenVersion != 1 || !first.IsActive {
-		t.Fatalf("first sync user = %+v, want bootstrap admin google:sub-1", first)
+		t.Fatalf("first sync user = %+v, want viewer (SSO never bootstraps an admin) google:sub-1", first)
 	}
 	if first.PasswordHash != "!sso-no-password" {
 		t.Fatalf("password hash = %q, want the unmatchable sentinel", first.PasswordHash)

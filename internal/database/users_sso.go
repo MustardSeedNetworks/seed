@@ -13,9 +13,9 @@ import (
 )
 
 // UpsertSSOUser returns the user matching (provider, external_id), or
-// creates a new row if none exists. On first-ever user creation across
-// any channel, the new user becomes 'admin'; subsequent SSO-created
-// users default to 'viewer' and an existing admin can promote them.
+// creates a new row if none exists. SSO-created users are always 'viewer';
+// an existing admin can promote them. SSO never creates the first admin:
+// that is only possible through setup.
 //
 // The synthetic username is "<provider>:<external_id>"; we don't try to
 // reuse the email as the username because emails can change at the IdP
@@ -59,15 +59,7 @@ func (db *DB) UpsertSSOUser(ctx context.Context, in ssosync.Identity) (*users.Us
 		return existing, nil
 	}
 
-	// New user. Decide initial role.
-	var totalUsers int
-	if cntErr := db.readConn.QueryRowContext(ctx, `SELECT COUNT(*) FROM users`).Scan(&totalUsers); cntErr != nil {
-		return nil, fmt.Errorf("failed to count users for SSO bootstrap: %w", cntErr)
-	}
 	role := roles.Viewer
-	if totalUsers == 0 {
-		role = roles.Admin
-	}
 
 	username := in.Provider + ":" + in.ExternalID
 	now := time.Now().UTC()
