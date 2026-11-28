@@ -28,12 +28,19 @@ type SetupStatusResponse struct {
 	SetupTokenFile string `json:"setupTokenFile,omitempty"`
 }
 
+// setupRequired reports whether the local admin has not been created yet.
+func (s *Server) setupRequired() bool {
+	s.config.RLock()
+	defer s.config.RUnlock()
+	return auth.IsDefaultPasswordHash(s.config.Auth.DefaultPasswordHash)
+}
+
 // handleSetupStatus checks if initial setup is required (fixes #544 - split from handlers.go).
 func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
 	// Check if using default password
-	needsSetup := auth.IsDefaultPasswordHash(s.config.Auth.DefaultPasswordHash)
+	needsSetup := s.setupRequired()
 
 	// Security fix #891: Check if setup mode has timed out
 	if needsSetup && !s.setupModeStartTime.IsZero() {

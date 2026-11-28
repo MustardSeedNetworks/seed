@@ -30,12 +30,22 @@ type Claims struct {
 // GenerateToken creates a new JWT token for the given username.
 // This is primarily used for testing. For production use, use Authenticate().
 func (m *Manager) GenerateToken(ctx context.Context, username string) (string, error) {
-	return m.generateTokenWithType(ctx, username, "access", m.sessionTimeout)
+	return m.generateTokenWithType(ctx, username, "access", m.accessTokenLifetime())
 }
 
 // GenerateAccessToken creates a short-lived access token (fixes #478).
 func (m *Manager) GenerateAccessToken(ctx context.Context, username string) (string, error) {
-	return m.generateTokenWithType(ctx, username, "access", AccessTokenDuration)
+	return m.generateTokenWithType(ctx, username, "access", m.accessTokenLifetime())
+}
+
+// accessTokenLifetime is the configured session timeout capped at
+// AccessTokenDuration, so no access JWT outlives its cookie; the refresh
+// token extends the session.
+func (m *Manager) accessTokenLifetime() time.Duration {
+	if m.sessionTimeout > 0 && m.sessionTimeout < AccessTokenDuration {
+		return m.sessionTimeout
+	}
+	return AccessTokenDuration
 }
 
 // GenerateRefreshToken creates a long-lived refresh token (fixes #478).
